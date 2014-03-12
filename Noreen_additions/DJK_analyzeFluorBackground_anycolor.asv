@@ -289,159 +289,151 @@ else
 
 
       if p.minimalMode~=1
-          %------------------------------------------------------------------------
-          % GET NEW BACKGROUND DATA 1
-          %------------------------------------------------------------------------
-          seg_dilate = imdilate(seg,strel('disk',30));
-          [rows, cols] = find(seg_dilate>0);
-          row_min = min(rows);
-          row_max = max(rows);
-          col_min = min(cols);
-          col_max = max(cols);
-          rect_dilate = [row_min col_min row_max col_max];
+      %------------------------------------------------------------------------
+      % GET NEW BACKGROUND DATA 1
+      %------------------------------------------------------------------------
+      seg_dilate = imdilate(seg,strel('disk',30));
+      [rows, cols] = find(seg_dilate>0);
+      row_min = min(rows);
+      row_max = max(rows);
+      col_min = min(cols);
+      col_max = max(cols);
+      rect_dilate = [row_min col_min row_max col_max];
 
-          background1 = zeros(phaseCropSize);
-          background1(row_min:row_max,col_min:col_max) = 1;
-          background1(find(seg_dilate>0)) = 0;
-          idx = find(background1>0);
+      background1 = zeros(phaseCropSize);
+      background1(row_min:row_max,col_min:col_max) = 1;
+      background1(find(seg_dilate>0)) = 0;
+      idx = find(background1>0);
 
-          eval([ backNew ' = median(  fluor3image(idx));']);
-          eval([all_backNew '= [' all_backNew ' ' backNew '];']);
-          %------------------------------------------------------------------------
+      eval([ backNew ' = median(  fluor3image(idx));']);
+      eval([all_backNew '= [' all_backNew ' ' backNew '];']);
+      %------------------------------------------------------------------------
+      
+      
+      %------------------------------------------------------------------------
+      % GET NEW BACKGROUND DATA 2 & 3
+      %------------------------------------------------------------------------
+      % first get boundary of microcolonie
+      seg_filled = imfill(imclose(seg, strel('disk',1)));
+      seg_filled_perim = bwperim(seg_filled);
+      [perim_y, perim_x] = find(seg_filled_perim>0);
 
+      % get min distance for each pixel away from seg
+      [nonseg_y, nonseg_x] = find(seg_filled==0);
+      nonseg_idx = find(seg_filled==0);
 
-          %------------------------------------------------------------------------
-          % GET NEW BACKGROUND DATA 2 & 3
-          %------------------------------------------------------------------------
-          % first get boundary of microcolonie
-          seg_filled = imfill(imclose(seg, strel('disk',1)));
-          seg_filled_perim = bwperim(seg_filled);
-          [perim_y, perim_x] = find(seg_filled_perim>0);
-
-          % get min distance for each pixel away from seg
-          [nonseg_y, nonseg_x] = find(seg_filled==0);
-          nonseg_idx = find(seg_filled==0);
-
-          %disp('starting calc optimized'); t=cputime; 
-          for i = 1:length(perim_y)
-            dist_squared = (nonseg_y-perim_y(i)).^2 + (nonseg_x-perim_x(i)).^2;
-            if i==1, min_dist_squared = dist_squared;
-            else, min_dist_squared = min(min_dist_squared, dist_squared);
-               % if i==100, disp(min_dist_squared(1:100)); end % blubb
-            end
-          end
-          %disp(['finished calc optimized in ' num2str(cputime-t)]); pause(0.2);
-          % keyboard;
-
-          pixels_squared_per_micro = (1/p.micronsPerPixel)^2;
-
-          % 0 tot 1 um etc
-          for i = 1:7
-            pixels2 = fluor3image( nonseg_idx(find(min_dist_squared>=(i-1)*pixels_squared_per_micro & min_dist_squared<=i*pixels_squared_per_micro)) );
-            pixels3 = fluor2image( nonseg_idx(find(min_dist_squared>=(i-1)*pixels_squared_per_micro & min_dist_squared<=i*pixels_squared_per_micro)) );
-            if length(pixels2) > 0
-                eval([backNew2 '(i) = median(pixels2);']);
-                eval([backNew3 '(i) = median(pixels3);']);
-            else
-                eval([backNew2 '(i) = 0;'])
-                eval([backNew3 '(i) = 0;'])
-            end
-          end
-          count = count + 1;
-          eval([all_backNew2 '(:,count) = [' backNew2 '(1); ' backNew2 '(2); ' backNew2 '(3); ' backNew2 '(4); ' backNew2 '(5); ' backNew2 '(6); ' backNew2 '(7); ];']);
-          eval([all_backNew3 '(:,count) = [' backNew3 '(1); ' backNew3 '(2); ' backNew3 '(3); ' backNew3 '(4); ' backNew3 '(5); ' backNew3 '(6); ' backNew3 '(7); ];']);
-      end %end p.minimalMode~=1
-          %------------------------------------------------------------------------
-    end %end loop frames
-        %--------------------------------------------------------------------------
-
-        %--------------------------------------------------------------------------
-        % PRINT BACKGROUND DATA
-        %--------------------------------------------------------------------------
-        dispAndWrite(fid, ['-------------------------------------------------']);
-        eval(['dispAndWrite(fid, [''frame ' back ' ' back2 ' ' back2Alt ' ' back3 ' ' backAlt ' ' backNew ' 0-1 1-2 2-3 3-4 4-5 5-6 6-7 '']);']);
-        for i = 1:length(all_frames)
-            if p.minimalMode~=1
-                eval(['dispAndWrite(fid, [ str3(all_frames(i)) '' ''  str3(' all_back '(i)) '' '' str3(' all_back2 '(i)) '' ''  str3(' all_back2Alt '(i)) '' '' str3(' all_back3 '(i)) '' ''  str3(' all_backAlt '(i)) '' ''  str3(' all_backNew '(i)) '' ''  str3(' all_backNew2 '(1,i)) '' ''  str3(' all_backNew2 '(2,i)) '' '' str3(' all_backNew2 '(3,i)) '' '' str3(' all_backNew2 '(4,i)) '' '' str3(' all_backNew2 '(5,i)) '' ''  str3(' all_backNew2 '(6,i)) '' '' str3(' all_backNew2 '(7,i)) '' '' str3(' all_backNew3 '(1,i)) '' '' str3(' all_backNew3 '(2,i)) '' '' str3(' all_backNew3 '(3,i)) '' '' str3(' all_backNew3 '(4,i)) '' '' str3(' all_backNew3 '(5,i)) '' ''  str3(' all_backNew3 '(6,i)) '' '' str3(' all_backNew3 '(7,i)) '' '' ]);']);
-            end
+      %disp('starting calc optimized'); t=cputime; 
+      for i = 1:length(perim_y)
+        dist_squared = (nonseg_y-perim_y(i)).^2 + (nonseg_x-perim_x(i)).^2;
+        if i==1, min_dist_squared = dist_squared;
+        else, min_dist_squared = min(min_dist_squared, dist_squared);
+           % if i==100, disp(min_dist_squared(1:100)); end % blubb
         end
-        %--------------------------------------------------------------------------
+      end
+      %disp(['finished calc optimized in ' num2str(cputime-t)]); pause(0.2);
+      % keyboard;
 
+      pixels_squared_per_micro = (1/p.micronsPerPixel)^2;
 
-        %--------------------------------------------------------------------------
-        % NORMALIZE FLUOR DATA SAME WAY AS FOR SCHNITZES
-        %--------------------------------------------------------------------------
-        if p.minimalMode~=1
-            eval([all_back2 '= normalize( ' all_back2 ', 0, ' expt ', ' binning ', p.micronsPerPixel, 0);']);
-            eval([all_back2Alt '= normalize( ' all_back2Alt ', 0, ' expt ', ' binning ', p.micronsPerPixel, 0);']);
-            eval([all_backAlt '= normalize( ' all_backAlt ', 0, ' expt ', ' binning ', p.micronsPerPixel, 0);']);
-            eval([all_backNew '= normalize( ' all_backNew ', 0, ' expt ', ' binning ', p.micronsPerPixel, 0);']);
-            eval([all_backNew2 '= normalize( ' all_backNew2 ', 0, ' expt ', ' binning ', p.micronsPerPixel, 0);']);
-            eval([all_backNew3 '= normalize( ' all_backNew3 ', 0, ' expt ', ' binning ', p.micronsPerPixel, 0);']);
-        end 
-    eval([all_back '= normalize( ' all_back ', 0, ' expt ', ' binning ', p.micronsPerPixel, 0);']);
-    eval([all_back3 '= normalize( ' all_back3 ', 0, ' expt ', ' binning ', p.micronsPerPixel, 0);']);
-       
+      % 0 tot 1 um etc
+      for i = 1:7
+        pixels2 = fluor3image( nonseg_idx(find(min_dist_squared>=(i-1)*pixels_squared_per_micro & min_dist_squared<=i*pixels_squared_per_micro)) );
+        pixels3 = fluor2image( nonseg_idx(find(min_dist_squared>=(i-1)*pixels_squared_per_micro & min_dist_squared<=i*pixels_squared_per_micro)) );
+        if length(pixels2) > 0
+            eval([backNew2 '(i) = median(pixels2);']);
+            eval([backNew3 '(i) = median(pixels3);']);
+        else
+            eval([backNew2 '(i) = 0;'])
+            eval([backNew3 '(i) = 0;'])
+        end
+      end
+      count = count + 1;
+      eval([all_backNew2 '(:,count) = [' backNew2 '(1); ' backNew2 '(2); ' backNew2 '(3); ' backNew2 '(4); ' backNew2 '(5); ' backNew2 '(6); ' backNew2 '(7); ];']);
+      eval([all_backNew3 '(:,count) = [' backNew3 '(1); ' backNew3 '(2); ' backNew3 '(3); ' backNew3 '(4); ' backNew3 '(5); ' backNew3 '(6); ' backNew3 '(7); ];']);
+      %------------------------------------------------------------------------
+    end 
+    %--------------------------------------------------------------------------
     
     %--------------------------------------------------------------------------
+    % PRINT BACKGROUND DATA
+    %--------------------------------------------------------------------------
+    dispAndWrite(fid, ['-------------------------------------------------']);
+    eval(['dispAndWrite(fid, [''frame ' back ' ' back2 ' ' back2Alt ' ' back3 ' ' backAlt ' ' backNew ' 0-1 1-2 2-3 3-4 4-5 5-6 6-7 '']);']);
+    for i = 1:length(all_frames)
+      eval(['dispAndWrite(fid, [ str3(all_frames(i)) '' ''  str3(' all_back '(i)) '' '' str3(' all_back2 '(i)) '' ''  str3(' all_back2Alt '(i)) '' '' str3(' all_back3 '(i)) '' ''  str3(' all_backAlt '(i)) '' ''  str3(' all_backNew '(i)) '' ''  str3(' all_backNew2 '(1,i)) '' ''  str3(' all_backNew2 '(2,i)) '' '' str3(' all_backNew2 '(3,i)) '' '' str3(' all_backNew2 '(4,i)) '' '' str3(' all_backNew2 '(5,i)) '' ''  str3(' all_backNew2 '(6,i)) '' '' str3(' all_backNew2 '(7,i)) '' '' str3(' all_backNew3 '(1,i)) '' '' str3(' all_backNew3 '(2,i)) '' '' str3(' all_backNew3 '(3,i)) '' '' str3(' all_backNew3 '(4,i)) '' '' str3(' all_backNew3 '(5,i)) '' ''  str3(' all_backNew3 '(6,i)) '' '' str3(' all_backNew3 '(7,i)) '' '' ]);']);
+    end
+    %--------------------------------------------------------------------------
+    
+    
+    %--------------------------------------------------------------------------
+    % NORMALIZE FLUOR DATA SAME WAY AS FOR SCHNITZES
+    %--------------------------------------------------------------------------
+    eval([all_back '= normalize( ' all_back ', 0, ' expt ', ' binning ', p.micronsPerPixel, 0);']);
+    eval([all_back2 '= normalize( ' all_back2 ', 0, ' expt ', ' binning ', p.micronsPerPixel, 0);']);
+    eval([all_back2Alt '= normalize( ' all_back2Alt ', 0, ' expt ', ' binning ', p.micronsPerPixel, 0);']);
+    eval([all_back3 '= normalize( ' all_back3 ', 0, ' expt ', ' binning ', p.micronsPerPixel, 0);']);
+    eval([all_backAlt '= normalize( ' all_backAlt ', 0, ' expt ', ' binning ', p.micronsPerPixel, 0);']);
+    eval([all_backNew '= normalize( ' all_backNew ', 0, ' expt ', ' binning ', p.micronsPerPixel, 0);']);
+    eval([all_backNew2 '= normalize( ' all_backNew2 ', 0, ' expt ', ' binning ', p.micronsPerPixel, 0);']);
+    eval([all_backNew3 '= normalize( ' all_backNew3 ', 0, ' expt ', ' binning ', p.micronsPerPixel, 0);']);
+    %--------------------------------------------------------------------------
 
-    if p.minimalMode~=1
-        %--------------------------------------------------------------------------
-        % Show Plot
-        %--------------------------------------------------------------------------
-        % make figure
-        scrsz = get(0, 'ScreenSize');
-        fig111 = figure('Position', [1 scrsz(4) scrsz(3) scrsz(4)]);
-        hold on;
 
-        subplot(2,1,1);
-        eval(['plot(all_frames, ' all_back ', ''b-'', all_frames, ' all_backAlt ',''k:''); ']);
-        legend(back,backAlt,-1);
-        %ylim([10 15]); blubb
+    %--------------------------------------------------------------------------
+    % Show Plot
+    %--------------------------------------------------------------------------
+    % make figure
+    scrsz = get(0, 'ScreenSize');
+    fig111 = figure('Position', [1 scrsz(4) scrsz(3) scrsz(4)]);
+    hold on;
 
-        subplot(2,1,2);
-        eval(['plot(all_frames, ' all_back2 ', ''b-'', all_frames, ' all_back2Alt ',''k:'', all_frames, ' all_back3 ',''b--'',all_frames, ' all_backNew ',''r-.'');']); 
-        legend(back2,back2Alt,back3,backNew,-1);
-        %ylim([0 5]); blubb
-        xlabel('Frames');
+    subplot(2,1,1);
+    eval(['plot(all_frames, ' all_back ', ''b-'', all_frames, ' all_backAlt ',''k:''); ']);
+    legend(back,backAlt,-1);
+    %ylim([10 15]); blubb
 
-        fig112 = figure('Position', [1 scrsz(4) scrsz(3) scrsz(4)]);
-        hold on;
+    subplot(2,1,2);
+    eval(['plot(all_frames, ' all_back2 ', ''b-'', all_frames, ' all_back2Alt ',''k:'', all_frames, ' all_back3 ',''b--'',all_frames, ' all_backNew ',''r-.'');']); 
+    legend(back2,back2Alt,back3,backNew,-1);
+    %ylim([0 5]); blubb
+    xlabel('Frames');
 
-        subplot(2,1,1);
-        eval(['plot( all_frames, ' all_backNew2 '(1,:), ''g-'', all_frames, ' all_backNew2 '(2,:), ''r-'', all_frames, ' all_backNew2 '(3,:), ''b-'', all_frames, ' all_backNew2 '(4,:), ''g--'', all_frames, ' all_backNew2 '(5,:), ''r--'', all_frames, ' all_backNew2 '(6,:), ''b--'', all_frames, ' all_backNew2 '(7,:), ''g-.''); ']);
-        legend([backNew2 ' 0 to 1 um'],[backNew2 ' 1 to 2 um'],[backNew2 ' 2 to 3 um'],[backNew2 ' 3 to 4 um'],[backNew2 ' 4 to 5 um'],[backNew2 ' 5 to 6 um'],[backNew2 ' 6 to 7 um'],-1);
-        % ylim([0 5]); blubb
+    fig112 = figure('Position', [1 scrsz(4) scrsz(3) scrsz(4)]);
+    hold on;
 
-        subplot(2,1,2);
-       eval(['plot( all_frames, ' all_backNew3 '(1,:), ''g-'', all_frames, ' all_backNew3 '(2,:), ''r-'',  all_frames, ' all_backNew3 '(3,:), ''b-'', all_frames, ' all_backNew3 '(4,:), ''g--'', all_frames, ' all_backNew3 '(5,:), ''r--'', all_frames, ' all_backNew3 '(6,:), ''b--'',  all_frames, ' all_backNew3 '(7,:), ''g-.''); ']);
-        legend([backNew3 ' 0 to 1 um'],[backNew3 ' 1 to 2 um'],[backNew3 ' 2 to 3 um'],[backNew3 ' 3 to 4 um'],[backNew3 ' 4 to 5 um'],[backNew3 ' 5 to 6 um'],[backNew3 ' 6 to 7 um'],-1);
-        % ylim([0 5]); blubb
-        xlabel('Frames');
+    subplot(2,1,1);
+    eval(['plot( all_frames, ' all_backNew2 '(1,:), ''g-'', all_frames, ' all_backNew2 '(2,:), ''r-'', all_frames, ' all_backNew2 '(3,:), ''b-'', all_frames, ' all_backNew2 '(4,:), ''g--'', all_frames, ' all_backNew2 '(5,:), ''r--'', all_frames, ' all_backNew2 '(6,:), ''b--'', all_frames, ' all_backNew2 '(7,:), ''g-.''); ']);
+    legend([backNew2 ' 0 to 1 um'],[backNew2 ' 1 to 2 um'],[backNew2 ' 2 to 3 um'],[backNew2 ' 3 to 4 um'],[backNew2 ' 4 to 5 um'],[backNew2 ' 5 to 6 um'],[backNew2 ' 6 to 7 um'],-1);
+    % ylim([0 5]); blubb
 
-        % Ask to save the figure
-        if p.onScreen
-          saveFigInput = questdlg('Save Figures?','Save Figures?','Yes','Yes and Close','No','Yes');
-          pause(0.2);
-        else
-          saveFigInput='Yes and Close';
-        end
+    subplot(2,1,2);
+   eval(['plot( all_frames, ' all_backNew3 '(1,:), ''g-'', all_frames, ' all_backNew3 '(2,:), ''r-'',  all_frames, ' all_backNew3 '(3,:), ''b-'', all_frames, ' all_backNew3 '(4,:), ''g--'', all_frames, ' all_backNew3 '(5,:), ''r--'', all_frames, ' all_backNew3 '(6,:), ''b--'',  all_frames, ' all_backNew3 '(7,:), ''g-.''); ']);
+    legend([backNew3 ' 0 to 1 um'],[backNew3 ' 1 to 2 um'],[backNew3 ' 2 to 3 um'],[backNew3 ' 3 to 4 um'],[backNew3 ' 4 to 5 um'],[backNew3 ' 5 to 6 um'],[backNew3 ' 6 to 7 um'],-1);
+    % ylim([0 5]); blubb
+    xlabel('Frames');
 
-        if (upper(saveFigInput(1))=='Y')
-          saveas(fig111,[p.DJK_saveDir p.movieName '-fluor_' p.fluorcolor '_Background1.fig']);
-          saveSameSize(fig111,'file',[p.DJK_saveDir p.movieName '-fluor_' p.fluorcolor '_Background1.png'], 'format', 'png');
-          saveas(fig112,[p.DJK_saveDir p.movieName '-fluor_' p.fluorcolor '_Background2.fig']);
-          saveSameSize(fig112,'file',[p.DJK_saveDir p.movieName '-fluor_' p.fluorcolor '_Background2.png'], 'format', 'png');
-          if (strcmp(saveFigInput,'Yes and Close'))
-            close(fig111); close(fig112);
-            pause(0.2);
-          end
-          dispAndWrite(fid, ['-------------------------------------------------']);
-          dispAndWrite(fid, [' * Saved plot background fluor (' p.fluorcolor ') over time in ' p.movieName '-fluor_' p.fluorcolor '_Background1.png']);
-          dispAndWrite(fid, [' * Saved plot background fluor (' p.fluorcolor ') over time in ' p.movieName '-fluor_' p.fluorcolor '_Background2.png']);
-        end
-        %--------------------------------------------------------------------------
-    end % end p.minimalMode~=1
+    % Ask to save the figure
+    if p.onScreen
+      saveFigInput = questdlg('Save Figures?','Save Figures?','Yes','Yes and Close','No','Yes');
+      pause(0.2);
+    else
+      saveFigInput='Yes and Close';
+    end
+
+    if (upper(saveFigInput(1))=='Y')
+      saveas(fig111,[p.DJK_saveDir p.movieName '-fluor_' p.fluorcolor '_Background1.fig']);
+      saveSameSize(fig111,'file',[p.DJK_saveDir p.movieName '-fluor_' p.fluorcolor '_Background1.png'], 'format', 'png');
+      saveas(fig112,[p.DJK_saveDir p.movieName '-fluor_' p.fluorcolor '_Background2.fig']);
+      saveSameSize(fig112,'file',[p.DJK_saveDir p.movieName '-fluor_' p.fluorcolor '_Background2.png'], 'format', 'png');
+      if (strcmp(saveFigInput,'Yes and Close'))
+        close(fig111); close(fig112);
+        pause(0.2);
+      end
+      dispAndWrite(fid, ['-------------------------------------------------']);
+      dispAndWrite(fid, [' * Saved plot background fluor (' p.fluorcolor ') over time in ' p.movieName '-fluor_' p.fluorcolor '_Background1.png']);
+      dispAndWrite(fid, [' * Saved plot background fluor (' p.fluorcolor ') over time in ' p.movieName '-fluor_' p.fluorcolor '_Background2.png']);
+    end
+    %--------------------------------------------------------------------------
 
 
     %--------------------------------------------------------------------------

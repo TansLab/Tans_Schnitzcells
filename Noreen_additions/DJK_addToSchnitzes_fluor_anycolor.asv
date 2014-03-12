@@ -194,7 +194,7 @@ else
     back=genvarname([p.fluorcolor 'back']);       % e.g. yback
     gain=genvarname(['gain' p.fluorcolor]);       % e.g. gainy
     expt=genvarname(['expt' p.fluorcolor]);       % e.g. expty
-    reg2=genvarname([p.fluorcolor 'reg2']);           % e.g. yreg2   %HERE WAS ACCIDENTLY '5' IN ALL VARIABLES!!!! (NW 2012-04-26)
+    reg2=genvarname([p.fluorcolor 'reg2']);           % e.g. yreg2   %HERE WAS ACCIDENTLY '5' IN ALL VARIABLES!!!!
     reg3=genvarname([p.fluorcolor 'reg3']);           % e.g. yreg3    %HERE WAS ACCIDENTLY '5' IN ALL VARIABLES!!!!
     reg4=genvarname([p.fluorcolor 'reg4']);           % e.g. yreg4    %HERE WAS ACCIDENTLY '5' IN ALL VARIABLES!!!!
     reg5=genvarname([p.fluorcolor 'reg5']);           % e.g. yreg5 

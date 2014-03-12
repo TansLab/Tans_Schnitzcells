@@ -84,6 +84,7 @@ if numExtraArgs > 0
 end
 %--------------------------------------------------------------------------
 
+
 %--------------------------------------------------------------------------
 % Override any schnitzcells parameters/defaults given optional fields/values
 %--------------------------------------------------------------------------
@@ -92,6 +93,20 @@ if ~existfield(p, 'dataFields')
   p.dataFields = {'Y_time' 'Y6_mean' 'muP15_fitNew'};
 end
 %--------------------------------------------------------------------------
+
+
+%--------------------------------------------------------------------------
+% Check if dataFields is empty. Then no noise has to be added
+%--------------------------------------------------------------------------
+% If not provided, use standard dataFields
+if isempty(p.dataFields)
+    disp(['No fields chosen to which noise should be added. Exiting...']);
+    return
+end
+%--------------------------------------------------------------------------
+
+
+
 
 %--------------------------------------------------------------------------
 % Check Schnitzcells
@@ -117,8 +132,8 @@ end
 %--------------------------------------------------------------------------
 if ~existfield(p, 'noisyBranchData')
     schnitzcells;
-    %myBranchData = DJK_getBranches(p,schnitzcells,'dataFields',p.dataFields,'sameLength',0); % don't restrict fitTime!
-    myBranchData = DJK_getBranches(p,schnitzcells,'dataFields',p.dataFields); % don't restrict fitTime!
+    myBranchData = DJK_getBranches(p,schnitzcells,'dataFields',p.dataFields,'sameLength',0); % don't restrict fitTime!
+    %myBranchData = DJK_getBranches(p,schnitzcells,'dataFields',p.dataFields); % don't restrict fitTime!
     myNoisyBranchData = DJK_addToBranches_noise(p, myBranchData,'dataFields',p.dataFields);
 else
     myNoisyBranchData = p.noisyBranchData;

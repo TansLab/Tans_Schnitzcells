@@ -46,6 +46,10 @@
 %                 correction is needed (error in optics? etc) . Take around 
 %                 XXXX for CFP.
 %                 Default: =1
+% 'minimalMode'       =1: only calculates values, that are actually used
+%                     later (Y5xxx,Y6_mean,(+ElowitzStyle) etc).
+%                     =0: calculates everything (default: =0)  (NW 2012/04)
+%
 
 
 function DJK_correctFluorImage_anycolor(p, flatfield, shading, replace, varargin)
@@ -172,6 +176,10 @@ end
 % (probably all cases except for CFP)
 if ~existfield(p,'rescaleCorrection')
     p.rescaleCorrection=1;
+end
+
+if ~existfield(p,'minimalMode') % (NW 2012/04)
+  p.minimalMode = 0;
 end
 %--------------------------------------------------------------------------
 
@@ -341,16 +349,18 @@ else
       testreg=eval(['isempty(' reg ')']);
       if (~p.TIFFonly & testreg~=1)
           
-        % Background of reg2 zoals Elowitz doet: median of complete crop fluor image except box around cells
-        temp = fluor2image;
-        temp(rect(1):rect(3), rect(2):rect(4)) = 0;
-        fluorimageVect = temp(temp>0);
-        fluorback2 = uint16( median(fluorimageVect) );
+        if p.minimalMode~=1
+            % Background of reg2 zoals Elowitz doet: median of complete crop fluor image except box around cells
+            temp = fluor2image;
+            temp(rect(1):rect(3), rect(2):rect(4)) = 0;
+            fluorimageVect = temp(temp>0);
+            fluorback2 = uint16( median(fluorimageVect) );
 
-        % Alternative Background: median of fluorcolor within subset (close to cells), but with cells disregarded
-        fluorreg2 = fluor2image(rect(1):rect(3), rect(2):rect(4) );
-        fluorreg2Vect = fluorreg2(Lc==0);
-        fluorback2Alt = uint16( median(fluorreg2Vect) ); 
+            % Alternative Background: median of fluorcolor within subset (close to cells), but with cells disregarded
+            fluorreg2 = fluor2image(rect(1):rect(3), rect(2):rect(4) );
+            fluorreg2Vect = fluorreg2(Lc==0);
+            fluorback2Alt = uint16( median(fluorreg2Vect) ); 
+        end
 
         % Background of fluorreg3 zoals Elowitz doet: median of complete crop fluor image except box around cells
         temp = fluor2image_shifted;
@@ -371,14 +381,16 @@ else
       % beginning) NW 11/12/08
       %----------------------------------------------------------------------
       shift=genvarname([p.fluorcolor 'shift']);
-      reg2=genvarname([p.fluorcolor 'reg2']); eval([reg2 '=fluorreg2;']);
-      reg3=genvarname([p.fluorcolor 'reg3']); eval([reg3 '=fluorreg3;']);
-      reg4=genvarname([p.fluorcolor 'reg4']); eval([reg4 '=fluorreg4;']);
       reg5=genvarname([p.fluorcolor 'reg5']); eval([reg5 '=fluorreg5;']);
-      back2=genvarname([p.fluorcolor 'back2']); eval([back2 '=fluorback2;']);
-      back3=genvarname([p.fluorcolor 'back3']); eval([back3 '=fluorback3;']);
-      backAlt=genvarname([p.fluorcolor 'backAlt']); eval([backAlt '=fluorbackAlt;']);
-      back2Alt=genvarname([p.fluorcolor 'back2Alt']); eval([back2Alt '=fluorback2Alt;']);
+      back3=genvarname([p.fluorcolor 'back3']); eval([back3 '=fluorback3;']);    
+      if p.minimalMode~=1
+          reg2=genvarname([p.fluorcolor 'reg2']); eval([reg2 '=fluorreg2;']);
+          reg3=genvarname([p.fluorcolor 'reg3']); eval([reg3 '=fluorreg3;']);
+          reg4=genvarname([p.fluorcolor 'reg4']); eval([reg4 '=fluorreg4;']);
+          back2=genvarname([p.fluorcolor 'back2']); eval([back2 '=fluorback2;']);
+         backAlt=genvarname([p.fluorcolor 'backAlt']); eval([backAlt '=fluorbackAlt;']);
+          back2Alt=genvarname([p.fluorcolor 'back2Alt']); eval([back2Alt '=fluorback2Alt;']);
+      end
       f2image_binned=genvarname([p.fluorcolor '2image_binned']); eval([f2image_binned '=fluor2image_binned;']);
       f2image_shifted=genvarname([p.fluorcolor '2image_shifted']); eval([f2image_shifted '=fluor2image_shifted;']);
       f2image_deconvolved_binned=genvarname([p.fluorcolor '2image_deconvolved_binned']);% eval([f2image_deconvolved_binned '=fluor2image_deconvolved_binned;']);
@@ -391,7 +403,11 @@ else
       testreg=eval(['isempty(' reg ')']);
       if (~p.TIFFonly & testreg~=1)
         eval([shift '= p.fluorShift;']);
-        savelist = ['''rectCrop'',''rect'',''phaseFullSize'',''phaseCropSize'',''' gain ''',''' binning ''',''' expt ''',''' shift ''',''' reg ''',''' reg2 ''',''' reg3 ''',''' reg4 ''',''' reg5 ''',''' back ''',''' back2 ''',''' back3 ''',''' backAlt ''',''' back2Alt ''''];
+        if p.minimalMode~=1
+            savelist = ['''rectCrop'',''rect'',''phaseFullSize'',''phaseCropSize'',''' gain ''',''' binning ''',''' expt ''',''' shift ''',''' reg ''',''' reg2 ''',''' reg3 ''',''' reg4 ''',''' reg5 ''',''' back ''',''' back2 ''',''' back3 ''',''' backAlt ''',''' back2Alt ''''];
+        else
+             savelist = ['''rectCrop'',''rect'',''phaseFullSize'',''phaseCropSize'',''' gain ''',''' binning ''',''' expt ''',''' shift ''',''' reg ''',''' reg5 ''',''' back ''',''' back3  ''''];
+        end
         filename = [p.tracksDir, p.movieName, 'Fluor_', p.fluorcolor '_', str3(frameNum)]; 
         eval(['save(''' filename ''',' savelist ');']);
         disp(['       -> saved ' [p.movieName, 'Fluor_', p.fluorcolor '_', str3(frameNum)] ' in ' p.tracksDir]);

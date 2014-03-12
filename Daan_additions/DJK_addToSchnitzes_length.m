@@ -97,7 +97,8 @@ disp(['Load from ''' p.schnitzName ''' completed...']);
 % Override any schnitzcells parameters/defaults given optional fields/values
 %--------------------------------------------------------------------------
 if ~existfield(p,'schnitzNum')
-  p.schnitzNum = [1:100:length(schnitzcells)]; %;
+ % p.schnitzNum = [1:100:length(schnitzcells)]; %; %blubb
+ p.schnitzNum = [1];
 end
 %--------------------------------------------------------------------------
 

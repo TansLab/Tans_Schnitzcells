@@ -58,12 +58,11 @@ function [piecepoly,binPlotXvalue, averageBinData] = NW_plotCellCycleDependence(
 %                   However, the best is to use NW_testBinningCellCycle and
 %                   see for yourself.
 %
-%
 % OPTIONAL ARGUMENTS:
 % 'onScreen' = 0      automatically save and close image (default)
 %              1      will only show image, and not ask to save
 % 'DJK_saveDir'       Directory where images will be saved. Default:
-%                     "p.analysisDir\cellCycle\'"
+%                     "p.analysisDir\cellcycle\'"
 % 'selectionName'
 % 'ylim'
 % 'mode'              'absolute': absolut values of fieldY are plotted
@@ -507,27 +506,27 @@ if (strcmp(whichTimeReference,'real-time-mode')==1)
         binThresholds=zeros(numberBins,1);
         %binPlotXvalue=[0:1/numberBins:(1-1/numberBins)]; % get good centered xvalues for plot in center of each bin
         binPlotXvalue=zeros(numberBins,1);
- 
-%***************************
-% equally distanced bins can be inserted potentially. START
+        
+% equally distanced bins can be inserted potentially.
 % default:********************
        binThresholds(2)=p.borderBinSize; % first and last bin smaller
        incrbin1=binThresholds(2);
        binPlotXvalue(1)=incrbin1/2;
        incr=(1-2*binThresholds(2))/(numberBins-2);
-       binThresholds(3:numberBins)=[incrbin1+incr:incr:1.001-incrbin1];
-       binPlotXvalue(2:numberBins-1)=[incrbin1+0.5*incr:incr:0.999-incrbin1];
+       binThresholds(3:numberBins)=[incrbin1+incr:incr:0.999];
+       binPlotXvalue(2:numberBins-1)=[incrbin1+0.5*incr:incr:0.999];
        binPlotXvalue(length(binPlotXvalue))=1-0.5*incrbin1;
  %********************
  % use the following for lines if you want to have equal sizes of all (incl
  % border) bins. otherwise comment out!!!
- %for i=1:numberBins  %equal bins
- %    binThresholds(i)=(i-1)/numberBins;
- %    binPlotXvalue(i)=binThresholds(i)+0.5/numberBins;
- %end
+ for i=1:numberBins  %equal bins
+     binThresholds(i)=(i-1)/numberBins;
+     binPlotXvalue(i)=binThresholds(i)+0.5/numberBins;
+ end
  
- % END (NW 2012-04-05)
-
+ 
+ % blubb ende (NW 2012-04-05)
+%***************************
 
         %binThresholds' %  some output
         %binPlotXvalue'
@@ -606,7 +605,7 @@ end
 
 
 %--------------------------------------------------------------------------
-% Do interpolation of bins (stddevs ignored) (and plot) 
+% Do interpolation of bins (stddevs ignored) (and plot)
 %--------------------------------------------------------------------------
 piecepoly=interp1(binPlotXvalue,averageBinData,p.interpolMethod,'pp');
 clear xx yy;

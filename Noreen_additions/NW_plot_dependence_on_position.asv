@@ -201,9 +201,7 @@ for framenr=p.frameRange
         centreX_mass=round(0.5*size(segImageFull,2));  % centre of mass mean. cenx_cent/ceny_cent are coordinates of schnitzes when centre of mass of colony is right in centre of image
         centreY_mass=round(0.5*size(segImageFull,1));
         
-        %dist_arithm=dataset(:,3)-centreX_arithm; % blubb!!! depedence on
-        %                                          x-position (y ignored)
-        dist_arithm=sqrt((dataset(:,3)-centreX_arithm).^2+(dataset(:,4)-centreY_arithm).^2);
+        dist_arithm=dataset(:,3)-centreX_arithm;%sqrt((dataset(:,3)-centreX_arithm).^2+(dataset(:,4)-centreY_arithm).^2);
         dist_mass=sqrt((dataset(:,3)-centreX_mass).^2+(dataset(:,4)-centreY_mass).^2);
         mu=dataset(:,5); % redundant. better readability
         

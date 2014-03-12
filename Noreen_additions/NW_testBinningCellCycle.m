@@ -6,7 +6,7 @@ function []=NW_testBinningCellCycle(p,schnitzcells,fieldY,numberBinArray,varargi
 %
 % OUTPUT
 % plots
-
+%
 %
 % REQUIRED ARGUMENTS:
 % 'p'
@@ -21,7 +21,7 @@ function []=NW_testBinningCellCycle(p,schnitzcells,fieldY,numberBinArray,varargi
 %                     NOTE: this refers to the mean and interpolation
 %                     images. Single traces are always saved and closed
 % 'DJK_saveDir'       Directory where images will be saved. Default:
-%                     "p.analysisDir 'schnitzcells\cellcycle\'"
+%                     "p.analysisDir '\Cellcycle\'"
 %                     Also Forwarded to NW_plotCellCycle
 % 'selectionName'
 % 'ylim'
@@ -82,7 +82,7 @@ end
 
 % Just in case it has not been set yet
 if ~existfield(p,'DJK_saveDir')
-  p.DJK_saveDir = [p.analysisDir 'schnitzcells' filesep 'cellcycle' filesep];
+  p.DJK_saveDir = [p.analysisDir 'cellCycle' filesep];
 end
 if length(p.selectionName) > 0
   p.DJK_saveDir = [p.DJK_saveDir p.selectionName filesep];

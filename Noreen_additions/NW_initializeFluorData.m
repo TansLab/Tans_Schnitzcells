@@ -1,5 +1,9 @@
 function p = NW_initializeFluorData(p, varargin)
 %
+% DOES NOT ACCOUNT FOR EXTRA RESCALE CORRECTION (WRONG SCALING OF CFP
+% IMAGES). Influences data in creg(!), cback(?). Data will be overwritten
+% anyways in DJK_correctFluorImage_anycolor
+%
 % TODO: INCLUDE SAVEDIR PROPERLY OR LEAVE OUT! (now: automatically in
 % segmantation folder written
 %
@@ -69,7 +73,7 @@ end
 %if isfield(p,'NW_saveDir') & (p.NW_saveDir(end) ~= filesep)
 %    p.NW_saveDir = [p.saveDir filesep];
 %end
-%% if directory doesn't exist, create it
+% if directory doesn't exist, create it
 %if exist(p.NW_saveDir)~=7
 %    [status,msg,id] = mkdir([p.segmentationDir p.NW_saveDir]);
 %    if status == 0

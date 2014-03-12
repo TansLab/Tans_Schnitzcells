@@ -116,7 +116,6 @@ disp('              press ''f'' for "fine-tuning" (to avoid renumbering the imag
 disp('              press ''g'' to goto indexnum = ... .')
 disp('              press ''R'' to renumber all cells.')
 disp('              press ''i'' to fill cells.')
-disp('              press ''h'' to seed a cell.')
 
 disp(' ')
 

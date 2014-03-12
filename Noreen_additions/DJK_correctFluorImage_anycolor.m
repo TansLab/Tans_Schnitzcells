@@ -1,3 +1,9 @@
+% CHANGED BY NOREEN
+%
+% loads fluorimage which is not yet corrected with extra rescale correction
+% (for CFP) and neither exists correciton in the .mat data (reg, back,..).
+% Does not matter because .mat data will be overwritten!
+%
 % DJK_correctFluorImage takes original fluor images, corrects them and saves results as:
 %  
 % example for 'y' fluorescence images:
@@ -33,6 +39,14 @@
 %            = 1  uses no seg files, and only creates TIFF files. If seg
 %                 files do not exist manualRange needs to be given
 % 'deconv_func'
+% 'rescaleCorrection'  Rescales fluorescence image by an additional factor
+%                 (apart from the factor due to different binning) and 
+%                 recenters image (according to central image coordinates). In
+%                 theory this should not be necessary, but for CFP images
+%                 correction is needed (error in optics? etc) . Take around 
+%                 XXXX for CFP.
+%                 Default: =1
+
 
 function DJK_correctFluorImage_anycolor(p, flatfield, shading, replace, varargin)
 
@@ -153,6 +167,12 @@ if ~existfield(p,'cropRightBottom')
   cropRightBottom = [1392,1040];
   disp(['Warning: p.cropRightBottom was not set. Now [1392,1040]']);
 end
+
+% If extra rescale Correction for Fluor Image does not exist, set to =1
+% (probably all cases except for CFP)
+if ~existfield(p,'rescaleCorrection')
+    p.rescaleCorrection=1;
+end
 %--------------------------------------------------------------------------
 
 
@@ -240,8 +260,19 @@ else
         end
       end
 
-      % still need to resize yimage
+      % still need to resize fluorimage
       eval(['fluorimage = imresize_old(fluorimage,' binning ',''nearest'');']);
+       
+      %------------------------------------------------------------------------
+      % perform manual rescale Correction (maybe unnecessary in this
+      % function?) NW 2012-02-27
+      %------------------------------------------------------------------------
+      if (length(p.rescaleCorrection==1) & p.rescaleCorrection~=1) | length(p.rescaleCorrection)>1
+          centerfluor=NW_rescalecenterimage_affine(fluorimage,p.rescaleCorrection);
+          fluorimage=centerfluor;
+          clear centerfluor;              
+      end
+      %------------------------------------------------------------------------          
       
       %------------------------------------------------------------------------
       % GET OLD [COLOR]REG & [COLOR]BACK DATA AGAIN

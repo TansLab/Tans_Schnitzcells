@@ -1,3 +1,9 @@
+% CHANGED BY NOREEN
+%
+% loads the extra rescaled corrected fluorescence data aus .mat file resp.
+% the not corrected data from original fluorimage (NW 2012-02-27) (image directory) 
+% resp corrected fluorimages from the directories c2, c3, c4 etc
+%
 % DJK_analyzeFluorBackground_anycolor
 %
 % OUTPUT
@@ -19,6 +25,13 @@
 %                 error when loading seg file
 %
 % 'onScreen' = 1  will not automatically save and close images, but ask
+% 'rescaleCorrection'  Rescales fluorescence image by an additional factor
+%                 (apart from the factor due to different binning) and 
+%                 recenters image (according to central image coordinates). In
+%                 theory this should not be necessary, but for CFP images
+%                 correction is needed (error in optics? etc) . Take around 
+%                 XXXX for CFP.
+%                 Default: =1
 %
 
 function DJK_analyzeFluorBackground_anycolor(p,varargin)
@@ -105,6 +118,13 @@ end
 if ~existfield(p,'onScreen')
   p.onScreen = 0;
 end
+
+% If extra rescale Correction for Fluor Image does not exist, set to =1
+% (probably all cases except for CFP)
+if ~existfield(p,'rescaleCorrection')
+    p.rescaleCorrection=1;
+end
+
 %--------------------------------------------------------------------------
 
 
@@ -175,7 +195,7 @@ else
       %------------------------------------------------------------------------
       % LOAD DATA
       %------------------------------------------------------------------------
-      % load complete fluor image
+      % load complete fluor image (not extra rescale corrected)
       fluorname= [p.imageDir,p.movieName,'-' p.fluorcolor '-',str3(frameNum),'.tif'];
       if exist(fluorname)==2
         fluorimage = imread(fluorname);
@@ -184,7 +204,7 @@ else
         continue;
       end
 
-      % load complete fluor image
+      % load complete fluor image (already extra rescale corrected)
       fluor2name= [p.analysisDir, 'fluor_', p.fluorcolor filesep p.fluorcolor '2' filesep, p.movieName ,'-' p.fluorcolor '2-',str3(frameNum),'.tif'];
       if exist(fluor2name)==2
         fluor2image = imread(fluor2name);
@@ -193,7 +213,7 @@ else
         continue;
       end
 
-      if ~p.TIFFonly
+      if ~p.TIFFonly %(already extra rescale corrected)
             fluor3name= [p.analysisDir, 'fluor_', p.fluorcolor filesep p.fluorcolor '3' filesep, p.movieName ,'-' p.fluorcolor '3-',str3(frameNum),'.tif'];
             if exist(fluor3name)==2
                fluor3image = imread(fluor3name);
@@ -233,6 +253,17 @@ else
 
       % still need to resize [color]image
       eval(['fluorimage = imresize_old(fluorimage,' binning ',''nearest'');']);
+      %------------------------------------------------------------------------
+      % perform manual rescale Correction of fluorimage(NW 2012-02-27)
+      %------------------------------------------------------------------------
+      if (length(p.rescaleCorrection==1) & p.rescaleCorrection~=1) | length(p.rescaleCorrection)>1
+          centerfluor=NW_rescalecenterimage_affine(fluorimage,p.rescaleCorrection);
+          fluorimage=centerfluor;
+          clear centerfluor;              
+      end
+      %------------------------------------------------------------------------    
+      % fluor2image was corrected in DJK_correctFluorImage_anycolor for
+      % extra rescaling
       eval(['fluor2image = imresize_old(fluor2image,' binning ',''nearest'');']);
       %------------------------------------------------------------------------
       

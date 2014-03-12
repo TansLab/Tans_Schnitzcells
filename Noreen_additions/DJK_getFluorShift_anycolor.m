@@ -1,3 +1,5 @@
+% CHANGED BY NOREEN
+%
 % DJK_getFluorShift takes original fluor images and segmentation files, and
 % determines shift between fluor and phase image. Does this by trying
 % different shifts and looking for maximum fluorescence within
@@ -21,6 +23,13 @@
 %                 default: 7
 % 'onScreen' = 0  automatically save and close images (default)
 %              1  will ask to save and close images
+% 'rescaleCorrection'  Rescales fluorescence image by an additional factor
+%                 (apart from the factor due to different binning) and 
+%                 recenters image (according to central image coordinates). In
+%                 theory this should not be necessary, but for CFP images
+%                 correction is needed (error in optics? etc) . Take around 
+%                 XXXX for CFP.
+%                 Default: =1
 
 function optimalShift = DJK_getFluorShift_anycolor(p,varargin)
 
@@ -102,6 +111,13 @@ end
 if ~existfield(p,'onScreen')
   p.onScreen = 0;
 end
+
+% If extra rescale Correction for Fluor Image does not exist, set to =1
+% (probably all cases except for CFP)
+if ~existfield(p,'rescaleCorrection')
+    p.rescaleCorrection=1;
+end
+
 %--------------------------------------------------------------------------
 
 
@@ -137,6 +153,8 @@ else
     dispAndWrite(fid, ['-------------------------------------------------']);
     dispAndWrite(fid, ['Getting fluorShift from fluor images and seg files.']);
     dispAndWrite(fid, ['maxShift is ' num2str(p.maxShift)]);
+    dispAndWrite(fid, ['extra rescale Correction is ' num2str(p.rescaleCorrection)]);
+    dispAndWrite(fid, ['Only the (used) bestShifts directly from Fluorimages use the extra rescale correction!']);
     dispAndWrite(fid, ['-------------------------------------------------']);
     dispAndWrite(fid, ['Analyzing ' num2str(length(p.manualRange)) ' frames from ' num2str(p.manualRange(1)) ' to ' num2str(p.manualRange(end))]);
     %--------------------------------------------------------------------------
@@ -174,7 +192,19 @@ else
 
           % still need to resize yimage
           eval(['fluorimage = imresize_old(fluorimage,' binning ',''nearest'');']);
-
+          
+         
+          %------------------------------------------------------------------------
+          % perform manual rescale Correction (NW_2012-02-27)
+          %------------------------------------------------------------------------
+          if (length(p.rescaleCorrection==1) & p.rescaleCorrection~=1) | length(p.rescaleCorrection)>1
+              centerfluor=NW_rescalecenterimage_affine(fluorimage,p.rescaleCorrection);
+              fluorimage=centerfluor;
+              clear centerfluor;              
+          end
+          %------------------------------------------------------------------------          
+ 
+                    
           %------------------------------------------------------------------------
           % Check Lc & [y/c/...]reg from segmentation file
           %------------------------------------------------------------------------
@@ -195,7 +225,8 @@ else
           %------------------------------------------------------------------------
 
           %------------------------------------------------------------------------
-          % Check Lc & loaded fluorimage
+          % Check Lc & loaded fluorimage (these data for best shift will be
+          % output of fct)
           %------------------------------------------------------------------------
           % get subimages
           dblfluor=double(fluorimage);

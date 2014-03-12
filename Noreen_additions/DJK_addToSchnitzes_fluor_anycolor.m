@@ -1,3 +1,4 @@
+%
 % DJK_addToSchnitzes_fluor_red loads schnitzcells, calculates the fluor for
 % schnitzes and saves them to schnitzcells again.
 %
@@ -31,7 +32,7 @@
 % 'DJK_saveDir2'       Directory where images should be saved. Defaults to "p.analysisDir \ fluor2 \ R6fromBlock \"
 %
 
-function [p,schnitzcells] = DJK_addToSchnitzes_fluor_red(p,varargin) 
+function [p,schnitzcells] = DJK_addToSchnitzes_fluor_anycolor(p,varargin) 
 
 DEBUG = 1;
 
@@ -39,7 +40,7 @@ DEBUG = 1;
 % Input error checking and parsing
 %--------------------------------------------------------------------------
 % Settings
-numRequiredArgs = 1; functionName = 'DJK_addToSchnitzes_fluor_red';
+numRequiredArgs = 1; functionName = 'DJK_addToSchnitzes_fluor_anycolor';
 
 if (nargin < numRequiredArgs) | (mod(nargin,2) ~= (mod(numRequiredArgs,2)) | ~isSchnitzParamStruct(p))
   errorMessage = sprintf('%s\n%s',['Error width input arguments of ' functionName],['Try "help ' functionName '".']);
@@ -119,6 +120,7 @@ if exist(p.DJK_saveDir2)~=7
     return;
   end
 end
+
 %--------------------------------------------------------------------------
 
 
@@ -497,6 +499,8 @@ else
         eval(['fluor = round( DJK_scaleRange(' reg5Norm ', p.colorNormalize, [0 number_of_colors-1]) );'])
         %--------------------------------------------------------------------------
 
+        
+        
         %--------------------------------------------------------------------------
         % MAKE PERIMETER OF SEG IMAGE
         %--------------------------------------------------------------------------

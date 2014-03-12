@@ -77,15 +77,15 @@ datafield_count = zeros(length(p.dataFields), length(unique_timeField));
 % loop over branches
 for branchNr = 1:length(branches)
   for age = 1:length(branches(branchNr).schnitzNrs)
-    idx  = find(unique_timeField  == branches(branchNr).(timeField)(age));
+    idx  = find(unique_timeField  == branches(branchNr).(timeField)(age)); %single index (typically runs from 1 to length of branch= # time points with increment=1, that is age=idx) (comment NW)
     for i = 1:length(p.dataFields)
-      datafield_sum(i,idx) = datafield_sum(i,idx) + branches(branchNr).(char(p.dataFields(i)))(age) / branches(branchNr).count(age); % DJK 091125 last / used to be *, but I now think this is wrong
-      datafield_count(i,idx) = datafield_count(i,idx) + 1/branches(branchNr).count(age); % DJK 091125 last + 1/ used to be + , but I now think this is wrong
+      datafield_sum(i,idx) = datafield_sum(i,idx) + branches(branchNr).(char(p.dataFields(i)))(age) / branches(branchNr).count(age); % DJK 091125 last / used to be *, but I now think this is wrong. [Yes (NW)]
+      datafield_count(i,idx) = datafield_count(i,idx) + 1/branches(branchNr).count(age); % DJK 091125 last + 1/ used to be + , but I now think this is wrong [Yes (NW).  I think datafield_count(idx) states total number of schnitzes/cells at time idx)
     end
   end
 end
 
-datafield_mean = datafield_sum ./ datafield_count;
+datafield_mean = datafield_sum ./ datafield_count; %[comment NW: I think this is the 'normal' mean: Sum(YFP-intensities of all cells)/(# cells in this frames). I'm pretty sure that the weighing with 'count' is cancelled out
 
 % loop over noiseFields in dataFields
 for i = 2:length(p.dataFields)

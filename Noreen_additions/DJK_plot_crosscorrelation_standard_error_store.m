@@ -40,7 +40,12 @@ function DJK_plot_crosscorrelation_standard_error_store(p,branch_groups, fieldX,
 bias = 0;      % 0 will adjust for less data at larger delay times
 weighing = 2;  % 2 performs 3/4 weighing
 extraNorm = 0; % 0 performs no extra normalization  %blubb
+
+colorMode=1;   %=1 single branch groups are plotted in different colors. otherwise: plotted in gray
+               % works only for up to 12 branches (by now)
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+
 
 
 %--------------------------------------------------------------------------
@@ -118,16 +123,31 @@ for i = 1:length(branch_groups)
 end
 
 figure; 
-for i = 1:length(branch_groups)
-  plot(branch_groups(i).composite_corr.X/60, branch_groups(i).composite_corr.Y, '-', 'LineWidth', 2, 'Color', [0.5 0.5 0.5]); hold on;
+% if single groups are to be plotted in color, get the colors
+if colorMode==1
+    myColor=[1 0 0 ; 0 1 0 ; 0 0 1; 1 0.6 0.2;  0 1 1; 0 0.5 0.5; 0 0.6 0; 0.6 0 0.4; 0.8 0.5 0; 0.7 0 0; 0.4 0.2 0.6; 0.6 0.2 0; 1 0 0 ; 0 1 0 ; 0 0 1; 1 0.6 0.2;  0 1 1; 0 0.5 0.5; 0 0.6 0; 0.6 0 0.4; 0.8 0.5 0; 0.7 0 0; 0.4 0.2 0.6; 0.6 0.2 0];
 end
-plot(branch_groups(i).composite_corr.X/60, mean(composite_corr), '-', 'LineWidth', 2, 'Color', [0 0 0]); hold on;
+for i = 1:length(branch_groups)
+    if colorMode==1
+          plot(branch_groups(i).composite_corr.X/60, branch_groups(i).composite_corr.Y, '-', 'LineWidth', 2, 'Color', myColor(i,:)); hold on;
+    else    
+          plot(branch_groups(i).composite_corr.X/60, branch_groups(i).composite_corr.Y, '-', 'LineWidth', 2, 'Color', [0.5 0.5 0.5]); hold on;
+    end
+end
+plot(branch_groups(i).composite_corr.X/60, mean(composite_corr), '-', 'LineWidth', 3, 'Color', [0 0 0]); hold on;
 xlabel('time [h]');
 ylabel('crosscorr');
 title(['single branch_groups (' fieldX ', ' fieldY ')'],'interpreter','none');
 hold on
 x_lim=get(gca,'xlim');y_lim=get(gca,'ylim');
 plot(x_lim,[0 0],'-k'); plot([0 0 ],y_lim,'-k');  % plot axis
+if colorMode==1 % legend with branch_group indices
+    mylegend='''1'' ';
+    for i=2:length(branch_groups)
+        mylegend=[mylegend, ', ''', num2str(i),''''];
+    end
+    eval(['legend(' mylegend ')']);
+end   
 saveas(gcf,[p.DJK_saveDir figureName1 '.png'], 'png');
 
 figure;

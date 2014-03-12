@@ -71,7 +71,7 @@ end
 % All phase images
 DphaseAll = dir([p.imageDir, [p.movieName,'-p-*.tif'] ]);
 % All phase -p-2- images
-Dphase2   = dir([p.imageDir, [p.movieName,'-p-2-*.tif'] ]);
+Dphase2   = dir([p.imageDir, [p.movieName,'-p-*2-*.tif'] ]);    %changed for Frenchstyle. (NW 21.1.2012. original: [p.movieName,'-p-*2-*.tif'] )
 % All fluor1 images                                        % NW 11/12/02
 Dfluor1=dir([p.imageDir, [p.movieName,sprintf('-%s-*.tif',p.fluor1)] ]);
 % All fluor2 images                                        % NW 11/12/02

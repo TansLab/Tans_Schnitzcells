@@ -29,6 +29,8 @@ function DJK_plot_crosscorrelation_standard_error_store(p,branch_groups, fieldX,
 % OPTIONAL ARGUMENTS:
 % 'selectionName: Creates subfolder with this name in which plots will be
 %                 stored
+% 'DJK_saveDir'   directory where images will be saved. 
+%                 default: [p.analysisDir 'branches\']
 % 
 % %%% range of optional arguments could be extended %%%
 %
@@ -67,10 +69,12 @@ end
 if ~existfield(p,'selectionName ')
   p.selectionName = ''
 end
-% Just in case it has not been set yet
+% Save directory
 if ~existfield(p,'DJK_saveDir')
-  p.DJK_saveDir = [p.analysisDir 'schnitzcells' filesep];
- 
+  p.DJK_saveDir = [p.analysisDir 'branches' filesep];
+end
+if ~existfield(p,'selectionName ')
+  p.selectionName = '';
 end
 if length(p.selectionName) > 0
   p.DJK_saveDir = [p.DJK_saveDir p.selectionName filesep];

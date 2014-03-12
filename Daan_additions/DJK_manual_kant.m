@@ -1,6 +1,7 @@
 function  [Lout,OKorNot,quit_now,dontsave,addtolist,crop_pop,newrect,savetemp,backwards,gotoframenum,DJK_settings] = ...
     DJK_manual_kant(p,Lin,leftend,upend,phin,rect,min_size,imnum,expandvalue,phsub,DJK_settings);
 
+
 iptsetpref('imshowborder','tight');
 backwards = 0;
 global pos Limage ourfig res pp phfig
@@ -29,8 +30,8 @@ clear j*  %j1=0;j2=0;
 figure(ourfig);
 clf reset;
 
-% 090505: DJK_imshowlabel(imresize(Lout,res));
-DJK_imshowlabel(imresize(Lout,res),'phaseImage',imresize(phsub,res));
+% 090505: DJK_imshowlabel(imresize_old(Lout,res));
+DJK_imshowlabel(imresize_old(Lout,res),'phaseImage',imresize_old(phsub,res));
 
 pos11 = get(phfig,'position'); % current position
 set(ourfig, 'position', pos11); % DJK 090117
@@ -114,9 +115,9 @@ if ct
             LZedge = LZedge | bwperim(Lzoom==ie);
         end;
         LZedge=double(+LZedge);
-        imshow(makergb(+imresize(LZedge,5),imresize(Phzoom(:,:,1),5)));
+        imshow(makergb(+imresize_old(LZedge,5),imresize_old(Phzoom(:,:,1),5)));
         figure(addfig); % needed in case current figure changes (in Windows)
-        subaddcell=imresize(roipoly,1/5);%(phin);
+        subaddcell=imresize_old(roipoly,1/5);%(phin);
         if max2(Lzoom(subaddcell>0))>0
             disp('overlaps existing cell; ignored.');
         else
@@ -127,7 +128,7 @@ if ct
         figure(ourfig)
         done=0;
     elseif cc=='x'
-        subcolroi=imresize(~roipoly,1/res);
+        subcolroi=imresize_old(~roipoly,1/res);
         if size(subcolroi,1)~=size(Lout,1) | size(subcolroi,2)~=size(Lout,2)
             subcolroi2=zeros(size(Lout));
             subcolroi2(1:size(subcolroi,1),1:size(subcolroi,2))=subcolroi;
@@ -137,7 +138,7 @@ if ct
     %           Lout=renumberimage(Lout);
         done=0;
     elseif cc=='k'
-        subcolroi=imresize(~roipoly,1/res);
+        subcolroi=imresize_old(~roipoly,1/res);
         if size(subcolroi,1)~=size(Lout,1) | size(subcolroi,2)~=size(Lout,2)
             subcolroi2=zeros(size(Lout));
             subcolroi2(1:size(subcolroi,1),1:size(subcolroi,2))=subcolroi;
@@ -149,7 +150,7 @@ if ct
 
     elseif cc=='t'
 
-        subcolroi=imresize(~roipoly,1/res);
+        subcolroi=imresize_old(~roipoly,1/res);
         if size(subcolroi,1)~=size(Lout,1) | size(subcolroi,2)~=size(Lout,2)
             subcolroi2=zeros(size(Lout));
             subcolroi2(1:size(subcolroi,1),1:size(subcolroi,2))=subcolroi;

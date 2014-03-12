@@ -122,7 +122,7 @@ datenumber = datenum(year,month,day,hour,minute,second);
 % end;
 exptimestr(exptimestr=='.')=[];
 
-gainpos = findstr('Gain=',descrip) + length('Gain=');
+gainpos = findstr('Gain: Gain ',descrip) + length('Gain: Gain ');
 gain = sscanf(descrip(gainpos:end), '%f');
 switch(gain),
     case 1,

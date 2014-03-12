@@ -192,7 +192,7 @@ for frameNum = p.manualRange
   end
 
   % still need to resize yimage
-  yimage = imresize(yimage,ybinning,'nearest');
+  yimage = imresize_old(yimage,ybinning,'nearest');
   
   %------------------------------------------------------------------------
   % GET OLD YREG & YBACK DATA AGAIN
@@ -246,9 +246,9 @@ for frameNum = p.manualRange
   %------------------------------------------------------------------------
   % DECONVOLUTION
   %------------------------------------------------------------------------
-  y2image_binned = imresize(y2image,1/ybinning,'nearest');
+  y2image_binned = imresize_old(y2image,1/ybinning,'nearest');
   y2image_deconvolved = p.deconv_func(y2image_binned);
-  y2image_deconvolved = imresize(y2image_deconvolved,ybinning,'nearest');
+  y2image_deconvolved = imresize_old(y2image_deconvolved,ybinning,'nearest');
   y2image_deconvolved_shifted = uint16(zeros(size(y2image_deconvolved)));
   y2image_deconvolved_shifted = DJK_imageShift(y2image_deconvolved_shifted, y2image_deconvolved, p.fluorShift);
   %------------------------------------------------------------------------
@@ -297,12 +297,12 @@ for frameNum = p.manualRange
   %----------------------------------------------------------------------
   % SAVE TIFF IMAGES OF Y2
   %----------------------------------------------------------------------
-    y2image_binned = imresize(y2image,1/ybinning,'nearest');
+    y2image_binned = imresize_old(y2image,1/ybinning,'nearest');
     imwrite(y2image_binned, [y2_directory, p.movieName, '-y2-', str3(frameNum) '.tif'], 'TIFF', 'Compression', 'none');
     disp(['       -> saved ' [p.movieName, '-y2-', str3(frameNum) '.tif'] ' in ' y2_directory]);
     imwrite(y2image_shifted, [y3_directory, p.movieName, '-y3-', str3(frameNum) '.tif'], 'TIFF', 'Compression', 'none');
     disp(['       -> saved ' [p.movieName, '-y3-', str3(frameNum) '.tif'] ' in ' y3_directory]);
-    y2image_deconvolved_binned = imresize(y2image_deconvolved,1/ybinning,'nearest');
+    y2image_deconvolved_binned = imresize_old(y2image_deconvolved,1/ybinning,'nearest');
     imwrite(y2image_deconvolved_binned, [y4_directory, p.movieName, '-y4-', str3(frameNum) '.tif'], 'TIFF', 'Compression', 'none');
     disp(['       -> saved ' [p.movieName, '-y4-', str3(frameNum) '.tif'] ' in ' y4_directory]);
     imwrite(y2image_deconvolved_shifted, [y5_directory, p.movieName, '-y5-', str3(frameNum) '.tif'], 'TIFF', 'Compression', 'none');

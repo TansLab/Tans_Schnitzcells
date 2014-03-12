@@ -179,8 +179,8 @@ for frameNum = p.manualRange
   end
 
   % still need to resize yimage
-  yimage = imresize(yimage,ybinning,'nearest');
-  y2image = imresize(y2image,ybinning,'nearest');
+  yimage = imresize_old(yimage,ybinning,'nearest');
+  y2image = imresize_old(y2image,ybinning,'nearest');
   %------------------------------------------------------------------------
  
   

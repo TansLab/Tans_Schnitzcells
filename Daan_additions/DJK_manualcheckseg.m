@@ -230,7 +230,7 @@ while loopindex <= length(p.manualRange);
     % scale image to minimum desired size (p.min_size), with maximum of 2
     res = min( (p.min_size./size(LNsub)) );
     res = min( 2, res);
-    g_resized = imresize(g,res);
+    g_resized = imresize_old(g,res);
     
     % show image
     iptsetpref('imshowborder','tight'); % DJK 090111 added so Lc & phase overlap
@@ -263,7 +263,7 @@ while loopindex <= length(p.manualRange);
         g2 = uint8(g2 * 255);
 
         % scale image
-        g2_resized = imresize(g2,res);
+        g2_resized = imresize_old(g2,res);
 
         % show image
         iptsetpref('imshowborder','tight'); % DJK 090111 added so Lc & phase overlap
@@ -350,7 +350,7 @@ while loopindex <= length(p.manualRange);
             figure(phfig);
             clf reset;
             
-            imshow(imresize(g,res));
+            imshow(imresize_old(g,res));
             colormap((1:100)'*[0 1 0]/100)
             pos11=get(phfig,'position');
             %set(phfig, 'position', [p.leftend-pos11(3)-8,p.upend-pos11(4), pos11(3), pos11(4)]);% DJK 071207

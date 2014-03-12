@@ -132,7 +132,7 @@ for frameNum = p.manualRange
   phaseCropSize = phaseFullSize; % seg file thinks phaseFullSize is full size, but might be crop size
 
   % still need to resize yimage
-  yimage = imresize(yimage,ybinning,'nearest');
+  yimage = imresize_old(yimage,ybinning,'nearest');
   
   %------------------------------------------------------------------------
   % Check Lc & yreg from segmentation file

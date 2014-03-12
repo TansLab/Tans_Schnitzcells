@@ -1,3 +1,12 @@
+02/02/2012 by Philippe
+
+- Problem of gestion of colors in DJK_addToSchnitzes_mu.m solved by Noreen.
+
+- Now if you press "h" in DJK_manualcheckseg, it will create a cell within the contour of the phase contrast image where you mouse pointer is.
+If there is already an overlapping cell, it will merge, otherwise create a new one.
+
+***************************************
+
 comment on version 18-01-12, by Philippe
 
 - new segmentation algorithm (PN_segPhase)

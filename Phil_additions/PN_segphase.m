@@ -102,7 +102,8 @@ end
 
 %makes a clean filled cells mask
 C_smoothPh = imfilter(A_cropPhImage,fspecial('gaussian',q.Results.GaussianFilter,q.Results.GaussianFilter));
-C_localMinPh = imextendedmin(C_smoothPh,q.Results.minDepth) & B_fillEdgeImage2;       %local minima in the mask      
+C_localMinPh = imextendedmin(C_smoothPh,q.Results.minDepth) & B_fillEdgeImage2;%local minima in the mask 
+%C_localMinPh = imregionalmin(C_smoothPh) & B_fillEdgeImage2;%local minima in the mask alternative method         
 C_cellMask = imfill(B_edgeImage2,find(C_localMinPh));                       
 C_cellMask = bwmorph(C_cellMask,'open');                                    %clean cells mask
 

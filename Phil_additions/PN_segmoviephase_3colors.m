@@ -64,9 +64,9 @@ end
 if ~existfield(p,'saveSteps')                             %indicate if you want to save intermediate images
     p.saveSteps = true;
 end
-if ~existfield(p,'PN_saveDir') & p.saveSteps              %subfolder of p.segmentationDir where image treatment steps are saved
+if ~existfield(p,'PN_saveDir') && p.saveSteps              %subfolder of p.segmentationDir where image treatment steps are saved
     p.PN_saveDir = ['param' '_Marg' num2str(p.maskMargin) '_LoG' num2str(p.LoG_Smoothing) '_Area' num2str(p.minCellArea) '_Depth' num2str(p.minDepth) '_Neck' num2str(p.neckDepth) filesep];
-    [message errmsg] = sprintf(['Image saving folder automatically generated: ' p.PN_saveDir]);
+    [message ~] = sprintf(['Image saving folder automatically generated: ' p.PN_saveDir]);
     disp(message);
 end
 %growth medium (nb: special problems in rich medium: holes + fringed edges

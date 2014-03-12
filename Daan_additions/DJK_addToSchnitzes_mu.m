@@ -344,9 +344,26 @@ for i = 1:length(schnitzcells)
       %--------------------------------------------------------------------
       % Add mu with timeframe for fluor timepoints only 
       % remark Philippe 09-20-11 : may have to modify
-      % if 2 colors are used at different timepoints 
+      % if 2 colors are used at different timepoints %blubb
+      % Remark: only works when fluorimages are taken at same time points!
+      % Takes time points of first existent fluor-color (usually fluor1).
       %--------------------------------------------------------------------
-      FluorIndex = find(~isnan(schnitzcells(i).Y_frames_all));
+      %get existent fluor color
+      if strcmp(p.fluor1,'none')==0
+          fluor_frames_all=genvarname([upper(p.fluor1) '_frames_all']);
+          if (i==1 && num==1), disp(['Using ' p.fluor1 ' frames to add mu']); end
+      elseif strcmp(p.fluor2,'none')==0
+          fluor_frames_all=genvarname([upper(p.fluor2) '_frames_all']);
+          if (i==1 && num==1), disp(['Using ' p.fluor2 ' frames to add mu']); end
+      elseif strcmp(p.fluor3,'none')==0
+          fluor_frames_all=genvarname([upper(p.fluor3) '_frames_all']);
+          if (i==1 && num==1), disp(['Using ' p.fluor3 ' frames to add mu']); end
+      else
+          if (i==1 && num==1), disp(['You don''t have any fluor colors. Don''t know to which frames mu should be associated. Exiting...']);end
+          return
+      end
+      %add mu to these frames with this fluorcolor
+      FluorIndex=eval(['find(~isnan(schnitzcells(i).' fluor_frames_all '));']);
       if ~isempty(FluorIndex)
         schnitzcells(i).(['mu' num2str(frameSize) name]) = schnitzcells(i).(['mu' num2str(frameSize) name '_all'])(FluorIndex);
         schnitzcells(i).(['muP' num2str(frameSize) name]) = schnitzcells(i).(['muP' num2str(frameSize) name '_all'])(FluorIndex);

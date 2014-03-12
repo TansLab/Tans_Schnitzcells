@@ -57,15 +57,15 @@ if ~existfield(p,'minDepth')                              %minimum accepted dept
     p.minDepth = 5;
 end
 %STEP E: treatment of long cells
-if ~existfield(p,'cutCellsWidth')                         %minimum neck width to cut a too long cell
-    p.cutCellsWidth = 3.5;
+if ~existfield(p,'neckDepth')                         %minimum neck width to cut a too long cell
+    p.neckDepth = 2;
 end
 %saving images
 if ~existfield(p,'saveSteps')                             %indicate if you want to save intermediate images
     p.saveSteps = true;
 end
 if ~existfield(p,'PN_saveDir') & p.saveSteps              %subfolder of p.segmentationDir where image treatment steps are saved
-    p.PN_saveDir = ['param' '_Marg' num2str(p.maskMargin) '_LoG' num2str(p.LoG_Smoothing) '_Area' num2str(p.minCellArea) '_Depth' num2str(p.minDepth) '_Width' num2str(p.cutCellsWidth) filesep];
+    p.PN_saveDir = ['param' '_Marg' num2str(p.maskMargin) '_LoG' num2str(p.LoG_Smoothing) '_Area' num2str(p.minCellArea) '_Depth' num2str(p.minDepth) '_Neck' num2str(p.neckDepth) filesep];
     [message errmsg] = sprintf(['Image saving folder automatically generated: ' p.PN_saveDir]);
     disp(message);
 end
@@ -188,7 +188,7 @@ for i= p.segRange
     inputsOfSegmentation = {'rangeFiltSize',p.rangeFiltSize,'maskMargin',p.rangeFiltSize,...
         'LoG_Smoothing',p.LoG_Smoothing,'minCellArea',p.minCellArea,...
         'GaussianFilter',p.GaussianFilter,'minDepth',p.minDepth,...
-        'cutCellsWidth',p.cutCellsWidth,'saveSteps',p.saveSteps,'saveDir',saveDirectory,'medium',p.medium};
+        'neckDepth',p.neckDepth,'saveSteps',p.saveSteps,'saveDir',saveDirectory};
     
     [phsub,LNsub,rect]= PN_segphase(imageToSegment,inputsOfSegmentation{:});                    %%%the real job is done here
 

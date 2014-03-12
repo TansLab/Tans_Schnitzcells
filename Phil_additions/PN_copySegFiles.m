@@ -50,8 +50,8 @@ if ~existfield(p,'minDepth')                              %minimum accepted dept
     p.minDepth = 5;
 end
 %STEP E: treatment of long cells
-if ~existfield(p,'cutCellsWidth')                         %minimum neck width to cut a too long cell
-    p.cutCellsWidth = 3.5;
+if ~existfield(p,'neckDepth')                         %minimum neck width to cut a too long cell
+    p.neckDepth = 2;
 end
 if ~isfield(p,'segRange')
     error('Field segRange empty : please specify the images number to copy.')
@@ -62,7 +62,7 @@ end
 %copy files to be used in following steps in the segmentation folder
 %--------------------------------------------------------------------------
 
-directory = [p.segmentationDir 'param' '_Marg' num2str(p.maskMargin) '_LoG' num2str(p.LoG_Smoothing) '_Area' num2str(p.minCellArea) '_Depth' num2str(p.minDepth) '_Width' num2str(p.cutCellsWidth) filesep];
+directory = [p.segmentationDir 'param' '_Marg' num2str(p.maskMargin) '_LoG' num2str(p.LoG_Smoothing) '_Area' num2str(p.minCellArea) '_Depth' num2str(p.minDepth) '_Neck' num2str(p.neckDepth) filesep];
     if ~isdir(directory)
         errormessage = sprintf('%s\n%s\n','The following directory does not exist :',directory);
         error(errormessage);

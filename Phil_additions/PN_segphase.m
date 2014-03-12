@@ -1,88 +1,49 @@
-function [A_cropPhImage, Z_segmentedImage, ROI_segmentation] = PN_segphase(imageToSegment,varargin)
-
+%by Philippe Nghe 16/01/2012
+%steps of the segmentation :
+%   A. Find a mask
+%   B. Find edges
+%   C. Find skeletenized seeds
+%   D. Cut branch points
+%   E. Cut long cells
+%   Z. Watershed from seeds
 % INPUTS:
 %   imageToSegment:    greyscale image
 %   varargin:      parameters for image treatment indicated below
-%                   optional input: 'medium','rich'
-%
 % OUTPUTS:
 %   A_cropPhImage:  phase contrast image cropped (default is median filtered input image)
 %   Z_segmentedImage:    segmented image (smaller size)
 %   ROI_segmentation:   corner coordinates of the crop region in the original image
 
+function [A_cropPhImage, Z_segmentedImage, ROI_segmentation] = PN_segphase(imageToSegment,varargin)
+
 
 %%%%%%%%%%%%%%%%%%%%%%  PARAMETERS INITIALIZATION  %%%%%%%%%%%%%%%%%%%%%%
 %Reads parameter values or initializes with default values not too bad for
 %E. Coli colonies on acryl gel pad with 100X phase contrast images.
-%This is highly simplified by inputParser in more recent matlab releases.
-q = struct; 
-
-numRequiredArgs = 1;
-if (nargin < 1) | (mod(nargin,2) == 0)
-  errorMessage = sprintf ('%s\n%s\n%s\n','Error using PN_segphase:',...
-      '    Invalid input arguments.','    Try "help PN_segphase".');
-  error(errorMessage);
-end
-
-
-numExtraArgs = nargin - numRequiredArgs;
-if numExtraArgs > 0
-  for i=1:2:(numExtraArgs-1)
-    if (~isstr(varargin{i}))
-      errorMessage = sprintf ('%s\n%s%s%s\n%s\n',...
-          'Error using ==> PN_segphase_temp:',...
-          '    Invalid property ', num2str(varargin{i}), ...
-          ' is not (needs to be) a string.',...
-          '    Try "help PN_segphase_temp".');
-      error(errorMessage);
-    end
-    fieldName = varargin{i};
-    q.(fieldName) = varargin{i+1};
-  end
-end
-
-%%%%%%%%%%%default values
+q = inputParser;
+q.addRequired('imageToSegment', @isnumeric);
 
 %STEP A : finds a global mask and crop the image
-if ~existfield(q,'rangeFiltSize')                         %typical area for dectection of interesting features of the image
-    q.rangeFiltSize = 35;       
-end
-if ~existfield(q,'maskMargin')                            %additional margin of the mask : enlarge if cells missing on the edge
-    q.maskMargin = 20;       
-end
+q.addParamValue('rangeFiltSize',35,@isnumeric);       %dectection of interesting parts of the image
+q.addParamValue('maskMargin',20,@isnumeric);          %additional margin of the mask : enlarge if cells missing on the edge
+
 %STEP B : find edges
-if ~existfield(q,'LoG_Smoothing')                         %smoothing amplitude of the edge detection filter                        
-    q.LoG_Smoothing = 2;       
-end
-if ~existfield(q,'minCellArea')                           %minimum cell area (objects smaller than that will be erased)                          
-    q.minCellArea = 250;       
-end
+q.addParamValue('LoG_Smoothing',2,@isnumeric);         %smoothing amplitude of the edge detection filter
+q.addParamValue('minCellArea',250,@isnumeric);        %minimum cell area (smaller are erased)
+
 %STEP C : prepare seeds for watershedding
-if ~existfield(q,'GaussianFilter')                        %smoothing of the original image to find local minima within cells                         
-    q.GaussianFilter = 5;       
-end
-if ~existfield(q,'minDepth')                              %minimum accepted depth for a local minimum                         
-    q.minDepth = 5;       
-end
-%STEP E: treatment of long cells
-if ~existfield(q,'cutCellsWidth')                         %minimum neck width to cut a too long cell
-    q.cutCellsWidth = 3.5;       
-end
+q.addParamValue('GaussianFilter',5,@isnumeric);        %smoothing of the original image to find local minima within cells 
+q.addParamValue('minDepth',5,@isnumeric);             %minimum accepted depth for a local minimum
+
+%STEP E : treatment of long cells
+q.addParamValue('neckDepth',2,@isnumeric);    
+
 %saving images
-if ~existfield(q,'saveSteps')                             %indicate if you want to save intermediate images
-    q.saveSteps = false;    
-end
-if ~existfield(q,'saveDir') & q.saveSteps                 %directory where intermediate treatment images are saved
-    error('Indicate a directory to save files')       
-end
-%growth medium (nb: special problems in rich medium: holes + fringed edges
-if ~existfield(q,'medium')                                %special treatment in case of rich medium
-    q.medium='normal';  
-end
-if strcmp(q.medium,'rich')==0 && strcmp(q.medium,'normal')==0
-    disp('unknown kind of medium. Set to ''normal'' ');
-    q.medium='normal';
-end
+q.addParamValue('saveSteps',false,@islogical);  %indicate if you want to save intermediate images  
+q.addParamValue('saveDir',pwd,@ischar);    %directory where intermediate treatment images are saved      
+
+q.parse(imageToSegment, varargin{:});
+
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%    SEGMENTATION   %%%%%%%%%%%%%%%%%%%%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -96,22 +57,19 @@ O_PhImageFilt = medfilt2(imageToSegment);
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %STEP A : find a global mask and crop the image
 
-A_maskImage = rangefilt(O_PhImageFilt,true(q.rangeFiltSize));              %detect zones of sufficient intensity variations
+A_maskImage = rangefilt(O_PhImageFilt,true(q.Results.rangeFiltSize));              %detect zones of sufficient intensity variations
 A_maskImage = im2bw(A_maskImage,graythresh(A_maskImage));                  %threshold to black and white
-A_maskImage = imclose(A_maskImage,true(q.maskMargin));                     %enlarge mask 
-if strcmp(q.medium,'rich')==1
-    A_maskImage=imfill(A_maskImage,'holes');                               % fill interiour holes in mask
-end
-labelMaskImage = bwlabel(A_maskImage);                                     %only keep the biggest connected part of the mask
+A_maskImage = imclose(A_maskImage,strel('disk',q.Results.maskMargin));                     %enlarge mask         
+labelMaskImage = logical(A_maskImage);                                     %only keep the biggest connected part of the mask
 propsMaskImage = regionprops(labelMaskImage,'Area','BoundingBox','Image');
-[dumb idx] = max([propsMaskImage.Area]);
+[~,idx] = max([propsMaskImage.Area]);
 A_cropMaskImage = propsMaskImage(idx).Image;                               %cropped mask
 bb = propsMaskImage(idx).BoundingBox;
-A_cropPhImage = imcrop(O_PhImageFilt, bb-[0 0 1 1]);                       %cropped ph image image
-ROI_segmentation = [ floor(bb([2 1])) floor(bb([2 1]))+bb([4 3])-[1 1] ];   %ymin xmin ymax xmax
+ROI_segmentation = [ceil(bb([2 1])) ceil(bb([2 1]))+bb([4 3])-[1 1]];   %ymin xmin ymax xmax
+A_cropPhImage = O_PhImageFilt(ROI_segmentation(1):ROI_segmentation(3),ROI_segmentation(2):ROI_segmentation(4)); %cropped ph image image
 
-if q.saveSteps
-    savePNGofImage(A_maskImage,'A_maskImage',q.saveDir);
+if q.Results.saveSteps
+    savePNGofImage(A_maskImage,'A_maskImage',q.Results.saveDir);
 end
 
 
@@ -123,108 +81,98 @@ se = strel('disk',1);
 B_negPhErode = imerode(B_negPh, se);                                       %Morphological reconstruction ...
 B_negPh = imreconstruct(B_negPhErode,B_negPh);                             %... in the mask of the original image
 B_negPh = imdilate(B_negPh, se);                                           %Allows a better edge determination at contacts.
-B_edgeImage1 = edge(B_negPh,'log',0,q.LoG_Smoothing);                      %edge detection by smoothing (laplacian of gaussian ensures closed edges)
+B_edgeImage1 = edge(B_negPh,'log',0,q.Results.LoG_Smoothing);                      %edge detection by smoothing (laplacian of gaussian ensures closed edges)
 
 %suppress noisy surroundings
 B_edgeImage2 = B_edgeImage1 & A_cropMaskImage;
 B_fillEdgeImage2 = imfill(B_edgeImage2,'holes');
-B_fillEdgeImage2 = bwareaopen(B_fillEdgeImage2,q.minCellArea,4);           %suppress small stuff 
+B_fillEdgeImage2 = bwareaopen(B_fillEdgeImage2,q.Results.minCellArea,4);           %suppress small stuff 
 B_edgeImage2 = B_edgeImage1 & B_fillEdgeImage2;                            %keeps only edges that do not own to small stuff
 B_edgeImage2 = bwareaopen(B_edgeImage2,30);                                %remove small loops related to intracell variations
 
-
-if q.saveSteps
-savePNGofImage(B_edgeImage1,'B_edgeImage1',q.saveDir);
-savePNGofImage(B_edgeImage2,'B_edgeImage2',q.saveDir);
-savePNGofImage(B_fillEdgeImage2,'B_fillEdgeImage2',q.saveDir);
+if q.Results.saveSteps
+savePNGofImage(B_edgeImage1,'B_edgeImage1',q.Results.saveDir);
+savePNGofImage(B_edgeImage2,'B_edgeImage2',q.Results.saveDir);
+savePNGofImage(B_fillEdgeImage2,'B_fillEdgeImage2',q.Results.saveDir);
 end
-
 
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %STEP C : prepare seeds for watershedding
 
 %makes a clean filled cells mask
-h = fspecial('gaussian',q.GaussianFilter,q.GaussianFilter);
-C_smoothPh = imfilter(A_cropPhImage,h);                                    %gaussian filtering of phimage
-C_localMinPh = imextendedmin(C_smoothPh,q.minDepth) & B_fillEdgeImage2;    %local minima of greyscale within the mask      
-C_cellMask = imfill(B_edgeImage2,find(C_localMinPh));                      %here we have a clean cells mask
-
-if strcmp(q.medium,'rich')==1                                              %smoothen edges (reduces unwanted holes, that are connected to edge. Cost: to many cells stay connected)
-    h=fspecial('gaussian',[5 5],5);  
-    d1= imfilter(C_cellMask,h);
-    d2= imfilter(d1,h); 
-    %d3= imfilter(d2,h); figure(13); colormap('gray'); imagesc(d3);
-    C_cellMask = d2;
-    B_edgeImage2 = edge(C_cellMask,'log',0);  
-    B_edgeImage2 = bwareaopen(B_edgeImage2,30);                            %remove small loops related to intracell variations
-end
-
+C_smoothPh = imfilter(A_cropPhImage,fspecial('gaussian',q.Results.GaussianFilter,q.Results.GaussianFilter));
+C_localMinPh = imextendedmin(C_smoothPh,q.Results.minDepth) & B_fillEdgeImage2;       %local minima in the mask      
+C_cellMask = imfill(B_edgeImage2,find(C_localMinPh));                       
+C_cellMask = bwmorph(C_cellMask,'open');                                    %clean cells mask
 
 %shrinking steps to cut some cells
-C_seeds1 = C_cellMask & ~B_edgeImage2;                           %to thin cells by removing the edge
-C_seeds2 = bwmorph(C_seeds1,'open');                             %already cuts some cells
+C_seeds1 = C_cellMask & ~B_edgeImage2;                                      %thins cells by removing the edge
+C_seeds2 = bwmorph(C_seeds1,'open');                                        %already cuts some cells
+C_seeds2 = bwmorph(C_seeds2,'thin',inf);                                    %skeletinization
 
-if q.saveSteps
-savePNGofImage(C_cellMask & ~C_localMinPh,'C_Mask and minima',q.saveDir);
-savePNGofImage(C_seeds1,'C_seeds1',q.saveDir);
-savePNGofImage(C_seeds2,'C_seeds2',q.saveDir);
+if q.Results.saveSteps
+savePNGofImage(C_cellMask & ~C_localMinPh,'C_Mask and minima',q.Results.saveDir);
+savePNGofImage(C_seeds1,'C_seeds1',q.Results.saveDir);
+savePNGofImage(C_seeds2,'C_seeds2',q.Results.saveDir);
 end
-
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%STEP D : treatment of kinky cells : to come.
-%solidity is a first screen but more local criterion should be found
-
 
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%STEP E: cut long cells with the threshold neck size cutCellsWidth
+%STEP D : suppress branch points of the skeleton
+brchpts = PN_FindBranchPoints(C_seeds2);
+C_seeds2(logical(brchpts)) = 0;
+%some cleaning
+C_seeds2 = bwmorph(C_seeds2,'spur',3);
+C_seeds2 = bwareaopen(C_seeds2,10,8);
 
-continue2cut = true; 
-E_seedsCutShort = C_seeds2;
-while continue2cut                                                         %cuts one connex domain per round, looped until no more cut found
-    E_cutterImage = PN_CutLongCells(q.cutCellsWidth,E_seedsCutShort);
-    E_cutterImage = bwmorph(E_cutterImage,'dilate',q.cutCellsWidth+2);     
-    E_seedsCutShort(E_cutterImage) = false;                                %creates elements to cut the seeds
-    continue2cut = ~isempty(find(E_cutterImage));
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%STEP E : cut long cells which neck is deeper than neckDepth
+continueToCut = true;
+icut = C_seeds2;
+while continueToCut
+    [cellsToRemove cutPoints] = PN_CutLongCells(icut,C_cellMask,q.Results.neckDepth);
+    if max(max(cutPoints))==0
+        continueToCut = false;
+    else
+        cutPoints = bwmorph(cutPoints,'dilate',2);
+        C_seeds2(cutPoints) = false; %cuts the long cells on the seeds image
+        icut(cutPoints) = false;
+        icut= icut & ~cellsToRemove;
+    end
 end
 
-if q.saveSteps
-savePNGofImage(E_seedsCutShort,'E_seedsCutShort',q.saveDir);
+if q.Results.saveSteps
+savePNGofImage(C_seeds2,'C_seeds2',q.Results.saveDir);
 end
 
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %STEP Z : final segmentation by watershedding
 
-%prepare seeds for watershedding (it could be possible to begin from a new edge image) 
-Z_seedsFinal = bwareaopen(E_seedsCutShort,q.minCellArea*0.8);               %suppress small seeds which result in intracell cutting
-
 %prepare mask for watershedding
-Z_maskToFillClean = bwmorph(C_cellMask,'close');                            %prepare mask from which watershedding is performed
-Z_maskToFillClean = bwareaopen(Z_maskToFillClean,q.minCellArea,4);
-if strcmp(q.medium,'rich')==1
-    Z_maskToFillClean=imfill(Z_maskToFillClean,'holes');                    % fill holes
-end
-
-
-Z_maskToFill = bwmorph(Z_maskToFillClean,'dilate');                         %final mask 
+Z_maskToFill = bwmorph(C_cellMask,'dilate');
 Z_background = ~Z_maskToFill;                                               %background
 
-%prepare landscape and seeds  for watershedding
-Z_d1 = -bwdist(Z_background);                                               %distance transform of the final mask 
-Z_d1 = imimposemin(Z_d1, Z_background | Z_seedsFinal);                      %impose background and seeds
+%prepare final seeds
+Z_seeds = bwmorph(C_seeds2,'spur',3);
+Z_seeds = bwareaopen(Z_seeds,4,8);
+
+%prepare seeded landscape for watershedding
+Z_d1 = -bwdist(Z_background);                                               %distance transform  
+Z_d1 = imimposemin(Z_d1, Z_background | Z_seeds);                           %impose background and seeds
 
 %watershedding
-Z_w0 = watershed(Z_d1);                     
-Z_w0(Z_background) = 0;
-Z_w1 = bwareaopen(Z_w0,40);
-Z_segmentedImage = bwlabel(Z_w1);                                           %segmentation is finished here
+Z_segmentedImage = watershed(Z_d1);                     
+Z_segmentedImage(Z_background) = 0;
+Z_segmentedImage = bwareaopen(Z_segmentedImage,10);
+Z_segmentedImage = bwlabel(Z_segmentedImage);                               %segmentation is finished here
+Z_segmentedImage = imdilate(Z_segmentedImage, strel('diamond',1));
 
-if q.saveSteps
-savePNGofImage(Z_maskToFillClean,'Z_maskToFillClean',q.saveDir);
-savePNGofImage(Z_maskToFill & ~Z_seedsFinal,'Z_Mask and seeds',q.saveDir);
-savePNGofImage(Z_segmentedImage,'Z_segmentedImage',q.saveDir);
+if q.Results.saveSteps
+savePNGofImage(Z_maskToFill & ~Z_seeds,'Z_Mask and seeds',q.Results.saveDir);
+savePNGofImage(Z_segmentedImage,'Z_segmentedImage',q.Results.saveDir);
 end
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%    SEGMENTATION END   %%%%%%%%%%%%%%%%
@@ -235,6 +183,8 @@ if max(max(Z_segmentedImage))==0                                           %let 
 end;
 
 
+
+
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % Function to save images of intermediate steps
 function savePNGofImage(image, name, saveDirectory)
@@ -243,6 +193,5 @@ function savePNGofImage(image, name, saveDirectory)
         image = [ 0 ]; % will get error if image is empty
     end
     DJK_writeSegImage(image, filename);
-    %disp(['          * written : ' name '.png']);
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%

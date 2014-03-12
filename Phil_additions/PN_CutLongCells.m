@@ -1,34 +1,46 @@
-function cutterImage = PN_CutLongCells(thresholdCut,Image)
-%outputs an binary image with positions to cut the skeleton
-cutterImage = false(size(Image));
-pixelsToSuppressXY = [];
+%by Philippe Nghe 16/01/2012
 
-dj0 = bwdist(~Image);
-dj1 = imhmax(dj0,1);         
-i1 = bwlabel(Image);
+function [nonCutCells cutImage] = PN_CutLongCells(skelim,refim,neckDepth)
 
-stats = regionprops(i1,'Area','BoundingBox','Image');
+sref = size(refim);
+cutImage = zeros(sref);
+nonCutCells = zeros(sref);
+
+dimage = bwdist(~refim);%distance transform
+cc=bwconncomp(skelim);
+stats = regionprops(cc,'Area','BoundingBox','Image');
 characSize = median([stats.Area]);
 idx = find([stats.Area] > characSize*1.5); %suspicious cells
 
 for ii = idx  %study the case of long cells individually
+    
+    %extracts the subimage containing the long cell
     s = stats(ii);
-    xb = ceil(s.BoundingBox(1)); 
-    yb = ceil(s.BoundingBox(2));
-    lx = s.BoundingBox(3);
-    ly = s.BoundingBox(4);
-    s.Image(1,:) = 0; s.Image(:,1) = 0; s.Image(ly,:) = 0; s.Image(:,lx) = 0; 
-    skelet = bwmorph(s.Image,'skel',inf); 
-    skelet = bwmorph(skelet,'spur',20);   
-    subImage = imcrop(dj1,[xb yb lx-1 ly-1]);
-    subImage(~skelet) = inf;                
-    [m xm ym] = MinCoordinates2(subImage);
-    if m < thresholdCut
-        pixelsToSuppressXY = [pixelsToSuppressXY ; xm+xb-1 ym+yb-1];
+    xb = ceil(s.BoundingBox(1));    yb = ceil(s.BoundingBox(2));
+    lx = s.BoundingBox(3);          ly = s.BoundingBox(4);
+    subImage = imcrop(dimage,[xb yb lx-1 ly-1]);
+    localSkel = s.Image;    %local skeleton
+    subImage(~localSkel) = inf; %local restriction of distance transform to the skeleton 
+    
+    %cuts under the condition that the necking has a certain depth
+    [m xm ym] = MinCoordinates2(subImage);    %potentiel division point
+    localSkel(ym,xm)=false; %cut...
+    localCc=bwconncomp(localSkel); %...and examin the 2 sides of the cells
+    cutHappened = false;
+    if localCc.NumObjects == 2 %avoid cases in which the cut point is at a cell end
+        av_left = mean(subImage(localCc.PixelIdxList{1}));    %average thickness on one side
+        av_right = mean(subImage(localCc.PixelIdxList{2}));    %average thickness on other side
+        if (av_left-m > neckDepth) && (av_right-m > neckDepth) %cusp of sufficient depth
+            cutImage(ym+yb-1,xm+xb-1)=1;
+            cutHappened = true;
+        end
+    end
+    
+    %cells which have not been cut are stored for erasion to not be reexamined
+    if ~cutHappened
+       nonCutCells(cc.PixelIdxList{ii}) = 1; 
     end
 end
 
-if ~isempty(pixelsToSuppressXY)
-    pixelsToSuppress = sub2ind(size(Image),pixelsToSuppressXY(:,2),pixelsToSuppressXY(:,1));
-    cutterImage(pixelsToSuppress) = true;
+clear sref dimage cc stats characSize idx s xb yb lx ly m xm ym localSkel localCc cutHappened av_left av_right
 end

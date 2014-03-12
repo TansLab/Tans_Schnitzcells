@@ -1,3 +1,12 @@
+comment on version 18-01-12, by Philippe
+
+- new segmentation algorithm (PN_segPhase)
+- cutCellWidth is replaced by neckDepth : the smaller neckDepth, the more agressive the cutting.
+- it is not necessary anymore to maintain a version for Matlab 704
+
+
+*************************************
+
 comment to version 17-01-12, by Noreen:
 
 - Schnitzcells is now generalized for any fluorescence colour. fluorescence colours are initialized as properties of 'p'.

@@ -1,6 +1,0 @@
-vimages = [24 77 303 338 341 394];
-
-%DJK_segLoopImproved_2colors(p,vimages, [1 2 3], [1 2 3], [275], 5);
-
-DJK_copySegFilesImproved(p,vimages, [1 2], [1 2], [275], 5);
-DJK_manualcheckseg(p,'manualRange',vimages,'override',0);

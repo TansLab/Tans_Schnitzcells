@@ -1,3 +1,0 @@
-v = [715:];
-
-DJK_manualcheckseg(p,'manualRange',v,'override',1);

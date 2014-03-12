@@ -145,7 +145,10 @@ fields = {...
   'colorbar' ...                    % DJK 090618
   'colorNormalize' ...              % DJK 090618
   'markerSize' ...                  % DJK 090618
-  
+  'fluor1' ...                      % NW 111202
+  'fluor2' ...                      % NW 111202
+  'fluor3' ...                      % NW 111202
+    
   };
 
 upfields = upper(fields);

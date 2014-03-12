@@ -38,6 +38,8 @@ set(ourfig, 'position', pos11); % DJK 090117
 
 set(ourfig,'name',['Pos: ',num2str(pos(1,2)),' , ',num2str(pos(1,1)),...
                          '  Val: ',num2str(double(Limage(pos(1,2),pos(1,1))))]);
+                     
+
 
 set(ourfig,'WindowButtonMotionFcn',['global pos Limage ourfig res pp phfig;pos=max(1,round((1/res)*get(gca,''CurrentPoint'')));',...
    'if (pos(1,2)>0 & pos(1,2)<size(Limage,1) & pos(1,1)>0 & pos(1,1)<size(Limage,2));',...
@@ -246,6 +248,9 @@ if ct
         done=1;
     elseif cc =='',
         disp('you typed shift');
+    elseif cc=='i'                              % Noreen 2012-01
+        Lout=imfill(Lout,'holes');
+    
 
 %%%%%%%%%%%%%%%%%%% START DJK 090105 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
     elseif cc=='9'

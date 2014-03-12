@@ -1,6 +1,8 @@
-function DJK_cropImages(p, cropRange, leftTop, rightBottom, varargin) 
+function DJK_cropImages_3colors(p, cropRange, leftTop, rightBottom, varargin) 
 % DJK_cropImages creates crops of all images. Coordinates given must be even (in
 % order for the fluor images to be cropped correctly)
+%
+% crops up to 3 fluorescence pictures as well
 % 
 %   'cropRange'       Defines a specific range of frame numbers to extract. 
 %                     By default, new movie will contain as many frames as 
@@ -70,23 +72,81 @@ end
 DphaseAll = dir([p.imageDir, [p.movieName,'-p-*.tif'] ]);
 % All phase -p-2- images
 Dphase2   = dir([p.imageDir, [p.movieName,'-p-2-*.tif'] ]);
+% All fluor1 images                                        % NW 11/12/02
+Dfluor1=dir([p.imageDir, [p.movieName,sprintf('-%s-*.tif',p.fluor1)] ]);
+% All fluor2 images                                        % NW 11/12/02
+Dfluor2=dir([p.imageDir, [p.movieName,sprintf('-%s-*.tif',p.fluor2)] ]);
+% All fluor3 images                                        % NW 11/12/02
+Dfluor3=dir([p.imageDir, [p.movieName,sprintf('-%s-*.tif',p.fluor3)] ]);
+
+
 % All fluor y images
-DfluorY = dir([p.imageDir, [p.movieName,'-y-*.tif'] ]);
+%DfluorY = dir([p.imageDir, [p.movieName,'-y-*.tif'] ]);
+% All fluor r images
+%DfluorR = dir([p.imageDir, [p.movieName,'-r-*.tif'] ]);
 
 if isempty(Dphase2)
     disp('You seem to have 1 phase image per frame');
-    if ~isempty(DfluorY)
-        disp(['You seem to a fluor image for every ' num2str(length(DphaseAll)/length(DfluorY)) ' frames']);
-    end 
+    if ~isempty(Dfluor1)                                  % NW 11/12/02
+        message=sprintf('You seem to have a fluor1 image (%s) for every %2.2f frames', fluor1,length(DphaseAll)/length(Dfluor1));
+        disp(message);
+    end
+    if ~isempty(Dfluor2)
+        message=sprintf('You seem to have a fluor2 image (%s) for every %2.2f frames', fluor2,length(DphaseAll)/length(Dfluor2));
+        disp(message);
+    end
+    if ~isempty(Dfluor3)
+        message=sprintf('You seem to have a fluor3 image (%s) for every %2.2f frames', fluor3,length(DphaseAll)/length(Dfluor3));
+        disp(message);
+    end
+    
+    %if ~isempty(DfluorY)
+    %    disp(['You seem to a fluor image for every ' num2str(length(DphaseAll)/length(DfluorY)) ' frames']);
+    %end 
+    %if ~isempty(DfluorR)
+    %    disp(['You seem to a fluor2 image for every ' num2str(length(DphaseAll)/length(DfluorY)) ' frames']);
+    %end 
 else 
     disp(['You seem to have ' num2str(length(DphaseAll)/length(Dphase2)) ' phase images per frame']);
-    if ~isempty(DfluorY)
-        disp(['You seem to a fluor image for every ' num2str(length(Dphase2)/length(DfluorY)) ' frames ']);
-    end 
+    if ~isempty(Dfluor1)                                  % NW 11/12/02
+        message=sprintf('You seem to have a fluor1 image (%s) for every %2.2f frames', p.fluor1,length(Dphase2)/length(Dfluor1));
+        disp(message);
+    end
+    if ~isempty(Dfluor2)
+        message=sprintf('You seem to have a fluor2 image (%s) for every %2.2f frames', p.fluor2,length(Dphase2)/length(Dfluor2));
+        disp(message);
+    end
+    if ~isempty(Dfluor3)
+        message=sprintf('You seem to have a fluor3 image (%s) for every %2.2f frames', p.fluor3,length(Dphase2)/length(Dfluor3));
+        disp(message);
+    end
+    
+    
+    
+    %if ~isempty(DfluorY)
+    %    disp(['You seem to a fluor image for every ' num2str(length(Dphase2)/length(DfluorY)) ' frames ']);
+    %end 
+    %if ~isempty(DfluorY)
+    %    disp(['You seem to a fluor2 image for every ' num2str(length(Dphase2)/length(DfluorY)) ' frames ']);
+    %end 
 end
-if isempty(DfluorY)
-    disp('You seem to have no fluor images');
+
+if isempty(Dfluor1)                                  % NW 11/12/02
+    disp('You seem to have no fluor1 images');
 end
+if isempty(Dfluor1)
+    disp('You seem to have no fluor2 images');
+end
+if isempty(Dfluor3)
+    disp('You seem to have no fluor3 images');
+end
+
+%if isempty(DfluorY)
+%    disp('You seem to have no fluor images');
+%end
+%if isempty(DfluorR)
+%    disp('You seem to have no fluor2 images');
+%end
 %--------------------------------------------------------------------------
 
 
@@ -123,8 +183,14 @@ end
 %--------------------------------------------------------------------------
 for fr = cropRange, % go over each frame
     DphaseRange = dir([p.imageDir, [p.movieName, '-p-*', str3(fr) ,'.tif'] ]);
-    DfluorYRange = dir([p.imageDir, [p.movieName, '-y-*', str3(fr) ,'.tif'] ]);
+    %DfluorYRange = dir([p.imageDir, [p.movieName, '-y-*', str3(fr) ,'.tif'] ]);
+    %DfluorRRange = dir([p.imageDir, [p.movieName, '-r-*', str3(fr) ,'.tif'] ]);
+    Dfluor1Range = dir([p.imageDir, [p.movieName, sprintf('-%s-*',p.fluor1), str3(fr) ,'.tif'] ]);  % NW 11/12/02
+    Dfluor2Range = dir([p.imageDir, [p.movieName, sprintf('-%s-*',p.fluor2), str3(fr) ,'.tif'] ]);  % NW 11/12/02
+    Dfluor3Range = dir([p.imageDir, [p.movieName, sprintf('-%s-*',p.fluor3), str3(fr) ,'.tif'] ]);  % NW 11/12/02
     
+   
+    % crop phase images
     for i = [1:length(DphaseRange)], % go over each phase image of this frame
         % read image
         im_original = imread([p.imageDir DphaseRange(i).name]); 
@@ -141,21 +207,54 @@ for fr = cropRange, % go over each frame
         %disp([ num2str(leftTop(2)) ':' num2str(rightBottom(2)) '-' num2str(leftTop(1)) ':' num2str(rightBottom(1))]);
     end
     
-    for i = [1:length(DfluorYRange)],  % go over each fluor image of this frame
+    %crop fluor images (if existent)
+    for i = [1:length(Dfluor1Range)],  % go over each fluor1 image of this frame (NW 11/12/02)
         % read image
-        im_original = imread([p.imageDir DfluorYRange(i).name]); 
+        im_original = imread([p.imageDir Dfluor1Range(i).name]); 
         % get image info
-        im_info = imfinfo([p.imageDir DfluorYRange(i).name]);
+        im_info = imfinfo([p.imageDir Dfluor1Range(i).name]);
         % this image info will be added to crop
         im_description = [im_info.ImageDescription 'DateTime: ' im_info.DateTime 'Software: ' im_info.Software];
         % crop the image
         im_crop = im_original( ((leftTop(2)+1)/2):(rightBottom(2)/2), ((leftTop(1)+1)/2):(rightBottom(1)/2));
         % write image data
-        im_crop_filename = [cropDirImageDir regexprep(DfluorYRange(i).name, p.movieName, p.cropName)];
+        im_crop_filename = [cropDirImageDir regexprep(Dfluor1Range(i).name, p.movieName, p.cropName)];
         imwrite(im_crop, im_crop_filename, 'tif', 'Compression', 'none', 'Description', im_description);
         disp(['Written: ' im_crop_filename]);
         %disp([ num2str(leftTop(2)/2) ':' num2str(rightBottom(2)/2) '-' num2str(leftTop(1)/2) ':' num2str(rightBottom(1)/2)]);
     end
+    for i = [1:length(Dfluor2Range)],  % go over each fluor2 image of this frame (NW 11/12/02)
+        % read image
+        im_original = imread([p.imageDir Dfluor2Range(i).name]); 
+        % get image info
+        im_info = imfinfo([p.imageDir Dfluor2Range(i).name]);
+        % this image info will be added to crop
+        im_description = [im_info.ImageDescription 'DateTime: ' im_info.DateTime 'Software: ' im_info.Software];
+        % crop the image
+        im_crop = im_original( ((leftTop(2)+1)/2):(rightBottom(2)/2), ((leftTop(1)+1)/2):(rightBottom(1)/2));
+        % write image data
+        im_crop_filename = [cropDirImageDir regexprep(Dfluor2Range(i).name, p.movieName, p.cropName)];
+        imwrite(im_crop, im_crop_filename, 'tif', 'Compression', 'none', 'Description', im_description);
+        disp(['Written: ' im_crop_filename]);
+        %disp([ num2str(leftTop(2)/2) ':' num2str(rightBottom(2)/2) '-' num2str(leftTop(1)/2) ':' num2str(rightBottom(1)/2)]);
+    end
+    for i = [1:length(Dfluor3Range)],  % go over each fluor3 image of this frame (NW 11/12/02)
+        % read image
+        im_original = imread([p.imageDir Dfluor3Range(i).name]); 
+        % get image info
+        im_info = imfinfo([p.imageDir Dfluor3Range(i).name]);
+        % this image info will be added to crop
+        im_description = [im_info.ImageDescription 'DateTime: ' im_info.DateTime 'Software: ' im_info.Software];
+        % crop the image
+        im_crop = im_original( ((leftTop(2)+1)/2):(rightBottom(2)/2), ((leftTop(1)+1)/2):(rightBottom(1)/2));
+        % write image data
+        im_crop_filename = [cropDirImageDir regexprep(Dfluor3Range(i).name, p.movieName, p.cropName)];
+        imwrite(im_crop, im_crop_filename, 'tif', 'Compression', 'none', 'Description', im_description);
+        disp(['Written: ' im_crop_filename]);
+        %disp([ num2str(leftTop(2)/2) ':' num2str(rightBottom(2)/2) '-' num2str(leftTop(1)/2) ':' num2str(rightBottom(1)/2)]);
+    end
+    
+    
 end
 %--------------------------------------------------------------------------
 

@@ -1,6 +1,9 @@
-% DJK_compileSchnitzImproved extracts data out of lineage & segmentation files.
+% DJK_compileSchnitzImproved_3colors extracts data out of lineage & segmentation files.
 %
 % Copied / Rewritten from COMPILESCHNITZ.
+%
+% It adds up to three fluorescence colors (depending on whether colors are
+% specified in 'p')
 %
 % OUTPUT
 % 'p'   
@@ -16,13 +19,13 @@
 % 'micronsPerPixel'   default = 0.04065 (1.5x magnification of Killer Mike)
 % 'cropLeftTop'
 
-function [p,schnitzcells] = DJK_compileSchnitzImproved(p,varargin) 
+function [p,schnitzcells] = DJK_compileSchnitzImproved_3colors(p,varargin) 
 
 %--------------------------------------------------------------------------
 % Input error checking and parsing
 %--------------------------------------------------------------------------
 % Settings
-numRequiredArgs = 1; functionName = 'DJK_compileSchnitzImproved';
+numRequiredArgs = 1; functionName = 'DJK_compileSchnitzImproved_3colors';
 
 if (nargin < numRequiredArgs) | (mod(nargin,2) ~= (mod(numRequiredArgs,2)) | ~isSchnitzParamStruct(p))
   errorMessage = sprintf('%s\n%s',['Error width input arguments of ' functionName],['Try "help ' functionName '".']);
@@ -128,6 +131,32 @@ end
 %--------------------------------------------------------------------------
 
 
+% -------------------------------------------------
+% create variable names
+% -------------------------------------------------
+reg1=genvarname([p.fluor1 'reg']);  % creates 'nonereg' if fluorcolor not existent
+reg2=genvarname([p.fluor2 'reg']);  % -> distinguish later if real fluorcolor
+reg3=genvarname([p.fluor3 'reg']);  %
+fluor1_frames_all=genvarname([upper(p.fluor1) '_frames_all']);  %'NONE_frames_all' if color non-existent
+fluor2_frames_all=genvarname([upper(p.fluor2) '_frames_all']);  % e.g. 'Y_frames_all' if yellow fluor
+fluor3_frames_all=genvarname([upper(p.fluor3) '_frames_all']);
+fluor1_frames=genvarname([upper(p.fluor1) '_frames']);
+fluor2_frames=genvarname([upper(p.fluor2) '_frames']);
+fluor3_frames=genvarname([upper(p.fluor3) '_frames']);
+fluor1_time=genvarname([upper(p.fluor1) '_time']);
+fluor2_time=genvarname([upper(p.fluor2) '_time']);
+fluor3_time=genvarname([upper(p.fluor3) '_time']);
+
+% --------------------------------------------------
+
+% --------------------------------------------------
+% create control variables for check if right fluorescence colors were
+% added to 'p'
+% --------------------------------------------------
+fluor1counter=0; fluor2counter=0; fluor3counter=0;
+% --------------------------------------------------
+
+
 %--------------------------------------------------------------------------
 % LOOP OVER FRAMES IN TRACKRANGE
 %--------------------------------------------------------------------------
@@ -140,15 +169,20 @@ for i = 1:length(trackRange)
   % to a given lincellnum{i}.
   % Also, recall that a schnitz' frames array is 1-based per 
   % makeschnitz hack to conform to schnitzedit expectations
-
+  
   % empty previous data
-  clear Lc yreg rreg;
+  eval([ 'clear Lc ' reg1 ' ' reg2 ' ' reg3 ';']);
   timestamp = 0;
+
+  
+  % empty previous data
+  %clear Lc yreg rreg;
+  %timestamp = 0;
 
   % load segmented image for this frameNum
   name = [p.segmentationDir,p.movieName,'seg',str3(currFrameNum)];
   disp([' Processing frame ', str3(currFrameNum), ' as nr ', str3(i), ' in range']);
-  load([name]); % including variables: LNsub, Lc, phsub, timestamp, rect, yback, yreg, yshift, expty, gainy, rback, rreg, rshift, exptr, gainr    
+  load([name]); % including variables: LNsub, Lc, phsub, timestamp, rect, and fluor-info, e.g. yback, yreg, yshift, expty, gainy, rback, rreg, rshift, exptr, gainr    
 
   % get shape properties for cells in this frame
   rp = regionprops(Lc,'MajorAxisLength','MinorAxisLength','Centroid','Orientation','Solidity');
@@ -232,21 +266,39 @@ for i = 1:length(trackRange)
     schnitzcells(s).fitCoef3_x_rot_right(age)  = x_rot_intersect_right;
     schnitzcells(s).length_fitCoef3(age) = quad(func_length, x_rot_intersect_left,x_rot_intersect_right) * p.micronsPerPixel;
 
-    % Add Yall_frames
-    schnitzcells(s).Y_frames_all(age)   = NaN;
-    if exist('yreg')
-      schnitzcells(s).Y_frames_all(age) = schnitzcells(s).frames(age);
-    end   
-    % Add Rall_frames
-    schnitzcells(s).R_frames_all(age)   = NaN;
-    if exist('rreg')
-      schnitzcells(s).R_frames_all(age) = schnitzcells(s).frames(age);
+    % Add fluor1_all_frames if color existent
+    if strcmp(p.fluor1,'none')==0
+         eval(['schnitzcells(s).' fluor1_frames_all '(age)   = NaN;']);
+         eval(['existfluor=exist(''' reg1 ''');']) % check if fluorescence picture
+         if existfluor==1
+             eval(['schnitzcells(s).' fluor1_frames_all '(age) = schnitzcells(s).frames(age);']);
+             fluor1counter=fluor1counter+1;
+         end
     end 
+    % Add fluor2_all_frames if color existent
+    if strcmp(p.fluor2,'none')==0
+         eval(['schnitzcells(s).' fluor2_frames_all '(age)   = NaN;']);
+         eval(['existfluor=exist(''' reg2 ''');']) % check if fluorescence picture
+         if existfluor==1
+             eval(['schnitzcells(s).' fluor2_frames_all '(age) = schnitzcells(s).frames(age);']);
+             fluor2counter=fluor2counter+1;
+         end
+    end 
+    % Add fluor3_all_frames if color existent
+    if strcmp(p.fluor3,'none')==0
+         eval(['schnitzcells(s).' fluor3_frames_all '(age)   = NaN;']);
+         eval(['existfluor=exist(''' reg3 ''');']) % check if fluorescence picture
+         if existfluor==1
+             eval(['schnitzcells(s).' fluor3_frames_all '(age) = schnitzcells(s).frames(age);']);
+             fluor3counter=fluor3counter+1;
+         end
+    end 
+    
   end % loop over schnitzesForFrame
 end % loop over frames
 %--------------------------------------------------------------------------
 
-
+  
 %--------------------------------------------------------------------------
 % LOOP OVER SCHNITZCELLS TO ADD FINAL STUFF
 %--------------------------------------------------------------------------
@@ -258,27 +310,40 @@ firstmoment = s(1);
 % loop over schnitzcells
 for i = 1:length(schnitzcells)
   %--------------------------------------------------------------------
-  % Convert Y_frames_all to Y_frames
+  % Convert fluor1_frames_all to fluor_frames  (e.g. Y_frames_all to
+  % Y_frames) (if color existent)
   %--------------------------------------------------------------------
-  idx = find(~isnan(schnitzcells(i).Y_frames_all));
-  schnitzcells(i).Y_frames = schnitzcells(i).Y_frames_all( idx );
+  if (strcmp(p.fluor1,'none')==0)
+    eval(['idx = find(~isnan(schnitzcells(i).' fluor1_frames_all '));']);
+    eval(['schnitzcells(i).' fluor1_frames '= schnitzcells(i).' fluor1_frames_all '( idx );']);
+  end
   %--------------------------------------------------------------------
-  % Convert R_frames_all to R_frames
+  % Convert fluor2_frames_all to fluor2_frames
   %--------------------------------------------------------------------
-  idx = find(~isnan(schnitzcells(i).R_frames_all));
-  schnitzcells(i).R_frames = schnitzcells(i).R_frames_all( idx );
+  if (strcmp(p.fluor2,'none')==0)
+    eval(['idx = find(~isnan(schnitzcells(i).' fluor2_frames_all '));']);
+    eval(['schnitzcells(i).' fluor2_frames '= schnitzcells(i).' fluor2_frames_all '( idx );']);
+  end
+  %--------------------------------------------------------------------
+  % Convert fluor3_frames_all to fluor3_frames
+  %--------------------------------------------------------------------
+  if (strcmp(p.fluor3,'none')==0)
+    eval(['idx = find(~isnan(schnitzcells(i).' fluor3_frames_all '));']);
+    eval(['schnitzcells(i).' fluor3_frames '= schnitzcells(i).' fluor3_frames_all '( idx );']);
+  end
   %--------------------------------------------------------------------
   
   %--------------------------------------------------------------------
-  % Add time data: time, av_time, Y_time, R_time,completeCycle, birthTime, divTime,
-  % interDivTime, gen, phase
+  % Add time data: time, av_time, fluor1_time. fluor2_time, fluor3_time (e.g. Y_time), 
+  % completeCycle, birthTime, divTime, interDivTime, gen, phase
   %--------------------------------------------------------------------
   % add time
   tdiff = schnitzcells(i).timestamp - firstmoment;
   schnitzcells(i).time    = DJK_getMinutesFromTimestamp(tdiff);
   schnitzcells(i).av_time = schnitzcells(i).time(1) + 0.5*(schnitzcells(i).time(end) - schnitzcells(i).time(1));
-  schnitzcells(i).Y_time  = schnitzcells(i).time( idx );
-  schnitzcells(i).R_time  = schnitzcells(i).time( idx );
+  eval(['schnitzcells(i).' fluor1_time ' = schnitzcells(i).time( idx );']);
+  eval(['schnitzcells(i).' fluor2_time ' = schnitzcells(i).time( idx );']);
+  eval(['schnitzcells(i).' fluor3_time ' = schnitzcells(i).time( idx );']);
   
   % A cell has a complete cell cycle when it's birth and division is seen
   schnitzcells(i).completeCycle = 0;
@@ -351,6 +416,25 @@ disp(['-----------------------------------------------------------']);
 % nr of cells with complete cell cycle
 disp([' * Total nr cells with complete cell cycle in schnitzcells: ', num2str(completeCycleNr)]);
 disp(['-----------------------------------------------------------']);
+%--------------------------------------------------------------------------
+
+
+
+%--------------------------------------------------------------------------
+% Display warning if no fluorescence pictures were found
+%--------------------------------------------------------------------------
+if (strcmp(p.fluor1,'none')==0 & fluor1counter==0)
+    disp(['Warning! No fluorescence pictures for fluor1 (' p.fluor1 ') found. ' ...
+          'Maybe color in ''p'' wrong associated. Change with p.fluor1=...']);
+end
+if (strcmp(p.fluor2,'none')==0 & fluor2counter==0)
+    disp(['Warning! No fluorescence pictures for fluor2 (' p.fluor2 ') found. ' ...
+          'Maybe color in ''p'' wrong associated. Change with p.fluor2=...']);
+end
+if (strcmp(p.fluor3,'none')==0 & fluor3counter==0)
+    disp(['Warning! No fluorescence pictures for fluor3 (' p.fluor3 ') found. ' ...
+          'Maybe color in ''p'' wrong associated. Change with p.fluor3=...']);
+end
 %--------------------------------------------------------------------------
 
 

@@ -1,4 +1,7 @@
 function p = djk_manualcheckseg (p, varargin);
+%
+% new: imfill-option (i) (Noreen 10/01/2012)
+%
 % function P = djk_manualcheckseg (p, varargin);
 % 
 %   Same as MANUALCHECKSEG, but then does not show fluorescence image
@@ -97,7 +100,7 @@ disp('                    ''s'' to save work to memory without writing to the fi
 disp('                    ''w'' to write a temporary partial correction to the file.')
 disp('              press ''x'' to black out an area.')
 disp('              press ''t'' to mark terraced area.')
-disp('              press ''c'' to crop out only populated area.')
+disp('              press ''c'' to crop out only populated area. Do not use...')
 disp('              press ''r'' to renumber the cell you are pointing to.')
 disp('              press ''p'' to show a square around the position, on phase image.')
 disp('              press ''b'' to mark the cell you are pointing to, on phase image.')
@@ -112,6 +115,8 @@ disp('              press ''e'' to expand image.')
 disp('              press ''f'' for "fine-tuning" (to avoid renumbering the image).')
 disp('              press ''g'' to goto indexnum = ... .')
 disp('              press ''R'' to renumber all cells.')
+disp('              press ''i'' to fill cells.')
+
 disp(' ')
 
 quit_now=0;
@@ -119,8 +124,7 @@ global pos Limage ourfig res pp phfig % flfig % DJK 071206
 
 ourfig = figure;
 phfig  = figure;
-flfig  = figure;
-
+% flfig  = figure; % former version: fluor picture
 outl=length(p.segmentationDir);
 
 % set some defaults if they don't exist
@@ -248,36 +252,10 @@ while loopindex <= length(p.manualRange);
     set(phfig, 'position', [x_left_bottom_screen y_left_bottom_screen width height]); % DJK 090117
     %----------------------------------------------------------------------
 
-
-    %----------------------------------------------------------------------
-    % Show Fluor Image if yreg5 exists in Fluor
-    %----------------------------------------------------------------------
-    % first close the fluor image, in case it was opened
-    if ishandle(flfig)
-      close(flfig);
-    end
-    if exist('yreg') == 1
-        % adjust contrast and make negative image
-        g2 = double(yreg);
-        g2 = DJK_scaleRange(g2, [min(min(g2)) max(max(g2))], [0 1]);
-        g2 = uint8(g2 * 255);
-
-        % scale image
-        g2_resized = imresize_old(g2,res);
-
-        % show image
-        iptsetpref('imshowborder','tight'); % DJK 090111 added so Lc & phase overlap
-        figure(flfig);
-        clf reset;
-        imshow(g2_resized);
-        set(flfig,'name',['Frame ',str3(i),' fluor (y5)']);
-
-        % center on screen
-        set(flfig, 'position', [x_left_bottom_screen y_left_bottom_screen width height]);
-%       end
-    end
-    %----------------------------------------------------------------------
-    
+    % ******************************************************
+    % here in former versions a fluor image was displayed
+    % ******************************************************
+   
     
     is_done=0;
     savelist=['''Lc'''];
@@ -307,7 +285,8 @@ while loopindex <= length(p.manualRange);
         end;
 
         if quit_now
-            close(phfig);close(ourfig); if ishandle(flfig), close(flfig); end
+            close(phfig);close(ourfig); 
+            % if ishandle(flfig), close(flfig); end
             clear global pos Limage ourfig res pp phfig;
             return;
         end;
@@ -321,16 +300,16 @@ while loopindex <= length(p.manualRange);
             LNfull(oldrect(1):oldrect(3), oldrect(2):oldrect(4))=phsub;
             phsub = LNfull(rect(1):rect(3), rect(2):rect(4));
             savelist=[savelist,',''phsub'',''LNsub'',''rect'''];
-            if exist('rreg')==1
-                savelist=[savelist,',''rreg'''];
-                LNfull(oldrect(1):oldrect(3), oldrect(2):oldrect(4))=rreg;
-                rreg = LNfull(rect(1):rect(3), rect(2):rect(4));
-            end
-            if exist('yreg')==1
-                savelist=[savelist,',''yreg'''];
-                LNfull(oldrect(1):oldrect(3), oldrect(2):oldrect(4))=yreg;
-                yreg = LNfull(rect(1):rect(3), rect(2):rect(4));
-            end
+           % if exist('rreg')==1
+           %     savelist=[savelist,',''rreg'''];
+           %     LNfull(oldrect(1):oldrect(3), oldrect(2):oldrect(4))=rreg;
+           %     rreg = LNfull(rect(1):rect(3), rect(2):rect(4));
+           % end
+           % if exist('yreg')==1
+           %     savelist=[savelist,',''yreg'''];
+           %     LNfull(oldrect(1):oldrect(3), oldrect(2):oldrect(4))=yreg;
+           %     yreg = LNfull(rect(1):rect(3), rect(2):rect(4));
+           % end
             crop_pop=0;
 
             g = double(phsub);
@@ -401,4 +380,4 @@ while loopindex <= length(p.manualRange);
       end
   end
 end;
-close(phfig); close(ourfig); if ishandle(flfig), close(flfig); end
+close(phfig); close(ourfig); end

@@ -188,22 +188,28 @@ for i= p.segRange
     phaseFullSize = size( ph3(:,:,1) ); % size of full image
 
     savelist=['''phsub'',''LNsub'',''rect'',''timestamp'',''phaseFullSize'''];
-
+    
+    % ******************************************************
+    % blubb start ******************************************
     % Prepare fluor data for saving 
-    yname = [p.imageDir,p.movieName,'-y-',str3(i),'.tif'];
-    if exist(yname)==2 & numel(rect)>0 % if no cells found, rect is empty, and gives error
-        disp('found Fluor image');
-        [yreg, yshift, yback, ybinning] = quicknoreg(LNsub,yname,rect,0,phaseFullSize); 
-        [exptystr, gainy, expty] = imsettings(yname);
-        savelist=[savelist,',''yreg'',''expty'',''gainy'',''yback'',''ybinning'''];
-    end
-    rname = [p.imageDir,p.movieName,'-r-',str3(i),'.tif'];
-    if exist(rname)==2 & numel(rect)>0 % if no cells found, rect is empty, and gives error
-        disp('found Fluor_red image');
-        [rreg, rshift, rback, rbinning] = quicknoreg(LNsub,rname,rect,0,phaseFullSize); 
-        [exptrstr, gainr, exptr] = imsettings(rname);
-        savelist=[savelist,',''rreg'',''exptr'',''gainr'',''rback'',''rbinning'''];
-    end
+    %yname = [p.imageDir,p.movieName,'-y-',str3(i),'.tif'];
+    %if exist(yname)==2 & numel(rect)>0 % if no cells found, rect is empty, and gives error
+    %    disp('found Fluor image');
+    %    [yreg, yshift, yback, ybinning] = quicknoreg(LNsub,yname,rect,0,phaseFullSize); 
+    %    [exptystr, gainy, expty] = imsettings(yname);
+    %    savelist=[savelist,',''yreg'',''expty'',''gainy'',''yback'',''ybinning'''];
+    %end
+    %rname = [p.imageDir,p.movieName,'-r-',str3(i),'.tif'];
+    %if exist(rname)==2 & numel(rect)>0 % if no cells found, rect is empty, and gives error
+    %    disp('found Fluor_red image');
+    %    [rreg, rshift, rback, rbinning] = quicknoreg(LNsub,rname,rect,0,phaseFullSize); 
+    %    [exptrstr, gainr, exptr] = imsettings(rname);
+    %    savelist=[savelist,',''rreg'',''exptr'',''gainr'',''rback'',''rbinning'''];
+    %end
+   % blubb end ****************************************** 
+   % ******************************************************
+    
+    
     % Save segmentation file
     if isfield(p,'PN_saveDir')
         Lname = [p.PN_saveDir, p.movieName, 'seg', str3(i)];

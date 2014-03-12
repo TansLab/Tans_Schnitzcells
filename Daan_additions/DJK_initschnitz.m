@@ -91,6 +91,20 @@ function p = DJK_initschnitz (movieName, movieDate, movieKind, varargin);
 %                     correspond to the numbers of the frames, so 
 %                     'segRange',[0:9] will segment the first 10 frames 
 %                     numbered 000,001,...,009.
+%
+%     Fluor1          The fluorescence colour you used. The name of the     % NW (11/12/2)
+%                     fluorescence images decides the actual input that is
+%                     is necessary. So if e.g. a (red) fluorescence image 
+%                     is named pos2-r-001 the input is 'r', if the name 
+%                     is pos2-rfp-001, then the input is 'rfp'.
+%
+%                     ******* Do NEVER use an image with 'none' in its name!!!!
+%                     (which should also not be very likely...) *******
+%
+%     Fluor2, Fluor3  Option to include more fluorescence colors. If none
+%                     are used, skip field or assign with 'none' (which
+%                     will be done automatically if field was skipped)
+%
 %                         
 % ----- some old or derived parameters below -----    
 %     
@@ -121,7 +135,10 @@ pOrder.segmentationDir = 0;
 pOrder.tracksDir = 0;
 pOrder.analysisDir = 0; % DJK 071211
 %pOrder.partialDir = 0;
-
+% --- fluorescence colors ---    % NW (11/12/02) (don't know if assignment here is necessary)
+pOrder.fluor1=0;
+pOrder.fluor2=0;
+pOrder.fluor3=0;
 
 %-------------------------------------------------------------------------------
 % Parse the input arguments, input error checking
@@ -246,6 +263,19 @@ if ~existfield(p,'micronsPerPixel')
   p.micronsPerPixel = 0.04065;
   pOrder.micronsPerPixel = 0;
 end
+
+% If less than 3 fluorescence colours have been set, fill others with
+% 'none'                                                                 NW 11/12/02
+if ~existfield(p,'fluor1')
+    p.fluor1='none';
+end
+if ~existfield(p,'fluor2')
+    p.fluor2='none';
+end
+if ~existfield(p,'fluor3')
+    p.fluor3='none';
+end
+
 
 %-------------------------------------------------------------------------------
 % if a fillinator 'cell' optional argument is provided, adjust the movie 

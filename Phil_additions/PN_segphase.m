@@ -3,6 +3,7 @@ function [A_cropPhImage, Z_segmentedImage, ROI_segmentation] = PN_segphase(image
 % INPUTS:
 %   imageToSegment:    greyscale image
 %   varargin:      parameters for image treatment indicated below
+%                   optional input: 'medium','rich'
 %
 % OUTPUTS:
 %   A_cropPhImage:  phase contrast image cropped (default is median filtered input image)
@@ -74,8 +75,14 @@ end
 if ~existfield(q,'saveDir') & q.saveSteps                 %directory where intermediate treatment images are saved
     error('Indicate a directory to save files')       
 end
-
-
+%growth medium (nb: special problems in rich medium: holes + fringed edges
+if ~existfield(q,'medium')                                %special treatment in case of rich medium
+    q.medium='normal';  
+end
+if strcmp(q.medium,'rich')==0 && strcmp(q.medium,'normal')==0
+    disp('unknown kind of medium. Set to ''normal'' ');
+    q.medium='normal';
+end
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%    SEGMENTATION   %%%%%%%%%%%%%%%%%%%%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -91,7 +98,10 @@ O_PhImageFilt = medfilt2(imageToSegment);
 
 A_maskImage = rangefilt(O_PhImageFilt,true(q.rangeFiltSize));              %detect zones of sufficient intensity variations
 A_maskImage = im2bw(A_maskImage,graythresh(A_maskImage));                  %threshold to black and white
-A_maskImage = imclose(A_maskImage,true(q.maskMargin));                     %enlarge mask         
+A_maskImage = imclose(A_maskImage,true(q.maskMargin));                     %enlarge mask 
+if strcmp(q.medium,'rich')==1
+    A_maskImage=imfill(A_maskImage,'holes');                               % fill interiour holes in mask
+end
 labelMaskImage = bwlabel(A_maskImage);                                     %only keep the biggest connected part of the mask
 propsMaskImage = regionprops(labelMaskImage,'Area','BoundingBox','Image');
 [dumb idx] = max([propsMaskImage.Area]);
@@ -122,11 +132,13 @@ B_fillEdgeImage2 = bwareaopen(B_fillEdgeImage2,q.minCellArea,4);           %supp
 B_edgeImage2 = B_edgeImage1 & B_fillEdgeImage2;                            %keeps only edges that do not own to small stuff
 B_edgeImage2 = bwareaopen(B_edgeImage2,30);                                %remove small loops related to intracell variations
 
+
 if q.saveSteps
 savePNGofImage(B_edgeImage1,'B_edgeImage1',q.saveDir);
 savePNGofImage(B_edgeImage2,'B_edgeImage2',q.saveDir);
 savePNGofImage(B_fillEdgeImage2,'B_fillEdgeImage2',q.saveDir);
 end
+
 
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -138,9 +150,20 @@ C_smoothPh = imfilter(A_cropPhImage,h);                                    %gaus
 C_localMinPh = imextendedmin(C_smoothPh,q.minDepth) & B_fillEdgeImage2;    %local minima of greyscale within the mask      
 C_cellMask = imfill(B_edgeImage2,find(C_localMinPh));                      %here we have a clean cells mask
 
+if strcmp(q.medium,'rich')==1                                              %smoothen edges (reduces unwanted holes, that are connected to edge. Cost: to many cells stay connected)
+    h=fspecial('gaussian',[5 5],5);  
+    d1= imfilter(C_cellMask,h);
+    d2= imfilter(d1,h); 
+    %d3= imfilter(d2,h); figure(13); colormap('gray'); imagesc(d3);
+    C_cellMask = d2;
+    B_edgeImage2 = edge(C_cellMask,'log',0);  
+    B_edgeImage2 = bwareaopen(B_edgeImage2,30);                            %remove small loops related to intracell variations
+end
+
+
 %shrinking steps to cut some cells
-C_seeds1 = C_cellMask & ~B_edgeImage2;                                     %to thin cells by removing the edge
-C_seeds2 = bwmorph(C_seeds1,'open');                                       %already cuts some cells
+C_seeds1 = C_cellMask & ~B_edgeImage2;                           %to thin cells by removing the edge
+C_seeds2 = bwmorph(C_seeds1,'open');                             %already cuts some cells
 
 if q.saveSteps
 savePNGofImage(C_cellMask & ~C_localMinPh,'C_Mask and minima',q.saveDir);
@@ -148,10 +171,10 @@ savePNGofImage(C_seeds1,'C_seeds1',q.saveDir);
 savePNGofImage(C_seeds2,'C_seeds2',q.saveDir);
 end
 
-
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %STEP D : treatment of kinky cells : to come.
 %solidity is a first screen but more local criterion should be found
+
 
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -180,6 +203,11 @@ Z_seedsFinal = bwareaopen(E_seedsCutShort,q.minCellArea*0.8);               %sup
 %prepare mask for watershedding
 Z_maskToFillClean = bwmorph(C_cellMask,'close');                            %prepare mask from which watershedding is performed
 Z_maskToFillClean = bwareaopen(Z_maskToFillClean,q.minCellArea,4);
+if strcmp(q.medium,'rich')==1
+    Z_maskToFillClean=imfill(Z_maskToFillClean,'holes');                    % fill holes
+end
+
+
 Z_maskToFill = bwmorph(Z_maskToFillClean,'dilate');                         %final mask 
 Z_background = ~Z_maskToFill;                                               %background
 
@@ -205,8 +233,6 @@ end
 if max(max(Z_segmentedImage))==0                                           %let user know when no cells were found
   disp([' * !! WATCH OUT !! no cells found on this frame...']);
 end;
-
-
 
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%

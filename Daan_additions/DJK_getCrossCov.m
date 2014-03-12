@@ -141,6 +141,14 @@ end
 % --------------------------------------------------------------------------
 % crosscorrelation for each independent branch will be saved in branches in this field
 targetField = ['crossCov_' fieldX '_' fieldY];
+%blubb % force truncation to 63 characters to suppress warning NW
+%2012-05-16. AKWARD!!!!
+if length(targetField)>63
+    length(targetField);
+    targetField=targetField(1:63);
+    length(targetField);
+end
+% blubb ende
 
 % prepare composite
 crossCov_composite = struct;
@@ -161,7 +169,7 @@ for r = rs
       X = X - mean(X);
       Y = Y - mean(Y);
     end
-    
+
     %length of this particular branch
     N = length(X);
 
@@ -247,7 +255,8 @@ function out = func_check_spacingError(timeData, spacingError), ...
 
 timeData = timeData-timeData(1);
 fit = polyfit([1:length(timeData)],timeData,1);
-disp([' * Time interval is ' num2str(fit(1)) ' (mins)']);
+% disp([' * Time interval is ' num2str(fit(1)) ' (mins)']); %blubb
+% NW2012-10
 
 fittedTimeData = fit(2) + fit(1)*[1:length(timeData)];
 interval_error = 0;
@@ -275,7 +284,8 @@ for br = 1:length(branches)
   min_br_length = min(min_br_length, length(branches(br).schnitzNrs));
 end
 if (max_br_length == min_br_length)
-  disp([' * All branches have same length: ' num2str(min_br_length) ' timepoints.']);
+  %disp([' * All branches have same length: ' num2str(min_br_length) '
+  %timepoints.']); blubb NW2012-010 just commented out
 else
   disp([' * Branches have different lengths: from ' num2str(min_br_length) ' to ' num2str(max_br_length) ' timepoints. Watch out! Do not know whether composite is correct!']);
 end

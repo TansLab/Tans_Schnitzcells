@@ -214,12 +214,13 @@ end
 % make figure with full screen size
 scrsz = get(0, 'ScreenSize');
 % fig1 = figure('Position', [1 scrsz(4) scrsz(3) scrsz(4)], 'Name', figureName);
-fig1 = figure('Position', [126 scrsz(4)-150 scrsz(3)-125 scrsz(4)-150], 'Name', figureName, 'visible','off');
+fig1 = figure('Position', [100 100 scrsz(3)-125 scrsz(4)-200], 'Name', figureName, 'visible','off');
 hold on;
 
 if useColor
   % loop over colors, and plot points with that color
   for k=1:size(map,1) 
+  %for k=1:size(map,1)*0.3
     if any(plot_Z_scaled==k)
       line( 'Xdata',plot_X(plot_Z_scaled==k), ...
             'Ydata',plot_Y(plot_Z_scaled==k), ...

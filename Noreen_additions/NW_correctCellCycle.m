@@ -56,6 +56,8 @@ function schnitzcells=NW_correctCellCycle(p,schnitzcells,piecepoly,fieldToCorrec
 % NW_saveDir         where corrected schnitzcells structure should be
 %                    stored.
 %                    default: posXcrop/data/
+% 'mytimefield'      timefield corresponding to fieldY (must have sdame length).
+%                    E.g. 'time' or 'time_atdR'. Default: 'time'
 %
 %
 
@@ -109,6 +111,25 @@ if exist(p.NW_saveDir)~=7
     return;
   end
 end
+
+if ~existfield(p,'mytimefield')    
+  p.mytimefield = 'time';
+end
+mytimefield=p.mytimefield; % easier to write down
+% check if total length of datafield and timefield are identical
+alldata=[schnitzcells.(fieldToCorrect)];
+if strcmp('time',mytimefield)~=1
+    idx=find(~isnan(alldata)); % muP15_fitNew can contain 'NaN' data but no correpsonding time point data
+                               % for muP15_fitNew_all, the NaN values have
+                               % to stay... argh
+    alldata=alldata(idx);
+end
+alltime=[schnitzcells.(mytimefield)];
+if length(alldata)~=length(alltime)
+    disp(['Datafield and timefield don''t correspond (have different size).'])
+    return
+end
+clear alldata alltime
 %--------------------------------------------------------------------------
 
 %--------------------------------------------------------------------------
@@ -133,9 +154,9 @@ end
 % if useForPlot has not been set
 useAllcells = ~existfield(schnitzcells(1),'useForPlot'); %if useForPlot has not been set at all
 
-% if cells with non-complete cycle are corrected, we need "time" ,
+% if cells with non-complete cycle are corrected, we need the fields "time" ,
 % 'av_birthLength_fitNew','birthTime', 'av_divLength_fitNew','interDivTime'
-% "av_mu_fitNew" field
+% "av_mu_fitNew" field (the may be 'NaN')
 if p.restrictToCompleteCycle==0
     if (~existfield(schnitzcells(1),'av_birthLength_fitNew'))
       disp(['Field ''av_birthLength_fitNew'' does not exist. Exiting...']);
@@ -164,37 +185,38 @@ if p.restrictToCompleteCycle==0
 end
 %--------------------------------------------------------------------------
 
-%--------------------------------------------------------------------------
-% get time field which corresponds to fieldToCorrect
-%--------------------------------------------------------------------------
-% if fieldToCorrect exists for all frames, take "frames" as timefield
-testschnitznr=100;
-if length(schnitzcells(testschnitznr).frames)==length(schnitzcells(testschnitznr).(fieldToCorrect))
-     mytimefield='frames';
+% %--------------------------------------------------------------------------
+% % get time field which corresponds to fieldToCorrect
+% %--------------------------------------------------------------------------
+% % if fieldToCorrect exists for all frames, take "frames" as timefield
+% testschnitznr=100;
+%if length(schnitzcells(testschnitznr).frames)==length(schnitzcells(testschnitznr).(fieldToCorrect))
+%     mytimefield='frames';
    
         
-% if fieldToCorrect exists for less frames, try with fluo-frames as timefield
-else
-     %get 1st real fluor timefield
-     if strcmp(p.fluor1,'none')==0
-          mytimefield=[upper(p.fluor1) '_frames'];
-     elseif strcmp(p.fluor2,'none')==0
-          mytimefield=[upper(p.fluor2) '_frames'];
-     elseif strcmp(p.fluor3,'none')==0
-          mytimefield=[upper(p.fluor2) '_frames'];
-     else
-          disp(['Don''t find appropriate time points (frames) for fieldToCorrect. No FluorColor? Exiting...']);
-          return
-     end
-     if length(schnitzcells(testschnitznr).(mytimefield))==length(schnitzcells(testschnitznr).(fieldToCorrect))
-          disp(['Will use ' mytimefield ' as time/frame field.'])
-     else
-          disp(['Don''t find appropriate time points (frames) for fieldToCorrect. Exiting...']);
-          disp(['I checked fields of schnitz ' num2str(testschnitznr) '. Maybe bad choice. Change in code testschnitznr=...'])
-          return
-     end
-end
-%--------------------------------------------------------------------------
+% % if fieldToCorrect exists for less frames, try with fluo-frames as timefield
+%else
+%     %get 1st real fluor timefield
+
+%if strcmp(p.fluor1,'none')==0
+ %         mytimefield=[upper(p.fluor1) '_frames'];
+ %    elseif strcmp(p.fluor2,'none')==0
+ %         mytimefield=[upper(p.fluor2) '_frames'];
+ %    elseif strcmp(p.fluor3,'none')==0
+ %         mytimefield=[upper(p.fluor2) '_frames'];
+ %    else
+ %         disp(['Don''t find appropriate time points (frames) for fieldToCorrect. No FluorColor? Exiting...']);
+ %         return
+%     end
+%     if length(schnitzcells(testschnitznr).(mytimefield))==length(schnitzcells(testschnitznr).(fieldToCorrect))
+%          disp(['Will use ' mytimefield ' as time/frame field.'])
+%     else
+%          disp(['Don''t find appropriate time points (frames) for fieldToCorrect. Exiting...']);
+%          disp(['I checked fields of schnitz ' num2str(testschnitznr) '. Maybe bad choice. Change in code testschnitznr=...'])
+%          return
+%     end
+%end
+% %--------------------------------------------------------------------------
 
 
 
@@ -288,182 +310,258 @@ end
 for schnitz=1:length(schnitzcells) 
     if useAllcells | schnitzcells(schnitz).useForPlot % test: use schnitz
         
-        % CORRECT SCHNITZES WITH COMPLETE CELL CYCLE
-        if schnitzcells(schnitz).completeCycle==1     
-            clear dataY totalTime YdataTime dataY_subtr dataY_div
+      % ************************
+        if ~isempty(schnitzcells(schnitz).(fieldToCorrect)) % sometimes weird (long) cells don't have fluo frames
             
-            % number of frames a schnitz exists (frames used as proxy for time)    
-            totalTime=length(schnitzcells(schnitz).frames); 
-            % absolute time points (in frames) of fieldToCorrect with initial 
-            % birth frame set to 0
-            YdataTime=schnitzcells(schnitz).(mytimefield)-schnitzcells(schnitz).frames(1); 
-            % relative time (birth=0. last frame=(#frames-1)/#frames)
-            YdataTime=YdataTime/totalTime; 
-            
-            %get fieldToCorrect data of this schnitz
-            dataY=schnitzcells(schnitz).(fieldToCorrect);
-            
-            %create arrays for corrected data
-            dataY_subtr=[]; %zeros(length(dataY),1);
-            if addDivision==1
-                dataY_div=[]; %zeros(length(dataY),1);
-            end
-   
-            if length(YdataTime)>0 %should always be the case for complete cycle
-                % STILL TO TEST! BLUBB!
-                % If dataY is one shorter than YdataTime, remove
-                % last time point of YdataTime, since last (daughter) datapoint of dataY is missing 
-                % (happens when: 
-                % - not complete cell cycle
-                % - complete celly cycle, but daughters don't have
-                % any fluor image
-                if length(YdataTime)==length(dataY)+1
-                      YdataTime(end)=[];
-                end       
-                % ****
-                
-                % correction by subtraction
-                dataY_subtr=dataY-ppval(piecepoly,YdataTime)+SplineMeanToSubstract;
-                % % correction by division
-                %dataY_div=dataY./(ppval(piecepoly,YdataTime)+forceShift).*SplineMeanToDivide;  %DOES NOT WORK YET
-                if addDivision==1
-                    dataY_div=dataY./ppval(piecepoly,YdataTime).*SplineMeanToDivide; 
-                end
-            end
-            
-            % add to schnitzcells
-            schnitzcells(schnitz).(field_subtr)=dataY_subtr;
-            if addDivision==1
-                    schnitzcells(schnitz).(field_div)=dataY_div;
-            end
-            
-        
-        % TREAT SCHNITZES WITH INCOMPLETE CELL CYCLE   
-        % here, the 'div' case is ignored
-        elseif schnitzcells(schnitz).completeCycle==0    
-            % only consider complete cycle -> associate empty array
-            % (useful?)
-            if p.restrictToCompleteCycle==1
-                schnitzcells(schnitz).(field_subtr)=[]; % if problems: change to array of NaN (NW 2012-03)
-            
-            % correct incomplete schnitzcell cycles by estimate
-            elseif p.restrictToCompleteCycle==0
+            % ------------------------------------------------
+            % CORRECT SCHNITZES WITH COMPLETE CELL CYCLE
+            % ------------------------------------------------
+            if schnitzcells(schnitz).completeCycle==1     
                 clear dataY totalTime YdataTime dataY_subtr dataY_div
+
+           %     % number of frames a schnitz exists (frames used as proxy for time)    
+           %     totalTime=length(schnitzcells(schnitz).frames); 
+           %     % absolute time points (in frames) of fieldToCorrect with initial 
+           %     % birth frame set to 0
+           %     YdataTime=schnitzcells(schnitz).(mytimefield)-schnitzcells(schnitz).frames(1); 
+           %     % relative time (birth=0. last frame=(#frames-1)/#frames)
+           %     YdataTime=YdataTime/totalTime; 
+
+                 totalTime=schnitzcells(schnitz).divTime-schnitzcells(schnitz).birthTime;
+                YdataTime=schnitzcells(schnitz).(mytimefield)-schnitzcells(schnitz).birthTime; %time points in [min] with respect to birth time of cell
+                YdataTime=YdataTime/totalTime; % time points normalized to interval [0 1]  -> phase
+        
+         
                 
-                if isnan(schnitzcells(schnitz).av_mu_fitNew) %very late cells ->no growth rate
-                    partiallifetime=1/meannumberframes; %set its growth rate to average
-                else
-                    % time [min] since schnitz was born
-                   
-                    % SET BIRTHTIME OF FIRST SCHNITZ TO=0
-                    % ROUGH ESTIMATE BUT SCHNITZ WILL PROBABLY NEVER BE
-                    % USED AND OTHERWISE DJK_getBranches collapses
-                    if isnan(schnitzcells(schnitz).birthTime)
-                        partiallifetime=schnitzcells(schnitz).time(length(schnitzcells(schnitz).time))...
-                            + 0.5*(schnitzcells(schnitz).time(2)-...
-                        schnitzcells(schnitz).time(1));
-                    else
-                        partiallifetime=schnitzcells(schnitz).time(length(schnitzcells(schnitz).time))-...                    
-                        schnitzcells(schnitz).birthTime + 0.5*(schnitzcells(schnitz).time(2)-...
-                            schnitzcells(schnitz).time(1));
-                        % maybe last correction is wrong, but I think Daan
-                        % associated birth and division to somewhere between
-                        % the frames
-                    end
+                %get fieldToCorrect data of this schnitz
+                dataY=schnitzcells(schnitz).(fieldToCorrect);
 
-                    % time, after which cell theoretically would have length
-                    % increase by factor "meanlengthfrac"
-                    % meanlengthfrac = 2^(lifetime/60*mu)
-                    % **** Here, the estimate comes in, that every cell is
-                    % supposed to grow by a factor meanlengthfrac before
-                    % division ******
-                    predictedlifetime=60*log(meanlengthfrac)/(log(2)*schnitzcells(schnitz).av_mu_fitNew);
+
+                %create arrays for corrected data
+                dataY_subtr=[]; %zeros(length(dataY),1);
+                if addDivision==1
+                    dataY_div=[]; %zeros(length(dataY),1);
                 end
 
-                % in case cell is already longer, assumes that it's gonna
-                % divide in the next frame
-                if predictedlifetime<=partiallifetime
-                    % number of frames in whic schnitz is supposed to exist
-                    totalTime=length(schnitzcells(schnitz).frames); 
-                    
-                    %tell user
-                    disp(['schnitz ' num2str(schnitz) ': actual frames=' num2str(totalTime) ...
-                        ' estimated frames=id'])
-                else
-                    % position in cell cycle (0 to 1)
-                    phi=partiallifetime/predictedlifetime;
-                    % # frames corresponding to phi
-                    partialframes=length(schnitzcells(schnitz).frames)-1;
-                    % estimate number of frames cell will live in
-                    allframesestimate=round(partialframes/phi);
-                        
-                    % get proxy for total Time
-                    totalTime=1+allframesestimate;
-                    
-                    % if the #existing frames is too low, the estimate
-                    % can be very crappy.
-                    % if less then 50% of average life time recorded
-                    % and estimatedframenumber higher/lower than
-                    % 1.3*max (cells get slower in end!) or min of
-                    % complete cell cycle, then ste to these border
-                    % values
-                    if ((partialframes+1)<0.6*meannumberframes) & (totalTime>1.3*max(numberframes))
-                            totalTime=1.3*max(numberframes);
-                    elseif ((partialframes+1)<0.5*meannumberframes) & (totalTime<min(numberframes))
-                            totalTime=min(numberframes);
-                    end                    
-                        
-                    %tell user
-                    disp(['schnitz ' num2str(schnitz) ': actual frames=' num2str(partialframes+1) ...
-                         ' estimated frames=' num2str(totalTime)])
-                end
-                        
-                    % *****************************************
-                    % now proceed like in completeCycle==1 case
-                    % *****************************************
-                    % absolute time points (in frames) 
-                    YdataTime=schnitzcells(schnitz).(mytimefield)-schnitzcells(schnitz).frames(1); 
-                    % relative time (birth=0. last frame=(#frames-1)/#frames)
-                    YdataTime=YdataTime/totalTime; 
-
-                    %get fieldToCorrect data of this schnitz
-                    dataY=schnitzcells(schnitz).(fieldToCorrect);
-                    
-                    %create arrays for corrected data
-                    dataY_subtr=[]; %zeros(length(dataY),1);
-                    if addDivision==1
-                        dataY_div=[]; %zeros(length(dataY),1);
-                    end
+          
    
-                    if length(YdataTime)>0 %should always be the case for complete cycle
-                        % STILL TO TEST! BLUBB!
-                        % If dataY is one shorter than YdataTime, remove
-                        % last time point of YdataTime, since last (daughter) datapoint of dataY is missing 
-                        % (happens when: 
-                        % - not complete cell cycle
-                        % - complete celly cycle, but daughters don't have
-                        % any fluor image
-                        if length(YdataTime)==length(dataY)+1
-                            YdataTime(end)=[];
-                        end
-                        % ***
-                        
-                        if ~isempty(dataY) % cells with only 1 fluor image don't possess rates! -> leave empty array
-                            % correction by subtraction
-                            dataY_subtr=dataY-ppval(piecepoly,YdataTime)+SplineMeanToSubstract;
-                            if addDivision==1 %correct for division
-                                dataY_div=dataY./ppval(piecepoly,YdataTime).*SplineMeanToDivide; 
-                            end
-                        end
-                    end
+                if length(YdataTime)>0  %should always be the case for complete cycle
+       %             % STILL TO TEST! BLUBB!
+       %             % If dataY is one shorter than YdataTime, remove
+       %             % last time point of YdataTime, since last (daughter) datapoint of dataY is missing 
+       %             % (happens when: 
+       %             % - not complete cell cycle
+       %             % - complete celly cycle, but daughters don't have
+       %             % any fluor image
+       %             if length(YdataTime)==length(dataY)+1
+       %                   YdataTime(end)=[];
+       %             end       
+       %             % ****
 
-                    % add to schnitzcells
-                    schnitzcells(schnitz).(field_subtr)=dataY_subtr;
+                    % correction by subtraction
+                    dataY_subtr=dataY-ppval(piecepoly,YdataTime)+SplineMeanToSubstract;
+                    % % correction by division
+                    %dataY_div=dataY./(ppval(piecepoly,YdataTime)+forceShift).*SplineMeanToDivide;  %DOES NOT WORK YET
                     if addDivision==1
-                        schnitzcells(schnitz).(field_div)=dataY_div;
+                        dataY_div=dataY./ppval(piecepoly,YdataTime).*SplineMeanToDivide; 
                     end
+                end
+
+                % add to schnitzcells
+                schnitzcells(schnitz).(field_subtr)=dataY_subtr;
+                if addDivision==1
+                        schnitzcells(schnitz).(field_div)=dataY_div;
+                end
+                 
+            % ------------------------------------------
+            % TREAT SCHNITZES WITH INCOMPLETE CELL CYCLE   
+            % ------------------------------------------
+            % here, the 'div' case is ignored
+            elseif schnitzcells(schnitz).completeCycle==0    
+                % only consider complete cycle -> associate empty array
+                % (useful?)
+                % -----------------------
+                % don't add data
+                % -----------------------
+                if p.restrictToCompleteCycle==1
+                    schnitzcells(schnitz).(field_subtr)=[]; % if problems: change to array of NaN (NW 2012-03)
+
+                % ----------------------
+                % correct incomplete schnitzcell cycles by estimate
+                % -----------------------
+                elseif p.restrictToCompleteCycle==0
+                    clear dataY totalTime YdataTime dataY_subtr dataY_div
+
+                    % ------------------------------
+                    % no average growth rate exists for cell
+                    % ------------------------------
+                    if isnan(schnitzcells(schnitz).av_mu_fitNew) %very late cells (or first cell)  ->no growth rate
+              %          %partiallifetime=1/meannumberframes; 
+              %          %set its growth rate to average
+              %          %for this case, unit is NOT in minutes!
+              %          partiallifetime=length(schnitzcells(schnitz).frames)+1;
+              %          predictedlifetime=meannumberframes;
+                         if ~isnan(schnitzcells(schnitz).birthTime)
+                             partiallifetime=schnitzcells(schnitz).time(end)-schnitzcells(schnitz).birthTime;
+                         else
+                             partiallifetime=schnitzcells(schnitz).divTime-schnitzcells(schnitz).time(1);
+                         end
+                        predictedlifetime=meantime;
+                        totalTime=meantime;
+                        disp(['schnitz ' num2str(schnitz) ': measured time=' num2str(partiallifetime) ...
+                                 ' estimated life time=' num2str(meantime)]);
+                    
+                    % ---------------------------
+                    % average growth rate exists
+                    % ---------------------------
+                    else  
+                        % time [min] since schnitz was born: partiallifetime
+
+                        % SET BIRTHTIME OF FIRST SCHNITZ TO=0
+                        % ROUGH ESTIMATE BUT SCHNITZ WILL PROBABLY NEVER BE
+                        % USED AND OTHERWISE DJK_getBranches collapses
+                        if isnan(schnitzcells(schnitz).birthTime)
+                            partiallifetime=schnitzcells(schnitz).time(end); %...
+                                %+ 0.5*(schnitzcells(schnitz).time(2)-...
+                            %schnitzcells(schnitz).time(1));
+                        else
+                            partiallifetime=schnitzcells(schnitz).time(end)- schnitzcells(schnitz).birthTime ;
+                        %+ 0.5*(schnitzcells(schnitz).time(2)-schnitzcells(schnitz).time(1));
+                         
+                        end
+
+                        % time, after which cell theoretically would have length
+                        % increase by factor "meanlengthfrac"
+                        % meanlengthfrac = 2^(lifetime/60*mu)
+                        % **** Here, the estimate comes in, that every cell is
+                        % supposed to grow by a factor meanlengthfrac before
+                        % division ******
+                        predictedlifetime=60*log(meanlengthfrac)/(log(2)*schnitzcells(schnitz).av_mu_fitNew);
+                    
+                        % in case cell is already longer, assumes that it's gonna
+                        % divide in the next frame
+                        if predictedlifetime<=partiallifetime
+                            % number of frames in whic schnitz is supposed to exist
+               %             totalTime=length(schnitzcells(schnitz).frames); 
+                            totalTime=partiallifetime; 
+
+               %             %tell user
+                            disp(['schnitz ' num2str(schnitz) ': measured time=' num2str(partiallifetime) ...
+                                 ' estimated life time= id']);
+                        else
+                            totalTime=predictedlifetime;
+
+                            % if the #existing time points is too low, the estimate
+                            % can be very crappy.
+                            % if less then 50% of average life time recorded
+                            % and estimated lifetime higher/lower than
+                            % 1.3*max or 1*min (cells get slower in end of experiment!) of
+                            % complete cell cycle, then reset value to these border values
+                            if (partiallifetime<0.5*meantime) & (totalTime>1.3*max(lifetime))
+                                    totalTime=1.3*max(lifetime);
+                            elseif (partiallifetime<0.5*meantime) & (totalTime<min(lifetime))
+                                    totalTime=min(lifetime);
+                            end                    
+
+                            %tell user
+                            disp(['schnitz ' num2str(schnitz) ': measured time=' num2str(partiallifetime) ...
+                                 ' estimated life time=' num2str(totalTime)]);
+                        end % end compare predicted lifetime & partiallifetime
+                    end % disinguish if av_mu_fitNew exists
+
+                        
+             %           % position in cell cycle (0 to 1)
+             %           phi=partiallifetime/predictedlifetime;
+             %           % # frames corresponding to phi
+             %           partialframes=length(schnitzcells(schnitz).frames)-1;
+             %           % estimate number of frames cell will live in
+             %           allframesestimate=round(partialframes/phi);
+
+             %           % get proxy for total Time
+             %           totalTime=1+allframesestimate;
+
+              %          % if the #existing frames is too low, the estimate
+              %          % can be very crappy.
+              %          % if less then 50% of average life time recorded
+              %          % and estimatedframenumber higher/lower than
+              %          % 1.3*max or 0.5*min (cells get slower in end!) of
+              %          % complete cell cycle, then stick to these border
+              %          % values
+              %          if ((partialframes+1)<0.5*meannumberframes) & (totalTime>1.3*max(numberframes))
+              %                  totalTime=1.3*max(numberframes);
+              %          elseif ((partialframes+1)<0.5*meannumberframes) & (totalTime<min(numberframes))
+              %                  totalTime=min(numberframes);
+              %          end                    
+
+              %          %tell user
+              %          disp(['schnitz ' num2str(schnitz) ': actual frames=' num2str(partialframes+1) ...
+              %               ' estimated frames=' num2str(totalTime)])
+              %      end
+
+              % -------------------------------------------------------------------------
+                        % *****************************************
+                        % now proceed like in completeCycle==1 case
+                        % *****************************************
+              % --------------------------------------------------------------------
+             %           % absolute time points (in frames) 
+             %           YdataTime=schnitzcells(schnitz).(mytimefield)-schnitzcells(schnitz).frames(1); 
+             %           % relative time (birth=0. last frame=(#frames-1)/#frames)
+             %           YdataTime=YdataTime/totalTime; 
+                        
+                       % absolute time points (in frames)
+                       if ~isnan(schnitzcells(schnitz).birthTime)
+                           YdataTime=schnitzcells(schnitz).(mytimefield)-schnitzcells(schnitz).birthTime;
+                       else
+                           YdataTime=schnitzcells(schnitz).(mytimefield); % ROUGH ESTIMATE: SCHNITZ 1 IS BORN AT TIME=0
+                       end
+                        % relative time (birth=0. last frame=(#frames-1)/#frames)
+                        YdataTime=YdataTime/totalTime; 
+
+                        %get fieldToCorrect data of this schnitz
+                        dataY=schnitzcells(schnitz).(fieldToCorrect);
+
+                        %create arrays for corrected data
+                        dataY_subtr=[]; %zeros(length(dataY),1);
+                        if addDivision==1
+                            dataY_div=[]; %zeros(length(dataY),1);
+                        end
+
+                %        if length(YdataTime)>0 %should always be the case for complete cycle
+                %            % STILL TO TEST! BLUBB!
+                %            % If dataY is one shorter than YdataTime, remove
+                %            % last time point of YdataTime, since last (daughter) datapoint of dataY is missing 
+                %            % (happens when: 
+                %            % - not complete cell cycle
+                %            % - complete celly cycle, but daughters don't have
+                %            % any fluor image
+                %            if length(YdataTime)==length(dataY)+1
+                %                YdataTime(end)=[];
+                %            end
+                %            % ***
+
+                            if ~isempty(dataY) & ~isnan(dataY) % isnan check: muP15_fitNew can exist as 'nan' vector even though no fluor time point exists
+                                % correction by subtraction
+                                dataY_subtr=dataY-ppval(piecepoly,YdataTime)+SplineMeanToSubstract;
+                                if addDivision==1 %correct for division
+                                    dataY_div=dataY./ppval(piecepoly,YdataTime).*SplineMeanToDivide; 
+                                end
+                            end
+                end % end of: restrictToCompleteCycle yes/no
+
+                        % add to schnitzcells
+                        schnitzcells(schnitz).(field_subtr)=dataY_subtr;
+                        if addDivision==1
+                            schnitzcells(schnitz).(field_div)=dataY_div;
+                        end
             end
-        end
+     
+        else % only for weird long cells
+           schnitzcells(schnitz).(field_subtr)=[];
+           if addDivision==1
+                  schnitzcells(schnitz).(field_div)=[];
+           end 
+        end % end weird long cells *****
+
     end
 end
 
@@ -478,18 +576,4 @@ disp(['Save in ''' p.schnitzNameCycCor ''' completed...']);
 
 
 
-% ******************************************
-% forces noise correction above zero and calculates mean of shifted
-% polynomial (for correction by division)
-% ******************************************
-
-%function [forceShift, SplineMeanToDivide]=NW_getNormalizedSplineDivision(xx,piecepoly);
-%forceShift=0;
-%yy=ppval(piecepoly,xx);
-%MinYvalue=min(yy)
-%if MinYvalue<=0
-%    forceShift=-MinYvalue*1.5
-%    yy=yy+forceShift;
-%end
-%SplineMeanToDivide=mean(yy)
 

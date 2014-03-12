@@ -199,6 +199,20 @@ end
 %--------------------------------------------------------------------------
 % LOOP OVER BRANCHES AND REMOVE DATA OUTSIDE TIME FRAME
 %--------------------------------------------------------------------------
+% remove branches which don't overlap at all with fitTime. Can affect
+% weighing! NW2012-09-12
+removeBranchNrs=[];
+for br=1:length(branches)
+    if max(branches(br).(timeField))<p.fitTime(1);
+        removeBranchNrs=[removeBranchNrs, br];
+        disp('')
+        disp(['Will delete short branch ' num2str(br) '. Can affect weighing.']);
+    end
+end
+branches(removeBranchNrs)=[];
+% end NW
+
+
 % DETERMINE TIME FRAME FOR ALL BRANCHES
 all_time_data = sort([branches.(timeField)]);
 idx = find(all_time_data >= p.fitTime(1));
@@ -212,14 +226,24 @@ disp(['useForPlot time    : ' num2str(round(min(all_time_data))) ' mins till ' n
 disp(['timeFrame          : ' num2str(round(timeFrame(1))) ' mins till ' num2str(round(timeFrame(2))) ' mins']);
 disp(['---------------------------------------------------------------']);
 
+%branches=branches(2:end); % blubb NW2012-05 (manually delete branches that collide with fitTime (errormessage in loop below)
 % loop over branches
 for branchNr = 1:length(branches)
   min_idx = find(branches(branchNr).(timeField)>=timeFrame(1));
   max_idx = find(branches(branchNr).(timeField)<=timeFrame(2));
-  if length(min_idx)==0 | length(max_idx)==0, disp('error with min_idx or max_idx'); end
-
+  if length(min_idx)==0 | length(max_idx)==0 
+      disp('error with min_idx or max_idx'); 
+  end
+  %branchNr %debug
+  
   % alter branches
   branches(branchNr).schnitzNrs = branches(branchNr).schnitzNrs(min_idx(1):max_idx(end));
+  % if errormessage: 2 options (dependeing on error):
+  % - if one branch is too short, delete it out of the "branches"right
+  % before this loop
+  % - if fitTime(2) is too high (larger than framerange), rates will be one
+  % entry short compared to concentrations. lower fitTime(2) a bit. (NW
+  % 2012-06-15)
   for i = 1:length(p.dataFields)
     field = char(p.dataFields(i));
 %     keyboard;

@@ -29,9 +29,15 @@ function []=NW_plot_dependence_on_position(p,plotField,varargin)
 % 'frameRange'      Frame numbers for which plots are calculated. Per
 %                   default: framenr=300 
 % 'colorRange'      Sets borders of colorbar (what input value will be
-%                   plotted in red resp. green). Default: [0.3 0.7]
-%                   (Suitable for mu with average value =0.5.)
-%                   TODO: automatize
+%                   plotted in red resp. green).
+%                   If input is 'automatic', range will be calculated
+%                   automatically from the mean and stddev of plotField of
+%                   ALL schnitzes (including sick ones, excluded ones,
+%                   first frames,...)
+%                   Range will be set to [mean-colorWidth*stddev,
+%                   mean+colorWidth*stddev]. colorWidth=2 is a good
+%                   prefactor but can be changed within the program.
+%
 % 'myColorMap'      Which colormap to choose. By default will be 'hot'. 
 %                   Usually a red-green colormap will be loaded before
 %                   calling this function.
@@ -130,6 +136,75 @@ end
 %--------------------------------------------------------------------------
 
 %--------------------------------------------------------------------------
+% If automated colorRange get range from all schnitz data
+%--------------------------------------------------------------------------
+% create array that contains every data point of plotField for every
+% schnitz (including initial schnitzes, sick schnitzes, excluded schnitzes)
+if strcmp(p.colorRange,'automatic')==1
+    completePlotField=[];
+    for i=1:length(schnitzcells)
+        idx=find(~isnan(schnitzcells(i).(plotField)));
+        if ~isempty(idx)
+            completePlotField=[completePlotField, schnitzcells(i).(plotField)(idx)];
+        end
+    end
+    % get mean and std deviation. choose borders by a factor colorWidth*stddev
+    % away from mean;
+    colorWidth=2;
+    stddevPlotField=std(completePlotField);
+    meanPlot=mean(completePlotField);
+    p.colorRange=[meanPlot-colorWidth*stddevPlotField    meanPlot+colorWidth*stddevPlotField];
+    clear completePlotField;
+end
+%--------------------------------------------------------------------------
+
+%--------------------------------------------------------------------------
+%Get existing FluorColor
+%--------------------------------------------------------------------------
+fluorcolor=p.fluor1;
+if p.fluor1=='none' , fluorcolor=p.fluor2;
+elseif (p.fluor2=='none' & p.fluor1=='none'), fluorcolor=p.fluor3;
+end
+expt=genvarname([ 'expt' fluorcolor]);
+%--------------------------------------------------------------------------
+      
+
+%--------------------------------------------------------------------------
+% Guess which frame field corresponds to plotField (either "frames"or
+% "Y_frames"
+%--------------------------------------------------------------------------
+
+testschnitznr=100;
+% plotField exists for each phase image
+myframefield=[];
+if length(schnitzcells(testschnitznr).frames)==length(schnitzcells(testschnitznr).(plotField))
+        myframefield='frames'; % for length, mu, area,...
+elseif length(schnitzcells(testschnitznr).frames)+1==length(schnitzcells(testschnitznr).(plotField))
+        myframefield='frames'; %necessary for fitted_Y6_mean etc since error in
+   %     data association and sometimes 1 entry to long
+% plotField exists for Fluor image
+else
+    fluorframes=[upper(fluorcolor) '_frames'];
+    if length(schnitzcells(testschnitznr).(fluorframes))==length(schnitzcells(testschnitznr).(plotField))
+        myframefield=fluorframes; % Y6_mean, Y5_mean etc
+    elseif length(schnitzcells(testschnitznr).(fluorframes))+1==length(schnitzcells(testschnitznr).(plotField))
+        myframefield=fluorframes; % Rates: dY5_sum_dt etc have often one datapoint less
+    end
+end
+if isempty(myframefield)
+    disp(['Don''t find appropriate time points (frames) for plotField. I tried fields of schnitz ' num2str(testschnitznr) ...
+                '. If bad choice, change ''testschnitznr'' in program. Exiting...']);
+    return
+else
+    disp(['Will use ' myframefield ' as time/frame field.']);
+end
+
+%--------------------------------------------------------------------------
+
+
+ 
+        
+ %--------------------------------------------------------------------------
 % loop over every frame number in frameRange
 %--------------------------------------------------------------------------
 for framenr=p.frameRange
@@ -140,11 +215,7 @@ for framenr=p.frameRange
     continue
     else
         % prepare for later check if fluorimage exists %Still to check? (NW
-        % 2012-03)
-        expt=genvarname([ 'expt' p.fluor1]);
-        if p.fluor1=='none' , expt=genvarname([ 'expt' p.fluor2]);
-        elseif p.fluor2=='none', expt=genvarname([ 'expt' p.fluor3]);
-        end
+        % 2012-03).         
         eval(['clear ' expt]);
         % now really load segfile
         clear Lc LNsub
@@ -168,7 +239,7 @@ for framenr=p.frameRange
         % [schnitznr1,cellnr1,cenx_cent1,ceny_cent1,mu1 ; 
         %  schnitznr2,cellnr2,cenx_cent2,ceny_cent2,mu2; 
         %  .... ]
-        % cellnr is the cell number in frame framenr. cenx/ceny are x/y
+        % cellnr is the cell number in frame framenr. cenx_cent/ceny_cent are x/y
         % positions in a full size image when the centre of mass of the
         % cell colony is centered in the image (see DJK_tracker_djk). mu:
         % growth rate or respectively any other input (e.g. YFP
@@ -179,18 +250,51 @@ for framenr=p.frameRange
         for schnitzrun=1:length(schnitzcells)
             % check if schnitz is excluded
             if ~ismember(schnitzrun,p.rm_SchnitzNrs)
-                isinframe=find((framenr+1)==schnitzcells(1,schnitzrun).frames); %+1 corrects for error in frame association (1st entry will e.g. be 44, if cell really appears in 43. shift by 1)
-                if ~isempty(isinframe) % schnitzcell exists in frame "framenr"
-                  newcellnr=schnitzcells(1,schnitzrun).cellno(isinframe);
-                  newx=schnitzcells(1,schnitzrun).cenx_cent(isinframe);
-                  newy=schnitzcells(1,schnitzrun).ceny_cent(isinframe);
-                  newmu=schnitzcells(1,schnitzrun).(plotField)(isinframe); 
-                  dataset=[dataset; schnitzrun, newcellnr, newx, newy, newmu];
+                % if schnitz is not excluded, check if schnitz appears in
+                % frame "framnr"
+                frameidx=find((framenr+1)==schnitzcells(1,schnitzrun).frames); %+1 corrects for error in frame association (1st entry will e.g. be 44, if cell really appears in 43. shift by 1)
+                if ~isempty(frameidx) % schnitzcell exists in frame "framenr"
+                    % get data in case of myframefield=frames
+                    if strcmp(myframefield,'frames')==1
+                        newcellnr=schnitzcells(1,schnitzrun).cellno(frameidx);
+                        newx=schnitzcells(1,schnitzrun).cenx_cent(frameidx);
+                        newy=schnitzcells(1,schnitzrun).ceny_cent(frameidx);
+                        newmu=schnitzcells(1,schnitzrun).(plotField)(frameidx); 
+                        dataset=[dataset; schnitzrun, newcellnr, newx, newy, newmu];
+                    else % myframefield=Y_frames
+                        fluoridx=find((framenr+1)==schnitzcells(1,schnitzrun).(myframefield));
+                        % data exists and extra check for last point (there
+                        % often Rate data does not exist any more)
+                        if (~isempty(fluoridx) & length(schnitzcells(schnitzrun).(plotField))>=fluoridx)
+                            newcellnr=schnitzcells(1,schnitzrun).cellno(frameidx); % cellno exists for all frames
+                            newx=schnitzcells(1,schnitzrun).cenx_cent(frameidx);  % so do x,y coordinates
+                            newy=schnitzcells(1,schnitzrun).ceny_cent(frameidx);
+                            newmu=schnitzcells(1,schnitzrun).(plotField)(fluoridx); 
+                            dataset=[dataset; schnitzrun, newcellnr, newx, newy, newmu];
+                        end
+                    end
                 end
+                     
+                  %newcellnr=schnitzcells(1,schnitzrun).cellno(frameidx);
+                  %newx=schnitzcells(1,schnitzrun).cenx_cent(frameidx);
+                  %newy=schnitzcells(1,schnitzrun).ceny_cent(frameidx);
+                  %newmu=schnitzcells(1,schnitzrun).(plotField)(frameidx); 
+                  %dataset=[dataset; schnitzrun, newcellnr, newx, newy, newmu];
+                
             end
         end
         disp(['Data extraction for frame ' num2str(framenr) ' completed.']);
         %--------------------------------------------------------------------------
+        
+        %--------------------------------------------------------------------------
+        % if data set empty, continue with next frame
+        %-------------------------------------------------------------------------- 
+        if isempty(dataset)
+            disp(['Data for ' plotField ' doesn''t exist for frame ' num2str(framenr) '. Will continue with next frame.']);
+            continue
+        end
+        %--------------------------------------------------------------------------
+        
         
         %--------------------------------------------------------------------------
         % calculate distance of each schnitz from centre of colony and
@@ -224,14 +328,15 @@ for framenr=p.frameRange
         [stat_R_mass,stat_P_mass] = corrcoef(mu,dist_mass);
         stat_R_mass = stat_R_mass(2,1);
         stat_P_mass = stat_P_mass(2,1);
-        % fitted line
+        % fitted line BLUBB: also has to be changed to totalleast squares!
+        % NW 2012-05
         stat_fitCoef_arithm = polyfit(dist_arithm,mu,1);
         stat_fitCoef_mass = polyfit(dist_mass,mu,1);
         
         %******************************************************
         
         %--------------------------------------------------------------------------
-        
+ 
         %--------------------------------------------------------------------------
         % 1st plot: segmentation image with colorcoded plotField
         %--------------------------------------------------------------------------
@@ -241,6 +346,8 @@ for framenr=p.frameRange
         % for each coordinate is the value of plotField (e.g. mu) of the
         % corresponding schnitz
         plotFieldImage=zeros(size(segImageFull));
+        %dummy to note where cells are
+        blackwhiteCellImage=zeros(size(segImageFull));
         % loop over all cell numbers
         for cellrun=1:max2(segImageFull) % identical to 1:Lc 
             clear whichposition
@@ -248,6 +355,7 @@ for framenr=p.frameRange
             % necessary for excluded schnitzes
             if ~isempty(whichposition)
                 plotFieldImage(segImageFull==cellrun)=dataset(whichposition,5);
+                blackwhiteCellImage(segImageFull==cellrun)=1;
             else
                 plotFieldImage(segImageFull==cellrun)=0;
             end
@@ -256,9 +364,17 @@ for framenr=p.frameRange
         % for the background Color (must be done, because they otherwise
         % appear in background color)
         % necessary because of strange background color construction
-        % (TODO in future: might be useful to switch indexed image)
+        % (TODO in future: might be useful to switch to indexed image)
         numbercolors=size(p.myColorMap,1); DeltaColor=p.colorRange(2)-p.colorRange(1);
         plotFieldImage(plotFieldImage~=0 & plotFieldImage<(p.colorRange(1)+2/numbercolors*DeltaColor))=p.colorRange(1)+2/numbercolors*DeltaColor;
+        
+        % very crude decreasing of background to a value below zero in case
+        % the colormap extends over zero (for production rates). otherwise
+        % the background will appear in red or green.
+        if p.colorRange(1)<=0
+            plotFieldImage(blackwhiteCellImage==0)=p.colorRange(1)-1000;
+        end
+        
         
         % actual plotting
         fig1=figure(1);

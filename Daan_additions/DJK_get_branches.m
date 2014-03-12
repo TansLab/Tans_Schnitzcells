@@ -211,6 +211,8 @@ disp(['useForPlot time    : ' num2str(round(min(all_time_data))) ' mins till ' n
 disp(['timeFrame          : ' num2str(round(timeFrame(1))) ' mins till ' num2str(round(timeFrame(2))) ' mins']);
 disp(['---------------------------------------------------------------']);
 
+
+
 % loop over branches
 for branchNr = 1:length(branchData)
   min_idx = find(branchData(branchNr).(timeField)>=timeFrame(1));

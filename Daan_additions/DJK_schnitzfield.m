@@ -148,6 +148,11 @@ fields = {...
   'fluor1' ...                      % NW 111202
   'fluor2' ...                      % NW 111202
   'fluor3' ...                      % NW 111202
+  'weighing' ...                    % NW 120511 DJK_plotcrosscorr_stderror_store
+  'bias'  ...                       % NW 120511 DJK_plotcrosscorr_stderror_store
+  'extraNorm'  ...                  % NW 120511 DJK_plotcrosscorr_stderror_store
+  'timeField'     ...               % NW 120511 DJK_plotcrosscorr_stderror_store
+  'spacingError'      ...           % NW 120511 DJK_plotcrosscorr_stderror_store
     
   };
 

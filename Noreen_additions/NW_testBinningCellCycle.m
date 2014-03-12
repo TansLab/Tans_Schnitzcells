@@ -28,13 +28,18 @@ function []=NW_testBinningCellCycle(p,schnitzcells,fieldY,numberBinArray,varargi
 % 'ylimCC'            Forwarded to NW_plotCellCycle
 % 'interpolMethodCC'  Forwarded to NW_plotCellCycle
 % 'periodicDataCC'    Forwarded to NW_plotCellCycle
-% 'borderBinSizeCC'     Forwarded to NW_plotCellCycle
+% 'borderBinSizeCC'   Forwarded to NW_plotCellCycle
+% 'equalBinsCC'       Forwarded to NW_plotCellCycle
+% 'ignorePointsCC'    Forwarded to NW_plotCellCycle
+% 'modeCC'            Forwarded to NW_plotCellCycle
+% 'mytimefieldCC'     Forwarded to NW_plotCellCycle
 %
-% Note: more exotic features of NW_plotCellCycleDependence (such as mode
-% 'absolute' or 'relative' etc.) have to be changed directly here in this
+% Note: more exotic features of NW_plotCellCycleDependence (time-reference-mode) 
+% have to be changed directly here in this
 % function and are not externally accessible
 
-
+%akward
+global extschnitzcounter;
 
 %--------------------------------------------------------------------------
 % Input error checking and parsing
@@ -136,6 +141,18 @@ end
 if existfield(p,'borderBinSizeCC')
     myInput=[myInput, ', ''borderBinSize'', ' num2str(p.borderBinSizeCC)];
 end
+if existfield(p,'equalBinsCC')
+    myInput=[myInput, ', ''equalBins'', ' num2str(p.equalBinsCC)];
+end
+if existfield(p,'ignorePointsCC')
+    myInput=[myInput, ', ''ignorePoints'', ' num2str(p.ignorePointsCC)];
+end
+if existfield(p,'modeCC')
+    myInput=[myInput, ', ''mode'', ''' p.modeCC ''''];
+end
+if existfield(p,'mytimefieldCC')
+    myInput=[myInput, ', ''mytimefield'', ''' p.mytimefieldCC ''''];
+end
 %--------------------------------------------------------------------------
 % Loop over numberBinArray and plot
 %--------------------------------------------------------------------------
@@ -183,9 +200,12 @@ for i=2:length(numberBinArray)
 end
 set(0,'CurrentFigure',fig1)
 eval(['legend(', mylegend, ',''Location'',''S'')']);
+title([p.movieDate ' ' p.movieName '.     ' fieldY '.   plotted ' num2str(extschnitzcounter) ' schnitzes'], ...
+      'interpreter','none','FontWeight','bold','FontSize',12);
 set(0,'CurrentFigure',fig2)  
 eval(['legend(', mylegend, ',''Location'',''S'')']);
-title([p.interpolMethodCC, ' interpolation'])
+title([p.movieDate ' ' p.movieName '.     ' fieldY '.    ' p.interpolMethodCC, ' interpolation.   plotted ' num2str(extschnitzcounter) ' schnitzes'], ...
+      'interpreter','none','FontWeight','bold','FontSize',12);
 
 %--------------------------------------------------------------------------
 

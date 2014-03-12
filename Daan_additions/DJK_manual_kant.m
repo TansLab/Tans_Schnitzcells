@@ -248,8 +248,10 @@ if ct
         done=1;
     elseif cc =='',
         disp('you typed shift');
-    elseif cc=='i'                              % Noreen 2012-01
-        Lout=imfill(Lout,'holes');
+    elseif cc=='i' & Lout(round(pos(1,2)),round(pos(1,1)))         % Noreen 2012-05. fills 1 cell       
+        cellonlyImage=(Lout==Lout(pos(1,2),pos(1,1))); % =1 for chosen cell, =0 elsewhere
+        cellonlyImage=imfill(cellonlyImage,'holes');
+        Lout(cellonlyImage==1)=Lout(pos(1,2),pos(1,1)); 
     elseif cc=='h'                              % Philippe 2012-02
         Lout = PN_reseed(Lout,phsub,round(pos(1,2)),round(pos(1,1)));
     

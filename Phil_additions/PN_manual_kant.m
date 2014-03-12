@@ -1,10 +1,21 @@
 function  [Lout,OKorNot,quit_now,dontsave,addtolist,crop_pop,newrect,savetemp,backwards,gotoframenum,DJK_settings] = ...
     PN_manual_kant(p,Lin,L_prec,phin,rect,rect_prec,phsub,DJK_settings,assistedCorrection)
 
+% *******
+% TODO: include "updatedCellNumbers" in program (PN_imshowlabel) so that
+% regionprops are only calculated for this numbers
+% ********
+
+% elapsed time for frame 444 in 2012-05-08. 390 cells
+
+
 
 iptsetpref('imshowborder','tight');
 backwards = 0;
 global pos Limage ourfig res pp phfig
+
+%set(phfig,'Visible', 'on') % ugly way to force phase image away from foreground during computation time NW2012-10-05
+
 
 pp=0;pps=0;
 zd3=25;
@@ -25,25 +36,89 @@ done=0;
 quit_now=0;
 pos=[1 1];
 
+% create array with cell numbers that changed (-> regioprops have to be
+% recalculated) (NW2012-05-10)
+updatedCellNumbers=[];
+%
+
 while ~done
     clear j*  %j1=0;j2=0;
-    figure(ourfig);
-    clf reset;
     
-    if assistedCorrection && ~isempty(L_prec)
-        Lshow = PN_imshowlabel(Lout,rect,L_prec,rect_prec,'phaseImage',phsub);
-        Lshow = imresize_old(Lshow,res);
-        imshow(Lshow);
+    % ** NW 2012-05-10 **
+    
+    if ~ishandle(ourfig) % if segmented image figure doesn't exist yet (should never be the case)
+       
+        figure(ourfig);
+        clf reset;
+    
+        if assistedCorrection && ~isempty(L_prec)
+            Lshow = PN_imshowlabel(Lout,rect,L_prec,rect_prec,'phaseImage',phsub);
+            Lshow = imresize_old(Lshow,res);
+            imshow(Lshow);
+            
+        else
+            DJK_imshowlabel(imresize_old(Lout,res),'phaseImage',imresize_old(phsub,res));
+        end
+    
+        pos11 = get(phfig,'position'); % current position
+        set(ourfig, 'position', pos11); % DJK 090117
+    
+         set(ourfig,'name',['Pos: ',num2str(pos(1,2)),' , ',num2str(pos(1,1)),...
+            '  Val: ',num2str(double(Limage(pos(1,2),pos(1,1))))]);
     else
-        DJK_imshowlabel(imresize_old(Lout,res),'phaseImage',imresize_old(phsub,res));
+        %tic %get time cost of operations
+        pos11 = get(phfig,'position'); % current position
+        %stop1=toc
+        set(ourfig, 'position', pos11); % DJK 090117
+        %stop2=toc
+        set(0,'CurrentFigure',ourfig);
+        %get(ourfig,'Position')
+        %clf reset %inserted further below
+        %get(ourfig,'Position')
+        %stop3=toc
+        if assistedCorrection && ~isempty(L_prec)
+            Lshow = PN_imshowlabel(Lout,rect,L_prec,rect_prec,'phaseImage',phsub); %slow step 0.45sec! (NW 2012-05-10)
+            %stop4a=toc %PN_imshow.. is slow step (0.45 sec)
+            Lshow = imresize_old(Lshow,res);
+            %stop5a=toc
+            figure(ourfig) % NW2012-05-10
+            %clf reset;% NW2012-05-10
+            imshow(Lshow,'InitialMagnification','fit');
+            
+            
+            %stop6a=toc
+        else
+            clf reset; %NW2012-05-10
+            DJK_imshowlabel(imresize_old(Lout,res),'phaseImage',imresize_old(phsub,res)); %slow step 0.2sec! (NW 2012-05-10)
+             set(ourfig, 'position', pos11); % DJK 090117 % a little awkward to redo, but should only affect first image
+            %stop4b=toc
+        end
+        set(ourfig,'name',['Pos: ',num2str(pos(1,2)),' , ',num2str(pos(1,1)),...
+            '  Val: ',num2str(double(Limage(pos(1,2),pos(1,1))))]);
+        %stop7=toc
     end
+        
     
-    pos11 = get(phfig,'position'); % current position
-    set(ourfig, 'position', pos11); % DJK 090117
+    % ***********
     
+ % *** OLD ***
+  %  figure(ourfig);
+  %  clf reset;
+  %  
+  %  if assistedCorrection && ~isempty(L_prec)
+  %      Lshow = PN_imshowlabel(Lout,rect,L_prec,rect_prec,'phaseImage',phsub);
+  %      Lshow = imresize_old(Lshow,res);
+  %      imshow(Lshow);
+  %  else
+  %      DJK_imshowlabel(imresize_old(Lout,res),'phaseImage',imresize_old(phsub,res));
+  %  end
+    
+  %  pos11 = get(phfig,'position'); % current position
+  %  set(ourfig, 'position', pos11); % DJK 090117
+  %  *** OLD ***
+  
     set(ourfig,'name',['Pos: ',num2str(pos(1,2)),' , ',num2str(pos(1,1)),...
         '  Val: ',num2str(double(Limage(pos(1,2),pos(1,1))))]);
-    
     
     
     set(ourfig,'WindowButtonMotionFcn',['global pos Limage ourfig res pp phfig;pos=max(1,round((1/res)*get(gca,''CurrentPoint'')));',...
@@ -53,20 +128,25 @@ while ~done
         '''  Val: '',curr_val]);']);
     %   '''  Val: '',curr_val]);pp=showbox(phfig,pos,pp,size(Limage),res);figure(ourfig);']);
     
+    % blubb
+    % hier the regionprobs of the next and previous image could already be
+    % calculated to quicken update of image when frame changes
+    % NW 2012-05-10
+    
     realpress = 0;
     while ~realpress,
         ct=waitforbuttonpress;
         cc=get(ourfig,'currentcharacter');
-        if (ct==1) && isempty(cc),
+        if (ct==1) && isempty(cc), % if keyboard pressed (ct==1), check if valid key (not ctrl etc)
             realpress=0;
-        else
+        else % ct==0: mouseclick
             realpress=1;
         end;
     end;
     
     set(ourfig,'WindowButtonMotionFcn','');
     %if ct cc=get(1,'currentcharacter');else cc=get(1,'selectiontype');end
-    if ct
+    if ct % key press
         % cc=get(ourfig,'currentcharacter');
         if cc==' '
             OKorNot=1;
@@ -92,7 +172,7 @@ while ~done
                 figure(ourfig);
                 pps=1;
             end
-        elseif cc=='b'
+        elseif cc=='b' %does not work.
             if bb delete(bb);delete(bbp);end;bb=0;
             if bbs
                 bbs=0;
@@ -130,6 +210,7 @@ while ~done
             else
                 Lzoom(subaddcell)=max2(Lout)+1;
                 Lout(zoomrect(1):zoomrect(2),zoomrect(3):zoomrect(4))=Lzoom;
+                updatedCellNumbers=[updatedCellNumbers;max2(Lout)+1]; % blubb
             end
             close(addfig)
             figure(ourfig)
@@ -142,9 +223,16 @@ while ~done
                 subcolroi=subcolroi2;
             end
             Lout=(double(Lout).*double(subcolroi));
-            %           Lout=renumberimage(Lout);
+            %           Lout=renumberimage(Lout); %don't use if you want to
+            %           work with "updatedCellNumbers"!
+            % get cellnumbers that were affected by blacking out
+            affectedcells=unique(Lout.*(1-subcolroi));
+            affectedcells=affectedcells(affectedcells>0);
+            updatedCellNumbers=[updatedCellNumbers;affectedcells]; %blubb
+            %
             done=0;
-        elseif cc=='k'
+        elseif cc=='k' % don't use!
+            disp(['obsolete and not correct version!'])
             subcolroi=imresize_old(~roipoly,1/res);
             if size(subcolroi,1)~=size(Lout,1) | size(subcolroi,2)~=size(Lout,2)
                 subcolroi2=zeros(size(Lout));
@@ -153,6 +241,7 @@ while ~done
             end
             Lout=(double(Lout).*double(subcolroi));
             %           Lout=renumberimage(Lout);
+            
             done=0;
             
         elseif cc=='t'
@@ -171,9 +260,15 @@ while ~done
             end
             Lout=(double(Lout).*double(subcolroi));
             %               Lout=renumberimage(Lout);
+            % get cellnumbers that were affected by blacking out
+            affectedcells=unique(Lout.*(1-subcolroi));
+            affectedcells=affectedcells(affectedcells>0);
+            updatedCellNumbers=[updatedCellNumbers;affectedcells]; %blubb
+            %
             done=0;
             
         elseif cc == 'c'
+            disp(['don''t use!'])
             crop_pop=1;
             done=1;
             extra= 15; % <- extra number of pixels on either side of highlighted region
@@ -202,6 +297,8 @@ while ~done
             OKorNot=1;
             done=1;
             dontsave=1;
+            % blubb! special case because everything has to be
+            % recalculated!!! NW 2012-05-10. updatedCellNumbers=ALL
         elseif cc == 'w'
             savetemp=2;
             done=1;
@@ -215,36 +312,42 @@ while ~done
             dontsave=1;
             backwards = 1;
         elseif cc == 'R'
-            Lout=renumberimage(Lout);
-        elseif cc == 'r'
-            % renumber this cell
-            cutx=round(pos(1,2));
-            cuty=round(pos(1,1));
-            chosencolor=Lout(cutx,cuty);
-            cell=zeros(size(Lout));
-            cell(Lout==Lout(cutx,cuty))=Lout(Lout==chosencolor);
-            [fx,fy] = find(cell);
-            xmin = max(min(fx)-5,1);
-            xmax = min(max(fx)+5,size(cell,1));
-            ymin = max(min(fy)-5,1);
-            ymax = min(max(fy)+5,size(cell,2));
-            subcell = cell(xmin:xmax, ymin:ymax);
-            cell(xmin:xmax,ymin:ymax) = bwlabel(subcell,4);
-            Lout(Lout==Lout(cutx,cuty))=0;
-            Lout(cell==1) = chosencolor;
-            for k = 2:max2(cell),
-                Lout(cell==k) = max2(Lout)+k-1;
-            end;
+            disp(['currently not in use']) %NW 2012-05-10
+            %   Lout=renumberimage(Lout); 
+        elseif cc == 'r' % 
+            disp(['currently not in use']) %NW 2012-05-10
+             %   % renumber this cell
+             %   cutx=round(pos(1,2));
+             %   cuty=round(pos(1,1));
+             %   chosencolor=Lout(cutx,cuty);
+             %   cell=zeros(size(Lout));
+             %   cell(Lout==Lout(cutx,cuty))=Lout(Lout==chosencolor);
+             %   [fx,fy] = find(cell);
+             %   xmin = max(min(fx)-5,1);
+             %   xmax = min(max(fx)+5,size(cell,1));
+             %   ymin = max(min(fy)-5,1);
+             %   ymax = min(max(fy)+5,size(cell,2));
+             %   subcell = cell(xmin:xmax, ymin:ymax);
+             %   cell(xmin:xmax,ymin:ymax) = bwlabel(subcell,4);
+             %   Lout(Lout==Lout(cutx,cuty))=0;
+             %   Lout(cell==1) = chosencolor;
+             %   for k = 2:max2(cell),
+             %       Lout(cell==k) = max2(Lout)+k-1;
+             %   end;
         elseif cc == 'l'
-            addtolist=1;
-            OKorNot=1;
-            done=1;
-            dontsave=1;
+            disp(['currently not in use']) %NW 2012-05-10
+                %addtolist=1;
+                %OKorNot=1;
+                %done=1;
+                %dontsave=1;
         elseif cc == 'o'
             % obliterate all but this cell
             cutx=round(pos(1,2));
             cuty=round(pos(1,1));
             chosencolor=Lout(cutx,cuty);
+            % basically all cells have been updated (=deleted)
+            updatedCellNumbers=unique(Lout);
+            %
             if (chosencolor > 0)
                 Lout = (Lout==chosencolor);
             end
@@ -253,11 +356,57 @@ while ~done
             done=1;
         elseif cc =='',
             disp('you typed shift');
-        elseif cc=='i'                              % Noreen 2012-01
-            Lout=imfill(Lout,'holes');
+        elseif cc=='i' & Lout(round(pos(1,2)),round(pos(1,1)))         % Noreen 2012-05. fills 1 cell       
+            cellonlyImage=(Lout==Lout(pos(1,2),pos(1,1))); % =1 for chosen cell, =0 elsewhere
+            cellonlyImage=imfill(cellonlyImage,'holes');
+            Lout(cellonlyImage==1)=Lout(pos(1,2),pos(1,1));            
+            % very crude: update all cells (NW2012-10-05)
+            updatedCellNumbers=unique(Lout);
+            %
         elseif cc=='h'                              % Philippe 2012-02
             Lout = PN_reseed(Lout,phsub,round(pos(1,2)),round(pos(1,1)));
-            
+            % BLUBB very crude and probably only the highest cell number or
+            % merged cell number has to be updated. NW2012-05-10
+            updatedCellNumbers=unique(Lout);
+            %
+        elseif cc=='j'
+            Lout=imfill(Lout,'holes');
+        elseif cc=='d' %           remove possible dirt. Dirt often has a large (NW2012-10)
+             for runcell=1:max2(Lout)      % convex hull compared to its actual area.
+                 % update (NW 2013-01): dirt has large perimeter(outline)
+                 % compared to area. More reliable than convex hull (bent
+                 % cells!)
+                 % update (NW 2013-01-30): combine properties of convex
+                 % hull and perimeter. further excludes all areas with
+                 % holes (fill ells first!)
+                 deletecellConv=0;
+                 deletecellPerim=0;
+                 deletecellHole=0;
+                 areaprops=regionprops(Lout==runcell,'Area','ConvexArea','Perimeter','EulerNumber');
+                 allarea=[areaprops.Area];
+                 allconvex=[areaprops.ConvexArea];
+                 allperim=[areaprops.Perimeter];
+                 containsholes=[areaprops.EulerNumber]; % (holes: value<=0)
+                 
+                 ratioconv=sum(allarea)/sum(allconvex);
+                 if ratioconv<0.88 %blubb . maybe adjust (around 0.85. dirt=low values)
+                     %                      large value= excludes a lot of areas (maybe cells))
+                     deletecellConv=1;
+                 end                 
+                 ratioperim=sum(allperim)/sum(allarea);
+                 if ratioperim>0.17 %blubb . maybe adjust (around 0.17. dirt=high values)
+                               %                      small value= excludes a lot of areas (maybe cells))
+                     deletecellPerim=1;
+                 end
+                 if containsholes<=0
+                     deletecellHole=1;
+                 end
+                 
+                 if deletecellHole==1  | (deletecellConv==1 &  deletecellPerim==1) % maybe change to 'or'/'and' condition
+                     Lout(Lout==runcell)=0;
+                 end
+             end
+    
             
             %%%%%%%%%%%%%%%%%%% START DJK 090105 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
         elseif cc=='9'
@@ -307,6 +456,7 @@ while ~done
                 cutcell(cutcell == fpts(i))= 0;
             end
             cutcell = DJK_randomRenumberImage(cutcell);
+            disp(['rarely used function! probably update of renumbered cells is wrong!!!'])
             
             % dilate into original cell
             if (DJK_settings.fill_cut)
@@ -325,6 +475,12 @@ while ~done
             end
             
             disp(['# cells now : ' str3(length(unique(Lout))-1)]);
+            
+            % rarely used functions. for security, impose to recalc
+            % regionproperties of all cells NW2012-05-10
+            updatedCellNumbers=unique(Lout);
+            %
+            
             %%%%%%%%%%%%%%%%%%%  END DJK 090105  %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
         end
     else
@@ -360,6 +516,9 @@ while ~done
                 Lout=drawline(Lout,[pos1(1,2),pos1(1,1)+1],[pos(1,2),pos(1,1)+1],j1);
             end
             
+            % updated cellnumbers NW2012-05-10
+            updatedCellNumbers=[updatedCellNumbers;j1;j2];
+            
             % extend = shift+left button (or both?)
         elseif (cz(1)=='e' & Lout(round(pos(1,2)),round(pos(1,1))))
             % erase cell
@@ -367,6 +526,10 @@ while ~done
             
             % alternate) = ctrl+left button or right mouse button
             % Will cut at this location
+            
+            % updated cellnumbers NW2012-05-10
+            updatedCellNumbers=[updatedCellNumbers;Lout(round(pos(1,2)),round(pos(1,1)))];
+            
         elseif (cz(1)=='a' & Lout(round(pos(1,2)),round(pos(1,1))))
             
             % cutx & cuty are coordinate that is clicked
@@ -443,26 +606,57 @@ while ~done
                 % first cell gets original color
                 Lout(cutcell==1) = chosencolor;
                 
+                
+                
                 % new cells get new color
                 for k = 2:max2(cutcell),
+                    
+                    % updated cellnumbers NW2012-05-10
+                    updatedCellNumbers=[updatedCellNumbers;chosencolor; max2(Lout)+k-1];
+                    
                     Lout(cutcell==k) = max2(Lout)+k-1;
                 end;
+                
+                
                 
             else
                 disp(['less than 2 perims! cell number: ' num2str(Lout(cutx,cuty)) ' in Lbot_back.'])
             end
         end
     end
+    
+    % get correct array for updated cell numbers NW2012-05-10. Not yet used
+    updatedCellNumbers=unique(updatedCellNumbers);
+    updatedCellNumbers=updatedCellNumbers(updatedCellNumbers>0);
+    %
 end
-if OKorNot & ~DJK_settings.finetuneimage
-    Lout=renumberimage(Lout);
-    for sfi=1:max2(Lout)
-        [sfx,sfy]=find(Lout==sfi);
-        if length(sfx)<100
-            Lout(Lout==sfi)=0;
-        end
-    end
-    Lout=renumberimage(Lout);
+if ~DJK_settings.finetuneimage & OKorNot 
+    % TODO!! if you want to use updatedNumberCells
+     %tic %start time
+    Lout=NW_renumberimage(Lout);
+     %toc  % elapsed time: 0.03 sec
+    
+     %for sfi=1:max2(Lout) %slow
+     %   [sfx,sfy]=find(Lout==sfi);
+     %   if length(sfx)<100
+     %       Lout(Lout==sfi)=0;
+     %   end
+     %end
+     propArea=regionprops(Lout,'Area'); %faster
+     miniCells = find([propArea.Area] < 100);
+     for i=miniCells
+         Lout(Lout==i)=0;
+     end
+     
+    Lout=NW_renumberimage(Lout);
+    %toc % elapsed time: 0.07sec
 end
+if ~DJK_settings.finetuneimage & (savetemp==2 & done==1) %case 'w' (NW2012-05-10)
+    % renumber but don't delete small cell fragments
+    % TODO!! if you want to use updatedNumberCells
+    Lout=NW_renumberimage(Lout);
+end
+
+
 if pp(1) delete(pp(1));delete(pp(2));delete(pp(3));delete(pp(4));end;pp=0;
 if bb delete(bb);delete(bbp);end;bb=0;

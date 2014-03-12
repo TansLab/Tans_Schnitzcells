@@ -136,6 +136,21 @@ sourceField     = ['crossCov_' fieldX '_' fieldY];
 sourceField_XX  = ['crossCov_' fieldX '_' fieldX];
 sourceField_YY  = ['crossCov_' fieldY '_' fieldY];
 targetField     = ['crossCor_' fieldX '_' fieldY];
+%blubb % force truncation to 63 characters to suppress waring NW
+%2012-05-16. AKWARD!!!!!
+if length(targetField)>63
+    targetField=targetField(1:63);
+end
+if length(sourceField_XX)>63
+    sourceField_XX=sourceField_XX(1:63);
+end
+if length(sourceField_YY)>63
+    sourceField_YY=sourceField_YY(1:63);
+end
+if length(sourceField)>63
+    sourceField=sourceField(1:63);
+end
+% blubb ende
 
 % make branches
 for br = 1:length(branches)
@@ -148,6 +163,6 @@ end
 % make composite
 crossCor_composite = struct;
 crossCor_composite.X = crossCov_composite.X;
-r_0 = (length(crossCov_XX_composite.X) + 1) / 2;
+r_0 = (length(crossCov_XX_composite.X) + 1) / 2; %=entry with time delay=0
 crossCor_composite.Y = crossCov_composite.Y / sqrt(crossCov_XX_composite.Y(r_0)*crossCov_YY_composite.Y(r_0));
 % -------------------------------------------------------------------------

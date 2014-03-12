@@ -17,7 +17,13 @@
 % 'phaseImage'        phase image of same size as seg, will be shown as
 %                     background
 % 'randomize' = 0     no randomizing of colormap (default:1)
-%
+% TODO: 'recalcCellNumbers' array for which region properties have to be
+%                     recalculated because cell was updated. default: all
+%                     cells. taking fewer cells will speed up process
+
+
+% elapsed time for frame 444 in 2012-05-08. 390 cells
+
 
 function outim = PN_imshowlabel(L,rect,Lp,rectp,varargin)
 
@@ -67,13 +73,20 @@ if islogical(L),
     L = double(L);
 end;
 
+%start time (calculate cost)
+%tic
 
-%suspicious cells detection
+%Suspicious cells detection.
+%Detect cells that have certainly been divided in the preceeding image
+[rw clm] = find(Lp);
+center_old = round([mean(clm) mean(rw)]);
+[rw clm] = find(L);
+center_new = round([mean(clm) mean(rw)]);
+pad_motion = center_new + [rect(2) rect(1)] - [rectp(2) rectp(1)] - center_old; 
+%Positions of the centroids of the former image in the new image
 propLp = regionprops(Lp,'Centroid');
-%detect cells that have certainly been divided in the preceeding image
-%positions of the centroids of the former image in the new image
 centroids = cat(1, propLp.Centroid);
-centroids = round(centroids + ones(size(propLp))*[rectp(2)-1 rectp(1)-1]);
+centroids = round(centroids + ones(size(propLp))*([rectp(2)-1 rectp(1)-1] + pad_motion));
 imcentroids = zeros(max(rect(3),rectp(3)),max(rect(4),rectp(4)));
 linearInd = sub2ind(size(imcentroids), centroids(:,2), centroids(:,1));
 imcentroids(linearInd) = 1;
@@ -93,6 +106,8 @@ for ii = union(ideul,idsmall)
     Lsuspicious(L==ii)=1;
 end
 
+% elapsed time: 0.33
+%stop1=toc
 
 %creation of a rgb colormap
 % L2 has every non-background blob in range [2,256] and 
@@ -113,13 +128,15 @@ if p_internal.randomize
 end
 mymap = [mymap ; 1 1 1]; %add white
 
-
+% elapsed time: 0.34
+%stop2=toc
 L2(logical(Lsuspicious)) = M+1;
-L2(logical(imdilate(imcentroids,strel('diamond',2)))) = 0;
-Lrgb = ind2rgb(L2,mymap);
+L2(logical(imdilate(imcentroids,strel('square',2)))) = 0; % costs 0.017 sec
+Lrgb = ind2rgb(L2,mymap); % costs 0.04 sec
 
-
-if addPhaseImage
+% elapsed time: 0.40
+%stop3=toc
+if addPhaseImage % costs 0.045 sec
     rgb = 0.5 * Lrgb;
     bwscreen = double(p_internal.phaseImage); % bwscreen = 0.5 * bwscreen / max(max(bwscreen));
     bwscreen = DJK_scaleRange(bwscreen, [max(max(bwscreen)) min(min(bwscreen))], [0 1]);
@@ -128,6 +145,14 @@ if addPhaseImage
     rgb(:,:,2) = rgb(:,:,2) + bwscreen;
     rgb(:,:,3) = rgb(:,:,3) + bwscreen;
     outim = rgb;
+    
+    % elapsed time: 0.45
+    %stop4a=toc
 else
     outim = Lrgb;
+    
+    %stop4b=toc
 end
+
+%elapsed time: 0.45
+%stop5=toc

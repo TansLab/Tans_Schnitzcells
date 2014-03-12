@@ -43,6 +43,7 @@ function p = djk_manualcheckseg (p, varargin);
 %   finetuneimage if 1, program will not renumber the image; default = 0
 %   regsize       maximum size in pixels of any translation between phase and 
 %                 fluorescent images; default is 3
+%   maxImage      if 1, image will be resized to fill screen. default=1
 %-------------------------------------------------------------------------------
 %
 
@@ -115,7 +116,7 @@ disp('              press ''e'' to expand image.')
 disp('              press ''f'' for "fine-tuning" (to avoid renumbering the image).')
 disp('              press ''g'' to goto indexnum = ... .')
 disp('              press ''R'' to renumber all cells.')
-disp('              press ''i'' to fill cells.')
+disp('              press ''i'' to fill the cell you are pointing to.')
 
 disp(' ')
 
@@ -192,6 +193,15 @@ if ~existfield(p,'regsize')
   p.regsize = 3;
 end
 
+if ~existfield(p,'maxImage')
+    p.maxImage=1;
+end
+
+% get screenSize for image display
+myScreenSize=get(0,'ScreenSize');
+maxValidImageSize=myScreenSize(3:4)-[150,150]; % empirical
+%
+
 backwards = 0;
 gotoframenum=0;
 loopindex = 1;
@@ -240,7 +250,17 @@ while loopindex <= length(p.manualRange);
     iptsetpref('imshowborder','tight'); % DJK 090111 added so Lc & phase overlap
     figure(phfig);
     clf reset;
-    imshow(g_resized);
+    % get max magnification (<=100%) (NW 2012-05-08)
+    if p.maxImage==1
+        rowScale=maxValidImageSize(2)/size(g_resized,1)*100;
+        columnScale=maxValidImageSize(1)/size(g_resized,2)*100;
+        myInitialMagn=min([rowScale,columnScale,100]);
+        % =100 for small images, otherwise <100
+    else 
+        myInitialMagn=100;
+    end
+        
+    imshow(g_resized, 'InitialMagnification',myInitialMagn);
     set(phfig,'name',['Frame ',str3(i),' phase']);
 
     % center on screen

@@ -38,8 +38,11 @@ function p = PN_manualcheckseg (p, varargin);
 %   finetuneimage if 1, program will not renumber the image; default = 0
 %   regsize       maximum size in pixels of any translation between phase and
 %                 fluorescent images; default is 3
-%   assitedCorrection      displays potentially wrong segmented cells in
+%   assistedCorrection      displays potentially wrong segmented cells in
 %                           (added by PN the 23-04-2012)
+%                    Works sometimes only if every frame is used (or stepsize not too big)! otherwise error
+%                    when backing up. exact conditions...no idea (comment NW2012-05-10)
+%   maxImage      if 1, image will be resized to fill screen. default=1
 %
 %-------------------------------------------------------------------------------
 %
@@ -52,6 +55,10 @@ function p = PN_manualcheckseg (p, varargin);
 %-------------------------------------------------------------------------------
 % Parse the input arguments, input error checking
 %-------------------------------------------------------------------------------
+
+
+% elapsed time for frame 444 in 2012-05-08. 390 cells
+
 
 numRequiredArgs = 1;
 if (nargin < 1) | ...
@@ -101,7 +108,7 @@ disp('              press ''t'' to mark terraced area.')
 disp('              press ''c'' to crop out only populated area. Do not use...')
 disp('              press ''r'' to renumber the cell you are pointing to.')
 disp('              press ''p'' to show a square around the position, on phase image.')
-disp('              press ''b'' to mark the cell you are pointing to, on phase image.')
+disp('              press ''b'' to mark the cell you are pointing to, on phase image.  Do not use...')
 disp('              press ''o'' to obliterate all but the cell you''re pointing to.')
 disp('              press ''l'' to add frame to list of badly segmented frames.')
 disp('              press ''.'' to skip frame (without saving).')
@@ -113,8 +120,10 @@ disp('              press ''e'' to expand image.')
 disp('              press ''f'' for "fine-tuning" (to avoid renumbering the image).')
 disp('              press ''g'' to goto indexnum = ... .')
 disp('              press ''R'' to renumber all cells.')
-disp('              press ''i'' to fill cells.')
+disp('              press ''i'' to fill the cell you are pointing to.')
+disp('              press ''j'' to fill all cells.')
 disp('              press ''h'' to reseed a cell.')
+disp('              press ''d'' to remove all ''cells'' which look like dirt (large convex hull).')
 
 disp(' ')
 
@@ -192,32 +201,45 @@ if ~existfield(p,'regsize')
 end
 
 if ~existfield(p,'assistedCorrection')
-    p.assitedCorrection = 0;
+    p.assistedCorrection = 0;
 end
 if p.assistedCorrection
     disp('You have chosen the Assisted Correction Mode :')
     disp(' - potentially re-merged or too small cells are displayed in white;')
     disp(' - centroids of cells of the former image are indicated as black dots.')
 end
+if ~existfield(p,'maxImage')
+    p.maxImage=1;
+end
+
+% get screenSize for image display
+myScreenSize=get(0,'ScreenSize');
+maxValidImageSize=myScreenSize(3:4)-[150,150]; % empirical
+%
+
+
 backwards = 0;
 gotoframenum=0;
 loopindex = 1;
 while loopindex <= length(p.manualRange);
-    
+   i = p.manualRange(loopindex);
+   
+   %former image data if available
     L_prec=[];
     rect_prec=[];
-    if loopindex > 1 %if possible loads the preceeding segmented image, this is used only for assisted correction
-        load([p.segmentationDir,p.movieName,'seg',str3(p.manualRange(loopindex)-1)]);
-        if exist('Lc','var')
-            L_prec=Lc;
-            rect_prec=rect;
+    if i > 1 %if possible loads the preceeding segmented image, this is used only for assisted correction
+        filename = [p.segmentationDir,p.movieName,'seg',str3(i-1),'.mat'];
+        if p.assistedCorrection && exist(filename)
+            load(filename);
+            if exist('Lc','var')
+                 L_prec=Lc;
+                 rect_prec=rect;
+            end
+            clear Lc phsub LNsub rect
         end
-        clear Lc phsub LNsub rect
     end
     
     %new image data
-    i = p.manualRange(loopindex);
-    
     clear Lc creg yreg savelist rect newrect oldrect;
     name= [p.segmentationDir,p.movieName,'seg',str3(i)];
     tempsegcorrect=0;
@@ -245,7 +267,7 @@ while loopindex <= length(p.manualRange);
         % Show Phase Image
         %----------------------------------------------------------------------
         % adjust contrast and make negative image
-        
+          
         g = double(phsub);
         if length(g) > 0
             g = DJK_scaleRange(g, [max(max(g)) min(min(g))], [0 1]);
@@ -260,10 +282,22 @@ while loopindex <= length(p.manualRange);
         
         % show image
         iptsetpref('imshowborder','tight'); % DJK 090111 added so Lc & phase overlap
-        figure(phfig);
-        clf reset;
-        imshow(g_resized);
+       % figure(phfig);
+        
+     %   clf reset;
+        if p.maxImage==1
+            rowScale=maxValidImageSize(2)/size(g_resized,1)*100;
+            columnScale=maxValidImageSize(1)/size(g_resized,2)*100;
+            myInitialMagn=min([rowScale,columnScale,100]);
+         % =100 for small images, otherwise <100
+        else 
+          myInitialMagn=100;
+        end
+       close(phfig)
+       phfig=figure('Visible','off');
+       imshow(g_resized, 'InitialMagnification',myInitialMagn);
         set(phfig,'name',['Frame ',str3(i),' phase']);
+        set(0,'CurrentFigure',ourfig)
         
         % center on screen
         pos11                 = get(phfig,'position'); % current position
@@ -273,7 +307,7 @@ while loopindex <= length(p.manualRange);
         y_left_bottom_screen  = 35 + (p.min_size(1)-height)/2 ;
         set(phfig, 'position', [x_left_bottom_screen y_left_bottom_screen width height]); % DJK 090117
         %----------------------------------------------------------------------
-        
+      
         % ******************************************************
         % here in former versions a fluor image was displayed
         % ******************************************************
@@ -287,9 +321,12 @@ while loopindex <= length(p.manualRange);
         clear DJK_settings
         DJK_settings.finetuneimage = p.finetuneimage; DJK_settings.figs = p.figs; DJK_settings.fill_cut = p.fill_cut;
         
-        
+         
+        set(phfig,'Visible', 'on')
+        %set(0,'CurrentFigure',ourfig)
         while ~is_done
-            
+           
+           
             [Lc,is_done,quit_now,dontsave,addtolist,crop_pop,newrect,savetemp,backwards,gotoframenum,DJK_settings] = ...
                 PN_manual_kant(p, LNsub, L_prec, g, rect,rect_prec,phsub, DJK_settings,p.assistedCorrection);
             
@@ -314,7 +351,7 @@ while loopindex <= length(p.manualRange);
                 clear global pos Limage ourfig res pp phfig;
                 return;
             end;
-            if crop_pop
+            if crop_pop %obsolete
                 LNfull=zeros(p.fullsize(1),p.fullsize(2));
                 LNfull(rect(1):rect(3), rect(2):rect(4))=LNsub;
                 oldrect=rect;
@@ -351,7 +388,7 @@ while loopindex <= length(p.manualRange);
                 res = 1; % DJK 071206
                 
                 figure(phfig);
-                clf reset;
+                clf reset; 
                 
                 imshow(imresize_old(g,res));
                 colormap((1:100)'*[0 1 0]/100)
@@ -405,5 +442,6 @@ while loopindex <= length(p.manualRange);
             loopindex = newloopindex;
         end
     end
+    
 end;
 close(phfig); close(ourfig); end

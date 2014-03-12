@@ -99,6 +99,17 @@ function [piecepoly,binPlotXvalue, averageBinData] = NW_plotCellCycleDependence(
 % 'borderBinSize'    Size of border bins in non-periodic case.
 %                    Default=0.05 (good for fluorescence data). Will be 
 %                    ignored if periodicData=1.
+%                    Only applicable if equalBins is not set, otherwise it
+%                    will be ignored.
+% 'equalBins'        =1. Sets all bins to equal Size. only applicable if
+%                    non-periodic data. Default: 0
+% 'ignorePoints'     If set to XX, then ignores the first and last XX points when plotting and
+%                    binning. Applicable for growth rate data without
+%                    offspring info, when the first/last (frames-1)/2
+%                    datapoints are identical (frames=#frames over which mu
+%                    was averaged). Default: 0
+% 'mytimefield'      timefield corresponding to fieldY (must have sdame length).
+%                    E.g. 'time' or 'time_atdR'. Default: 'time'
 %
 
 
@@ -143,6 +154,8 @@ whichTimeReference='real-time-mode';
 % whichTimeReference='0-1-mode';
 %-------------------------------------------------------------------------- 
 
+% akward
+global extschnitzcounter;
 
 
 %--------------------------------------------------------------------------
@@ -213,12 +226,40 @@ end
 if ~existfield(p,'borderBinSize')    
   p.borderBinSize = 0.05;
 end
+if ~existfield(p,'equalBins')    
+  p.equalBins = 0;
+end
+if ~existfield(p,'ignorePoints')    
+  p.ignorePoints = 0;
+end
+if ~existfield(p,'mytimefield')    
+  p.mytimefield = 'time';
+end
+mytimefield=p.mytimefield; % easier to write down
+% check if total length of datafield and timefield are identical
+alldata=[schnitzcells.(fieldY)];
+if strcmp('time',mytimefield)~=1
+    idx=find(~isnan(alldata)); % muP15_fitNew can contain 'NaN' data but no correpsonding time point data
+                               % for muP15_fitNew_all, the NaN values have
+                               % to stay... argh
+    alldata=alldata(idx);
+end
+alltime=[schnitzcells.(mytimefield)];
+if length(alldata)~=length(alltime)
+    disp(['Datafield and timefield don''t correspond (have different size).'])
+    return
+end
+clear alldata alltime
 
 %--------------------------------------------------------------------------
 % Let know what is happening
 %--------------------------------------------------------------------------
 if p.periodicData==0
-     disp(['Will use non-periodic bins with borderBinSize=' num2str(p.borderBinSize)])
+    if p.equalBins==0
+        disp(['Will use non-periodic bins with borderBinSize=' num2str(p.borderBinSize)])
+    else
+        disp(['Will use non-periodic bins with equal bin size.'])
+    end
 else
      disp(['Will use periodic bins.'])     
 end
@@ -227,10 +268,16 @@ disp(['Number of bins=' num2str(numberBins)])
 
 
 %--------------------------------------------------------------------------
-% Check Time referene mode
+% Check Inout
 %--------------------------------------------------------------------------
+%Time reference mode
 if (~(strcmp(whichTimeReference,'0-1-mode')==1)) & ~(strcmp(whichTimeReference,'real-time-mode')==1)
     disp(['Unknown time reference mode. Exiting...']);
+    return
+end
+%ignorePoints
+if (p.ignorePoints<0 | rem(p.ignorePoints,1)~=0)
+    disp(['Negative or non-integer number of ignored Points. Exiting...']);
     return
 end
 %--------------------------------------------------------------------------
@@ -256,43 +303,46 @@ if (strcmp(whichTimeReference,'real-time-mode')==1) & (~existfield(schnitzcells(
 end
 %--------------------------------------------------------------------------
 
-
+% % AKWARD SOLUTION: COMMENT THE FRAME FINDING BELOW OUT AND MANUALLY
+% % ASSOCIATE CORRECT FRAME FIELD -> works for rates!!!
+% ****************************
 %--------------------------------------------------------------------------
 % Get time/frame field in case of 'real-time-mode' 
 %--------------------------------------------------------------------------
-if (strcmp(whichTimeReference,'real-time-mode')==1)
-    % if fieldY exists for all frames, take "frames" as timefield
-    testschnitznr=100;
-    if length(schnitzcells(testschnitznr).frames)==length(schnitzcells(testschnitznr).(fieldY))
-        mytimefield='frames';
-   %elseif length(schnitzcells(1).frames)+1==length(schnitzcells(1).(fieldY))
-   %     mytimefield='frames'; %necessary for fitted_Y6_mean since error in
-   %     data association
-        
-    % if fieldY exists for less frames, try with fluo-frames as timefield
-    else
-        %get 1st real fluor timefield
-        if strcmp(p.fluor1,'none')==0
-          mytimefield=[upper(p.fluor1) '_frames'];
-        elseif strcmp(p.fluor2,'none')==0
-          mytimefield=[upper(p.fluor2) '_frames'];
-        elseif strcmp(p.fluor3,'none')==0
-          mytimefield=[upper(p.fluor2) '_frames'];
-        else
-          disp(['Don''t find appropriate time points (frames) for fieldY. No FluorColor? Exiting...']);
-          return
-        end
-        if length(schnitzcells(testschnitznr).(mytimefield))==length(schnitzcells(testschnitznr).(fieldY))
-            disp(['Will use ' mytimefield ' as time/frame field.'])
-        else
-            disp(['Don''t find appropriate time points (frames) for fieldY. I tried fields of schnitz ' num2str(testschnitznr) ...
-                '. If bad choice, change ''testschnitznr'' in program. Exiting...']);
-            return
-        end
-    end
-end
+%if (strcmp(whichTimeReference,'real-time-mode')==1)
+%    % if fieldY exists for all frames, take "frames" as timefield
+%    testschnitznr=2;
+%    if length(schnitzcells(testschnitznr).frames)==length(schnitzcells(testschnitznr).(fieldY))
+%        mytimefield='frames';
+%   %elseif length(schnitzcells(1).frames)+1==length(schnitzcells(1).(fieldY))
+%   %     mytimefield='frames'; %necessary for fitted_Y6_mean since error in
+%   %     data association
+%        
+%    % if fieldY exists for less frames, try with fluo-frames as timefield
+%    else
+%        %get 1st real fluor timefield
+%        if strcmp(p.fluor1,'none')==0
+%          mytimefield=[upper(p.fluor1) '_frames'];
+%        elseif strcmp(p.fluor2,'none')==0
+%          mytimefield=[upper(p.fluor2) '_frames'];
+%        elseif strcmp(p.fluor3,'none')==0
+%          mytimefield=[upper(p.fluor2) '_frames'];
+%        else
+%          disp(['Don''t find appropriate time points (frames) for fieldY. No FluorColor? Exiting...']);
+%          return
+%        end
+%        if length(schnitzcells(testschnitznr).(mytimefield))==length(schnitzcells(testschnitznr).(fieldY))
+%            disp(['Will use ' mytimefield ' as time/frame field.'])
+%        else
+% %            disp(['Don''t find appropriate time points (frames) for fieldY. I tried fields of schnitz ' num2str(testschnitznr) ...
+%                '. If bad choice, change ''testschnitznr'' in program. Exiting...']);
+%            return
+%        end
+%    end
+%end
 %--------------------------------------------------------------------------
-
+% ***************************
+%mytimefield='dY5_frames';
 
 %--------------------------------------------------------------------------
 % Get data to plot and do plot
@@ -361,11 +411,15 @@ if (strcmp(whichTimeReference,'real-time-mode')==1)
     for schnitz = 25:length(schnitzcells) % ignore first, synchronized, cells (important, if 'noise_XYZ' is plotted)
       if (useAllcells | schnitzcells(schnitz).useForPlot) & schnitzcells(schnitz).completeCycle==1
           clear dataRelTime dataY totalTime
-        totalTime=length(schnitzcells(schnitz).frames); %# frames a schnitz lives
-        YdataTime=schnitzcells(schnitz).(mytimefield)-schnitzcells(schnitz).frames(1); %absolute time with initial frame set to 0
-          YdataTime=YdataTime/totalTime; % relative time (birth=0. last frame=(#frames-1)/#frames
-   %YdataTime=schnitzcells(schnitz).phase; %BLUBB       
+ %       totalTime=length(schnitzcells(schnitz).frames); %# frames a schnitz lives
+ %       YdataTime=schnitzcells(schnitz).(mytimefield)-schnitzcells(schnitz).frames(1); %absolute time with initial frame set to 0
+ %         YdataTime=YdataTime/totalTime; % relative time (birth=0. last frame=(#frames-1)/#frames
+ %  %YdataTime=schnitzcells(schnitz).phase; %BLUBB       
    
+        totalTime=schnitzcells(schnitz).divTime-schnitzcells(schnitz).birthTime;
+        YdataTime=schnitzcells(schnitz).(mytimefield)-schnitzcells(schnitz).birthTime; %time points in [min] with respect to birth time of cell
+        YdataTime=YdataTime/totalTime; % time points normalized to interval [0 1]  -> phase
+        
           dataY=schnitzcells(schnitz).(fieldY);
           %if length(dataY)>length(YdataTime) %necessary for fitted_Y6_mean
           %since error in data association
@@ -373,11 +427,19 @@ if (strcmp(whichTimeReference,'real-time-mode')==1)
           %end
           
           
+          %ignore first/last XX points (repetitive data), if enabled (otherwise
+          %p.ignorePoints=0)
+          YdataTime=YdataTime(1+p.ignorePoints : end-p.ignorePoints); %empty if array is shorter than 2*p.ignoredPoints
+          dataY=dataY(1+p.ignorePoints : end-p.ignorePoints);
+          
+      
           if p.mode=='relative'
               % debugging
               % disp(['schnitz=', num2str(schnitz) , '  av_mu_fitNew=' num2str(schnitzcells(schnitz).av_mu_fitNew), '  mean(' , num2str(fieldY), ')=' num2str(mean(dataY))]);
               dataY=dataY./(mean(dataY));          
           end
+          %disp(['schnitz=' num2str(schnitz) ' mean(dataY)='
+          %num2str(mean(dataY))]); some output
           
           % especially in noise-variables, it can happen, that entries are
           % empty (I think then these schnitzes are part of a non used
@@ -386,13 +448,15 @@ if (strcmp(whichTimeReference,'real-time-mode')==1)
           % Update (2012-03): if samelength=0 is added in DJK_getBranches
           % within the NW_addToSchnitzcellsNoise, all schnitzes get noise
           % values. Still, the check is no harm
+          % Update 2012-06: If points are ignored (above), also then empty
+          % arrays can appear
           if ~isempty(dataY)
               
               % BLUBB IGNORE DATA THAT HAS NOT SAME LENGTH AS Y_TIME
               if length(YdataTime)~=length(dataY)
                   disp(['Ignored Schnitz ' num2str(schnitz) ' because wrong length of plotfield. Maybe production rate + late cells?']);
               else %blubb
-                  plot(YdataTime,dataY,'.-','Color',schnitz/length(schnitzcells)*[0.8 0.8 0.8])
+                  plot(YdataTime,dataY,'.-','Color',schnitz/length(schnitzcells)*[0.9 0.9 0.9])
 
                   % add same data at (tau+1) for periodicity 
                   if p.periodicData==1
@@ -507,26 +571,25 @@ if (strcmp(whichTimeReference,'real-time-mode')==1)
         binThresholds=zeros(numberBins,1);
         %binPlotXvalue=[0:1/numberBins:(1-1/numberBins)]; % get good centered xvalues for plot in center of each bin
         binPlotXvalue=zeros(numberBins,1);
- 
-%***************************
-% equally distanced bins can be inserted potentially. START
-% default:********************
-       binThresholds(2)=p.borderBinSize; % first and last bin smaller
-       incrbin1=binThresholds(2);
-       binPlotXvalue(1)=incrbin1/2;
-       incr=(1-2*binThresholds(2))/(numberBins-2);
-       binThresholds(3:numberBins)=[incrbin1+incr:incr:1.001-incrbin1];
-       binPlotXvalue(2:numberBins-1)=[incrbin1+0.5*incr:incr:0.999-incrbin1];
-       binPlotXvalue(length(binPlotXvalue))=1-0.5*incrbin1;
- %********************
- % use the following for lines if you want to have equal sizes of all (incl
- % border) bins. otherwise comment out!!!
- %for i=1:numberBins  %equal bins
- %    binThresholds(i)=(i-1)/numberBins;
- %    binPlotXvalue(i)=binThresholds(i)+0.5/numberBins;
- %end
- 
- % END (NW 2012-04-05)
+
+       % ******* borderBin has different size *************
+       if p.equalBins==0
+           binThresholds(2)=p.borderBinSize; % first and last bin smaller
+           incrbin1=binThresholds(2);
+           binPlotXvalue(1)=incrbin1/2;
+           incr=(1-2*binThresholds(2))/(numberBins-2);
+           binThresholds(3:numberBins)=[incrbin1+incr:incr:1.001-incrbin1];
+           binPlotXvalue(2:numberBins-1)=[incrbin1+0.5*incr:incr:0.999-incrbin1];
+           binPlotXvalue(length(binPlotXvalue))=1-0.5*incrbin1;
+       else
+ 	   % ******* borderBins have equal size *************   
+           for i=1:numberBins  %equal bins
+               binThresholds(i)=(i-1)/numberBins;
+               binPlotXvalue(i)=binThresholds(i)+0.5/numberBins;
+           end
+       end
+
+
 
 
         %binThresholds' %  some output
@@ -700,7 +763,7 @@ if p.onScreen == 0
 end
 %--------------------------------------------------------------------------
 
-
+extschnitzcounter=schnitzcounter;
 
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%% from Daan %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%

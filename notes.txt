@@ -1,0 +1,87 @@
+Comment Noreen 2013-04-08:
+This very text-file has not been updated since 2012-03-29. Check the Schnitzcells_structure.xls file for all existing functions.
+
+*****************************************
+
+
+
+
+Comments to version 29-03-2012, by Noreen
+
+- new PN_reseed.m by Philippe
+----------
+Several new plotting options:
+- NW_plot_dependence_on_position analyzes spatial dependence of growth rate or fluorescence data
+- NW_makeMovie_branchGroups makes a movie similar to the ones used for analyzing the tracking. Schnitzes are colored according to its branch groups. Allows to identify where strange traces from cross correlations are located and check if too many schnitzes are left out
+- In DJK_plot_plot_crosscorrelation_standard_error_store single traces are now in color (can be switched off). Same color as in NW_makeMovie_branchGroups.m
+----------
+- NW_detectSlowSchnitzes: finds schnitzes that grow slower than a certain threshold (e.g. =0). Suggested schnitzes to remove from analysis
+----------
+- NW_addToBranchBranchGroups_noise: calculates noise individually for each single branch group (independent of other ca. 3 branch groups)
+----------
+Features for analyzing Cell Cycle Dependence of measured Data
+- NW_addToSchnitzcells_noise: Adds noise to schnitzcells structure (up to now: only for branch structure possible). Needed for plots of cell cycle dependence
+- NW_plot_cellCycleDependence: for each schnitz (with complete cell cycle) growthrate/fluorescence is plotted accoring to time in its cell cycle, i.e. mapped to [0 1]. For details, see documentation
+- NW_testBinningCellCycle: Test different binning sizes for averaging cell cycle dependent data
+- NW_correctCellCycle: adds extra fields to schnitzcells structure which are cell cycle corrected
+
+
+
+***************************************
+
+
+02/02/2012 by Philippe
+
+- Problem of gestion of colors in DJK_addToSchnitzes_mu.m solved by Noreen.
+
+- Now if you press "h" in DJK_manualcheckseg, it will create a cell within the contour of the phase contrast image where you mouse pointer is.
+If there is already an overlapping cell, it will merge, otherwise create a new one.
+
+***************************************
+
+comment on version 18-01-12, by Philippe
+
+- new segmentation algorithm (PN_segPhase)
+- cutCellWidth is replaced by neckDepth : the smaller neckDepth, the more agressive the cutting.
+- it is not necessary anymore to maintain a version for Matlab 704
+
+
+*************************************
+
+comment to version 17-01-12, by Noreen:
+
+- Schnitzcells is now generalized for any fluorescence colour. fluorescence colours are initialized as properties of 'p'.
+  Hence, use the new excel-sheet(!), where the fluorescence colours are initialized and added as function inputs correctly.
+- Functions are now either independent of fluorescence images, written for 3 arbitrary colors ('....3colors.m') or require the specific color as function input ('....anycolor.m'). No more color specific functions!
+- Fluorescence and Phase Image treatment are separated. Fluorescence data is now initialized --after-- segmentation is finished.
+- DJK_manualcheckseg allows to fill the cells, which can be useful if they are manually connected by 2 lines in the interior is then filled. Press 'i'.
+- In the segmentation algorithm, special treatment for cells growing on rich medium is added. Call extra option in PN_segmoviephase_3colors with ( 'medium','rich' ). PN_segmoviephase_3colors only initializes the medium as a field in 'p'.
+- Names of created folders for fluorescence data and names of fluorescence images adjusted to make name creation more consistent. BUT: Old data might not be recognized by new schnitzcell!
+
+************************************
+NOTE:
+I did not change functions apart from the standard functions for evaluation and plotting. If you use more exotic functions (e.g. for trouble shooting) and run into some hazzle because they have not been adapted yet to the new handling of fluorescence colors -> let me know and I adjust them!!
+************************************
+
+
+
+
+
+
+
+comment to version 30-11-11, by Noreen:
+
+- main Schnitzcell folder contains update to new matlab version (R2010b, actually everything starting R2007a)
+- subfolder matlab704 contains version for old matlab
+
+
+
+**********************************************
+by Philippe Nghe
+29-11-11
+
+This version of schnitzcells integrates :
+- a new segmentation algorithm
+- templates to perform the full analysis for experiments comprising 1 or 2 colors
+
+It is suited for matlab 7.0.4

@@ -16,7 +16,7 @@
 % Note that only branched with maximum length are returned. Using
 % 'sameLength'=0 can be specified that branches of unequal length are returned. 
 %
-% Some data might be used more than once (in different branches). This is
+% Some data might be used moresc than once (in different branches). This is
 % counted in the weight field.
 %
 % 2DO: ranking

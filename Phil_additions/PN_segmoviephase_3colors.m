@@ -74,7 +74,7 @@ if ~existfield(p,'saveSteps')                             %indicate if you want 
     p.saveSteps = true;
 end
 if ~existfield(p,'PN_saveDir') & p.saveSteps              %subfolder of p.segmentationDir where image treatment steps are saved
-    p.PN_saveDir = ['param' '_Marg' num2str(p.maskMargin) '_LoG' num2str(p.LoG_Smoothing) '_Area' num2str(p.minCellArea) '_Depth' num2str(p.minDepth) '_Neck' num2str(p.neckDepth) filesep];
+    p.PN_saveDir = ['param', '_Marg' num2str(p.maskMargin) '_LoG' num2str(p.LoG_Smoothing) '_Area' num2str(p.minCellArea) '_Depth' num2str(p.minDepth) '_Neck' num2str(p.neckDepth) filesep];
     [message errmsg] = sprintf(['Image saving folder automatically generated: ' p.PN_saveDir]);
     disp(message);
 end
@@ -274,6 +274,16 @@ for i= p.segRange
         %     imageToSegment = NW_prepareImagesRich(ph3,p.slices);
         %     disp('rich medium')
         %else
+        
+        %test if number of slices for averaging (p.slices) exists. if less
+        %slices exist, use the existing ones only
+        if length(p.slices)>p.numphaseslices
+            disp(' ')
+            disp(['Phase slices for averaging do not all exist. Will use slices from 1 to ' num2str(p.numphaseslices) '.'])
+            disp(' ')
+            p.slices=1:1:p.numphaseslices;
+        end
+        
         imageToSegment = PN_prepareImages(ph3,p.slices);  
         %end
    
@@ -315,7 +325,7 @@ for i= p.segRange
                 % Prepare image: average over repetitions
                 layermean = uint16(mean( layerall(:, :, p.numimagesperlayer), 3));
                 % save averaged images
-                imwrite(uint16(layermean),[p.imageDir, p.NW_brightfieldsaveDir, p.movieName, '-p-', num2str(runslice,'%02d'), '-averaged-',str3(i), '.tif'],'tiff','compression','none'); %blubb change!!!!
+                imwrite(uint16(layermean),[p.imageDir, p.NW_brightfieldsaveDir, p.movieName, '-p-', num2str(runslice,'%02d'), '-averaged-',str3(i), '.tif'],'tif','compression','none'); %blubb change!!!!
                 
                 % --------------------------------------------------------------------
                 % Prepare image: input for correlation analysis
@@ -361,6 +371,7 @@ for i= p.segRange
         LNsub = [0];          %if no cells segmented, add this so that we have an image
     end
 
+        
     [TSTa,TSTb,TSTc,TSTd,timestamp] = imsettings([p.imageDir,Dframe(1).name],'p'); % extract timestamp of first phase image
     clear TST*
 

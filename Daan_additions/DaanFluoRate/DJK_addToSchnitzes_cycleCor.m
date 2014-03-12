@@ -33,12 +33,20 @@ phase = [schnitzcells(:).(phaseField)];
 %                                  % for growth rate (NW 2012-09-11)
 %  error(['length of fields ' field ' and ' phaseField ' is not the same']);
 %end
-idx = ~isnan(data);
-data = data(idx);
-phase = phase(idx);
+
+%DE,oct2013.: The order of following for blocks 38-40 and 42-44 was switched,
+% becasue indexing in phase very often gave problems. So I changed the
+% order of indexing reals.
+
 idx = ~isnan(phase);
 data = data(idx);
 phase = phase(idx);
+
+idx = ~isnan(data);
+data = data(idx);
+phase = phase(idx);
+
+
 meanData = mean(data);
 if length(data) ~= length(phase)  
   error(['length of fields ' field ' and ' phaseField ' is not the same']);

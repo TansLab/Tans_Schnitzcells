@@ -95,9 +95,9 @@ end
 
 
 disp(' ')
-disp('Instructions: press left mouse button on two consecutive cells to join them.')
-disp('              Press right mouse button to cut at that point.')
-disp('              Shift + left mouse button erases current cell.')
+disp('Instructions: press left mouse button (or key ''4'') on two consecutive cells to join them.')
+disp('              Press right mouse button (or key ''5'') to cut at that point.')
+disp('              Shift + left mouse button (or key ''7'') erases current cell.')
 disp('              When you''re done, press <space> to go to the next frame.')
 disp('              press <escape> to redo this frame from the original autoseg file.')
 disp('              to save progress during work on a frame, press:')

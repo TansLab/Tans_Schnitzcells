@@ -66,7 +66,8 @@ for i = 1:length(schnitzcells)
         for f = 1:length(s.(fluortime))-1
           age                 = find(s.time == s.(fluortime)(f));
           age2                = find(s.time == s.(fluortime)(f+1));
-
+          
+          
           s.(d_sum)(end+1)         =  s.(sum_all)(age2) - s.(sum_all)(age);
           s.(d_sum_dt)(end+1)      = (s.(sum_all)(age2) - s.(sum_all)(age)) /  (s.(fluortime)(f+1) - s.(fluortime)(f));
           s.(d_sum_dt_ph)(end+1)   = (s.(sum_all)(age2) - s.(sum_all)(age)) / ((s.(fluortime)(f+1) - s.(fluortime)(f))*(1 + s.phase(age)));

@@ -239,7 +239,6 @@ for count = 2:length(p.manualRange);
       if cellno==0, continue; end % background
       coordinates_yesterday(cellno,:) = getCentroidsOfCell(Lc_yesterday_fullsize_centered, cellno);
     end
-    % rescale such that total cell-area of yesterday & today roughly has same size
     coordinates_yesterday = normalizeCentroids(coordinates_yesterday, Lc_yesterday_fullsize_centered);
   end
   fprintf(1,'.');
@@ -250,7 +249,6 @@ for count = 2:length(p.manualRange);
     if cellno==0, continue; end % background
     coordinates_today(cellno,:) = getCentroidsOfCell(Lc_today_fullsize_centered, cellno);
   end
-  % rescale such that total cell-area of yesterday & today roughly has same size
   coordinates_today = normalizeCentroids(coordinates_today, Lc_today_fullsize_centered);
   dataLeft_previousRound = true;
   fprintf(1,'.');
@@ -507,10 +505,14 @@ offset_x = round( size(Lc_fullsize,2)/2 - center_cells_x);
 offset_y = round( size(Lc_fullsize,1)/2 - center_cells_y);
 
 % center Lc_fullsize into Lc_centered
-Lc_fullsize_centered( min(fy)+offset_y:max(fy)+offset_y, min(fx)+offset_x:max(fx)+offset_x ) = Lc_fullsize( min(fy):max(fy), min(fx):max(fx) );
+%Lc_fullsize_centered( min(fy)+offset_y:max(fy)+offset_y, min(fx)+offset_x:max(fx)+offset_x ) = Lc_fullsize( min(fy):max(fy), min(fx):max(fx) );
+
 % remark NW (2012-08): If errormessage here: possible that colony is so
 % large that after centering the outer coordinates of cells exceed the
-% image range (e.g. become negative). One solution: Use less frames
+% image range (e.g. become negative). One solution: pretend that the
+% original image is the centered image (e.g. if the image was not cropped
+% during segmentation):
+Lc_fullsize_centered=Lc_fullsize;
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 

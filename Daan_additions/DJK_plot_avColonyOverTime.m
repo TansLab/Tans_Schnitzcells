@@ -292,7 +292,11 @@ end
 % make figure with full screen size
 scrsz = get(0, 'ScreenSize');
 % fig1 = figure('Position', [1 scrsz(4) scrsz(3) scrsz(4)], 'Name', figureName);
-fig1 = figure('Position', [126 scrsz(4)-150 scrsz(3)-125 scrsz(4)-150], 'Name', figureName, 'visible','off');
+% here is the old position:
+%pos1=[126 scrsz(4)-150 scrsz(3)-125 scrsz(4)-150];
+% this position seems to be more convenient:
+pos2=[scrsz(3)*0.1 scrsz(4)*0.1 scrsz(3)*0.8 scrsz(4)*0.7];
+fig1 = figure('Position', pos2, 'Name', figureName, 'visible','off');
 
 hold on;
 

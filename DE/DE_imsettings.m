@@ -1,5 +1,5 @@
 
-function [exptimestr, gainstr,exptime,cube,datenumber] = imsettings(pname, color);
+function [exptimestr, gainstr,exptime,cube,datenumber] = DE_imsettings(p, pname, color)
 
 exptimestr = 'empty';
 gainstr = 'empty';
@@ -15,58 +15,33 @@ if nargin > 1,
     pname(pos+1) = color;
 end;
 
+
 if exist(pname)==2,
     iminfo = imfinfo(pname);
     
-    if isfield(iminfo,'ImageDescription'),
-        descrip = iminfo.ImageDescription;
-    else
-        descrip = [];
-    end;
+    %Image info (timestamp and exposure) I get from Micromanager (p.micromanager==1)
+    %This info is actually written in txt metadata file; I parse it DE_adjustinfo
+    descrip = iminfo.ImageDescription;
+    pos_software=(findstr(descrip,'Software: '))+length('Software: ');
+    software = descrip(pos_software:end);
     
+    pos_datetime=(findstr(descrip,'DateTime: '))+length('DateTime: ');
+    datetime=descrip(pos_datetime:pos_datetime+18);
     
-    % ST 4/10/05:
-    if isfield(iminfo,'Software'),
-        software = iminfo.Software;
-    elseif ~isempty(descrip) %DE 2013/11/05
-        descrip = iminfo.ImageDescription;
-        ps1=(strfind(descrip,'Software: '))+length('Software: ');
-        software = descrip(ps1:end);
-    else
-        software = [];
-    end;
-    
-    
-    
-    if isfield(iminfo,'DateTime'),
-        datetime = iminfo.DateTime;
-    elseif ~isempty(strfind(descrip,'DateTime')) %DE 2013/11/05
-         ps2=(strfind(descrip,'DateTime: '))+length('DateTime: ');
-         datetime=descrip(ps2:ps2+18);
-         
-         year=str2num(datetime(1:4));
-         month=str2num(datetime(6:7));
-         day=str2num(datetime(9:10));
-         hour=str2num(datetime(12:13));
-         minute=str2num(datetime(15:16));
-         second=str2num(datetime(18:19));
-         
-         
-         datenumber = datenum(year,month,day,hour,minute,second);
-         
-         %     elseif isfield(iminfo,'FileModDate'),     %%%ADDED SJT
-         %         timestr = iminfo.FileModDate(13:20);
-         %         hour = str2num(timestr(1:2));
-         %         minute = str2num(timestr(4:5));
-         %         second = str2num(timestr(7:8));
-         %         year = 2000;
-         %         month = 10;
-         %         day = 10;
-         %         datenumber = datenum(year,month,day,hour,minute,second);
-    else
-        datetime = [];
-    end;
-    % ST end
+    year=str2num(datetime(1:4));
+    month=str2num(datetime(6:7));
+    day=str2num(datetime(9:10));
+    hour=str2num(datetime(12:13));
+    minute=str2num(datetime(15:16));
+    second=str2num(datetime(18:19));
+        
+    datenumber = datenum(year,month,day,hour,minute,second);
+        
+    %Here is exposure
+    pos_exposure=(findstr(descrip,'Exposure: '))+length('Exposure: ');
+    exptimestr=descrip(pos_exposure:end);
+    exptime=str2num(exptimestr);
+
 else
     exptimestr = '';
     gainstr = '';
@@ -82,6 +57,7 @@ if isempty(descrip),
     cube=-1;
     return;
 end;
+
 if strmatch('Image-Pro',software)
     exptimepos = findstr('Exptime=',descrip) + length('Exptime=');
     exptime = sscanf(descrip(exptimepos:end),'%f');
@@ -120,6 +96,7 @@ elseif strmatch('MetaMorph',software)     %%%%%%%%%%%%%%%ADDED SJT
     hour = str2num(timestr(1:2));
     minute = str2num(timestr(4:5));
     second = str2num(timestr(7:8));
+    
 elseif strmatch('Exposure:',descrip)     %%%%%%%%%%%%%%%ADDED SJT not so nice..if can not add extra fields
     exptimepos = findstr('Exposure: ',descrip) + length('Exposure: ');
     exptime = sscanf(descrip(exptimepos:end),'%f');
@@ -141,7 +118,11 @@ elseif strmatch('Exposure:',descrip)     %%%%%%%%%%%%%%%ADDED SJT not so nice..i
 end
 
 %end
+
+
 datenumber = datenum(year,month,day,hour,minute,second);
+
+
 % keyboard;
 % if exptime < 1,
 %     exptimestr = ['0',exptimestr];
@@ -164,7 +145,7 @@ else
     gain = sscanf(descrip(gainpos:end), '%f');
 
     % And convert numerical value to string value
-   switch(gain),
+    switch(gain),
         case 1,
             gainstr = 'low';
         case 2,
@@ -177,4 +158,3 @@ else
             gainstr = 'high';
     end;
 end;
-

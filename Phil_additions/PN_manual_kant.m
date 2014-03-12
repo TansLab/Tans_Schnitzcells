@@ -16,7 +16,6 @@ global pos Limage ourfig res pp phfig
 
 %set(phfig,'Visible', 'on') % ugly way to force phase image away from foreground during computation time NW2012-10-05
 
-
 pp=0;pps=0;
 zd3=25;
 pb=[3,3,3,4;4,4,3,4;1,2,1,2;1,2,2,1];
@@ -40,6 +39,7 @@ pos=[1 1];
 % recalculated) (NW2012-05-10)
 updatedCellNumbers=[];
 %
+list_mark =0;
 
 while ~done
     clear j*  %j1=0;j2=0;
@@ -128,7 +128,14 @@ while ~done
         '''  Val: '',curr_val]);']);
     %   '''  Val: '',curr_val]);pp=showbox(phfig,pos,pp,size(Limage),res);figure(ourfig);']);
     
-    % blubb
+     if list_mark ==1
+         figure(ourfig);
+         hold on
+         plot(10,10,'r*');
+         hold off;
+     end
+     
+     % blubb
     % hier the regionprobs of the next and previous image could already be
     % calculated to quicken update of image when frame changes
     % NW 2012-05-10
@@ -146,11 +153,14 @@ while ~done
     
     set(ourfig,'WindowButtonMotionFcn','');
     %if ct cc=get(1,'currentcharacter');else cc=get(1,'selectiontype');end
-    if ct % key press
+    if ct % STAR KEYBOARD CLICKS
         % cc=get(ourfig,'currentcharacter');
         if cc==' '
             OKorNot=1;
             done=1;
+        elseif cc=='l'
+            list_mark=1;
+            
         elseif cc=='q'
             Lout=Lin;
             OKorNot=0;
@@ -409,7 +419,7 @@ while ~done
     
             
             %%%%%%%%%%%%%%%%%%% START DJK 090105 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-        elseif cc=='9'
+        elseif cc=='9'  % still part of keyboard clicks
             if DJK_settings.fill_cut
                 DJK_settings.fill_cut = 0;
                 disp('Filling of Cutting Pixels Turned OFF');
@@ -479,11 +489,155 @@ while ~done
             % rarely used functions. for security, impose to recalc
             % regionproperties of all cells NW2012-05-10
             updatedCellNumbers=unique(Lout);
-            %
-            
             %%%%%%%%%%%%%%%%%%%  END DJK 090105  %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+            %
+            % ------------ start NW 2013-05 replace mouse ---------
+        elseif (cc=='4' || cc=='7' || cc=='5')
+            % alternative ways to replace mouse button function (does the same things as mouse button functions)
+                if cc=='4' % join cells by pressing '4' twice
+                    % join cells
+                    pos1=pos;
+                    j1=Lout(round(pos(1,2)),round(pos(1,1)));
+                    figure(ourfig);
+                    set(ourfig,'WindowButtonMotionFcn',['global pos Limage ourfig res pp phfig;pos=max(1,round((1/res)*get(gca,''CurrentPoint'')));',...
+                        'if (pos(1,2)>0 & pos(1,2)<size(Limage,1) & pos(1,1)>0 & pos(1,1)<size(Limage,2));',...
+                        'curr_val=num2str(double(Limage(pos(1,2),pos(1,1))));else;curr_val=''-1'';end;',...
+                        'set(ourfig,''name'',[''Pos: '',num2str(pos(1,2)),'' , '',num2str(pos(1,1)),',...
+                        '''  Val: '',curr_val]);']);
+                    ct=waitforbuttonpress;
+                    cc=get(ourfig,'currentcharacter');
+                    set(ourfig,'WindowButtonMotionFcn','');
+                    if ct==0 & cc=='4'
+                        j2=j1;
+                    else
+                        j2=Lout(round(pos(1,2)),round(pos(1,1)));
+                    end
+                    if j2<j1
+                        j1old=j1;
+                        j1=j2;
+                        j2=j1old;
+                    end
+                    Lout(Lout==j2)=j1;
+                    if ((pos1(1,2)-pos(1,2))^2+(pos1(1,1)-pos(1,1))^2)
+                        Lout=drawline(Lout,[pos1(1,2),pos1(1,1)],[pos(1,2),pos(1,1)],j1);
+                        Lout=drawline(Lout,[pos1(1,2)+1,pos1(1,1)],[pos(1,2)+1,pos(1,1)],j1);
+                        Lout=drawline(Lout,[pos1(1,2),pos1(1,1)+1],[pos(1,2),pos(1,1)+1],j1);
+                    end
+
+                    % updated cellnumbers NW2012-05-10
+                    updatedCellNumbers=[updatedCellNumbers;j1;j2];
+
+            % extend = shift+left button (or both?) -> press '7'to remove
+            % cell
+            elseif (cc=='7' & Lout(round(pos(1,2)),round(pos(1,1))))
+                % erase cell
+                Lout(Lout==Lout(round(pos(1,2)),round(pos(1,1))))=0;
+
+                % alternate) = ctrl+left button or right mouse button
+                % Will cut at this location
+
+                % updated cellnumbers NW2012-05-10
+                updatedCellNumbers=[updatedCellNumbers;Lout(round(pos(1,2)),round(pos(1,1)))];
+
+            elseif (cc=='5' & Lout(round(pos(1,2)),round(pos(1,1)))) %-> press '5' to cut cell into 2
+
+                % cutx & cuty are coordinate that is clicked
+                cutx = round(pos(1,2));
+                cuty = round(pos(1,1));
+
+                % extract cell that will be cut
+                chosencolor = Lout(cutx,cuty);
+                cell = zeros(size(Lout));
+                cell(Lout==Lout(cutx,cuty)) = Lout(Lout==chosencolor);
+                [fx,fy] = find(cell);
+                xmin = max(min(fx)-5,1);
+                xmax = min(max(fx)+5,size(cell,1));
+                ymin = max(min(fy)-5,1);
+                ymax = min(max(fy)+5,size(cell,2));
+                subcell = cell(xmin:xmax, ymin:ymax);
+                % subcell is only cell that will be cut
+                % figure(1);imshowlabel(subcell);pause;close(1);
+
+                % perim is perimeter of dilated cell
+                perim = bwperim(imdilate(subcell,strel('disk',1)));
+                % figure(1);imshowlabel(perim);pause;close(1);
+
+                % starting from clicked point, will increase a box untill 2 sides are
+                % found: this will be perims
+                perims = zeros(size(perim));
+                radp = 1;
+                while max2(perims)<2 & radp<41
+                    pxmin = max(cutx-xmin+1-radp,1);
+                    pxmax = min(cutx-xmin+1+radp,size(perims,1));
+                    pymin = max(cuty-ymin+1-radp,1);
+                    pymax = min(cuty-ymin+1+radp,size(perims,2));
+                    perims(pxmin:pxmax,pymin:pymax) = bwlabel(perim(pxmin:pxmax,pymin:pymax));
+                    radp = radp+1;
+                end
+                % figure(1);imshowlabel(perims);pause;close(1);
+
+                % if indeed 2 sides are found, will cut
+                if max2(perims)>1
+                    % kim is image with only clicked point drawn
+                    kim=zeros(size(subcell));
+                    kim(cutx-xmin+1,cuty-ymin+1)=1;
+
+                    % look for start of drawline
+                    kim1=kim;
+                    % increase size of kim untill it hits perims
+                    while ~any(any(kim1 & perims))
+                        kim1=imdilate(kim1,strel('disk',1));
+                    end
+                    % randomly select first point as start of drawline
+                    [cut1x,cut1y]=find(kim1 & perims);
+
+                    % now go for end of drawline, first remove points of side of start from perims
+                    color1=perims(cut1x(1),cut1y(1));
+                    perims(perims==color1)=0;
+                    kim2=kim;
+                    while ~any(any(kim2 & perims))
+                        kim2=imdilate(kim2,strel('disk',1));
+                    end
+                    % randomly select first point as end of drawline
+                    [cut2x,cut2y]=find(kim2 & perims);
+                    color2=perims(cut2x(1),cut2y(1));
+
+                    % cut cell by drawing line
+                    subcell = drawline(subcell,[cut1x(1) cut1y(1)],[cut2x(1) cut2y(1)],0);
+
+                    % cutcell is original cell, but now with seperate cells different colors
+                    cutcell = cell;
+                    cutcell(xmin:xmax,ymin:ymax) = bwlabel(subcell,4);
+
+                    % remove original cell in Lout
+                    Lout(Lout==Lout(cutx,cuty))=0;
+
+                    % first cell gets original color
+                    Lout(cutcell==1) = chosencolor;
+
+
+
+                    % new cells get new color
+                    for k = 2:max2(cutcell),
+
+                        % updated cellnumbers NW2012-05-10
+                        updatedCellNumbers=[updatedCellNumbers;chosencolor; max2(Lout)+k-1];
+
+                        Lout(cutcell==k) = max2(Lout)+k-1;
+                    end;
+
+
+
+                else
+                    disp(['less than 2 perims! cell number: ' num2str(Lout(cutx,cuty)) ' in Lbot_back.'])
+                end
+                end % end replace mouse clicks (if cc='4')
+
+            % ----------- end NW 2013-05 replace mouse button functions --------
+            
         end
-    else
+        
+    else % START MOUSE CLICKS (before: everything: keyboard clicks)
         cz=get(ourfig,'selectiontype');
         
         % normal = left mouse button

@@ -1,0 +1,16 @@
+#configuration  file:  leave values negative for defaults (soft.h file )
+10        //  BetaInit= 
+1.075     //  BetaIncr=  
+100.0     //  BetaMax=     // annealing rules: from Min to Max at Incr step
+1.        //  lambda1=     // warp penalizing 
+0.0000001 //  lambda2=     // affines penalizing     
+1.        //  TH=          // theta-parameter: defines number of slacks, should be around 1
+.0009     //  rEvar=       // reversals of variance
+.8        //  alphaS       // shrinking coefficient
+3         //  MaxSplit=    // 1,2,or 3: 1 for non-splits, 2 for 2 perm. matrices, 3 for 3 ;
+1         //  # of X column
+2         //  # of Y  column
+4         //  # of Length column
+5         //  # of Angle column
+6         //  # of ID column
+3         //  # of Z column if there is any

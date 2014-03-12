@@ -1,0 +1,380 @@
+function [xout,yout,Xbr,Xsw,Xdv] = plotschnitzmeST_Anc(p,schnitzcells, xfield, yfield, whichones, styleMap, varargin)
+
+%ADDITION ST-Anc:
+% The command will only show the plot of schnitzes of interest with, in some case, their parents. 
+% Also, there is a regression done in between 2 points clicked on the schnitz mention LAST.
+% It is best to mwntion the switching schnitz last.
+% Xbr, Xsw, Xdv is the x value of the plot at schnitz birth, switch and division, and 
+% ONLY  evaluated on the LAST mentioned schnitz plot. Xbr is the first data of the plot.
+% Xsw is the switching time from the regression at a given value of
+% background fluorescence. Xdv is x value of last the plot. 
+%%%%%%%%%%%%%%%%end
+
+%function [xout,yout,xavgout,yavgout] = plotschnitzmeST(p,schnitzcells, xfield, yfield, whichones, styleMap, varargin)
+
+% function plotschnitzme(schnitzcells, xfield, yfield, whichones, style, option1, option2,...)
+%
+%  [xout,yout = plotschnitzme(schnitzcells, xfield, yfield, ...
+%                                   whichones, style, varargin)
+%
+% plots almost any two fields of a schnitzcell structure against each other.
+% xfield and yfield are strings with the names of fields, e.g. 'frames', or
+% 'MC', or 'FC'...
+% whichones is an array containing the numbers of the schnitzcells you want
+%  to plot.  
+% note that this function automatically plots all of the ancestors of the
+% chosen schnitz.
+% 
+% 
+% To load the schnitz data structure (schnitzcells) you can either use
+% 
+%   load([p.tracksDir 'movieName-Schnitz.mat']);
+%   
+% or
+% 
+%   [p,schnitzcells]=compileschnitz(p,'load',1);
+% 
+% You can see any of your data by looking at the specific fields, e.g.
+% 
+%   schnitzcells(1)
+%   
+% This will also show what fields are available for this schnitz and 
+% what is their length. To plot the data, use
+% 
+%   plotschnitzme(schnitzcells,{xaxis-field},{yaxis-field},...
+%   	{cells-to-plot},{plot-color-and-style});
+%   	
+% Where {xaxis-field} is the abscissa variable and {yaxis-field} is the 
+% ordinate, and the data will be plotted for the schnitzes numbered 
+% {cells-to-plot} and for their ancestors. {plot-color-and-style} is 
+% in the normal format for the Matlab plot function. For example:
+% 
+%   plotschnitzme(schnitzcells,'mins','len',1,'ko-');
+%   plotschnitzme(schnitzcells,'FYsmins','MYs',[],'ro-');
+%   plotschnitzme(schnitzcells,'FCsmins','FCs',[],'gs-');
+%   plotschnitzme(schnitzcells,'dFCmins','dFCdt',1,'bs-');
+% 
+% You can chose any pair of fields to plot against each other, so long 
+% as they are the same length. E.g. volume array is same length as mins, 
+% but the derivative and _interp fields are one shorter since they're 
+% calculated between original time points. So 'dFCdt','dFCmins' could go
+% together.
+%
+% The function returns the x-data and y-data.
+% Additional options are available through the use of flags in "varargin".
+%
+
+% styleColorMap=[1 0 1;0 1 1;1 0 0;0 1 0;0 0 1;0 0 0];
+% styleMap=['r-';'b-';'g-';'k-';'m-';'c-'];
+% set(gca,'NextPlot','add');
+%  
+
+%figure; SJT
+fig = figure;
+
+if isfield(schnitzcells,'approved')
+    if nargin < 4,
+        whichones = find([schnitzcells.approved]);
+        if length(whichones)
+            disp('Showing approved schnitzes (and their ancestors) only.');
+        end
+    end;
+    if isempty(whichones),
+        whichones = find([schnitzcells.approved]);
+        if length(whichones)
+            disp('Showing approved schnitzes (and their ancestors) only.');
+        end
+    end;
+end
+if isempty(whichones),
+    whichones = find([schnitzcells.D]==0);
+    if length(whichones)
+        disp('Showing daughterless schnitzes (and their ancestors) only.');
+    end
+end;
+if ~length(whichones)
+    disp('No schnitzces selected. See "help plotschnitzme"');
+end
+
+xavgout = [];
+yavgout = [];
+
+if nargin <= 4,
+    style = 'b-';
+end;
+derivon = 0; % if you use "deriv", then we plot the dyfield/dxfield versus xfield.
+norm0on = 0;
+normon = 0;
+bfilton = 0;
+normbothon = 0;
+invxon = 0;
+collapseon = 0;
+indmaxon = 0;
+finalmedon = 0;
+avgon = 0;
+subtracton = 0;
+subtractval = 0;
+gethandles = 0;
+keepnans = 0;
+if nargin>=6,
+    for i = 1:length(varargin),
+        
+        if ~isempty(findstr(upper(varargin{i}),'SUBTRACT')),
+            s = upper(varargin{i});
+            subtracton = 1;
+            [T,R] = strtok(s);
+            [T,R] = strtok(R);
+            subtractval = str2num(T);
+            disp(['subtracting ',num2str(subtractval)]);
+        end;
+
+        
+        if ~isempty(findstr(upper(varargin{i}),'COLLAPSE')),
+            collapseon = 1;
+        end;
+        
+        if ~isempty(findstr(upper(varargin{i}),'FINALMED')),
+            finalmedon = 1;
+        end;
+        
+        if ~isempty(findstr(upper(varargin{i}),'INDMAX')),
+            indmaxon = 1;
+        end;
+        
+        if ~isempty(findstr(upper(varargin{i}),'BFILT')),
+            bfilton = 1;
+        end;
+        
+        if ~isempty(findstr(upper(varargin{i}),'INVX')),
+            invxon = 1;
+        end;
+        
+        if ~isempty(findstr(upper(varargin{i}),'NORM')),
+            normon = 1;
+        end;
+        
+        if ~isempty(findstr(upper(varargin{i}),'AVG')),
+            avgon = 1;
+        end;
+        if ~isempty(findstr(upper(varargin{i}),'HANDLEBACK')),
+            gethandles = 1;
+        end;
+        if ~isempty(findstr(upper(varargin{i}),'KEEPNANS')),
+            keepnans = 1;
+        end;
+        if ~isempty(findstr(upper(varargin{i}),'DERIV')),
+            derivon = 1;
+
+            s = (varargin{i});
+          
+            [T,R] = strtok(s);
+            [T,R] = strtok(R);
+            derivfield = T;
+            disp(['derivative with respect to ',num2str(derivfield)]);
+            
+        end;
+        if ~isempty(findstr(upper(varargin{i}),'NZERO')),
+            norm0on = 1;
+            normon = 0;
+            disp('norm 0 on');
+        elseif ~isempty(findstr(upper(varargin{i}),'NBOTH')),
+            normbothon = 1;
+            normon = 0;
+            disp('norm both on');
+        end;
+        
+        if ~isempty(findstr(upper(varargin{i}),'')),
+            bfilton = 1;
+        end;
+    end;
+    
+    if normon,
+        disp('norm on!');
+        eval(['allvals = [schnitzcells.',yfield,'];']);
+        normfac = max(allvals);
+    end;
+end;
+
+for i = 1:length(whichones),
+    thisone = whichones(i);
+    remembthisone = thisone;
+%     styleColor=styleColorMap(mod(i,size(styleColorMap,1)),:);
+    style=char(styleMap(1+mod(i,size(styleMap,1))));
+    X = [];
+    Y = [];
+    XM=[];
+    YM=[];
+    D = [];
+    T= [];
+    done = 0;
+    while ~done, 
+        x = getfield(schnitzcells(thisone),xfield);
+        y = getfield(schnitzcells(thisone),yfield);
+        
+        x = x(end:-1:1);
+        y = y(end:-1:1);
+        
+        if subtracton,
+            y = y - subtractval;
+        end;
+        
+        if derivon,
+            d = getfield(schnitzcells(thisone),derivfield);
+            d = d(end:-1:1);
+        end;
+            
+        X = cat(2,X,x);
+        Y = cat(2,Y,y);
+        XM = [XM length(x)];
+        T = [T thisone];
+        if derivon,
+            D = cat(2,D,d);
+        end;
+        thisone = schnitzcells(thisone).P;
+        done = (thisone <=0);
+ %   done = 1;  %% aletered SJT 11-10-06
+    end;
+    X = X(end:-1:1);
+    Y = Y(end:-1:1);
+    XM = XM(end:-1:1);
+    XM2= cumsum(XM);
+    T = T(end:-1:1);
+    
+    if derivon,
+        D = D(end:-1:1);
+        dY = diff(Y);
+        dD = diff(D);
+        dYdD = dY./dD;
+        Y = dYdD;
+        X2 = X(2:end);
+        X1 = X(1:end-1);
+        X12 = 0.5*(X1+X2);
+        X = X12;
+    end;
+
+    if normon
+        Y = Y/normfac;
+    elseif norm0on | normbothon,
+        Y = Y/Y(1);
+    elseif collapseon,
+        Y = Y/Y(end);
+    elseif indmaxon,
+        Y = Y/max(Y);
+    end;
+    
+    if normbothon,
+        X = X/X(1);
+        XM = XM/XM(1);
+    end;
+    
+    fnotnan = find(~isnan(X) & ~isnan(Y));
+    
+    if ~keepnans
+        X2 = X(fnotnan);
+        Y2 = Y(fnotnan);
+    else
+        X2 = X;
+        Y2 = Y;
+    end
+    
+    if bfilton & (length(Y2)>5),
+        Y2 = bfilt(Y2);
+    end;
+    
+    
+    if invxon,
+        X2 = 1./X2;
+    end;
+    
+    if ~avgon & length(X2),
+        hout(i)=plot(X2,Y2,style); 
+        hold on;
+        for k=1:length(T)
+        text(X2(XM2(k)),Y2(XM2(k)),num2str(T(k)),'FontSize',7,'HorizontalAlignment','left'); 
+        hold on;
+        end
+        hold on;
+    end;
+    yout{i} = Y2;
+    xout{i} = X2;
+    
+end;
+
+
+if avgon,
+    
+    allxout = [xout{:}];
+    allyout = [yout{:}];
+    avgX = [];
+    avgY = [];
+    
+    ux = unique(allxout);
+    for i = 1:length(ux),
+        uu = ux(i);
+        f = find(allxout==uu);
+        avgX(i) = uu;
+        avgY(i) = mean(allyout(f));
+        stdY(i) = std(allyout(f));
+    end;
+    
+    if normon,
+        avgY = avgY / max(avgY);
+    end;
+    
+    h = errorbar(avgX,avgY,stdY,style);
+    xavgout = avgX;
+    yavgout = avgY;
+    
+end;
+if gethandles
+    xout = hout;
+end;
+
+title([p.movieDate '  ' p.movieName]);
+
+fs=findstr(yfield,'_');
+for i=fs(end:-1:1);
+    yfield(i+1:end+1)=yfield(i:end);yfield(i)='\';end
+fs=findstr(xfield,'_');
+for i=fs(end:-1:1);
+    xfield(i+1:end+1)=xfield(i:end);xfield(i)='\';end
+if derivon,
+    ylabel(['derivative: \partial(',yfield,')/\partial(',derivfield,')']);
+elseif normon,
+    ylabel(['normalized ',yfield]);
+else
+    ylabel(yfield);
+end;
+xlabel(xfield);
+
+%%%%%%%%%%%%%Added SJT AILEEN : regression
+%done = 0;
+%while ~done
+%     RefFl=0.00001; % value of background fluorescence
+%     datacursormode on;
+%     waitforbuttonpress;
+%     dcm_obj = datacursormode(fig);
+%     c_info = getCursorInfo(dcm_obj);
+%     Index1 = c_info.DataIndex;
+%     waitforbuttonpress;
+%     dcm_obj = datacursormode(fig);
+%     c_info = getCursorInfo(dcm_obj);
+%     Index2 = c_info.DataIndex;
+%     X([Index1:Index2]);
+%     Y([Index1:Index2]);
+%     fitpar = polyfit(X([Index1:Index2]),Y([Index1:Index2]),1) 
+%     fitpar2 = fitpar * 10^3
+%     fitfunct = polyval(fitpar,X([1:Index2]));
+%     hold on;
+%     plot(X([1:Index2]),fitfunct);
+%     Xsw = (RefFl-fitpar(2))/fitpar(1)
+%     reply = input('correct (y/n)', 's');
+%     reply
+%     if reply=='y'
+%         done = 1;
+%     end
+%     Xbr=X(1);
+%     Xdv=X(length(X));
+% end
+% hold off;
+% close(fig);

@@ -1,0 +1,13 @@
+Hi,
+so what you already do  is very good, I do not remove slow growing cells but I think it is a very good idea.
+If you create a routine to detect potential cells to remove, you could add the detection of signals which significantly diverge from the population average.
+The program DetectDivergingTrees will output a vector of the schnitzes ordered by how much they diverge from the population (the last elements of the vector are the most diverging sub-trees associated to the schnitz number). In this version, I have used a smoothing function of the whole tree. It is not necessary, you could do the same without it.
+I have added the functions called in this program, plus the function "Descend" which outputs the list of the schtnizes of the children tree of a given schnitz.
+cheers,
+Philippe
+
+
+
+NB Noreen
+works inly with 1 init schnitz.
+only intensive quantities, not extensive (otherwise one has to sum the daugheters)

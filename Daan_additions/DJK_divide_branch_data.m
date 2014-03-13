@@ -7,6 +7,9 @@ function branch_groups = DJK_divide_branch_data(branches);
 
 % FIRST CHECK HOW MANY BRANCHES IN DATA %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 for i=1:length(branches)
+% comment NW 2013-04-11: if CrossCorrs will be extented to branches with
+% SameLength=0, then the following lines needs to be changed (it's
+% assumed that all branches have same length).
   schnitzNrs(i,:) = branches(i).schnitzNrs;
 end
 parent_schnitzes = schnitzNrs(:,1)';

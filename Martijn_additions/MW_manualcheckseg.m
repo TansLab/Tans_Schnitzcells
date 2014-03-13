@@ -1,4 +1,4 @@
-function p = PN_manualcheckseg (p, varargin);
+function p = MW_manualcheckseg (p, varargin);
 % Lc will be saved as the corrected image
 %
 %   MANUALCHECKSEG allows users to review the results of image segmentation
@@ -327,9 +327,9 @@ while loopindex <= length(p.manualRange);
         %set(0,'CurrentFigure',ourfig)
         while ~is_done
            
-            % This executes the function that asks for keyboard input.
+           
             [Lc,is_done,quit_now,dontsave,addtolist,crop_pop,newrect,savetemp,backwards,gotoframenum,DJK_settings] = ...
-                PN_manual_kant(p, LNsub, L_prec, g, rect,rect_prec,phsub, DJK_settings,p.assistedCorrection);
+                MW_manual_kant(p, LNsub, L_prec, g, rect,rect_prec,phsub, DJK_settings,p.assistedCorrection);
             
             if backwards==1 && (loopindex>1),
                 % JCR: Note this is kind of ugly- later loopindex is *incremented*

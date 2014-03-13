@@ -1,5 +1,5 @@
 function  [Lout,OKorNot,quit_now,dontsave,addtolist,crop_pop,newrect,savetemp,backwards,gotoframenum,DJK_settings] = ...
-    PN_manual_kant(p,Lin,L_prec,phin,rect,rect_prec,phsub,DJK_settings,assistedCorrection)
+    MW_manual_kant(p,Lin,L_prec,phin,rect,rect_prec,phsub,DJK_settings,assistedCorrection)
 
 % *******
 % TODO: include "updatedCellNumbers" in program (PN_imshowlabel) so that
@@ -154,6 +154,15 @@ while ~done
         if cc==' '
             OKorNot=1;
             done=1;
+        % Custom MW EDIT option, switches between figures
+%         elseif cc == '/'            
+%             % set(0,'CurrentFigure',phfig)
+%             setAlwaysOnTop(phfig)
+%             pause(1)            
+%             % set(0,'CurrentFigure',ourfig)
+%             setAlwaysOnTop(ourfig)
+%             pause(1)            
+%             msgbox('done')            
         elseif cc=='q'
             Lout=Lin;
             OKorNot=0;

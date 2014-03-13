@@ -170,7 +170,8 @@ for i = 1:length(schnitzcells)
     %--------------------------------------------------------------------
 
     %--------------------------------------------------------------------
-    % initialize with NaN
+    % initialize with NaN (full length vectors) resp. empty vector (length
+    % vector restricted to fluo time points) (init was modified 2013-11 NW)
     %--------------------------------------------------------------------
     schnitzcells(i).(['av_mu' name])            = NaN;
     schnitzcells(i).(['av_fittedLength' name])  = NaN;
@@ -178,9 +179,9 @@ for i = 1:length(schnitzcells)
     schnitzcells(i).(['av_divLength' name])     = NaN;
     for frameSize = p.frameSizes
       schnitzcells(i).(['mu' num2str(frameSize) name '_all']) = [1:length(i_time)]*NaN;
-      schnitzcells(i).(['mu' num2str(frameSize) name]) = [1:length(i_time)]*NaN;
+      schnitzcells(i).(['mu' num2str(frameSize) name]) = [];%[1:length(i_time)]*NaN;
       schnitzcells(i).(['muP' num2str(frameSize) name '_all']) = [1:length(i_time)]*NaN;
-      schnitzcells(i).(['muP' num2str(frameSize) name]) = [1:length(i_time)]*NaN;
+      schnitzcells(i).(['muP' num2str(frameSize) name]) = [];%[1:length(i_time)]*NaN;
     end
     %--------------------------------------------------------------------
     

@@ -174,7 +174,7 @@ expt=genvarname([ 'expt' fluorcolor]);
 % "Y_frames"
 %--------------------------------------------------------------------------
 
-testschnitznr=100;
+testschnitznr=10;
 % plotField exists for each phase image
 myframefield=[];
 if length(schnitzcells(testschnitznr).frames)==length(schnitzcells(testschnitznr).(plotField))

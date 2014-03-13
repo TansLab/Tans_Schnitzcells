@@ -1,13 +1,11 @@
-function p = PN_segmoviephase_3colors(p,varargin)
+function p = NW_nocut_segmoviephase_3colors_diffStrains(p,varargin)
 %
 % OPTIONAL ARGUMENTS:
-% 'medium'    : 'rich'  . Special segmentation of images that accounts for
-%                 substructures occuring in ruch medium. more time
-%                 consuming but better results in rich medium
-%                 default: 'normal'
+% 'medium'    : 'rich'  . Special preparation of images. default: 'normal'
+% (18.1.12: obsolete, nonfunctional! NW)
 % 'method'    : 'brightfield'. Pretreatment of images in French style
 %               (brightfield and 32 layers. 1 image per layer). default:
-%               'phasecontrast' (NOT UPDATED)
+%               'phasecontrast'
 
 % numimagesperlayer : which of the repeated images of the same layer are to
 %               be taken and averaged. Default: all. Possible alternative: [1]
@@ -46,14 +44,6 @@ if numExtraArgs > 0
 end
 
 %%%%%%%%%%%default values
-%growth medium (nb: special problems in rich medium: holes + fringed edges)
-if ~existfield(p,'medium')                                %special treatment in case of rich medium
-    p.medium='normal';  
-end
-if strcmp(p.medium,'rich')==0 && strcmp(p.medium,'normal')==0
-    disp('unknown kind of medium. Set to ''normal'' ');
-    p.medium='normal';
-end
 %STEP A : finds a global mask and crop the image
 if ~existfield(p,'rangeFiltSize')                         %typical area for dectection of interesting features of the image
     p.rangeFiltSize = 35;
@@ -68,16 +58,6 @@ end
 if ~existfield(p,'minCellArea')                           %minimum cell area (objects smaller than that will be erased)
     p.minCellArea = 250;
 end
-% if rich medium, minimal cell area should be set to a small value (100).
-% enforce it
-if strcmp(p.medium,'rich')==1 & p.minCellArea>100
-    p.minCellArea=100;
-    disp('...')
-    disp(['For better segmentation in rich medium, minCellArea should be small. It was reset to 100. ' ...
-        ' A larger default value can only be written directly into the function.'])
-    disp('...')
-end
-
 %STEP C : prepare seeds for watershedding
 if ~existfield(p,'GaussianFilter')                        %smoothing of the original image to find local minima within cells
     p.GaussianFilter = 5;
@@ -98,7 +78,14 @@ if ~existfield(p,'PN_saveDir') & p.saveSteps              %subfolder of p.segmen
     [message errmsg] = sprintf(['Image saving folder automatically generated: ' p.PN_saveDir]);
     disp(message);
 end
-
+%growth medium (nb: special problems in rich medium: holes + fringed edges)
+if ~existfield(p,'medium')                                %special treatment in case of rich medium
+    p.medium='normal';  
+end
+if strcmp(p.medium,'rich')==0 && strcmp(p.medium,'normal')==0
+    disp('unknown kind of medium. Set to ''normal'' ');
+    p.medium='normal';
+end
 %acquisition technique: 'phasecontrast' (conventional) or 'brightfield' (French
 %style) possible
 if ~existfield(p,'method')                                %standard technique
@@ -120,9 +107,6 @@ end
 if ~existfield(p,'quickMode') %extract already averaged images
     p.quickMode = 0;
 end
-
-
-
 
 %--------------------------------------------------------------------------
 % Checking or creation of directories
@@ -285,17 +269,13 @@ for i= p.segRange
         % LNsub : the segmented image of this frame in size that contains segmented cells
         % rect  : transformation required to reconstruct full size image from smaller ones
 
-        %test if number of slices for averaging (p.slices) exists. if less
-        %slices exist, use the existing ones only
-        if length(p.slices)>p.numphaseslices
-            disp(' ')
-            disp(['Phase slices for averaging do not all exist. Will use slices from 1 to ' num2str(p.numphaseslices) '.'])
-            disp(' ')
-            p.slices=1:1:p.numphaseslices;
-        end
-        
+        %if (isfield(p,'medium') & strcmp(p.medium,'rich')==1)        % special
+        %                           pre-treatment in rich medium (maybe to come)
+        %     imageToSegment = NW_prepareImagesRich(ph3,p.slices);
+        %     disp('rich medium')
+        %else
         imageToSegment = PN_prepareImages(ph3,p.slices);  
-        
+        %end
    
     %----------------------------------------------------------------------
     %BRIGHTFIELD
@@ -362,6 +342,8 @@ for i= p.segRange
     end
     %----------------------------------------------------------------------
     
+    %disp(['starting segmentation of frame ',num2str(i), ' Might take forever...']); %blubb
+    %return %BLUBB . BREAK FOR TEST PURPOSE ONLY !!!!!!!!!!!!!!!!!!!!!!!!!!!
     
     saveDirectory = [p.segmentationDir p.PN_saveDir 'seg' str3(i) filesep];
     [status,msg,id] = mkdir(saveDirectory);
@@ -370,15 +352,8 @@ for i= p.segRange
         'GaussianFilter',p.GaussianFilter,'minDepth',p.minDepth,...
         'neckDepth',p.neckDepth,'saveSteps',p.saveSteps,'saveDir',saveDirectory};
     
-    %---------------------------------------------------------------------------
-    % the real and true segmentation now comes:
-    if strcmp(p.medium,'normal')==1
-        [phsub,LNsub,rect]= PN_segphase(imageToSegment,inputsOfSegmentation{:});    
-    elseif strcmp(p.medium,'rich')==1
-        [phsub,LNsub,rect]= NW_segphase_richMed(imageToSegment,inputsOfSegmentation{:});    
-    else
-        error('Don''t know how to segment...')
-    end
+    [phsub,LNsub,rect]= NW_segphase_diffStrains(imageToSegment,inputsOfSegmentation{:});                    %%%the real job is done here
+
     
     %----------------------------------------------------------------------
     % Prepare segmentation and fluorescence data for saving

@@ -262,13 +262,14 @@ fittedTimeData = fit(2) + fit(1)*[1:length(timeData)];
 interval_error = 0;
 for i = 1:length(timeData)
   if abs(timeData(i) - fittedTimeData(i)) > spacingError*fit(1)
-    if ~interval_error, disp([' * Watch out! timepoints might not be evenly spaced! See graph']); end
+    if ~interval_error, disp([' * Watch out! timepoints might not be evenly spaced! See graph [disabled in code]']); end
     interval_error = 1;
     disp(['   -> at i=' num2str(i) ' : measured time = ' num2str(timeData(i)) ' & fitted time = ' num2str(fittedTimeData(i))]);
   end
 end
 if interval_error
-  figure; plot(timeData,'bo'); hold on; plot(fittedTimeData,'k-');
+  %figure; plot(timeData,'bo'); hold on; plot(fittedTimeData,'k-'); %enable
+  %for investigation. otherwise slows matlab down
 end
 out = fit(1);
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%

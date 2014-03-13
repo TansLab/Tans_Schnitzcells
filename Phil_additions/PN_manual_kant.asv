@@ -294,7 +294,7 @@ while ~done
             Lout=(double(Lout).*double(~subcolroi)); %inverted to 't'. % examine area of roi
             %               Lout=renumberimage(Lout);
             % get cellnumbers that were affected by blacking out
-            affectedcells=unique(Lout.*subcolroi); %TOBE CHECKED! unique(Lout.*(1-subcolroi));
+            affectedcells=unique(Lout.*(1-subcolroi));
             affectedcells=affectedcells(affectedcells>0);
             updatedCellNumbers=[updatedCellNumbers;affectedcells]; %blubb
             %

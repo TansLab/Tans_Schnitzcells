@@ -32,7 +32,7 @@ function problemCells = DJK_analyzeTracking(p, varargin);
 %                  in addition to 20px length change because length change
 %                  for bent cells (majoraxislength!) is a poor criterion
 %                  and often false positive.
-%                  default: 70
+%                  default: 50
 %
 %
 % OUTPUT:
@@ -121,7 +121,7 @@ end
 
 % If explicit pixelsAreaDiv is not given, use 50 pixels
 if ~existfield(p,'pixelsAreaDiv')
-    p.pixelsAreaDiv = 70;
+    p.pixelsAreaDiv = 50;
 end
 %--------------------------------------------------------------------------
 
@@ -280,18 +280,14 @@ for cell = 1:length(schnitzcells)
        (schnitzcells(cell).len(end) < -20 + schnitzcells(D).len(1) + schnitzcells(E).len(1))
         %area change (check only if schnitz contains this field -> not true for schnitz files older than 2013-12)
         if ~existfield(schnitzcells,'areapx')
-            schnitzcells(cell).offspringToBig = true;
-            framesWithCellsChangingAfterDivision = [framesWithCellsChangingAfterDivision schnitzcells(cell).frames(end)-1];
-            problemCells = [problemCells ; cell schnitzcells(cell).frames(end)-1];
-        else
-            AreaChange=abs(schnitzcells(cell).areapx(end) -  ( schnitzcells(D).areapx(1) + schnitzcells(E).areapx(1)));
-            if AreaChange>p.pixelsAreaDiv;
-                schnitzcells(cell).offspringToBig = true;
-                framesWithCellsChangingAfterDivision = [framesWithCellsChangingAfterDivision schnitzcells(cell).frames(end)-1];
-                problemCells = [problemCells ; cell schnitzcells(cell).frames(end)-1];
-                %disp(['Parent schnitz: ' num2str(cell) ' Frame '   num2str(schnitzcells(cell).frames(end)-1)])
-            end
-        end
+      schnitzcells(cell).offspringToBig = true;
+      framesWithCellsChangingAfterDivision = [framesWithCellsChangingAfterDivision schnitzcells(cell).frames(end)-1];
+      problemCells = [problemCells ; cell schnitzcells(cell).frames(end)-1];
+      %BLUBB START
+      disp(['Parent schnitz: ' num2str(cell) ' Frame '   num2str(schnitzcells(cell).frames(end)-1)])
+      schnitzcells(cell).areapx(end) -  ( schnitzcells(D).areapx(1) + schnitzcells(E).areapx(1))
+      
+      %BLUBB END
     end
   end
 end
@@ -370,8 +366,6 @@ for fr = framesWithCellsMoving
   for cell = 1:length(schnitzcells)
     if schnitzcells(cell).inTracking & intersect(fr, schnitzcells(cell).moving)
 %       out = [out str3(cell) ' '];
-% MAYBE SOME CORRECTION NEEDED FOR FR_IDX -> IF FRAMES ARE SKIPPED %
-% NW2014-01
       fr_idx = find(schnitzcells(cell).frames==(fr+1));
       cenx = schnitzcells(cell).cenx_cent(fr_idx-1);
       ceny = schnitzcells(cell).ceny_cent(fr_idx-1);
@@ -399,9 +393,6 @@ for fr = framesWithCellsGrowingWeird
   % output
   dispAndWrite(fid, ['     |  |--- in frame ' str3(frprevious) ' -> ' str3(fr)]);
   for cell = 1:length(schnitzcells)
-      % MAYBE SOME CORRECTION NEEDED FOR FR_IDX -> IF FRAMES ARE SKIPPED %
-    % NW2014-01
-
     idx = [find(schnitzcells(cell).growingTooLittle==(fr))  find(schnitzcells(cell).growingTooMuch==(fr))];
     if schnitzcells(cell).inTracking & idx
       fr_idx = find(schnitzcells(cell).frames==(fr+1));

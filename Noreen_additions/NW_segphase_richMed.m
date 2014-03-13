@@ -1,10 +1,11 @@
-%by Philippe Nghe 16/01/2012
+% largely modified by Noreen Walker 2014-01
+% original by Philippe Nghe 16/01/2012
 %steps of the segmentation :
 %   A. Find a mask
 %   B. Find edges
-%   C. Find skeletenized seeds
-%   D. Cut branch points
-%   E. Cut long cells
+%   C. Get clean cell mask and cut long cells
+%   D. Remove fuzzy outline. Connect cut-off cell poles 
+%   E. Create skeleton (seeds)
 %   Z. Watershed from seeds
 % INPUTS:
 %   imageToSegment:    greyscale image
@@ -14,7 +15,7 @@
 %   Z_segmentedImage:    segmented image (smaller size)
 %   ROI_segmentation:   corner coordinates of the crop region in the original image
 
-function [A_cropPhImage, Z_segmentedImage, ROI_segmentation] = PN_segphase(imageToSegment,varargin)
+function [A_cropPhImage, Z_segmentedImage, ROI_segmentation] = NW_segphase_v1(imageToSegment,varargin)
 
 
 %%%%%%%%%%%%%%%%%%%%%%  PARAMETERS INITIALIZATION  %%%%%%%%%%%%%%%%%%%%%%
@@ -27,15 +28,15 @@ q.addRequired('imageToSegment', @isnumeric);
 q.addParamValue('rangeFiltSize',35,@isnumeric);       %dectection of interesting parts of the image
 q.addParamValue('maskMargin',20,@isnumeric);          %additional margin of the mask : enlarge if cells missing on the edge
 
-%STEP B : find edges
+%STEP XYZ
 q.addParamValue('LoG_Smoothing',2,@isnumeric);         %smoothing amplitude of the edge detection filter
 q.addParamValue('minCellArea',250,@isnumeric);        %minimum cell area (smaller are erased)
 
-%STEP C : prepare seeds for watershedding
+%STEP XYZ
 q.addParamValue('GaussianFilter',5,@isnumeric);        %smoothing of the original image to find local minima within cells 
 q.addParamValue('minDepth',5,@isnumeric);             %minimum accepted depth for a local minimum
 
-%STEP E : treatment of long cells
+%STEP C : treatment of long cells
 q.addParamValue('neckDepth',2,@isnumeric);    
 
 %saving images
@@ -60,9 +61,6 @@ O_PhImageFilt = medfilt2(imageToSegment);
 A_maskImage = rangefilt(O_PhImageFilt,true(q.Results.rangeFiltSize));              %detect zones of sufficient intensity variations
 A_maskImage = im2bw(A_maskImage,graythresh(A_maskImage));                  %threshold to black and white
 A_maskImage = imclose(A_maskImage,strel('disk',q.Results.maskMargin));                     %enlarge mask         
-% ** NW: activate "imdilate" if cells at edge are not detected properly
-%A_maskImage = imdilate(A_maskImage,strel('disk',q.Results.maskMargin));                     
-% **
 labelMaskImage = logical(A_maskImage);                                     %only keep the biggest connected part of the mask
 propsMaskImage = regionprops(labelMaskImage,'Area','BoundingBox','Image');
 [~,idx] = max([propsMaskImage.Area]);
@@ -91,43 +89,7 @@ B_edgeImage1 = edge(B_negPh,'log',0,q.Results.LoG_Smoothing);                   
 B_edgeImage2 = B_edgeImage1 & A_cropMaskImage;
 B_fillEdgeImage2 = imfill(B_edgeImage2,'holes');
 B_fillEdgeImage2 = bwareaopen(B_fillEdgeImage2,q.Results.minCellArea,4);           %suppress small stuff 
-B_edgeImage2 = B_edgeImage1 & B_fillEdgeImage2;                            %keeps only edges that do not own to small stuff
-B_edgeImage2 = bwareaopen(B_edgeImage2,30);                                %remove small loops related to intracell variations
-
-
-DE_boolean=0;
-if DE_boolean
-    %DE 2013-07-09. Issue with bright empty areas between the cells detected as
-    % jagged regions. Annoying while manual segmentaion.
-    % Make an additional mask and use it later to remove unwanted jagged regions.
-    
-    % threshold: if int<mean(int): int=0; this eliminates the most of the unwanted jagged regions
-    B_negPh(B_negPh<mean(B_negPh(:)))=0;
-    %make a binary mask from it:
-    mask_fromintensity=(logical(B_negPh));
-    %erode the mask, otherwise it's too tight and can cut the edges of the cells drastically (lysis :))
-    se5 = strel('disk',10);
-    mask_fromintensity2=imcomplement(imerode(imcomplement(mask_fromintensity),se5));
-    
-    % apply the mask obtained above to cut away the unwanted
-    % regions from the old (B_edgeImage2) edge matrix, containing the edges of 
-    % unwanted regions too:
-    B_edgeImage3 = B_edgeImage2 .* mask_fromintensity2;
-    
-    % one can actually check the difference:
-    % edge_difference=B_edgeImage2-B_edgeImage3; imagesc(edge_difference);
-    % the rest goes unchanged:
-    B_fillEdgeImage3 = imfill(B_edgeImage3,'holes');
-    B_fillEdgeImage3 = bwareaopen(B_fillEdgeImage3,q.Results.minCellArea,4);  
-    B_edgeImage3 = B_edgeImage3 & B_fillEdgeImage3;                            %keeps only edges that do not own to small stuff
-    B_edgeImage3 = bwareaopen(B_edgeImage3,30);
-    
-    % IMPORTANT!!!! HERE I REPLACE B_edgeImage2 with B_edgeImage2 !!!!!
-    B_edgeImage2 = B_edgeImage3;
-end
-
-
-
+B_edgeImage2 = bwareaopen(B_edgeImage2,30);           %obsolete? blubb                     %remove small loops related to intracell variations
 
 
 if q.Results.saveSteps
@@ -138,53 +100,98 @@ end
 
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%STEP C : prepare seeds for watershedding
+%STEP C : get clean cell mask (dirt removed) and cut long cells
 
-%makes a clean filled cells mask
+%makes a clean filled cells mask (removes segmented dirt without clear
+%intensity-min)
 C_smoothPh = imfilter(A_cropPhImage,fspecial('gaussian',q.Results.GaussianFilter,q.Results.GaussianFilter));
 C_localMinPh = imextendedmin(C_smoothPh,q.Results.minDepth) & B_fillEdgeImage2;       %local minima in the mask      
 C_cellMask = imfill(B_edgeImage2,find(C_localMinPh));                       
 C_cellMask = bwmorph(C_cellMask,'open');                                    %clean cells mask
 
 %shrinking steps to cut some cells
-C_seeds1 = C_cellMask & ~B_edgeImage2;                                      %thins cells by removing the edge
-C_seeds2 = bwmorph(C_seeds1,'open');                                        %already cuts some cells
-C_seeds2 = bwmorph(C_seeds2,'thin',inf);                                    %skeletinization
+C_cellMaskSmall = C_cellMask & ~B_edgeImage2;                                      %thins cells by removing the edge
 
-if q.Results.saveSteps
-savePNGofImage(C_cellMask & ~C_localMinPh,'C_Mask and minima',q.Results.saveDir);
-savePNGofImage(C_seeds1,'C_seeds1',q.Results.saveDir);
-savePNGofImage(C_seeds2,'C_seeds2',q.Results.saveDir);
-end
-
-
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%STEP D : suppress branch points of the skeleton
-brchpts = PN_FindBranchPoints(C_seeds2);
-C_seeds2(logical(brchpts)) = 0;
-%some cleaning
-C_seeds2 = bwmorph(C_seeds2,'spur',3);
-C_seeds2 = bwareaopen(C_seeds2,10,8);
-
-
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%STEP E : cut long cells which neck is deeper than neckDepth
+%cut long cells
 continueToCut = true;
-icut = C_seeds2;
+icut=bwmorph(C_cellMaskSmall,'thin',inf);
+
+brchptsicut = PN_FindBranchPoints(icut);
+icut(logical(brchptsicut)) = 0;
+%some cleaning
+icut = bwmorph(icut,'spur',3);
+icut = bwareaopen(icut,10,8);
+
 while continueToCut
-    [cellsToRemove cutPoints] = PN_CutLongCells(icut,C_cellMask,q.Results.neckDepth);
+    [cellsToRemove cutPoints] = NW_CutLongCells_richMed(icut,C_cellMaskSmall,q.Results.neckDepth);
     if max(max(cutPoints))==0
         continueToCut = false;
     else
         cutPoints = bwmorph(cutPoints,'dilate',2);
-        C_seeds2(cutPoints) = false; %cuts the long cells on the seeds image
+        C_cellMaskSmall(cutPoints)=0; %it could happen that not enough pixels are removed! but larger dilation -> stranger cell-pole shape
+    %    C_seeds2(cutPoints) = false; %cuts the long cells on the seeds image
         icut(cutPoints) = false;
         icut= icut & ~cellsToRemove;
     end
 end
 
 if q.Results.saveSteps
-savePNGofImage(C_seeds2,'C_seeds2',q.Results.saveDir);
+    savePNGofImage(C_cellMask & ~B_edgeImage2,'C_cellMaskSmall_preCutLong',q.Results.saveDir);
+    savePNGofImage(C_cellMaskSmall,'C_cellMaskSmall',q.Results.saveDir);
+    savePNGofImage(C_cellMaskSmall & ~C_localMinPh,'C_cellMaskSmall and minima',q.Results.saveDir);
+end
+disp('finished *C* clean cellMask & cut Long Cells.')
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%STEP D : Remove fuzzy outline & gulfs. Connect cut-off cell poles to
+% larger cells. specific for rich medium
+
+% ------ 
+% connect suspiciously small cell areas (cutoff-poles...) to neighbour
+% cells
+% label all areas
+D_cellMask_conn=bwlabel(C_cellMaskSmall);
+
+areacutoff=400; % adjust
+allAreas=regionprops(D_cellMask_conn,'Area');
+idxSmallArea=find([allAreas.Area]<areacutoff);
+for i=1:length(idxSmallArea);
+    myareaidx=idxSmallArea(i);
+    % check if area is still suspiciously small or already connected
+    currentarea=regionprops(D_cellMask_conn==myareaidx,'Area');
+    if isempty(currentarea) | currentarea.Area>areacutoff; continue; end
+    D_cellMask_conn=NW_ConnectDividedCellParts(D_cellMask_conn,B_negPh,myareaidx);
+end
+
+% -----
+% imclose each area
+mystruct_el=strel('disk',10); %adjust
+D_cellMask_closed=NW_imclose_eachArea(D_cellMask_conn,mystruct_el);
+% reduce image again to logical: areas=1, background=0
+D_cellMask_closed=(D_cellMask_closed>0);
+
+E_seeds = bwmorph(D_cellMask_closed,'thin',inf);     %for later                     %skeletinization
+
+% reconstruct Cell_Mask by dilation. compensate for previous edge removal
+D_cellMask_closed=imdilate(D_cellMask_closed,strel('disk',1));
+
+if q.Results.saveSteps
+    savePNGofImage(D_cellMask_conn,'D_cellMask_conn',q.Results.saveDir);
+    savePNGofImage(D_cellMask_closed,'D_cellMask_closed',q.Results.saveDir);
+end
+disp('Finished *D* imclose and connect small cells.')
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%STEP E : create skeleton and suppress branch points of the skeleton
+%E_seeds = bwmorph(D_cellMask_closed,'thin',inf);                                    %skeletinization
+brchpts = PN_FindBranchPoints(E_seeds);
+E_seeds(logical(brchpts)) = 0;
+%some cleaning
+E_seeds = bwmorph(E_seeds,'spur',3);
+E_seeds = bwareaopen(E_seeds,10,8);
+
+if q.Results.saveSteps
+    savePNGofImage(E_seeds,'E_seeds',q.Results.saveDir);
 end
 
 
@@ -192,11 +199,11 @@ end
 %STEP Z : final segmentation by watershedding
 
 %prepare mask for watershedding
-Z_maskToFill = bwmorph(C_cellMask,'dilate');
+Z_maskToFill = bwmorph(D_cellMask_closed,'dilate');
 Z_background = ~Z_maskToFill;                                               %background
 
 %prepare final seeds
-Z_seeds = bwmorph(C_seeds2,'spur',3);
+Z_seeds = bwmorph(E_seeds,'spur',3);
 Z_seeds = bwareaopen(Z_seeds,4,8);
 
 %prepare seeded landscape for watershedding
@@ -205,7 +212,7 @@ Z_d1 = imimposemin(Z_d1, Z_background | Z_seeds);                           %imp
 
 %watershedding
 Z_segmentedImage = watershed(Z_d1);                     
-Z_segmentedImage(Z_background) = 0;
+Z_segmentedImage(Z_background) = 0;                                         % (small) areas which did not contain seed are now also included
 Z_segmentedImage = bwareaopen(Z_segmentedImage,10);
 Z_segmentedImage = bwlabel(Z_segmentedImage);                               %segmentation is finished here
 Z_segmentedImage = imdilate(Z_segmentedImage, strel('diamond',1));

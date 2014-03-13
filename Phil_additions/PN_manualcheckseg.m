@@ -95,9 +95,9 @@ end
 
 
 disp(' ')
-disp('Instructions: press left mouse button on two consecutive cells to join them.')
-disp('              Press right mouse button to cut at that point.')
-disp('              Shift + left mouse button erases current cell.')
+disp('Instructions: press left mouse button (or key ''4'') on two consecutive cells to join them.')
+disp('              Press right mouse button (or key ''5'') to cut at that point.')
+disp('              Shift + left mouse button (or key ''7'') erases current cell.')
 disp('              When you''re done, press <space> to go to the next frame.')
 disp('              press <escape> to redo this frame from the original autoseg file.')
 disp('              to save progress during work on a frame, press:')
@@ -105,7 +105,7 @@ disp('                    ''s'' to save work to memory without writing to the fi
 disp('                    ''w'' to write a temporary partial correction to the file.')
 disp('              press ''x'' to black out an area.')
 disp('              press ''t'' to mark terraced area.')
-disp('              press ''c'' to crop out only populated area. Do not use...')
+disp('              press ''c'' to morphologically close each cell area (imclose)')
 disp('              press ''r'' to renumber the cell you are pointing to.')
 disp('              press ''p'' to show a square around the position, on phase image.')
 disp('              press ''b'' to mark the cell you are pointing to, on phase image.  Do not use...')
@@ -124,6 +124,7 @@ disp('              press ''i'' to fill the cell you are pointing to.')
 disp('              press ''j'' to fill all cells.')
 disp('              press ''h'' to reseed a cell.')
 disp('              press ''d'' to remove all ''cells'' which look like dirt (large convex hull).')
+disp('              press ''u'' to go back one step (possible once).')
 
 disp(' ')
 

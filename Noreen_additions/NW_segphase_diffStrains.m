@@ -1,3 +1,7 @@
+% NW (2013): No restriction to largest connected area -> cells that are far
+% apart are all detected. Segmentation is not restricted to central area.
+% Otherwise identical to Std Segmentation
+%
 %by Philippe Nghe 16/01/2012
 %steps of the segmentation :
 %   A. Find a mask
@@ -61,16 +65,35 @@ A_maskImage = rangefilt(O_PhImageFilt,true(q.Results.rangeFiltSize));           
 A_maskImage = im2bw(A_maskImage,graythresh(A_maskImage));                  %threshold to black and white
 A_maskImage = imclose(A_maskImage,strel('disk',q.Results.maskMargin));                     %enlarge mask         
 labelMaskImage = logical(A_maskImage);                                     %only keep the biggest connected part of the mask
+
+%blubb start
+% enforce conncetion
+%propsMaskImage = regionprops(labelMaskImage,'Area','BoundingBox','Image');
+
+
+
+%blubb end
+
+
 propsMaskImage = regionprops(labelMaskImage,'Area','BoundingBox','Image');
 [~,idx] = max([propsMaskImage.Area]);
-A_cropMaskImage = propsMaskImage(idx).Image;                               %cropped mask
-bb = propsMaskImage(idx).BoundingBox;
-ROI_segmentation = [ceil(bb([2 1])) ceil(bb([2 1]))+bb([4 3])-[1 1]];   %ymin xmin ymax xmax
+%blubb A_cropMaskImage = propsMaskImage(idx).Image;                               %cropped mask
+%bb = propsMaskImage(idx).BoundingBox;
+%ROI_segmentation = [ceil(bb([2 1])) ceil(bb([2 1]))+bb([4 3])-[1 1]];   %ymin xmin ymax xmax
+A_cropMaskImage=labelMaskImage;
+%bb = [1 1 size(A_cropMaskImage,1) size(A_cropMaskImage,2)];
+%increment a little bit, otherwise background calculation of fluor is going
+%to fail
+myIncr=15;
+ROI_segmentation=[1+myIncr 1+myIncr size(A_cropMaskImage,1)-myIncr size(A_cropMaskImage,2)-myIncr];
+A_cropMaskImage=A_cropMaskImage(ROI_segmentation(1):ROI_segmentation(3),ROI_segmentation(2):ROI_segmentation(4));
+%blubb
+
+%
 A_cropPhImage = O_PhImageFilt(ROI_segmentation(1):ROI_segmentation(3),ROI_segmentation(2):ROI_segmentation(4)); %cropped ph image image
 
 if q.Results.saveSteps
     savePNGofImage(A_maskImage,'A_maskImage',q.Results.saveDir);
-    %saveas(A_maskImage,'A_maskImage','png')
 end
 
 
@@ -81,7 +104,7 @@ B_negPh = imcomplement(A_cropPhImage);
 se = strel('disk',1);
 B_negPhErode = imerode(B_negPh, se);                                       %Morphological reconstruction ...
 B_negPh = imreconstruct(B_negPhErode,B_negPh);                             %... in the mask of the original image
-B_negPh = imdilate(B_negPh, se);                                          %Allows a better edge determination at contacts.
+B_negPh = imdilate(B_negPh, se);                                           %Allows a better edge determination at contacts.
 B_edgeImage1 = edge(B_negPh,'log',0,q.Results.LoG_Smoothing);                      %edge detection by smoothing (laplacian of gaussian ensures closed edges)
 
 %suppress noisy surroundings
@@ -90,42 +113,6 @@ B_fillEdgeImage2 = imfill(B_edgeImage2,'holes');
 B_fillEdgeImage2 = bwareaopen(B_fillEdgeImage2,q.Results.minCellArea,4);           %suppress small stuff 
 B_edgeImage2 = B_edgeImage1 & B_fillEdgeImage2;                            %keeps only edges that do not own to small stuff
 B_edgeImage2 = bwareaopen(B_edgeImage2,30);                                %remove small loops related to intracell variations
-
-
-DE_boolean=0;
-if DE_boolean
-    %DE 2013-07-09. Issue with bright empty areas between the cells detected as
-    % jagged regions. Annoying while manual segmentaion.
-    % Make an additional mask and use it later to remove unwanted jagged regions.
-    
-    % threshold: if int<mean(int): int=0; this eliminates the most of the unwanted jagged regions
-    B_negPh(B_negPh<mean(B_negPh(:)))=0;
-    %make a binary mask from it:
-    mask_fromintensity=(logical(B_negPh));
-    %erode the mask, otherwise it's too tight and can cut the edges of the cells drastically (lysis :))
-    se5 = strel('disk',10);
-    mask_fromintensity2=imcomplement(imerode(imcomplement(mask_fromintensity),se5));
-    
-    % apply the mask obtained above to cut away the unwanted
-    % regions from the old (B_edgeImage2) edge matrix, containing the edges of 
-    % unwanted regions too:
-    B_edgeImage3 = B_edgeImage2 .* mask_fromintensity2;
-    
-    % one can actually check the difference:
-    % edge_difference=B_edgeImage2-B_edgeImage3; imagesc(edge_difference);
-    % the rest goes unchanged:
-    B_fillEdgeImage3 = imfill(B_edgeImage3,'holes');
-    B_fillEdgeImage3 = bwareaopen(B_fillEdgeImage3,q.Results.minCellArea,4);  
-    B_edgeImage3 = B_edgeImage3 & B_fillEdgeImage3;                            %keeps only edges that do not own to small stuff
-    B_edgeImage3 = bwareaopen(B_edgeImage3,30);
-    
-    % IMPORTANT!!!! HERE I REPLACE B_edgeImage2 with B_edgeImage2 !!!!!
-    B_edgeImage2 = B_edgeImage3;
-end
-
-
-
-
 
 if q.Results.saveSteps
 savePNGofImage(B_edgeImage1,'B_edgeImage1',q.Results.saveDir);

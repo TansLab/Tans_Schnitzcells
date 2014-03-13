@@ -150,7 +150,7 @@ if addPhaseImage % costs 0.045 sec
     %stop4a=toc
 else
     outim = Lrgb;
-    
+
     %stop4b=toc
 end
 

@@ -1,4 +1,4 @@
-function [CorrData,composite_corr]=DJK_plot_crosscorrelation_standard_error_store(p,branch_groups, fieldX, fieldY,varargin);
+function CorrData=DJK_plot_crosscorrelation_standard_error_store(p,branch_groups, fieldX, fieldY,varargin);
 % Daans function but saves the generated plots
 %
 % This function plots the cross-correlation of fieldX and fieldY. Further
@@ -79,14 +79,14 @@ if numExtraArgs > 0
 end
 
 % create SaveDir 
-if ~existfield(p,'selectionName')
+if ~existfield(p,'selectionName ')
   p.selectionName = ''
 end
 % Save directory
 if ~existfield(p,'DJK_saveDir')
   p.DJK_saveDir = [p.analysisDir 'branches' filesep];
 end
-if ~existfield(p,'selectionName')
+if ~existfield(p,'selectionName ')
   p.selectionName = '';
 end
 if length(p.selectionName) > 0
@@ -123,6 +123,7 @@ end
 %                                       otherwise the input-'p' to the whole function is overwritten, including
 %                                       information about 'saveDir' (older version did not require
 %                                       'p'as a function-input.)
+
 for i = 1:length(branch_groups)
   [trash, branch_groups(i).composite_corr] = DJK_getCrossCor(p, branch_groups(i).branches, fieldX, fieldY, 'bias', bias, 'weighing', weighing, 'extraNorm', extraNorm);
 end
@@ -143,13 +144,7 @@ for i = 1:length(branch_groups)
   composite_corr(i,:) = branch_groups(i).composite_corr.Y;
 end
 
-if p.onScreen
-    visibleOnOff='on';
-else
-    visibleOnOff='off';
-end
-
-h=figure('visible',visibleOnOff); 
+h=figure('visible','off'); 
 % if single groups are to be plotted in color, get the colors
 if colorMode==1 %start one color earlier than in NW_makemovieBranchgroups!
     myColor=[1 1 0.9; 1 0 0 ; 0 1 0 ; 0 0 1; 1 0.6 0.2;  0 1 1; 0 0.5 0.5; 0 0.6 0; 0.6 0 0.4; 0.8 0.5 0; 0.7 0 0; 0.4 0.2 0.6; 0.6 0.2 0; 1 0 0 ; 0 1 0 ; 0 0 1; 1 0.6 0.2;  0 1 1; 0 0.5 0.5; 0 0.6 0; 0.6 0 0.4; 0.8 0.5 0; 0.7 0 0; 0.4 0.2 0.6; 0.6 0.2 0];
@@ -181,7 +176,7 @@ if ~p.onScreen
     close(h)
 end
 
-h=figure('visible',visibleOnOff); 
+h=figure('visible','off'); 
 errorbar(branch_groups(i).composite_corr.X/60,mean(composite_corr),std(composite_corr), '-', 'LineWidth', 2, 'Color', [0 0 0]); hold on;
 xlabel('time [h]');
 ylabel('crosscorr');
@@ -194,7 +189,7 @@ if ~p.onScreen
     close(h)
 end
 
-h=figure('visible',visibleOnOff); 
+h=figure('visible','off'); 
 errorbar(branch_groups(i).composite_corr.X/60,mean(composite_corr),std(composite_corr)/sqrt(length(branch_groups)), '-', 'LineWidth', 2, 'Color', [0 0 0]); hold on;
 xlabel('time [h]');
 ylabel('crosscorr');

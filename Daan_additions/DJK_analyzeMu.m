@@ -42,7 +42,7 @@ function [fitTime, fitMu] = DJK_analyzeMu(p, schnitzcells, varargin);
 numRequiredArgs = 2; functionName = 'DJK_analyzeMu';
 
 if (nargin < numRequiredArgs) | (mod(nargin,2) ~= (mod(numRequiredArgs,2)) | ~isSchnitzParamStruct(p))
-  errorMessage = sprintf('%s\n%s',['Error width input arguments of ' functionName],['Try "help ' functionName '".']);
+  errorMessage = sprintf('%s\n%s',['Error with input arguments of ' functionName],['Try "help ' functionName '".']);
   error(errorMessage);
 end
 
@@ -197,7 +197,7 @@ figureName = ['mu_' p.muField];
 figureFileName = ['mu_' p.muField]; 
 
 % determine which data will be used for fitting
-if p.fitTime
+if ~isempty(p.fitTime) % Edit MW 2014-3-13; bugfix
   fit_idx = find( data_time >= p.fitTime(1) & data_time <= p.fitTime(2) );
 
   figureName = [figureName '_fitTime' num2str(round(p.fitTime(1))) '_' num2str(round(p.fitTime(2)))]; 

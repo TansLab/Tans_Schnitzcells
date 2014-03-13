@@ -15,6 +15,7 @@
 
 function outim = DJK_imshowlabel(L,varargin);
 
+
 %--------------------------------------------------------------------------
 % Input error checking and parsing
 %--------------------------------------------------------------------------
@@ -98,4 +99,11 @@ else
     imshow(L2, mymap);
   end
   outim = L2;
+  
+      
+
+  
 end
+
+
+     

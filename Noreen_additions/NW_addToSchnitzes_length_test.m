@@ -24,6 +24,10 @@
 % 'DJK_saveDir'       directory where images will be saved. 
 %                     default: [p.analysisDir 'schnitzLength\']
 %
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% func_len changed in this test version!! (blubb)
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
 
 function [p,schnitzcells] = DJK_addToSchnitzes_length(p,varargin) 
 
@@ -174,27 +178,18 @@ for i = 1:length(trackRange)
     % get cell number in segmented image for current schnitz & frame
     cellnum = schnitzcells(s).cellno(age);
 
-%     REMOVED BECAUSE OF BUG - MW 7-3-2014
-%   TODO: remove this code
-% % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % 
-%     % get previous stuff
-%     phi = schnitzcells(s).phi(age);
-%     fitCoef2 = schnitzcells(s).fitCoef2(age,:);
-%     fitCoef3 = schnitzcells(s).fitCoef3(age,:);
-%     func_3rd = @(x) x.^3 .* fitCoef3(1) + x.^2 .* fitCoef3(2) + x .* fitCoef3(3) + fitCoef3(4);
-% %     func_3rd_deriv = @(x) x.^2 .* (3*fitCoef3(1)) + x .* (2*fitCoef3(2)) + fitCoef3(3);
-%     func_length = @(x) sqrt( abs( 3 .* x.^2 .* fitCoef3(1) + 2 .* x .* fitCoef3(2) + fitCoef3(3) + 1 ) );
-% % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % 
-
-    % UPDATED VERSION BECAUSE OF BUG : MW 7-3-2014
     % get previous stuff
     phi = schnitzcells(s).phi(age);
     fitCoef2 = schnitzcells(s).fitCoef2(age,:);
     fitCoef3 = schnitzcells(s).fitCoef3(age,:);
     func_3rd = @(x) x.^3 .* fitCoef3(1) + x.^2 .* fitCoef3(2) + x .* fitCoef3(3) + fitCoef3(4);
-    func_3rd_deriv = x.^2 .* (3*fitCoef3(1)) + x .* (2*fitCoef3(2)) + fitCoef3(3);
-    func_length = @(x) sqrt((func_3rd_deriv.^2 + 1 ) );
+%     func_3rd_deriv = @(x) x.^2 .* (3*fitCoef3(1)) + x .* (2*fitCoef3(2)) + fitCoef3(3);
 
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%% ******* BLUBB ***** CHANGED **** NW 2014-02 ***** %%%%%%%%%%%%%%%%%%%
+func_length = @(x) sqrt( ( 3 .* x.^2 .* fitCoef3(1) + 2 .* x .* fitCoef3(2) + fitCoef3(3)).^2 + 1 );
+% OLD WAY:  func_length = @(x) sqrt( abs( 3 .* x.^2 .* fitCoef3(1) + 2 .* x .* fitCoef3(2) + fitCoef3(3) + 1 ) );
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
     % [y,x] are pixels in Lc image where this cell is located
     [y,x] = find(Lc == cellnum); % note: returns (row, column), which will be used as (y,x)

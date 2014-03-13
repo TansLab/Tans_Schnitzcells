@@ -237,14 +237,22 @@ if ~existfield(p,'mytimefield')
 end
 mytimefield=p.mytimefield; % easier to write down
 % check if total length of datafield and timefield are identical
-alldata=[schnitzcells.(fieldY)];
+alldata=[];
+alltime=[];
+for i=1:length(schnitzcells)
+    if schnitzcells(i).useForPlot==1
+        alltime=[alltime, schnitzcells(i).(mytimefield)];
+        alldata=[alldata, schnitzcells(i).(fieldY)];
+    end
+end
+%alldata=[schnitzcells.(fieldY)];
 if strcmp('time',mytimefield)~=1
     idx=find(~isnan(alldata)); % muP15_fitNew can contain 'NaN' data but no correpsonding time point data
                                % for muP15_fitNew_all, the NaN values have
                                % to stay... argh
     alldata=alldata(idx);
 end
-alltime=[schnitzcells.(mytimefield)];
+%alltime=[schnitzcells.(mytimefield)];
 if length(alldata)~=length(alltime)
     disp(['Datafield and timefield don''t correspond (have different size).'])
     return

@@ -3,6 +3,9 @@ This very text-file has not been updated since 2012-03-29. Check the Schnitzcell
 
 *****************************************
 
+25-7-2013 Dmitry.
+There was an issue with calling median() in DJK_correctFluorImage_anycolor in Matlab 2012b.
+median desperately wanted doubles as an argument, so I added a line converting arguments to double.
 
 
 
@@ -85,3 +88,8 @@ This version of schnitzcells integrates :
 - templates to perform the full analysis for experiments comprising 1 or 2 colors
 
 It is suited for matlab 7.0.4
+
+
+
+
+

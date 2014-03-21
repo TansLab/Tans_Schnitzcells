@@ -20,6 +20,7 @@ function DJK_cropImages_3colors(p, cropRange, leftTop, rightBottom, varargin)
 % Input error checking
 %--------------------------------------------------------------------------
 % Settings
+
 numRequiredArgs = 4;
 functionName = 'DJK_cropImages';
 
@@ -134,7 +135,7 @@ end
 if isempty(Dfluor1)                                  % NW 11/12/02
     disp('You seem to have no fluor1 images');
 end
-if isempty(Dfluor1)
+if isempty(Dfluor2)
     disp('You seem to have no fluor2 images');
 end
 if isempty(Dfluor3)
@@ -160,7 +161,7 @@ end
 
 % if directories don't exist, create them (will issue warnings if they exist)
 if exist(p.cropDir)~=7
-  [status,msg,id] = DJK_mkdir(p.cropDir);
+    [status,msg,id] = DJK_mkdir(p.cropDir);
   if status == 0
     disp(['Warning: unable to mkdir ' p.cropDir ' : ' msg]);
   end
@@ -182,6 +183,7 @@ end
 % Perform Cropping
 %--------------------------------------------------------------------------
 for fr = cropRange, % go over each frame
+    
     DphaseRange = dir([p.imageDir, [p.movieName, '-p-*', str3(fr) ,'.tif'] ]);
     %DfluorYRange = dir([p.imageDir, [p.movieName, '-y-*', str3(fr) ,'.tif'] ]);
     %DfluorRRange = dir([p.imageDir, [p.movieName, '-r-*', str3(fr) ,'.tif'] ]);
@@ -194,12 +196,22 @@ for fr = cropRange, % go over each frame
     for i = [1:length(DphaseRange)], % go over each phase image of this frame
         % read image
         im_original = imread([p.imageDir DphaseRange(i).name]); 
-        % get image info
-        im_info = imfinfo([p.imageDir DphaseRange(i).name]);
-        % this image info will be added to crop
-        im_description = [im_info.ImageDescription 'DateTime: ' im_info.DateTime 'Software: ' im_info.Software];
         % crop the image
         im_crop = im_original( leftTop(2):rightBottom(2), leftTop(1):rightBottom(1));
+        % read iminfo
+        im_info = imfinfo([p.imageDir DphaseRange(i).name]);
+       
+        % this image info will be added to crop
+        if isfield(p,'micromanager')
+            if p.micromanager==1
+            im_description=DE_adjustiminfo(p, DphaseRange(i).name);
+            else
+                im_description = [im_info.ImageDescription 'DateTime: ' im_info.DateTime 'Software: ' im_info.Software];
+            end
+        else
+            im_description = [im_info.ImageDescription 'DateTime: ' im_info.DateTime 'Software: ' im_info.Software];
+        end
+        
         % write image data
         im_crop_filename = [cropDirImageDir regexprep(DphaseRange(i).name, p.movieName, p.cropName)];
         imwrite(im_crop, im_crop_filename, 'tif', 'Compression', 'none', 'Description', im_description);
@@ -210,28 +222,49 @@ for fr = cropRange, % go over each frame
     %crop fluor images (if existent)
     for i = [1:length(Dfluor1Range)],  % go over each fluor1 image of this frame (NW 11/12/02)
         % read image
-        im_original = imread([p.imageDir Dfluor1Range(i).name]); 
-        % get image info
-        im_info = imfinfo([p.imageDir Dfluor1Range(i).name]);
-        % this image info will be added to crop
-        im_description = [im_info.ImageDescription 'DateTime: ' im_info.DateTime 'Software: ' im_info.Software];
+        im_original = imread([p.imageDir Dfluor1Range(i).name]);
         % crop the image
         im_crop = im_original( ((leftTop(2)+1)/2):(rightBottom(2)/2), ((leftTop(1)+1)/2):(rightBottom(1)/2));
+        % read iminfo
+        im_info = imfinfo([p.imageDir DphaseRange(i).name]);
+        
+         % this image info will be added to crop
+        if isfield(p,'micromanager')
+            if p.micromanager==1
+            im_description=DE_adjustiminfo(p, Dfluor1Range(i).name);
+            else
+                im_description = [im_info.ImageDescription 'DateTime: ' im_info.DateTime 'Software: ' im_info.Software];
+            end
+        else
+            im_description = [im_info.ImageDescription 'DateTime: ' im_info.DateTime 'Software: ' im_info.Software];
+        end
+    
         % write image data
         im_crop_filename = [cropDirImageDir regexprep(Dfluor1Range(i).name, p.movieName, p.cropName)];
         imwrite(im_crop, im_crop_filename, 'tif', 'Compression', 'none', 'Description', im_description);
         disp(['Written: ' im_crop_filename]);
         %disp([ num2str(leftTop(2)/2) ':' num2str(rightBottom(2)/2) '-' num2str(leftTop(1)/2) ':' num2str(rightBottom(1)/2)]);
     end
+    
     for i = [1:length(Dfluor2Range)],  % go over each fluor2 image of this frame (NW 11/12/02)
         % read image
         im_original = imread([p.imageDir Dfluor2Range(i).name]); 
-        % get image info
-        im_info = imfinfo([p.imageDir Dfluor2Range(i).name]);
-        % this image info will be added to crop
-        im_description = [im_info.ImageDescription 'DateTime: ' im_info.DateTime 'Software: ' im_info.Software];
         % crop the image
         im_crop = im_original( ((leftTop(2)+1)/2):(rightBottom(2)/2), ((leftTop(1)+1)/2):(rightBottom(1)/2));
+        % read iminfo
+        im_info = imfinfo([p.imageDir DphaseRange(i).name]);
+        
+          % this image info will be added to crop
+        if isfield(p,'micromanager')
+            if p.micromanager==1
+            im_description=DE_adjustiminfo(p, Dfluor2Range(i).name);
+            else
+                im_description = [im_info.ImageDescription 'DateTime: ' im_info.DateTime 'Software: ' im_info.Software];
+            end
+        else
+            im_description = [im_info.ImageDescription 'DateTime: ' im_info.DateTime 'Software: ' im_info.Software];
+        end
+        
         % write image data
         im_crop_filename = [cropDirImageDir regexprep(Dfluor2Range(i).name, p.movieName, p.cropName)];
         imwrite(im_crop, im_crop_filename, 'tif', 'Compression', 'none', 'Description', im_description);
@@ -241,12 +274,22 @@ for fr = cropRange, % go over each frame
     for i = [1:length(Dfluor3Range)],  % go over each fluor3 image of this frame (NW 11/12/02)
         % read image
         im_original = imread([p.imageDir Dfluor3Range(i).name]); 
-        % get image info
-        im_info = imfinfo([p.imageDir Dfluor3Range(i).name]);
-        % this image info will be added to crop
-        im_description = [im_info.ImageDescription 'DateTime: ' im_info.DateTime 'Software: ' im_info.Software];
         % crop the image
         im_crop = im_original( ((leftTop(2)+1)/2):(rightBottom(2)/2), ((leftTop(1)+1)/2):(rightBottom(1)/2));
+         % read iminfo
+        im_info = imfinfo([p.imageDir DphaseRange(i).name]);
+        
+         % this image info will be added to crop
+        if isfield(p,'micromanager')
+            if p.micromanager==1
+                im_description=DE_adjustiminfo(p, Dfluor3Range(i).name);
+            else
+                im_description = [im_info.ImageDescription 'DateTime: ' im_info.DateTime 'Software: ' im_info.Software];
+            end
+        else
+            im_description = [im_info.ImageDescription 'DateTime: ' im_info.DateTime 'Software: ' im_info.Software];
+        end
+        
         % write image data
         im_crop_filename = [cropDirImageDir regexprep(Dfluor3Range(i).name, p.movieName, p.cropName)];
         imwrite(im_crop, im_crop_filename, 'tif', 'Compression', 'none', 'Description', im_description);

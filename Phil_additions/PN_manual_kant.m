@@ -40,8 +40,13 @@ pos=[1 1];
 % recalculated) (NW2012-05-10)
 updatedCellNumbers=[];
 %
+
 % initialize image for undo-step ('u')
 Lout_undo=Lout;
+
+% initialize list of badly segmented files
+list_mark =0;
+
 
 while ~done
     clear j*  %j1=0;j2=0;

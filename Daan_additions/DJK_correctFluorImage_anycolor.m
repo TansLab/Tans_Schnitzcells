@@ -261,6 +261,7 @@ else
         eval([reg '=[]; ' binning '=[]; ' back '=[]; ' gain '=[]; ' expt '=[]; ' ]);
         clear rect phaseFullSize Lc LNsub;
         load(filename);
+ 
         disp([' * ' str3(frameNum) ' -> loaded ' p.movieName 'seg' str3(frameNum) ' in ' p.segmentationDir]);
         if ~exist('Lc')      
           disp(['       ->  segmentations has not been corrected -> will use LNsub in stead of Lc !!!']);
@@ -270,6 +271,7 @@ else
 
       % still need to resize fluorimage
       eval(['fluorimage = imresize_old(fluorimage,' binning ',''nearest'');']);
+          
        
       %------------------------------------------------------------------------
       % perform manual rescale Correction (maybe unnecessary in this
@@ -281,7 +283,7 @@ else
           clear centerfluor;              
       end
       %------------------------------------------------------------------------          
-      
+   
       %------------------------------------------------------------------------
       % GET OLD [COLOR]REG & [COLOR]BACK DATA AGAIN
       %------------------------------------------------------------------------
@@ -299,11 +301,13 @@ else
         temp = fluorimage;
         temp(rect(1):rect(3), rect(2):rect(4)) = 0;
         fluorimageVect = temp(temp>0);
-        eval([back '= uint16( median(fluorimageVect) );']);
+       fluorimageVect=double( fluorimageVect);%DE
+        eval([back '= uint16( median((fluorimageVect)) );']);
 
         % Alternative Background: median of fluor within subset (close to cells), but with cells disregarded
         eval([reg '= fluorimage(rect(1):rect(3), rect(2):rect(4) );']);
         eval(['fluorregVect = ' reg '(Lc==0);']);
+        fluorregVect=double(fluorregVect);%DE
         fluorbackAlt = uint16( median(fluorregVect) );
       end
       %------------------------------------------------------------------------
@@ -354,11 +358,13 @@ else
             temp = fluor2image;
             temp(rect(1):rect(3), rect(2):rect(4)) = 0;
             fluorimageVect = temp(temp>0);
+            fluorimageVect=double(fluorimageVect);%DE 
             fluorback2 = uint16( median(fluorimageVect) );
 
             % Alternative Background: median of fluorcolor within subset (close to cells), but with cells disregarded
             fluorreg2 = fluor2image(rect(1):rect(3), rect(2):rect(4) );
             fluorreg2Vect = fluorreg2(Lc==0);
+            fluorreg2Vect=double(fluorreg2Vect);
             fluorback2Alt = uint16( median(fluorreg2Vect) ); 
         end
 
@@ -366,6 +372,7 @@ else
         temp = fluor2image_shifted;
         temp(rect(1):rect(3), rect(2):rect(4)) = 0;
         fluorimageVect = temp(temp>0);
+        fluorimageVect=double(fluorimageVect);%DE
         fluorback3 = uint16( median(fluorimageVect) );
 
         % Get correct subset
@@ -400,6 +407,7 @@ else
       %----------------------------------------------------------------------
       % SAVE TO MAT FILE
       %----------------------------------------------------------------------
+ 
       testreg=eval(['isempty(' reg ')']);
       if (~p.TIFFonly & testreg~=1)
         eval([shift '= p.fluorShift;']);

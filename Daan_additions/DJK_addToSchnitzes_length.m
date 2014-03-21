@@ -180,7 +180,10 @@ for i = 1:length(trackRange)
     fitCoef3 = schnitzcells(s).fitCoef3(age,:);
     func_3rd = @(x) x.^3 .* fitCoef3(1) + x.^2 .* fitCoef3(2) + x .* fitCoef3(3) + fitCoef3(4);
 %     func_3rd_deriv = @(x) x.^2 .* (3*fitCoef3(1)) + x .* (2*fitCoef3(2)) + fitCoef3(3);
-    func_length = @(x) sqrt( abs( 3 .* x.^2 .* fitCoef3(1) + 2 .* x .* fitCoef3(2) + fitCoef3(3) + 1 ) );
+
+% corrected length function 2014-02 NW
+func_length = @(x) sqrt( ( 3 .* x.^2 .* fitCoef3(1) + 2 .* x .* fitCoef3(2) + fitCoef3(3)).^2 + 1 );
+
 
     % [y,x] are pixels in Lc image where this cell is located
     [y,x] = find(Lc == cellnum); % note: returns (row, column), which will be used as (y,x)

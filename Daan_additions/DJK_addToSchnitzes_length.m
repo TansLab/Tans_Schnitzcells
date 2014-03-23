@@ -164,6 +164,8 @@ for i = 1:length(trackRange)
   %------------------------------------------------------------------------
   schnitzesForFrame = lincellnum{i}; % [schnitznum for cellno1, schnitznum for cellno2, etc]
   nonZeroSchnitzes = schnitzesForFrame(schnitzesForFrame~=0); % with correction you sometimes end up with unexisting schnitzes (0)
+  
+  
   for s = nonZeroSchnitzes
     % figure out index within this schnitz' age-based arrays
     age = find((schnitzcells(s).frames-1) == currFrameNum);
@@ -174,32 +176,60 @@ for i = 1:length(trackRange)
     % get cell number in segmented image for current schnitz & frame
     cellnum = schnitzcells(s).cellno(age);
 
-%     REMOVED BECAUSE OF BUG - MW 7-3-2014
-%   TODO: remove this code
-% % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % 
-%     % get previous stuff
-%     phi = schnitzcells(s).phi(age);
-%     fitCoef2 = schnitzcells(s).fitCoef2(age,:);
-%     fitCoef3 = schnitzcells(s).fitCoef3(age,:);
-%     func_3rd = @(x) x.^3 .* fitCoef3(1) + x.^2 .* fitCoef3(2) + x .* fitCoef3(3) + fitCoef3(4);
-% %     func_3rd_deriv = @(x) x.^2 .* (3*fitCoef3(1)) + x .* (2*fitCoef3(2)) + fitCoef3(3);
-%     func_length = @(x) sqrt( abs( 3 .* x.^2 .* fitCoef3(1) + 2 .* x .* fitCoef3(2) + fitCoef3(3) + 1 ) );
-% % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % 
-
-    % UPDATED VERSION BECAUSE OF BUG : MW 7-3-2014
     % get previous stuff
     phi = schnitzcells(s).phi(age);
     fitCoef2 = schnitzcells(s).fitCoef2(age,:);
     fitCoef3 = schnitzcells(s).fitCoef3(age,:);
-    func_3rd = @(x) x.^3 .* fitCoef3(1) + x.^2 .* fitCoef3(2) + x .* fitCoef3(3) + fitCoef3(4);
-    func_3rd_deriv = x.^2 .* (3*fitCoef3(1)) + x .* (2*fitCoef3(2)) + fitCoef3(3);
-    func_length = @(x) sqrt((func_3rd_deriv.^2 + 1 ) );
+    fitCoef4 = schnitzcells(s).fitCoef4(age,:); % RUTGER ADDED
+   
+    % HIGHER ORDER FIT
+    fitCoef5 = schnitzcells(s).fitCoef5(age,:); % RUTGER ADDED
+    fitCoef6 = schnitzcells(s).fitCoef6(age,:); %
+    fitCoef7 = schnitzcells(s).fitCoef7(age,:); %
+ %  func_3rd = @(x) x.^3 .* fitCoef3(1) + x.^2 .* fitCoef3(2) + x .* fitCoef3(3) + fitCoef3(4);
+ %   func_3rd_deriv = @(x) x.^2 .* (3*fitCoef3(1)) + x .* (2*fitCoef3(2)) + fitCoef3(3);
+%   func_length = @(x) sqrt( abs( 3 .* x.^2 .* fitCoef3(1) + 2 .* x .* fitCoef3(2) + fitCoef3(3) + 1 ) );
+
+
+
 
 
     % [y,x] are pixels in Lc image where this cell is located
     [y,x] = find(Lc == cellnum); % note: returns (row, column), which will be used as (y,x)
     x_rot = x*cos(phi) - y*sin(phi); % mathematical rotation
     y_rot = x*sin(phi) + y*cos(phi); % mathematical rotation
+    
+ xpixlength=max(x_rot)-min(x_rot);
+    if xpixlength <250; 
+        func_3rd = @(x) x.^3 .* fitCoef3(1) + x.^2 .* fitCoef3(2) + x .* fitCoef3(3) + fitCoef3(4);
+         func_length = @(x) sqrt( (abs( 3 .* x.^2 .* fitCoef3(1) + 2 .* x .* fitCoef3(2) + fitCoef3(3)).^2 + 1 ) ); 
+    %4TH DEGREE FIT
+%     func_3rd = @(x) x.^4 .* fitCoef4(1) + x.^3 .* fitCoef4(2) + x.^2 .* fitCoef4(3) + x .* fitCoef4(4) + fitCoef4(5);
+%     func_length = @(x) sqrt( abs( 4 .* x.^3 .* fitCoef4(1) + 3 .* x.^2 .* fitCoef4(2) +2 .* x .* fitCoef4(3)+ fitCoef4(4) + 1 ) );
+    order=3;
+    else
+ % 7TH DEGREE FIT
+    func_3rd = @(x)x.^7 .* fitCoef7(1)+x.^6 .* fitCoef7(2)+x.^5 .* fitCoef7(3) + x.^4 .* fitCoef7(4) +x.^3 .* fitCoef7(5) + x.^2 .* fitCoef7(6) + x .* fitCoef7(7) + fitCoef7(8);% RUTGER ADDED
+    func_length = @(x) sqrt( (abs( 7 .* x.^6 .* fitCoef7(1) +6 .*x.^5 .* fitCoef7(2) + 5 .*x.^4 .* fitCoef7(3) + 4 .*x.^3* fitCoef7(4)+ 3 .*x.^2* fitCoef7(5)+2 .*x.^1* fitCoef7(6)+fitCoef7(7)).^2 + 1) ); % RUTGER ADDED
+    order=7;
+    end 
+
+%  if s==1000;
+%     s
+% end
+    schnitzcells(s).x_rot= x_rot;
+    schnitzcells(s).y_rot= y_rot;
+    schnitzcells(s).order= order;
+%TRIES TO OBTAIN RIGHT CURVATURE GRAPH
+%      y_rot_new1=func_3rd(x_rot);
+%      figure;plot(x_rot,y_rot_new1);
+%     figure;plot(x_rot,y_rot_new1);
+%     curv=quick_curv(x_rot,y_rot_new1);
+%     figure;plot(x_rot_intersect,y_rot_intersect);
+%     figure;plot(x_rot,y_line_rot_left);
+%     figure;plot(x_rot_line_left,y_line_rot_left);
+
+
 
     %--------------------------------------------------------------------
     % Determine length from 3rd degree polynomial, IMPROVED OLD WAY 
@@ -230,6 +260,10 @@ for i = 1:length(trackRange)
     schnitzcells(s).fitCoef3b_x_rot_right(age)  = x_rot_intersect_right;
     schnitzcells(s).length_fitCoef3b(age) = quad(func_length, x_rot_intersect_left,x_rot_intersect_right) * p.micronsPerPixel;
 
+
+   %zz=medfilt1(y_rot_intersect,21);zz1=smooth(zz,2);figure;plot(x_rot_intersect,zz1);
+   % ynew_length
+    %xnew_length
     %--------------------------------------------------------------------
     % Determine length from 3rd degree polynomial, NEW WAY
     % Adding: fitNew_x_rot_left, fitNew_x_rot_right, length_fitNew
@@ -277,6 +311,18 @@ for i = 1:length(trackRange)
     end
     schnitzcells(s).length_fitNew(age) = quad(func_length, schnitzcells(s).fitNew_x_rot_left(age),schnitzcells(s).fitNew_x_rot_right(age)) * p.micronsPerPixel;
     
+    %%% Find curvature
+    
+    x_values=min(schnitzcells(s).fitNew_x_rot_left(age)):0.5:max(schnitzcells(s).fitNew_x_rot_right(age));
+    y_values=func_3rd(x_values);
+    schnitzcells(s).x_values_end= x_values;
+    schnitzcells(s).y_values_end= y_values;
+    %figure(10); plot(x_values,y_values); pause; close figure 10
+    %curv=quick_curv(x_values,y_values);
+    %schnitzcells(s). curv= curv;
+    s;
+    framenum;
+
     if p.onScreen ~= 2 & find(p.schnitzNum==s) 
       %--------------------------------------------------------------------
       % calculate some data
@@ -448,6 +494,13 @@ end % loop over frames
 %--------------------------------------------------------------------------
 
 
+
+for k=1:max(size(schnitzcells));
+ x_values=schnitzcells(k).x_values_end(1,:);
+ y_values=schnitzcells(k).y_values_end(1,:);
+ curv_all=quick_curv(x_values,y_values);
+ schnitzcells(k). curv= curv_all;
+end
 %--------------------------------------------------------------------------
 % Save extacted data
 %--------------------------------------------------------------------------

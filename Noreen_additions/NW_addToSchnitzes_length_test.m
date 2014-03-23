@@ -171,9 +171,11 @@ for i = 1:length(trackRange)
   %------------------------------------------------------------------------
   % LOOP OVER EACH SCHNITZ THAT EXISTS DURING THIS FRAME, AND UPDATE IT
   %------------------------------------------------------------------------
+  % START COPIED FROM RR (DJK_addToSchnitzes_length.m) - MW 23/3/2014
   schnitzesForFrame = lincellnum{i}; % [schnitznum for cellno1, schnitznum for cellno2, etc]
   nonZeroSchnitzes = schnitzesForFrame(schnitzesForFrame~=0); % with correction you sometimes end up with unexisting schnitzes (0)
-  % START COPIED FROM RR (DJK_addToSchnitzes_length.m) - MW 23/3/2014
+
+  
   for s = nonZeroSchnitzes
     % figure out index within this schnitz' age-based arrays
     age = find((schnitzcells(s).frames-1) == currFrameNum);

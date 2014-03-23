@@ -100,8 +100,13 @@ disp(['Load from ''' p.schnitzName ''' completed...']);
 %--------------------------------------------------------------------------
 % Override any schnitzcells parameters/defaults given optional fields/values
 %--------------------------------------------------------------------------
-if ~existfield(p,'schnitzNum')
- % p.schnitzNum = [1:100:length(schnitzcells)]; %; %blubb
+% Reintroducing option to plot all fits - MW 23/3/2014
+if existfield(p,'schnitzNum')  
+    if p.schnitzNum == 'all'
+        p.schnitzNum = [1:length(schnitzcells)];
+        % p.schnitzNum = [1:100:length(schnitzcells)]; %; %blubb
+    end   
+else
  p.schnitzNum = [1];
 end
 %--------------------------------------------------------------------------

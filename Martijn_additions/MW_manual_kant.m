@@ -1,5 +1,5 @@
 function  [Lout,OKorNot,quit_now,dontsave,addtolist,crop_pop,newrect,savetemp,backwards,gotoframenum,DJK_settings] = ...
-    MW_manual_kant(p,Lin,L_prec,phin,rect,rect_prec,phsub,DJK_settings,assistedCorrection)
+    MW_manual_kant(p,Lin,L_prec,phin,rect,rect_prec,phsub,DJK_settings,assistedCorrection,framenr)
 
 % *******
 % TODO: include "updatedCellNumbers" in program (PN_imshowlabel) so that
@@ -12,7 +12,7 @@ function  [Lout,OKorNot,quit_now,dontsave,addtolist,crop_pop,newrect,savetemp,ba
 
 iptsetpref('imshowborder','tight');
 backwards = 0;
-global pos Limage ourfig res pp phfig
+global pos Limage ourfig res pp phfig whitelist mywatermark
 
 %set(phfig,'Visible', 'on') % ugly way to force phase image away from foreground during computation time NW2012-10-05
 
@@ -56,10 +56,10 @@ while ~done
         if assistedCorrection && ~isempty(L_prec)
             Lshow = PN_imshowlabel(Lout,rect,L_prec,rect_prec,'phaseImage',phsub);
             Lshow = imresize_old(Lshow,res);
-            imshow(Lshow);
-            
+                       
+            imshow(Lshow);            
         else
-            DJK_imshowlabel(imresize_old(Lout,res),'phaseImage',imresize_old(phsub,res));
+             DJK_imshowlabel(imresize_old(Lout,res),'phaseImage',imresize_old(phsub,res));
         end
     
         pos11 = get(phfig,'position'); % current position
@@ -85,13 +85,18 @@ while ~done
             %stop5a=toc
             figure(ourfig) % NW2012-05-10
             %clf reset;% NW2012-05-10
+                                       
             imshow(Lshow,'InitialMagnification','fit');
             
             
             %stop6a=toc
         else
             clf reset; %NW2012-05-10
-            DJK_imshowlabel(imresize_old(Lout,res),'phaseImage',imresize_old(phsub,res)); %slow step 0.2sec! (NW 2012-05-10)
+             % MW - REMOVE THIS WATERMARK CODE
+             %Decide whether to use watermark (do if frame approved)
+             % watermarkyesno=inlist(whitelist,framenr);
+             % Show image with cells and color overlay
+             DJK_imshowlabel(imresize_old(Lout,res),'phaseImage',imresize_old(phsub,res)); %slow step 0.2sec! (NW 2012-05-10)
              set(ourfig, 'position', pos11); % DJK 090117 % a little awkward to redo, but should only affect first image
             %stop4b=toc
         end
@@ -112,7 +117,7 @@ while ~done
   %      Lshow = imresize_old(Lshow,res);
   %      imshow(Lshow);
   %  else
-  %      DJK_imshowlabel(imresize_old(Lout,res),'phaseImage',imresize_old(phsub,res));
+  %      MW_imshowlabel(imresize_old(Lout,res),'phaseImage',imresize_old(phsub,res));
   %  end
     
   %  pos11 = get(phfig,'position'); % current position
@@ -135,6 +140,19 @@ while ~done
     % calculated to quicken update of image when frame changes
     % NW 2012-05-10
     
+    % EDIT by MW 7-3-2014
+    % This checks whether the frame is on the whitelist,
+    % if so, it adds a small circle ('watermark') to the plot
+    % as a flag to the user.   
+    if(inlist(whitelist,framenr))
+        figure(ourfig);
+        hold on
+        h=imshow(mywatermark);
+        set(h, 'AlphaData', mywatermark(:,:,2));
+        hold off;
+    end
+    % END edit MW
+    
         
     realpress = 0;
     while ~realpress,
@@ -154,15 +172,6 @@ while ~done
         if cc==' '
             OKorNot=1;
             done=1;
-        % Custom MW EDIT option, switches between figures
-%         elseif cc == '/'            
-%             % set(0,'CurrentFigure',phfig)
-%             setAlwaysOnTop(phfig)
-%             pause(1)            
-%             % set(0,'CurrentFigure',ourfig)
-%             setAlwaysOnTop(ourfig)
-%             pause(1)            
-%             msgbox('done')            
         elseif cc=='q'
             Lout=Lin;
             OKorNot=0;
@@ -353,10 +362,10 @@ while ~done
              %       Lout(cell==k) = max2(Lout)+k-1;
              %   end;
         elseif cc == 'l'
-            disp(['currently not in use']) %NW 2012-05-10
-                %addtolist=1;
+%             disp(['currently not in use']) %NW 2012-05-10
+                addtolist=1;
                 %OKorNot=1;
-                %done=1;
+                done=0;
                 %dontsave=1;
         elseif cc == 'o'
             % obliterate all but this cell
@@ -837,3 +846,9 @@ end
 
 if pp(1) delete(pp(1));delete(pp(2));delete(pp(3));delete(pp(4));end;pp=0;
 if bb delete(bb);delete(bbp);end;bb=0;
+
+
+
+
+
+

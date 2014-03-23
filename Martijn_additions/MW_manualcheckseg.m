@@ -56,7 +56,6 @@ function p = MW_manualcheckseg (p, varargin);
 % Parse the input arguments, input error checking
 %-------------------------------------------------------------------------------
 
-
 % elapsed time for frame 444 in 2012-05-08. 390 cells
 
 
@@ -129,7 +128,8 @@ disp('              press ''u'' to go back one step (possible once).')
 disp(' ')
 
 quit_now=0;
-global pos Limage ourfig res pp phfig % flfig % DJK 071206
+global pos Limage ourfig res pp phfig whitelist mywatermark % flfig % DJK 071206
+    % whitelist added by MW 7-3-2014
 
 ourfig = figure;
 phfig  = figure;
@@ -218,6 +218,23 @@ myScreenSize=get(0,'ScreenSize');
 maxValidImageSize=myScreenSize(3:4)-[150,150]; % empirical
 %
 
+% EDIT by MW 6-3-2014 
+
+% Load the watermark
+% Note that the green chanel is also used for alphadata
+mywatermark=imread('watermark.png');
+
+% loading of whitelist
+
+% if file w. list found, load
+if exist([p.movieDir,'whitelist.mat'])==2
+    load([p.movieDir,'whitelist.mat'],'whitelist');
+else
+    whitelist = []
+end
+
+whitelist
+% end edit by MW
 
 backwards = 0;
 gotoframenum=0;
@@ -312,7 +329,28 @@ while loopindex <= length(p.manualRange);
         % ******************************************************
         % here in former versions a fluor image was displayed
         % ******************************************************
+                
+        % addition by MW // 6-3-2014 -- displays cross on rejected
+        % frames
         
+%         HAS BEEN MOVED TO PN_imshowlabel
+        
+        % if on blacklist, then let user know (by adding cross)
+%         if (inlist(whitelist,i) == 0)
+%             % whitelist
+%             % 
+%              disp(['badly segmented frame (i=' str3(i) ')'])
+% %              [MWcolor,MWoverlay] = approval_mask(g_resized,0);
+% %              hold on            
+%              % gcf
+%              % ourfig
+% %              ourfig = imshow(MWcolor);
+% %              set(ourfig, 'AlphaData', MWoverlay);
+% %              hold on
+%              currentname = get(gcf,'name');
+%              set(gcf,'name',[currentname,' -- in APPROVED list']);
+%         end
+        % end addition MW
         
         is_done=0;
         savelist=['''Lc'''];
@@ -327,9 +365,9 @@ while loopindex <= length(p.manualRange);
         %set(0,'CurrentFigure',ourfig)
         while ~is_done
            
-           
+            % This executes the function that asks for keyboard input.
             [Lc,is_done,quit_now,dontsave,addtolist,crop_pop,newrect,savetemp,backwards,gotoframenum,DJK_settings] = ...
-                MW_manual_kant(p, LNsub, L_prec, g, rect,rect_prec,phsub, DJK_settings,p.assistedCorrection);
+                MW_manual_kant(p, LNsub, L_prec, g, rect,rect_prec,phsub, DJK_settings,p.assistedCorrection,i);
             
             if backwards==1 && (loopindex>1),
                 % JCR: Note this is kind of ugly- later loopindex is *incremented*
@@ -350,6 +388,14 @@ while loopindex <= length(p.manualRange);
                 close(phfig);close(ourfig);
                 % if ishandle(flfig), close(flfig); end
                 clear global pos Limage ourfig res pp phfig;
+                
+                % Edit by MW - 7-3-2014, shows whitelist of frames
+                if (exist('whitelist') & ~isempty(whitelist))
+                    whitelist=sort(whitelist);
+                    save([p.movieDir,'whitelist.mat'],'whitelist');
+                    disp(['whitelist=' mat2str(whitelist)])
+                end
+                
                 return;
             end;
             if crop_pop %obsolete
@@ -406,7 +452,7 @@ while loopindex <= length(p.manualRange);
                     eval(['save(''',name,''',',savelist,',''tempsegcorrect'',''-append'');']);
                     disp(['Saved partial file ',name(outl:end),'   # of cells: ',num2str(max2(Lc))]);
                 end
-            end
+            end                           
         end
         
         
@@ -417,16 +463,49 @@ while loopindex <= length(p.manualRange);
             tempsegcorrect=0;
             eval(['save(''',name,''',',savelist,',''tempsegcorrect'',''-append'');']);
             disp(['Updated file ',name(outl:end),'   # of cells: ',num2str(max2(Lc))]);
+            
+            % MW edit 7-3-2014 - if we save (==approve) the frame, add it 
+            % to the whitelist.
+            if (isempty(find(whitelist==i)) == 1)                
+                whitelist=[whitelist,i];
+            end
+            
         elseif addtolist
-            if exist(badseglistname)==2
-                load(badseglistname);
+            
+            % MW edit 6-3-2014
+            %
+            % Whitelist is list of approved frames (TODO: this might be
+            % a redundant function).
+            %
+            % This code mostly serves to remove frames from the whitelist,
+            % because frames are also added to the whitelist when the 
+            % spacebar is pressed.
+
+            % Note that list is loaded at initialization of this function
+            whitelist
+            
+            % if list doesn't exist, make
+            %if exist('whitelist')~=1
+            %    whitelist=[];
+            %end
+            
+            % Add this frame to list if wasn't already there
+            if (isempty(find(whitelist==i)) == 1)                
+                whitelist=[whitelist,i];
+                disp(['Added frame ',name(outl:end),' to whitelist.']);
+            else
+                % Otherwise remove it from the list
+                whitelist = whitelist(whitelist~=i);
+                disp(['Removed frame ',name(outl:end),' from whitelist.']);
             end
-            if exist('badseglist')~=1
-                badseglist=[];
-            end
-            badseglist=[badseglist,i];
-            save(badseglistname,'badseglist');
-            disp(['Added frame ',name(outl:end),' to bad segmentation list.']);
+            
+            % and save list
+            % TODO: one could also only do this when the loop is exited.
+            save([p.movieDir,'whitelist.mat'],'whitelist');            
+            
+            % show list to user
+            whitelist
+            
         else
             disp(['Skipped file ',name(outl:end),' <--']);
         end;
@@ -445,4 +524,15 @@ while loopindex <= length(p.manualRange);
     end
     
 end;
+
+% Edit by MW - 7-3-2014, shows whitelist of frames
+if (exist('whitelist') & ~isempty(whitelist))
+    whitelist=sort(whitelist);
+    save([p.movieDir,'whitelist.mat'],'whitelist');
+    disp(['whitelist=' mat2str(whitelist)])
+end
+    
 close(phfig); close(ourfig); end
+
+
+

@@ -248,7 +248,24 @@ for i = 1:length(trackRange)
     % Fit 3rd degree polynomial to rotated pixels
     fitCoef3 = DJK_polyfit(x_rot,y_rot,3);
     schnitzcells(s).fitCoef3(age,:) = fitCoef3;
-    func_3rd = @(x) x.^3 .* fitCoef3(1) + x.^2 .* fitCoef3(2) + x .* fitCoef3(3) + fitCoef3(4);
+    
+     % Fit 4rd degree polynomial to rotated pixels (ADDED)
+    fitCoef4 = DJK_polyfit(x_rot,y_rot,4);
+    schnitzcells(s).fitCoef4(age,:) = fitCoef4;
+    
+     % Fit 5rd degree polynomial to rotated pixels (ADDED)
+    fitCoef5 = DJK_polyfit(x_rot,y_rot,5);
+    schnitzcells(s).fitCoef5(age,:) = fitCoef5;
+    
+      % Fit 6rd degree polynomial to rotated pixels (ADDED)
+    fitCoef6 = DJK_polyfit(x_rot,y_rot,6);
+    schnitzcells(s).fitCoef6(age,:) = fitCoef6;
+    
+      % Fit 7rd degree polynomial to rotated pixels (ADDED)
+    fitCoef7 = DJK_polyfit(x_rot,y_rot,7);
+    schnitzcells(s).fitCoef7(age,:) = fitCoef7;
+    
+    func_3rd = @(x)x.^7 .* fitCoef7(1)+x.^6 .* fitCoef7(2)+x.^5 .* fitCoef7(3) + x.^4 .* fitCoef7(4) +x.^3 .* fitCoef7(5) + x.^2 .* fitCoef7(6) + x .* fitCoef7(7) + fitCoef7(8);
 
     %--------------------------------------------------------------------
     % Determine length from 3rd degree polynomial, OLD WAY

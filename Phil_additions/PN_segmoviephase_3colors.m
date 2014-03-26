@@ -267,6 +267,9 @@ for i= p.segRange
     if (strcmp(p.method,'phasecontrast')==1)
         % Load images into X
         Dframe = dir([p.imageDir p.movieName '*-p*-' str3(i) '.tif']); %list of all phase contrast images of this frame in directory
+        if isempty(Dframe)
+            error(['List with images for this frame (' str3(i) ') is empty! - p.imageDir = ' p.imageDir]) 
+        end
         pname = Dframe(1).name; % first filename
         if p.numphaseslices==1
             ph3(:,:,1) = imread([p.imageDir,pname]);

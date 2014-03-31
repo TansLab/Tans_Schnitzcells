@@ -240,7 +240,7 @@ for i = 1:length(schnitzcells)
         temp_s_length     = schnitzS.(lengthField)(1:data_length);
         temp_time         = schnitzcells(i).time(1:data_length)/60;
 
-        % if only 1 datapoint, will just use this single length datapoint as birthLength (incorrect)
+        % if only 1 datapoint, will just use this single length datapoint as birthLength (incorrect - TODO?)
         if data_length < 2
           i_birthLength   = temp_i_length(1);
           s_birthLength   = temp_s_length(1);
@@ -341,33 +341,53 @@ for i = 1:length(schnitzcells)
         end
       end
       %--------------------------------------------------------------------
-
+    
       %--------------------------------------------------------------------
       % Add mu with timeframe for fluor timepoints only 
       % remark Philippe 09-20-11 : may have to modify
       % if 2 colors are used at different timepoints %blubb
       % Remark: only works when fluorimages are taken at same time points!
       % Takes time points of first existent fluor-color (usually fluor1).
+      % Remark MW 31/3/2014: this also doesn't work when there are 
+      % no fluor images. TODO: fix this.
       %--------------------------------------------------------------------
-      %get existent fluor color
+      
+      fluor_used=0; % flag to see whether fluorescence images detected
+      
+      % Determine which fluors are used, and what they are.
       if strcmp(p.fluor1,'none')==0
+          fluor_used=1;
           fluor_frames_all=genvarname([upper(p.fluor1) '_frames_all']);
           if (i==1 && num==1), disp(['Using ' p.fluor1 ' frames to add mu']); end
       elseif strcmp(p.fluor2,'none')==0
+          fluor_used=1;
           fluor_frames_all=genvarname([upper(p.fluor2) '_frames_all']);
           if (i==1 && num==1), disp(['Using ' p.fluor2 ' frames to add mu']); end
       elseif strcmp(p.fluor3,'none')==0
+          fluor_used=1;
           fluor_frames_all=genvarname([upper(p.fluor3) '_frames_all']);
           if (i==1 && num==1), disp(['Using ' p.fluor3 ' frames to add mu']); end
       else
-          if (i==1 && num==1), disp(['You don''t have any fluor colors. Don''t know to which frames mu should be associated. Exiting...']);end
-          return
+          % UPDATE MW, 31/3/2014
+          % If no fluor colors are used, "fluor_used" will be zero now.
+          if (i==1 && num==1)
+            disp('WARNING! You don''t have any fluor colors.');
+            disp('Continuing after 3 seconds.');
+            pause(3);
+          end
+          % Earlier, function was just terminated; OLD CODE:
+          % if (i==1 && num==1), disp(['You don''t have any fluor colors. Don''t know to which frames mu should be associated. Exiting...']);end          
+          % return 
       end
-      %add mu to these frames with this fluorcolor
-      FluorIndex=eval(['find(~isnan(schnitzcells(i).' fluor_frames_all '));']);
-      if ~isempty(FluorIndex)
-        schnitzcells(i).(['mu' num2str(frameSize) name]) = schnitzcells(i).(['mu' num2str(frameSize) name '_all'])(FluorIndex);
-        schnitzcells(i).(['muP' num2str(frameSize) name]) = schnitzcells(i).(['muP' num2str(frameSize) name '_all'])(FluorIndex);
+         
+      % if fluorescense images used:
+      if fluor_used
+          %add mu to these frames with this fluorcolor
+          FluorIndex=eval(['find(~isnan(schnitzcells(i).' fluor_frames_all '));']);
+          if ~isempty(FluorIndex)
+            schnitzcells(i).(['mu' num2str(frameSize) name]) = schnitzcells(i).(['mu' num2str(frameSize) name '_all'])(FluorIndex);
+            schnitzcells(i).(['muP' num2str(frameSize) name]) = schnitzcells(i).(['muP' num2str(frameSize) name '_all'])(FluorIndex);
+          end
       end
       %--------------------------------------------------------------------
 
@@ -558,6 +578,8 @@ end
 %--------------------------------------------------------------------------
 % Save new schnitzcells with pole information added
 %--------------------------------------------------------------------------
+% EDIT MW REMOVE
+%schnitzcells.muP11_fitNew
 save(p.schnitzName, 'schnitzcells');
 disp('');
 disp(['Save in ''' p.schnitzName ''' completed...']);

@@ -31,6 +31,8 @@ function outim = PN_imshowlabel(L,rect,Lp,rectp,varargin)
 % Input error checking and parsing
 %--------------------------------------------------------------------------
 % Settings
+fractionbelowwhite = 0.2 % cells which are a fraction of <fractionbelowwhite>
+                         % smaller than the median are marked white.
 numRequiredArgs = 4; functionName = 'PN_imshowlabel'; p_internal = struct;
 
 if (nargin < numRequiredArgs) | (mod(nargin,2) ~= (mod(numRequiredArgs,2)))
@@ -99,7 +101,8 @@ ideul = find([propLtemp.EulerNumber]<0); %label of cells which may have been re-
 %detect too small cells
 propL = regionprops(L,'Area');
 characSize = median([propL.Area]);
-idsmall = find([propL.Area] < characSize/2); %label of cells which may be too small
+idsmall = find([propL.Area] < characSize*fractionbelowwhite); %label of cells which may be too small 
+                % ^ fractionbelowwhite is the fraction of the avg under which the cell is colored white
 %create a logical of suspicious cells
 Lsuspicious = zeros(size(L));
 for ii = union(ideul,idsmall)

@@ -196,15 +196,7 @@ for fr = cropRange, % go over each frame
     for i = [1:length(DphaseRange)], % go over each phase image of this frame
         % read image
         
-        im_original = imread([p.imageDir DphaseRange(i).name]); 
-        
-        % DE: sometimes there are extremely annoying spots. Bomb them with
-        % this:
-      % disp('BRUTE-FORCE CORRECTION OF SPOTS ENABLED!!!!!')
-       % im_original(:,1175:end) = mean(im_original(:));
-       
-       
-        
+        im_original = imread([p.imageDir DphaseRange(i).name]);
         % crop the image
         im_crop = im_original( leftTop(2):rightBottom(2), leftTop(1):rightBottom(1));
         % read iminfo

@@ -161,7 +161,10 @@ for i= p.manualRange
                 fluor1counter=fluor1counter+1;
                 [fluor1reg, fluor1shift, fluor1back, fluor1binning] = quicknoreg(LNsub,fluor1name,rect,0,phaseFullSize); 
                 %[exptfluor1str, gainfluor1, exptfluor1] = imsettings(fluor1name);
-                [exptfluor1str, gainfluor1, exptfluor1] = DE_imsettings(p,fluor1name,'g');
+                [exptfluor1str, gainfluor1, exptfluor1] = imsettings(fluor1name);
+                %DE: tested originally with 'g':
+                % [exptfluor1str, gainfluor1, exptfluor1] = DE_imsettings(p,fluor1name,'g');
+
                 
                 % change names to actual color: fluor1back -> yback, or
                 % rback etc.. fluor1 could in principle be kept in the

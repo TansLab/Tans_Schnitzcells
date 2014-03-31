@@ -343,73 +343,79 @@ end
 dispAndWrite(fid, ['     |  ']);
 % dispAndWrite(fid, ['     |--- ' str3(nrBarrenInManualRange) ' of barren cells in manualRange']);
 dispAndWrite(fid, ['     |--- ' str3(length(framesWithBarrenCells)) ' frames have barren cells']);
-for fr = framesWithBarrenCells
-  out = ['     |  |--- in frame ' str3(fr) ' schnitz '];
-  for cell = 1:length(schnitzcells)
-    if schnitzcells(cell).inTracking & schnitzcells(cell).barren & intersect(fr, schnitzcells(cell).frames(end)-1)
-      out = [out str3(cell) ' '];
-      %dispAndWrite(fid, ['     |  |--- schnitz ' str3(cell) ' is barren and disappears in frame ' str3(schnitzcells(cell).frames(end)-1)]);
+if ~isempty(framesWithBarrenCells)
+    for fr = framesWithBarrenCells
+      out = ['     |  |--- in frame ' str3(fr) ' schnitz '];
+      for cell = 1:length(schnitzcells)
+        if schnitzcells(cell).inTracking & schnitzcells(cell).barren & intersect(fr, schnitzcells(cell).frames(end)-1)
+          out = [out str3(cell) ' '];
+          %dispAndWrite(fid, ['     |  |--- schnitz ' str3(cell) ' is barren and disappears in frame ' str3(schnitzcells(cell).frames(end)-1)]);
+        end
+      end
+      out = [out 'are barren'];
+      dispAndWrite(fid, out);
     end
-  end
-  out = [out 'are barren'];
-  dispAndWrite(fid, out);
 end
 
 % Display moving cells (possibly wrong tracking)
 dispAndWrite(fid, ['     |  ']);
 dispAndWrite(fid, ['     |--- ' str3(length(framesWithCellsMoving)) ' frames have cells moving > ' num2str(p.pixelsMoveDef) ' pixels']);
-for fr = framesWithCellsMoving
-  % get previous frame nr
-  idxmyfr=find(framesunique==fr);
-  if idxmyfr>1 % get previous frame
-      idxmyfr=idxmyfr-1;
-  end
-  frprevious=framesunique(idxmyfr);
-  % output
-  dispAndWrite(fid, ['     |  |--- in frame ' str3(frprevious) ' -> ' str3(fr)]); %NW2013-12 change display (fr)->(next fr)
-  for cell = 1:length(schnitzcells)
-    if schnitzcells(cell).inTracking & intersect(fr, schnitzcells(cell).moving)
-%       out = [out str3(cell) ' '];
-% MAYBE SOME CORRECTION NEEDED FOR FR_IDX -> IF FRAMES ARE SKIPPED %
-% NW2014-01
-      fr_idx = find(schnitzcells(cell).frames==(fr+1));
-      cenx = schnitzcells(cell).cenx_cent(fr_idx-1);
-      ceny = schnitzcells(cell).ceny_cent(fr_idx-1);
-      cenx_new = schnitzcells(cell).cenx_cent(fr_idx);
-      ceny_new = schnitzcells(cell).ceny_cent(fr_idx);
-      distanceMoved = sqrt( (cenx_new-cenx)^2 + (ceny_new-ceny)^2 );
-      dispAndWrite(fid, ['     |  |  |--- schnitz ' str3(cell) ' : ' num2str( round(distanceMoved) ) ' pixels']);
+if ~isempty(framesWithCellsMoving)
+    for fr = framesWithCellsMoving
+      % get previous frame nr
+      idxmyfr=find(framesunique==fr);
+      if idxmyfr>1 % get previous frame
+          idxmyfr=idxmyfr-1;
+      end
+      frprevious=framesunique(idxmyfr);
+      % output
+      dispAndWrite(fid, ['     |  |--- in frame ' str3(frprevious) ' -> ' str3(fr)]); %NW2013-12 change display (fr)->(next fr)
+      for cell = 1:length(schnitzcells)
+        if schnitzcells(cell).inTracking & intersect(fr, schnitzcells(cell).moving)
+    %       out = [out str3(cell) ' '];
+    % MAYBE SOME CORRECTION NEEDED FOR FR_IDX -> IF FRAMES ARE SKIPPED %
+    % NW2014-01
+          fr_idx = find(schnitzcells(cell).frames==(fr+1));
+          cenx = schnitzcells(cell).cenx_cent(fr_idx-1);
+          ceny = schnitzcells(cell).ceny_cent(fr_idx-1);
+          cenx_new = schnitzcells(cell).cenx_cent(fr_idx);
+          ceny_new = schnitzcells(cell).ceny_cent(fr_idx);
+          distanceMoved = sqrt( (cenx_new-cenx)^2 + (ceny_new-ceny)^2 );
+          dispAndWrite(fid, ['     |  |  |--- schnitz ' str3(cell) ' : ' num2str( round(distanceMoved) ) ' pixels']);
+        end
+      end
+    %   out = [out 'are moving'];
+    %   dispAndWrite(fid, out);
+      dispAndWrite(fid, ['     |  |' ]);
     end
-  end
-%   out = [out 'are moving'];
-%   dispAndWrite(fid, out);
-  dispAndWrite(fid, ['     |  |' ]);
 end
 
 % Display weird growing cells (possibly wrong tracking / segmentation)
 dispAndWrite(fid, ['     |  ']);
 dispAndWrite(fid, ['     |--- ' str3(length(framesWithCellsGrowingWeird)) ' frames have cells growing < ' num2str(p.pixelsLenDef(1)) ' or > ' num2str(p.pixelsLenDef(2)) ' pixels']);
-for fr = framesWithCellsGrowingWeird
-  % get previous frame nr
-  idxmyfr=find(framesunique==fr);
-  if idxmyfr>1 % get previous frame
-      idxmyfr=idxmyfr-1;
-  end
-  frprevious=framesunique(idxmyfr);
-  % output
-  dispAndWrite(fid, ['     |  |--- in frame ' str3(frprevious) ' -> ' str3(fr)]);
-  for cell = 1:length(schnitzcells)
-      % MAYBE SOME CORRECTION NEEDED FOR FR_IDX -> IF FRAMES ARE SKIPPED %
-    % NW2014-01
+if ~isempty(framesWithCellsGrowingWeird)
+    for fr = framesWithCellsGrowingWeird
+      % get previous frame nr
+      idxmyfr=find(framesunique==fr);
+      if idxmyfr>1 % get previous frame
+          idxmyfr=idxmyfr-1;
+      end
+      frprevious=framesunique(idxmyfr);
+      % output
+      dispAndWrite(fid, ['     |  |--- in frame ' str3(frprevious) ' -> ' str3(fr)]);
+      for cell = 1:length(schnitzcells)
+          % MAYBE SOME CORRECTION NEEDED FOR FR_IDX -> IF FRAMES ARE SKIPPED %
+        % NW2014-01
 
-    idx = [find(schnitzcells(cell).growingTooLittle==(fr))  find(schnitzcells(cell).growingTooMuch==(fr))];
-    if schnitzcells(cell).inTracking & idx
-      fr_idx = find(schnitzcells(cell).frames==(fr+1));
-      lengthIncrease = schnitzcells(cell).len(fr_idx) - schnitzcells(cell).len(fr_idx-1);
-      dispAndWrite(fid, ['     |  |  |--- schnitz ' str3(cell) ' : ' num2str( round(lengthIncrease) ) ' pixels']);
+        idx = [find(schnitzcells(cell).growingTooLittle==(fr))  find(schnitzcells(cell).growingTooMuch==(fr))];
+        if schnitzcells(cell).inTracking & idx
+          fr_idx = find(schnitzcells(cell).frames==(fr+1));
+          lengthIncrease = schnitzcells(cell).len(fr_idx) - schnitzcells(cell).len(fr_idx-1);
+          dispAndWrite(fid, ['     |  |  |--- schnitz ' str3(cell) ' : ' num2str( round(lengthIncrease) ) ' pixels']);
+        end
+      end
+      dispAndWrite(fid, ['     |  |' ]);
     end
-  end
-  dispAndWrite(fid, ['     |  |' ]);
 end
 
 % Display moving whose length change after division (possibly wrong tracking)

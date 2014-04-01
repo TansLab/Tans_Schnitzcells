@@ -1,11 +1,21 @@
-Comment Noreen 2013-04-08:
-This very text-file has not been updated since 2012-03-29. Check the Schnitzcells_structure.xls file for all existing functions.
-
-*****************************************
 
 25-7-2013 Dmitry.
 There was an issue with calling median() in DJK_correctFluorImage_anycolor in Matlab 2012b.
 median desperately wanted doubles as an argument, so I added a line converting arguments to double.
+
+->march 2014; Micromanager data compatibility. This needed a change in several sub-functions:
+1. DJK_cropImages_3colors(p, cropRange, leftTop, rightBottom, varargin)
+	a fork was introduced:
+	if p.micromanager = 1
+		DE_adjustiminfo (appends necessary info to the phase contrast images)
+	else	
+		normal path
+	end
+
+2. DE_adjustiminfo	needs	DE_month_convert
+
+
+%% no updates commented between between 4/2012 and 7/2013 %%%
 
 
 
@@ -88,6 +98,7 @@ This version of schnitzcells integrates :
 - templates to perform the full analysis for experiments comprising 1 or 2 colors
 
 It is suited for matlab 7.0.4
+
 
 
 

@@ -195,7 +195,7 @@ for fr = cropRange, % go over each frame
     % crop phase images
     for i = [1:length(DphaseRange)], % go over each phase image of this frame
         % read image
-        im_original = imread([p.imageDir DphaseRange(i).name]); 
+        im_original = imread([p.imageDir DphaseRange(i).name]);
         % crop the image
         im_crop = im_original( leftTop(2):rightBottom(2), leftTop(1):rightBottom(1));
         % read iminfo

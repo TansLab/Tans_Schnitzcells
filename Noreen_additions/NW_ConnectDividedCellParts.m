@@ -39,9 +39,15 @@ function SegImageConn= NW_ConnectDividedCellParts(SegImage,NegPhaseImage,AreaIdx
 
 
 % ******** ADJUST **************
-maxNumRounds=5;   % 5... max # of growth loops before abortion
+maxNumRounds=10;   % 5... max # of growth loops before abortion
 Pxgrowth=20;         % 20... # of added pixels per loop
-mystruct_el=strel('disk',2);   % disk,2.... structuring element for dilation
+
+% ** structuring element **
+% line along the long axis
+cellangle=regionprops(SegImage==AreaIdx,'Orientation'); % major axis orientation.
+cellangle=cellangle.Orientation;
+mystruct_el=strel('line',4,cellangle); 
+% alternative: disk: mystruct_el=strel('disk',2);   % disk,2.... structuring element for dilation
 % *****************************
 
 SegImageBackup=SegImage;

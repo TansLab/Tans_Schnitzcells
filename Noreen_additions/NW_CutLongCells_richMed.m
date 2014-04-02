@@ -5,8 +5,8 @@
 function [nonCutCells cutImage] = NW_cutLongCells_richMed(skelim,refim,neckDepth)
 
 % **** ADJUST ****
-suspiciousSizeFactor=2;   % use=2 (contrary to minimal Medium=1.5)
-remEdgePx=20;             % remove xx end pixels of skeletons where cut must not happen
+suspiciousSizeFactor=1.5;   % use=2 (contrary to minimal Medium=1.5)
+remEdgePx=10;%20;             % remove xx end pixels of skeletons where cut must not happen
 % ****************
 
 sref = size(refim);
@@ -31,16 +31,31 @@ for ii = idx  %study the case of long cells individually
     subImage(~localSkel) = inf; %local restriction of distance transform to the skeleton 
     
     %cuts under the condition that the necking has a certain depth
-    [m xm ym] = MinCoordinates2(subImage);    %potentiel division point
-    localSkel(ym,xm)=false; %cut...
-    localCc=bwconncomp(localSkel); %...and examin the 2 sides of the cells
-    cutHappened = false;
-    if localCc.NumObjects == 2 %avoid cases in which the cut point is at a cell end
-        av_left = mean(subImage(localCc.PixelIdxList{1}));    %average thickness on one side
-        av_right = mean(subImage(localCc.PixelIdxList{2}));    %average thickness on other side
-        if (av_left-m > neckDepth) && (av_right-m > neckDepth) %cusp of sufficient depth
-            cutImage(ym+yb-1,xm+xb-1)=1;
-            cutHappened = true;
+    % Tests several potential neck positions (specific for rich medium ->
+    % branched skeletons)
+    if     ii==158
+        disp(' ')
+    end
+    % [m xm ym] = MinCoordinates2(subImage);    %potentiel division point
+    [mvec xmvec ymvec] = MinCoordinates2_N(subImage,3);    %potentiel division point, 3 closest dist's
+    
+    % loop over potential division points
+    for potdivrun=1:length(xmvec)
+        m=mvec(potdivrun);
+        xm=xmvec(potdivrun);
+        ym=ymvec(potdivrun);
+        localSkelRun=localSkel;
+        localSkelRun(ym,xm)=false; %cut...
+        localCc=bwconncomp(localSkelRun); %...and examin the 2 sides of the cells
+        cutHappened = false;
+        if localCc.NumObjects == 2 %avoid cases in which the cut point is at a cell end
+            av_left = mean(subImage(localCc.PixelIdxList{1}));    %average thickness on one side
+            av_right = mean(subImage(localCc.PixelIdxList{2}));    %average thickness on other side
+            if (av_left-m > neckDepth) && (av_right-m > neckDepth) %cusp of sufficient depth
+                cutImage(ym+yb-1,xm+xb-1)=1;
+                cutHappened = true;
+                break %stop when cell could be cut. maybe allow for more cuts in future
+            end
         end
     end
     

@@ -154,7 +154,6 @@ while ~done
     
     set(ourfig,'WindowButtonMotionFcn','');
     %if ct cc=get(1,'currentcharacter');else cc=get(1,'selectiontype');end
-    if ct % STAR KEYBOARD CLICKS
     
     % ****************************************************
     % *********** START KEYBOARD KLICKS ******************

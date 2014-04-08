@@ -5,7 +5,7 @@
 function [nonCutCells cutImage] = NW_cutLongCells_richMed(skelim,refim,neckDepth)
 
 % **** ADJUST ****
-suspiciousSizeFactor=1.5;   % use=2 (contrary to minimal Medium=1.5)
+suspiciousSizeFactor=2;   % use=2 (contrary to minimal Medium=1.5)
 remEdgePx=10;%20;             % remove xx end pixels of skeletons where cut must not happen
 % ****************
 

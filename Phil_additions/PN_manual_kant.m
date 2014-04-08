@@ -155,7 +155,16 @@ while ~done
     set(ourfig,'WindowButtonMotionFcn','');
     %if ct cc=get(1,'currentcharacter');else cc=get(1,'selectiontype');end
     if ct % STAR KEYBOARD CLICKS
+    
+    % ****************************************************
+    % *********** START KEYBOARD KLICKS ******************
+    % ****************************************************
+    
+ 
+    if ct 
         % cc=get(ourfig,'currentcharacter');
+           
+        % save, continue etc
         if cc==' '
             OKorNot=1;
             done=1;
@@ -226,6 +235,7 @@ while ~done
             figure(ourfig)
             done=0;
         elseif cc=='x'
+            Lout_undo=Lout;   %for undo step NW 2014-01
             subcolroi=imresize_old(~roipoly,1/res);
             if size(subcolroi,1)~=size(Lout,1) | size(subcolroi,2)~=size(Lout,2)
                 subcolroi2=zeros(size(Lout));
@@ -568,9 +578,10 @@ while ~done
                     % updated cellnumbers NW2012-05-10
                     updatedCellNumbers=[updatedCellNumbers;j1;j2];
 
-            % extend = shift+left button (or both?) -> press '7'to remove
+            % remove cell = shift+left button (or both?) -> press '7'to remove
             % cell
             elseif (cc=='7' & Lout(round(pos(1,2)),round(pos(1,1))))
+                
                 Lout_undo=Lout;   %for undo step NW 2014-01
                 % erase cell
                 Lout(Lout==Lout(round(pos(1,2)),round(pos(1,1))))=0;
@@ -680,11 +691,17 @@ while ~done
             
         end
         
-    else % START MOUSE CLICKS (before: everything: keyboard clicks)
+    
+    % ****************************************************
+    % *********** START MOUSE KLICKS *********************
+    % ****************************************************    
+        
+    else 
         cz=get(ourfig,'selectiontype');
         
         % normal = left mouse button
         if cz(1)=='n'
+            Lout_undo=Lout;   %for undo step NW 2014-01
             % join cells
             pos1=pos;
             j1=Lout(round(pos(1,2)),round(pos(1,1)));
@@ -716,8 +733,9 @@ while ~done
             % updated cellnumbers NW2012-05-10
             updatedCellNumbers=[updatedCellNumbers;j1;j2];
             
-            % extend = shift+left button (or both?)
+            % delete cell = shift+left button (or both?)
         elseif (cz(1)=='e' & Lout(round(pos(1,2)),round(pos(1,1))))
+            Lout_undo=Lout;   %for undo step NW 2014-01
             % erase cell
             Lout(Lout==Lout(round(pos(1,2)),round(pos(1,1))))=0;
             
@@ -728,7 +746,8 @@ while ~done
             updatedCellNumbers=[updatedCellNumbers;Lout(round(pos(1,2)),round(pos(1,1)))];
             
         elseif (cz(1)=='a' & Lout(round(pos(1,2)),round(pos(1,1))))
-            
+            Lout_undo=Lout;   %for undo step NW 2014-01
+                        
             % cutx & cuty are coordinate that is clicked
             cutx = round(pos(1,2));
             cuty = round(pos(1,1));

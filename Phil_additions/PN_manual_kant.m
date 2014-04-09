@@ -40,13 +40,8 @@ pos=[1 1];
 % recalculated) (NW2012-05-10)
 updatedCellNumbers=[];
 %
-
 % initialize image for undo-step ('u')
 Lout_undo=Lout;
-
-% initialize list of badly segmented files
-list_mark =0;
-
 
 while ~done
     clear j*  %j1=0;j2=0;
@@ -159,6 +154,40 @@ while ~done
     % *********** START KEYBOARD KLICKS ******************
     % ****************************************************
     
+    % bring phase image to front (and background again)
+    % treated independently of 'real' actions since update in segImage
+    % colors is not wanted. [NW 2014-04]
+ allowM=0;
+ if allowM
+    if ct & cc=='m'
+        while ct==1 & cc=='m'
+            % introduce an if-statement if current figure is already the phase
+            % image (accident in updating)?
+            figure(phfig)
+            ctsub=waitforbuttonpress;
+            ccsub=get(phfig,'currentcharacter');
+            while ctsub~=1 | ccsub~='m' % wait until another 'm' is pressed
+                ctsub=waitforbuttonpress;
+                ccsub=get(phfig,'currentcharacter');
+            end
+                figure(ourfig)
+                % don't know why but apparently the windowsbuttonmotionfcn
+                % (track mouse position) has to be reactivated after
+                % changing the figure [NW 2014-04]
+                set(ourfig,'WindowButtonMotionFcn',['global pos Limage ourfig res pp phfig;pos=max(1,round((1/res)*get(gca,''CurrentPoint'')));',...
+                'if (pos(1,2)>0 & pos(1,2)<size(Limage,1) & pos(1,1)>0 & pos(1,1)<size(Limage,2));',...
+                'curr_val=num2str(double(Limage(pos(1,2),pos(1,1))));else;curr_val=''-1'';end;',...
+                'set(ourfig,''name'',[''Pos: '',num2str(pos(1,2)),'' , '',num2str(pos(1,1)),',...
+                '''  Val: '',curr_val]);']);
+                
+                clear ccsub ctsub
+                % wait for new button press in segImage
+                ct=waitforbuttonpress;
+                cc=get(ourfig,'currentcharacter');
+        end
+    end           
+                
+ end
  
     if ct 
         % cc=get(ourfig,'currentcharacter');

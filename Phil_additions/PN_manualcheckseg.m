@@ -126,6 +126,7 @@ disp('              press ''j'' to fill all cells.')
 disp('              press ''h'' to reseed a cell.')
 disp('              press ''d'' to remove all ''cells'' which look like dirt (large convex hull).')
 disp('              press ''u'' to go back one step (possible once).')
+disp('              press ''m'' to switch between phase contrast and segmentation image.')
 
 disp(' ')
 

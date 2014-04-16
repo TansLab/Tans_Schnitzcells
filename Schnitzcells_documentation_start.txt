@@ -1,0 +1,40 @@
+
+
+____________________________________________________________
+SOME DOCUMENTATION WITH SCHNITZCELLS (Tans lab version)
+2014/04/16 Martijn Wehrens
+____________________________________________________________
+
+
+
+Contents:
+
+Part 1.     Documentation on how to use Excel file to analyze a position.
+
+Part 2.     Documentation about specific properties of the code.
+
+
+
+
+____________________________________________________________
+PART 1
+HOW TO USE EXCEL FILE AND MATLAB TO ANALYZE A POSITION
+____________________________________________________________
+
+
+
+
+____________________________________________________________
+PART 2
+SOME NOTES ON HOW MATLAB CODE WORKS
+____________________________________________________________
+
+
+See the "Schnitzcells_structure.xlsx" file for an overview of the matlab functions and a description.
+
+SOME NOTES ON SEGMENTATION
+===
+
+THE L STRUCTURE
+
+The "L" structure contains the segmented bacteria. This is simply a N * M matrix with zeros with each area that comprises a bacteria marked by a unique number that is not zero. N * M equals the pixel size of the picture.

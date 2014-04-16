@@ -105,8 +105,12 @@ idsmall = find([propL.Area] < characSize*fractionbelowwhite); %label of cells wh
                 % ^ fractionbelowwhite is the fraction of the avg under which the cell is colored white
 %create a logical of suspicious cells
 Lsuspicious = zeros(size(L));
-for ii = union(ideul,idsmall)
-    Lsuspicious(L==ii)=1;
+% If there are suspicous cells, mark them on the Lsuspicious image.
+allSuspiciousLabels = union(ideul,idsmall);
+if ~isempty(allSuspiciousLabels)
+    for ii = allSuspiciousLabels
+        Lsuspicious(L==ii)=1;
+    end
 end
 
 % elapsed time: 0.33

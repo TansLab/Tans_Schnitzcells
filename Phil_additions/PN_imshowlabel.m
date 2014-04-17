@@ -31,7 +31,7 @@ function outim = PN_imshowlabel(L,rect,Lp,rectp,varargin)
 % Input error checking and parsing
 %--------------------------------------------------------------------------
 % Settings
-fractionbelowwhite = 0.2 % cells which are a fraction of <fractionbelowwhite>
+fractionbelowwhite = 0.2; % cells which are a fraction of <fractionbelowwhite>
                          % smaller than the median are marked white.
 numRequiredArgs = 4; functionName = 'PN_imshowlabel'; p_internal = struct;
 

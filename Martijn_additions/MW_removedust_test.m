@@ -194,7 +194,7 @@ end
 % print____________________________________________________________________
 
 % Convert back to uint
-my_shiny_image = int16(my_shiny_image);
+my_shiny_image = uint16(my_shiny_image);
 
 % Show result
 h = figure(3);

@@ -34,7 +34,7 @@ work_img = im2bw(work_img);
 
 % _________________________________________________________________________
 
-figure (2), imshow(work_img);
+%figure (2), imshow(work_img);
 
 % Create a disk-shaped structuring element with a radius of 5 pixels.
 
@@ -59,8 +59,14 @@ work_img = bwareaopen(work_img, 500);
 work_img = bwareaopen(work_img, 500);
 work_img = imopen(work_img,se);
 
-% intensify identified areas
+% determine filter
 filter = work_img+1.0;
+
+% show filter
+img_after = work_img;
+figure (3), imshow(filter);
+
+% apply to orginal
 work_img = normalized_original ./ filter; % (work_img now contains ones and twos)
 % renormalize
 work_img = work_img ./ max(work_img(:)); 
@@ -71,7 +77,7 @@ work_img = work_img ./ max(work_img(:));
 % put result in img_after and show_________________________________________
 
 img_after = work_img;
-figure (3), imshow(img_after);
+figure (4), imshow(img_after);
 
 %{
 ff_img = fft(work_img);

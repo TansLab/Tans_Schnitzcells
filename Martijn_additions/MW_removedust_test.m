@@ -6,9 +6,11 @@ min_multiplier = 0.9
 my_prctile = .01; % Percentile of avg img to be used for removal of dust
 
 % Load image_______________________________________________________________
-img_location = 'D:\LocalPlayground\pos1-p-1-002.tif';
+my_dir = 'D:\LocalPlayground\'
+img_name = 'pos1-p-1-002.tif'
+output_name = ['D' img_name]
 %img_location = 'D:\LocalPlayground\Vincent_van_Gogh_(1853-1890)_-_Wheat_Field_with_Crows_(1890).jpg'
-[my_image,my_colormap] = imread(img_location);
+[my_image,my_colormap] = imread([my_dir img_name]);
 
 % Show image
 h = figure(1);
@@ -23,10 +25,7 @@ my_xmin = my_rect(1); my_ymin = my_rect(2);
 my_xmax = my_rect(1)+my_rect(3); my_ymax = my_rect(2)+my_rect(4);
 
 % Select region which shouldn't be altered
-my_not_altered = round(getrect(h))
-% Rename vars for clearity - note counter-intuitive x/y 
-my_notaltered_xmin = my_not_altered(1); my_notaltered_ymin = my_not_altered(2); 
-my_notaltered_xmax = my_not_altered(3)+my_not_altered(1); my_notaltered_ymax = my_not_altered(4)+my_not_altered(2);
+my_BW_not_altered = roipoly;
 
 % Get area
 my_avg_area = my_image(my_ymin:my_ymax,my_xmin:my_xmax);
@@ -58,8 +57,7 @@ for i = [1:size(my_image,1)]
     for j = [1:size(my_image,2)]
                
         % If outside region not to be altered (dusted)
-        if ~((i > my_notaltered_ymin) & (i < my_notaltered_ymax) & ...
-             (j > my_notaltered_xmin) & (j < my_notaltered_xmax))
+        if ~(my_BW_not_altered(i,j))
         
             % Remove dust
             if (my_image(i,j)<my_min_margin)
@@ -88,7 +86,15 @@ imshow(my_dust_image);
 h = figure(3);
 imshow(my_shiny_image,my_colormap);
 
+% Get old image metadata
+im_info = imfinfo([my_dir img_name]);
 
+% Note that this produces 'cropped' image style metadata
+im_description = [im_info.ImageDescription 'DateTime: ' im_info.DateTime 'Software: ' im_info.Software];
+imwrite(my_shiny_image,[my_dir output_name], 'tif', 'Compression', 'none', 'Description', im_description);
+
+
+ 
 
 
 

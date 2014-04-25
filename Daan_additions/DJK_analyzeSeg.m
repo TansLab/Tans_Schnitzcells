@@ -296,13 +296,13 @@ if (sum(unApproved)<1)
   dispAndWrite(fid, ['All frames are approved']);
 else
   dispAndWrite(fid, [num2str(sum(unApproved)) ' frames are not approved:']);
-  fprintf(' * ');
+  unapproved_str = []; % for printing
   for i=[1:length(unApproved)]
     if unApproved(i)
-      fprintf([str3(p.manualRange(i)) ' ']);
+        unapproved_str = [unapproved_str ' ' str3(p.manualRange(i))];      
     end
   end
-  disp('.');
+  dispAndWrite(fid,['* ' unapproved_str '.']);
 end  
 dispAndWrite(fid, ['-------------------------------------------------']);
 %--------------------------------------------------------------------------

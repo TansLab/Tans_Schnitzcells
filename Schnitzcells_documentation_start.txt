@@ -21,8 +21,35 @@ PART 1
 HOW TO USE EXCEL FILE AND MATLAB TO ANALYZE A POSITION
 ____________________________________________________________
 
+The Schnitzcells analysis constists of different steps. 
+
+(Step 0: Cropping the images)
+
+Step 1: Segmentation of the cells
+===
+- The segmentation needs to be checked manually; There is a matlab function available to correct the segmentation (.._manualcheckseg()) and a function which tries to detect mistakes. It is convenient to combine the use of these two functions. The advised procedure is as follows:
+    o First, run .._manualcheckseg() once to correct obvious errors. Cells that look incorrect to the algorithm are colored white by this function.
+    o Second, run DJK_analyzeSeg(), this will identify cases which the algorithm thinks are incorrect. These can be corrected by running .._manualcheckseg() again.
+    DJK_analyzeSeg() produces the following output which gives information about incorrect segmentation:
+    > analysis\segmentation\fitRange1_199
+    This is also printed to screen, but has a list of possible problems for tracking.
 
 
+
+NOTES: There are some "hidden" settings to the algorithm that determines whether cells might be incorrectly segmented. 
+Settings in PN_imshowlabel:
+- fractionbelowwhite = 0.2; 
+    cells which are a fraction of <fractionbelowwhite> smaller than the median are marked white.
+
+
+
+Step 2: 
+===
+
+
+
+        > ../analysis/movies/
+        Movies which highlight suspected errors.
 
 ____________________________________________________________
 PART 2
@@ -38,3 +65,30 @@ SOME NOTES ON SEGMENTATION
 THE L STRUCTURE
 
 The "L" structure contains the segmented bacteria. This is simply a N * M matrix with zeros with each area that comprises a bacteria marked by a unique number that is not zero. N * M equals the pixel size of the picture.
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

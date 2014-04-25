@@ -61,7 +61,7 @@ my_dust_image = zeros( size (my_image) );
 % Mark area used for averaging
 my_dust_image(my_ymin:my_ymax,my_xmin:my_xmax) = .5;
 % Mark area to be left alone
-my_dust_image(my_notaltered_ymin:my_notaltered_ymax,my_notaltered_xmin:my_notaltered_xmax) = .75;
+%my_dust_image(my_notaltered_ymin:my_notaltered_ymax,my_notaltered_xmin:my_notaltered_xmax) = .75;
 
 % Copy original image to to-be-dusted image
 my_shiny_image = my_image;
@@ -100,7 +100,7 @@ imshow(my_dust_image);
 
 
 % Convert back to uint
-my_shiny_image = int16(my_shiny_image);
+my_shiny_image = uint16(my_shiny_image);
 
 % Show result
 h = figure(3);

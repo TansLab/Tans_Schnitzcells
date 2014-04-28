@@ -154,6 +154,7 @@ fields = {...
   'timeField'     ...               % NW 120511 DJK_plotcrosscorr_stderror_store
   'spacingError'      ...           % NW 120511 DJK_plotcrosscorr_stderror_store
   'badseglistname'  ...             % MW 140306   
+  'dumpPlot' ...                    % MW 140428
   };
 
 upfields = upper(fields);

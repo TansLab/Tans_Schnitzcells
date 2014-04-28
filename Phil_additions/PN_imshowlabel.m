@@ -114,7 +114,7 @@ if ~isempty(allSuspiciousLabels)
 end
 
 % MW: make them stand out some more using checkerboard
-sqsize = 10; %square size
+sqsize = 4; %square size
 mycheckerboard = (checkerboard(sqsize,ceil(size(Lsuspicious,1)/sqsize),ceil(size(Lsuspicious,2)/sqsize)) > 0.5);
 for i = 1:size(Lsuspicious,1)
     for j = 1:size(Lsuspicious,2)

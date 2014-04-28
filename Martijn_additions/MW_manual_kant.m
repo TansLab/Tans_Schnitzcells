@@ -54,12 +54,12 @@ while ~done
         clf reset;
     
         if assistedCorrection && ~isempty(L_prec)
-            Lshow = PN_imshowlabel(Lout,rect,L_prec,rect_prec,'phaseImage',phsub);
+            Lshow = PN_imshowlabel(Lout,rect,L_prec,rect_prec,framenr,'phaseImage',phsub);
             Lshow = imresize_old(Lshow,res);
                        
             imshow(Lshow);            
         else
-             DJK_imshowlabel(imresize_old(Lout,res),'phaseImage',imresize_old(phsub,res));
+             DJK_imshowlabel(imresize_old(Lout,res),framenr,'phaseImage',imresize_old(phsub,res));
         end
     
         pos11 = get(phfig,'position'); % current position
@@ -79,7 +79,7 @@ while ~done
         %get(ourfig,'Position')
         %stop3=toc
         if assistedCorrection && ~isempty(L_prec)
-            Lshow = PN_imshowlabel(Lout,rect,L_prec,rect_prec,'phaseImage',phsub); %slow step 0.45sec! (NW 2012-05-10)
+            Lshow = PN_imshowlabel(Lout,rect,L_prec,rect_prec,framenr,'phaseImage',phsub); %slow step 0.45sec! (NW 2012-05-10)
             %stop4a=toc %PN_imshow.. is slow step (0.45 sec)
             Lshow = imresize_old(Lshow,res);
             %stop5a=toc
@@ -93,10 +93,10 @@ while ~done
         else
             clf reset; %NW2012-05-10
              % MW - REMOVE THIS WATERMARK CODE
-             %Decide whether to use watermark (do if frame approved)
+             % Decide whether to use watermark (do if frame approved)
              % watermarkyesno=inlist(whitelist,framenr);
              % Show image with cells and color overlay
-             DJK_imshowlabel(imresize_old(Lout,res),'phaseImage',imresize_old(phsub,res)); %slow step 0.2sec! (NW 2012-05-10)
+             DJK_imshowlabel(imresize_old(Lout,res),framenr,'phaseImage',imresize_old(phsub,res)); %slow step 0.2sec! (NW 2012-05-10)
              set(ourfig, 'position', pos11); % DJK 090117 % a little awkward to redo, but should only affect first image
             %stop4b=toc
         end
@@ -106,7 +106,7 @@ while ~done
     end
         
     
-    % ***********
+    % ***********   
     
  % *** OLD ***
   %  figure(ourfig);
@@ -138,21 +138,7 @@ while ~done
     % blubb
     % hier the regionprobs of the next and previous image could already be
     % calculated to quicken update of image when frame changes
-    % NW 2012-05-10
-    
-    % EDIT by MW 7-3-2014
-    % This checks whether the frame is on the whitelist,
-    % if so, it adds a small circle ('watermark') to the plot
-    % as a flag to the user.   
-    if(inlist(whitelist,framenr))
-        figure(ourfig);
-        hold on
-        h=imshow(mywatermark);
-        set(h, 'AlphaData', mywatermark(:,:,2));
-        hold off;
-    end
-    % END edit MW
-    
+    % NW 2012-05-10 
         
     realpress = 0;
     while ~realpress,

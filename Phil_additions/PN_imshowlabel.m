@@ -25,7 +25,8 @@
 % elapsed time for frame 444 in 2012-05-08. 390 cells
 
 
-function outim = PN_imshowlabel(L,rect,Lp,rectp,varargin)
+function outim = PN_imshowlabel(L,rect,Lp,rectp,framenr,varargin)
+global whitelist mywatermark; % MW
 
 %--------------------------------------------------------------------------
 % Input error checking and parsing
@@ -33,7 +34,7 @@ function outim = PN_imshowlabel(L,rect,Lp,rectp,varargin)
 % Settings
 fractionbelowwhite = 0.2; % cells which are a fraction of <fractionbelowwhite>
                          % smaller than the median are marked white.
-numRequiredArgs = 4; functionName = 'PN_imshowlabel'; p_internal = struct;
+numRequiredArgs = 5; functionName = 'PN_imshowlabel'; p_internal = struct;
 
 if (nargin < numRequiredArgs) | (mod(nargin,2) ~= (mod(numRequiredArgs,2)))
     errorMessage = sprintf('%s\n%s',['Error width input arguments of ' functionName],['Try "help ' functionName '".']);
@@ -151,6 +152,9 @@ mymap = [mymap ; 1 1 1]; %add white
 L2(logical(Lsuspicious)) = M+1;
 L2(logical(imdilate(imcentroids,strel('square',2)))) = 0; % costs 0.017 sec
 Lrgb = ind2rgb(L2,mymap); % costs 0.04 sec
+
+% Edit MW - adds green marker if framenr is in whitelist.
+Lrgb = MW_stampit(Lrgb,framenr);
 
 % elapsed time: 0.40
 %stop3=toc

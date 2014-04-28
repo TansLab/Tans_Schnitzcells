@@ -32,6 +32,8 @@
 % 'xlim'            default: [0 900]
 % 'ylim'            default: [2 2000]
 %
+% 'dumpPlot'        default: 0, when 1 dump line data to variables
+%
 
 function [fitTime, fitMu] = DJK_analyzeMu(p, schnitzcells, varargin);
 
@@ -110,6 +112,9 @@ end
 if ~existfield(p,'ylim')
   p.ylim = [2 2000];
 end
+if ~existfield(p,'dumpPlot')
+  p.dumpPlot = 0;
+end
 %--------------------------------------------------------------------------
 
 
@@ -186,6 +191,15 @@ idx = find(~isnan(data_muField_sum));
 data_frames = data_frames(idx);
 data_time = data_time(idx);
 data_muField_sum = data_muField_sum(idx);
+
+% MW addition: dump these graphs 
+% TODO: not sure whether this parameter should be stored in p structure.
+if p.dumpPlot
+    assignin('caller', 'data_frames', data_frames);
+    assignin('caller', 'data_time', data_time);
+    assignin('caller', 'data_muField_sum', data_muField_sum);
+    disp('Made variables data_frames, data_time, data_muField_sum available in workspace..');
+end
 %--------------------------------------------------------------------------
 
 
@@ -217,9 +231,12 @@ fitTime = p.fitTime;
 
 
 % make figure with full screen size
-scrsz = get(0, 'ScreenSize');
+scrsz = get(0, 'ScreenSize'); % [ x1, y1, x2, y2 ]
 % fig1 = figure('Position', [1 scrsz(4) scrsz(3) scrsz(4)], 'Name', figureName);
-fig1 = figure('Position', [126 scrsz(4)-150 scrsz(3)-125 scrsz(4)-150], 'Name', figureName, 'visible','off');
+% fig1 = figure('Position', [126 scrsz(4)-150 scrsz(3)-125 scrsz(4)-150],
+% 'Name', figureName, 'visible','off'); % MW: unclear why this weird
+% positioning? - didn't work for me.
+fig1 = figure('Name', figureName, 'visible','off');
 
 semilogy(data_time, data_muField_sum, 'o-k', 'MarkerSize',12, 'LineWidth',2);
 hold on;

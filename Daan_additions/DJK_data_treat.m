@@ -24,29 +24,49 @@ D={};
 E={};
 
 i=1;
+% Loop over all frames 
 for frameNum = p.manualRange(2:end)
+    % Administration (what is previous frame)
     mynum_t= str3(frameNum);
     yesterdayFrameNum = p.manualRange(find(p.manualRange==frameNum)-1);
     mynum_y= str3(yesterdayFrameNum);
 
+    % Load tracking file for frames n and n-1 into variable
     trackOutputFile = [p.tracksDir,p.movieName,'-djk-output-',...
-                       mynum_y,'-to-',mynum_t,'.txt'];
-
+                       mynum_y,'-to-',mynum_t,'.txt'];                   
     m = load( trackOutputFile ,'ASCII');
 
-    sz=size(m(:),1)/4;
-    m=reshape(m,[sz,4]);
+    % MW - unclear why this is needed, is data ever not Nx4 matrix?
+    sz=size(m(:),1)/4;      % sz = # all elements divided by four
+    m=reshape(m,[sz,4]);    % reshapes matrix that was already Nx4 to Nx4?
 
-    P1=m(:,1);
-    P2=m(:,4);
-    D1=m(:,2);
-    D2=m(:,3);
+    % MW - after manual edit, data can be sorted in wrong order, fix that
+    % here
+    msorted = sortrows(m,4);
+    if ismember(0,msorted == m)
+        disp(['WARNING, last column in ' trackOutputFile ' was not sorted correctly. I have corrected this.']);
+        m = msorted;
+    end
+    
+    % MW TODO - make more clear what these labels stand for
+    P1=m(:,1); % MW nomencl. pn
+    P2=m(:,4); % MW nomencl. ch
+    D1=m(:,2); % MW nomencl. p1
+    D2=m(:,3); % MW nomencl. p2
+   
+    %P2sort=sort( round(P2),'ascend' ) ;
 
-    P2sort=sort( round(P2),'ascend' ) ;
-
-    if( sum(P2==P2sort)~=size(P2,1) | P2sort(1)<1)
-        error(sprintf('last column in:  ''%s'' is not 1,2,3...',...
-                       trackOutputFile) )
+    % EDIT MW (TODO: remove these comments if proven to work smoothly)
+    % Data is now sorted if it was not to begin with (see above)
+    % Old code:
+    % First statement checks whether P2 is sorted 
+    % Second checks whether first value is a one    
+    % if( sum(P2==P2sort)~=size(P2,1) | P2sort(1)<1)
+    % New code:
+    if( P2(1)<1)
+        %error(sprintf('last column in:  ''%s'' is not 1,2,3...',...
+        error(['First value last column should be a one, not the case in ', ...
+                       trackOutputFile] );
     else
         if( sum(P2==[1:size(P2,1)]')~=size(P2,1) );
             warning(['last column in ',trackOutputFile,...

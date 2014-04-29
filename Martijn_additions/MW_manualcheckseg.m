@@ -128,7 +128,7 @@ disp('              press ''u'' to go back one step (possible once).')
 disp(' ')
 
 quit_now=0;
-global pos Limage ourfig res pp phfig whitelist mywatermark % flfig % DJK 071206
+global pos Limage ourfig res pp phfig whitelist mywatermark currentFrameNo% flfig % DJK 071206
     % whitelist added by MW 7-3-2014
 
 ourfig = figure;
@@ -221,7 +221,7 @@ maxValidImageSize=myScreenSize(3:4)-[150,150]; % empirical
 % EDIT by MW 6-3-2014 
 
 % Load the watermark
-% Note that the green chanel is also used for alphadata
+% Note that only the green channel is used, and only binary form.
 mywatermark=imread('watermark.png');
 
 % loading of whitelist
@@ -230,7 +230,7 @@ mywatermark=imread('watermark.png');
 if exist([p.movieDir,'whitelist.mat'])==2
     load([p.movieDir,'whitelist.mat'],'whitelist');
 else
-    whitelist = []
+    whitelist = [];
 end
 
 whitelist
@@ -366,8 +366,9 @@ while loopindex <= length(p.manualRange);
         while ~is_done
            
             % This executes the function that asks for keyboard input.
+            currentFrameNo = i; % Passes current frame number to subfunctions (required MW_stampit.m)
             [Lc,is_done,quit_now,dontsave,addtolist,crop_pop,newrect,savetemp,backwards,gotoframenum,DJK_settings] = ...
-                MW_manual_kant(p, LNsub, L_prec, g, rect,rect_prec,phsub, DJK_settings,p.assistedCorrection,i);
+                MW_manual_kant(p, LNsub, L_prec, g, rect,rect_prec,phsub, DJK_settings,p.assistedCorrection);
             
             if backwards==1 && (loopindex>1),
                 % JCR: Note this is kind of ugly- later loopindex is *incremented*

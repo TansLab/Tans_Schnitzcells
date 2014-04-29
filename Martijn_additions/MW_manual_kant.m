@@ -1,5 +1,5 @@
 function  [Lout,OKorNot,quit_now,dontsave,addtolist,crop_pop,newrect,savetemp,backwards,gotoframenum,DJK_settings] = ...
-    MW_manual_kant(p,Lin,L_prec,phin,rect,rect_prec,phsub,DJK_settings,assistedCorrection,framenr)
+    MW_manual_kant(p,Lin,L_prec,phin,rect,rect_prec,phsub,DJK_settings,assistedCorrection)
 
 % *******
 % TODO: include "updatedCellNumbers" in program (PN_imshowlabel) so that
@@ -12,7 +12,7 @@ function  [Lout,OKorNot,quit_now,dontsave,addtolist,crop_pop,newrect,savetemp,ba
 
 iptsetpref('imshowborder','tight');
 backwards = 0;
-global pos Limage ourfig res pp phfig whitelist mywatermark
+global pos Limage ourfig res pp phfig whitelist mywatermark currentFrameNo
 
 %set(phfig,'Visible', 'on') % ugly way to force phase image away from foreground during computation time NW2012-10-05
 
@@ -54,7 +54,8 @@ while ~done
         clf reset;
     
         if assistedCorrection && ~isempty(L_prec)
-            Lshow = PN_imshowlabel(Lout,rect,L_prec,rect_prec,framenr,'phaseImage',phsub);
+            % currentFrameNo needs to be set for PN_imshowlabel to work -MW
+            Lshow = PN_imshowlabel(Lout,rect,L_prec,rect_prec,'phaseImage',phsub);
             Lshow = imresize_old(Lshow,res);
                        
             imshow(Lshow);            

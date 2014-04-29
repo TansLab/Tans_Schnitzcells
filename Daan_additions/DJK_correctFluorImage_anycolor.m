@@ -87,6 +87,12 @@ if numExtraArgs > 0
 end
 %--------------------------------------------------------------------------
 
+% If user has set fluorcolor to value 'none', there are no fluor colors to
+% correct, and this function will not be executed. MW
+if (p.fluorcolor == 'none')
+    disp('WARNING, fluorcolor was ''none'', so I WILL NOT CORRECT FLUOR IMAGES.');
+    return;
+end
 
 %--------------------------------------------------------------------------
 % Override any schnitzcells parameters/defaults given optional fields/values

@@ -184,12 +184,12 @@ end
 %--------------------------------------------------------------------------
 for fr = cropRange, % go over each frame
     
-    DphaseRange = dir([p.imageDir, [p.movieName, '-p-*', str3(fr) ,'.tif'] ]);
+    DphaseRange = dir([p.imageDir, [p.movieName, '-p-*-', str3(fr) ,'.tif'] ]); 
     %DfluorYRange = dir([p.imageDir, [p.movieName, '-y-*', str3(fr) ,'.tif'] ]);
     %DfluorRRange = dir([p.imageDir, [p.movieName, '-r-*', str3(fr) ,'.tif'] ]);
-    Dfluor1Range = dir([p.imageDir, [p.movieName, sprintf('-%s-*',p.fluor1), str3(fr) ,'.tif'] ]);  % NW 11/12/02
-    Dfluor2Range = dir([p.imageDir, [p.movieName, sprintf('-%s-*',p.fluor2), str3(fr) ,'.tif'] ]);  % NW 11/12/02
-    Dfluor3Range = dir([p.imageDir, [p.movieName, sprintf('-%s-*',p.fluor3), str3(fr) ,'.tif'] ]);  % NW 11/12/02
+    Dfluor1Range = dir([p.imageDir, [p.movieName, sprintf('-%s-*-',p.fluor1), str3(fr) ,'.tif'] ]);  % NW 11/12/02
+    Dfluor2Range = dir([p.imageDir, [p.movieName, sprintf('-%s-*-',p.fluor2), str3(fr) ,'.tif'] ]);  % NW 11/12/02
+    Dfluor3Range = dir([p.imageDir, [p.movieName, sprintf('-%s-*-',p.fluor3), str3(fr) ,'.tif'] ]);  % NW 11/12/02
     
     if isempty(DphaseRange)
         disp(['Searching for img with : ''', p.imageDir, p.movieName, '-p-*', str3(fr) ,'.tif', '''']);

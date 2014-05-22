@@ -197,6 +197,7 @@ if (strcmp(p.method,'phasecontrast')==1)
 
     % if user didn't specify a range of frames to segment, figure it out
     % given the image names
+    % TODO: not robust to frame # > 999, could be fixed w. if-statement
     if ~isfield(p,'segRange')
         D = Dphase1;
         [s,I] = sort({D.name}');

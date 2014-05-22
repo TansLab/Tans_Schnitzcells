@@ -60,7 +60,7 @@ while ~done
                        
             imshow(Lshow);            
         else
-             DJK_imshowlabel(imresize_old(Lout,res),framenr,'phaseImage',imresize_old(phsub,res));
+             DJK_imshowlabel(imresize_old(Lout,res),'phaseImage',imresize_old(phsub,res));
         end
     
         pos11 = get(phfig,'position'); % current position
@@ -80,7 +80,7 @@ while ~done
         %get(ourfig,'Position')
         %stop3=toc
         if assistedCorrection && ~isempty(L_prec)
-            Lshow = PN_imshowlabel(Lout,rect,L_prec,rect_prec,framenr,'phaseImage',phsub); %slow step 0.45sec! (NW 2012-05-10)
+            Lshow = PN_imshowlabel(Lout,rect,L_prec,rect_prec,'phaseImage',phsub); %slow step 0.45sec! (NW 2012-05-10)
             %stop4a=toc %PN_imshow.. is slow step (0.45 sec)
             Lshow = imresize_old(Lshow,res);
             %stop5a=toc
@@ -95,9 +95,9 @@ while ~done
             clf reset; %NW2012-05-10
              % MW - REMOVE THIS WATERMARK CODE
              % Decide whether to use watermark (do if frame approved)
-             % watermarkyesno=inlist(whitelist,framenr);
+             % watermarkyesno=inlist(whitelist,currentFrameNo);
              % Show image with cells and color overlay
-             DJK_imshowlabel(imresize_old(Lout,res),framenr,'phaseImage',imresize_old(phsub,res)); %slow step 0.2sec! (NW 2012-05-10)
+             DJK_imshowlabel(imresize_old(Lout,res),'phaseImage',imresize_old(phsub,res)); %slow step 0.2sec! (NW 2012-05-10)
              set(ourfig, 'position', pos11); % DJK 090117 % a little awkward to redo, but should only affect first image
             %stop4b=toc
         end

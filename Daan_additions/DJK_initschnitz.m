@@ -143,7 +143,6 @@ pOrder.fluor3=0;
 %-------------------------------------------------------------------------------
 % Parse the input arguments, input error checking
 %-------------------------------------------------------------------------------
-
 numRequiredArgs = 3;
 if (nargin < 3) | ...
    (~isstr(movieName) | ~isstr(movieDate) | ~isstr(movieKind)) | ...

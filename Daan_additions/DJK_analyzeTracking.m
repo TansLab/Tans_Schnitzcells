@@ -307,9 +307,14 @@ problemCells = unique(problemCells, 'rows');
 %--------------------------------------------------------------------------
 % get all framenumbers to write in which tracking step (e.g. 1->3 or
 % 23->24) the problem occured
-framesunique=unique([schnitzcells.frames])-1;  %NW2013-12. Miraculeously, a shift of '-1' has to be introduced
+framesunique=unique([schnitzcells.frames]);
+% The -1 below results in taking next frame and current frame as inspected
+% frames, I think I solved this. (Variables are also more clearly named
+% now.) - MW 2014/6/3
+%framesunique=unique([schnitzcells.frames])-1;  %NW2013-12. Miraculeously, a shift of '-1' has to be introduced
+                                               % TODO!
 
-% Display nr of cells in lineage file
+% Display nr of cells in lineage file______________________________________
 dispAndWrite(fid, ['-------------------------------------------------']);
 dispAndWrite(fid, ['Results:']);
 dispAndWrite(fid, ['--- ' str3(length(schnitzcells)) ' cells in tracking file']);
@@ -317,7 +322,7 @@ dispAndWrite(fid, ['  | ']);
 dispAndWrite(fid, ['  |--- ' str3(nrCellsInTracking) ' of these are in manualRange']);
 dispAndWrite(fid, ['     | ']);
 
-% Display cells that are in segmentation but not in tree
+% Display cells that are in segmentation but not in tree___________________
 dispAndWrite(fid, ['     |--- ' str3(sum(segAndTrackDoNotMatch)) ' frames lack cells in tracking, which are there in segmentation']);
 for frameNum = p.manualRange
   if segAndTrackDoNotMatch(frameNum)
@@ -330,7 +335,7 @@ for frameNum = p.manualRange
   end
 end
 
-% Display orphans (first frame always has orphans)
+% Display orphans (first frame always has orphans)_________________________
 dispAndWrite(fid, ['     |  ']);
 dispAndWrite(fid, ['     |--- ' str3(nrOrphansInManualRange) ' of cells are orphans']);
 for cell = 1:length(schnitzcells)
@@ -339,7 +344,7 @@ for cell = 1:length(schnitzcells)
   end
 end
 
-% Display barren cells (cell lineage ends)
+% Display barren cells (cell lineage ends)_________________________________
 dispAndWrite(fid, ['     |  ']);
 % dispAndWrite(fid, ['     |--- ' str3(nrBarrenInManualRange) ' of barren cells in manualRange']);
 dispAndWrite(fid, ['     |--- ' str3(length(framesWithBarrenCells)) ' frames have barren cells']);
@@ -357,63 +362,89 @@ if ~isempty(framesWithBarrenCells)
     end
 end
 
-% Display moving cells (possibly wrong tracking)
+% Display moving cells (possibly wrong tracking)___________________________
 dispAndWrite(fid, ['     |  ']);
 dispAndWrite(fid, ['     |--- ' str3(length(framesWithCellsMoving)) ' frames have cells moving > ' num2str(p.pixelsMoveDef) ' pixels']);
+
+% Only loop when frames w. suspicious cells were detected
 if ~isempty(framesWithCellsMoving)
+    
+    % Loop over frames w. cells that seem to be moving (suspicious)    
     for fr = framesWithCellsMoving
-      % get previous frame nr
-      idxmyfr=find(framesunique==fr);
-      if idxmyfr>1 % get previous frame
-          idxmyfr=idxmyfr-1;
-      end
-      frprevious=framesunique(idxmyfr);
+        
+      % Get the index that corresponds to the schnitz with the frame of
+      % interest, and then also find the next schnitz 
+      % edit MW 2014/6/3: cleaner code. renaming.      
+      next_fr_idx =  find(schnitzcells(cell).frames==(fr+1)); % take +1 frame as reference
+      current_fr_idx = next_fr_idx - 1;      
+      % TODO: not entirely clear to me why we want next frame as a
+      % reference, and not like this:
+      % current_fr_idx = find(schnitzcells(cell).frames==(fr));
+      % next_fr_idx = current_fr_idx + 1;      
+      
       % output
-      dispAndWrite(fid, ['     |  |--- in frame ' str3(frprevious) ' -> ' str3(fr)]); %NW2013-12 change display (fr)->(next fr)
+      dispAndWrite(fid, ['     |  |--- in frame ' str3(current_fr_idx) ' -> ' str3(next_fr_idx)]); %NW2013-12 change display (fr)->(next fr)
       for cell = 1:length(schnitzcells)
-        if schnitzcells(cell).inTracking & intersect(fr, schnitzcells(cell).moving)
-    %       out = [out str3(cell) ' '];
-    % MAYBE SOME CORRECTION NEEDED FOR FR_IDX -> IF FRAMES ARE SKIPPED %
-    % NW2014-01
-          fr_idx = find(schnitzcells(cell).frames==(fr+1));
-          cenx = schnitzcells(cell).cenx_cent(fr_idx-1);
-          ceny = schnitzcells(cell).ceny_cent(fr_idx-1);
-          cenx_new = schnitzcells(cell).cenx_cent(fr_idx);
-          ceny_new = schnitzcells(cell).ceny_cent(fr_idx);
+        if schnitzcells(cell).inTracking & intersect(fr, schnitzcells(cell).moving)                                   
+          
+          % get x,y locations of centers of schnitzes
+          cenx = schnitzcells(cell).cenx_cent(current_fr_idx); % MW 2014/6/3 renaming
+          ceny = schnitzcells(cell).ceny_cent(current_fr_idx);
+          cenx_new = schnitzcells(cell).cenx_cent(next_fr_idx);
+          ceny_new = schnitzcells(cell).ceny_cent(next_fr_idx);
+          
+          % Pythagoras
           distanceMoved = sqrt( (cenx_new-cenx)^2 + (ceny_new-ceny)^2 );
           dispAndWrite(fid, ['     |  |  |--- schnitz ' str3(cell) ' : ' num2str( round(distanceMoved) ) ' pixels']);
         end
       end
-    %   out = [out 'are moving'];
-    %   dispAndWrite(fid, out);
+
+      % MW 2014/6/3
+      % missing frames might introduce extra movement, could tell user that
+      if (schnitzcells(cell).frames(next_fr_idx)-schnitzcells(cell).frames(current_fr_idx) ~= 1)
+          dispAndWrite(fid, ['     |  |--- (but missing frame detected, this might be the cause.)' ]);    
+      end
+      
       dispAndWrite(fid, ['     |  |' ]);
     end
 end
 
-% Display weird growing cells (possibly wrong tracking / segmentation)
+% Display weird growing cells (possibly wrong tracking / segmentation)_____
 dispAndWrite(fid, ['     |  ']);
 dispAndWrite(fid, ['     |--- ' str3(length(framesWithCellsGrowingWeird)) ' frames have cells growing < ' num2str(p.pixelsLenDef(1)) ' or > ' num2str(p.pixelsLenDef(2)) ' pixels']);
 if ~isempty(framesWithCellsGrowingWeird)
     for fr = framesWithCellsGrowingWeird
-      % get previous frame nr
-      idxmyfr=find(framesunique==fr);
-      if idxmyfr>1 % get previous frame
-          idxmyfr=idxmyfr-1;
-      end
-      frprevious=framesunique(idxmyfr);
+        
+      % Get the index that corresponds to the schnitz with the frame of
+      % interest, and then also find the next schnitz 
+      % edit MW 2014/6/3: cleaner code. renaming.      
+      next_fr_idx =  find(schnitzcells(cell).frames==(fr+1)); % take +1 frame as reference
+      current_fr_idx = next_fr_idx - 1;      
+      % TODO: not entirely clear to me why we want next frame as a
+      % reference, and not like this:
+      % current_fr_idx = find(schnitzcells(cell).frames==(fr));
+      % next_fr_idx = current_fr_idx + 1; 
+      
       % output
-      dispAndWrite(fid, ['     |  |--- in frame ' str3(frprevious) ' -> ' str3(fr)]);
+      dispAndWrite(fid, ['     |  |--- in frame ' str3(current_fr_idx) ' -> ' str3(next_fr_idx)]);
       for cell = 1:length(schnitzcells)
-          % MAYBE SOME CORRECTION NEEDED FOR FR_IDX -> IF FRAMES ARE SKIPPED %
-        % NW2014-01
 
-        idx = [find(schnitzcells(cell).growingTooLittle==(fr))  find(schnitzcells(cell).growingTooMuch==(fr))];
-        if schnitzcells(cell).inTracking & idx
-          fr_idx = find(schnitzcells(cell).frames==(fr+1));
-          lengthIncrease = schnitzcells(cell).len(fr_idx) - schnitzcells(cell).len(fr_idx-1);
-          dispAndWrite(fid, ['     |  |  |--- schnitz ' str3(cell) ' : ' num2str( round(lengthIncrease) ) ' pixels']);
-        end
+          % get indices schnitzes that grow too fast/too little
+          idx = [find(schnitzcells(cell).growingTooLittle==(fr))  find(schnitzcells(cell).growingTooMuch==(fr))];
+        
+          if schnitzcells(cell).inTracking & idx % MW TODO 2014/6, probably this should be & ~isempty(idx)??
+            lengthIncrease = schnitzcells(cell).len(next_fr_idx) - schnitzcells(cell).len(current_fr_idx);
+            dispAndWrite(fid, ['     |  |  |--- schnitz ' str3(cell) ' : ' num2str( round(lengthIncrease) ) ' pixels']);
+          end
+        
       end
+      
+      % MW 2014/6/3
+      % missing frames might introduce extra movement, could tell user that
+      if (schnitzcells(cell).frames(next_fr_idx)-schnitzcells(cell).frames(current_fr_idx) ~= 1)
+          dispAndWrite(fid, ['     |  |--- (but missing frame detected, this might be the cause.)' ]);    
+      end
+      
       dispAndWrite(fid, ['     |  |' ]);
     end
 end
@@ -421,24 +452,38 @@ end
 % Display moving whose length change after division (possibly wrong tracking)
 dispAndWrite(fid, ['     |  ']);
 dispAndWrite(fid, ['     |--- ' str3(length(framesWithCellsChangingAfterDivision)) ' frames have cells with length change <> 20 pixels after division']);
+% loop over frames when there are frames that contain suspicious cells
 if ~isempty(framesWithCellsChangingAfterDivision)
     for fr = framesWithCellsChangingAfterDivision
-      % get next frame nr
-      idxmyfr=find(framesunique==fr);
-      if idxmyfr<length(framesunique) % get next frame
-          idxmyfr=idxmyfr+1;
-      end
-      frnext=framesunique(idxmyfr);
+      
+      % get next frame nr and current frame nr (edit MW 2014/6/3)
+      next_fr_idx = find(framesunique==fr+1);
+      current_fr_idx = next_fr_idx-1;
+     
       % output
-      dispAndWrite(fid, ['     |  |--- in frame ' str3(fr) ' -> ' str3(frnext)]); 
+      dispAndWrite(fid, ['     |  |--- in frame ' str3(current_fr_idx) ' -> ' str3(next_fr_idx)]); 
       for cell = 1:length(schnitzcells)
+          
+        % determine whether this schnitz is suspicious
         if schnitzcells(cell).inTracking & schnitzcells(cell).offspringToBig & fr==schnitzcells(cell).frames(end)-1
+
+          % Obtain children
           D = schnitzcells(cell).D;
           E = schnitzcells(cell).E;
+
+          % Calculate length increase
           lengthIncrease = schnitzcells(D).len(1) +  schnitzcells(E).len(1) - schnitzcells(cell).len(end);
           dispAndWrite(fid, ['        |  |--- parent schnitz ' str3(cell) ' : ' num2str( round(lengthIncrease) ) ' pixels']);
         end
+        
       end
+      
+      % MW 2014/6/3
+      % missing frames might introduce extra movement, could tell user that
+      if (schnitzcells(cell).frames(next_fr_idx)-schnitzcells(cell).frames(current_fr_idx) ~= 1)
+          dispAndWrite(fid, ['     |  |--- (but missing frame detected, this might be the cause.)' ]);    
+      end
+      
       dispAndWrite(fid, ['        |' ]);
     end
 end

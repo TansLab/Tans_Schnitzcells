@@ -144,9 +144,11 @@ for schnitzNr = length(s):-1:1
       done = 0;
 
       cur_schnitzNr = schnitzNr;
+      %empty cell:
       data_temp = cell(1+length(p.dataFields),1);
-
-      % now get data for this branch from end to beginning
+     
+      % now get data for this (starts from schnitzNr) branch from end to beginning
+               
       while ~done
         s(cur_schnitzNr).schnitzUsed = 1;
         temp = [];
@@ -157,8 +159,9 @@ for schnitzNr = length(s):-1:1
           temp = getfield(s(cur_schnitzNr),field);
           temp = temp(end:-1:1);
           data_temp{i+1,:} = cat(2,data_temp{i+1,:}, temp);
-        end
-
+        end        
+        
+      
         % add schnitzNrs
         data_temp{1,:} = cat(2, data_temp{1,:}, cur_schnitzNr*ones(1,length(temp)));
 
@@ -175,8 +178,15 @@ for schnitzNr = length(s):-1:1
 
         % in case of singleSchnitz also done after 1 loop
         if p.singleSchnitz, done = 1; end
+        
+        
+        %end while:
       end
 
+      
+      
+      
+      
       % invert data_temp 
       for i = 1:length(data_temp)
         data_invers = data_temp{i,:};

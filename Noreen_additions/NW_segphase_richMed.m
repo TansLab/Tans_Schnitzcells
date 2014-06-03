@@ -117,20 +117,131 @@ continueToCut = true;
 icut=bwmorph(C_cellMaskSmall,'thin',inf);
 
 brchptsicut = PN_FindBranchPoints(icut);
-icut(logical(brchptsicut)) = 0;
+
+%icut(logical(brchptsicut)) = 0; % removed NW2014-03 rich medium
+
 %some cleaning
 icut = bwmorph(icut,'spur',3);
 icut = bwareaopen(icut,10,8);
 
 while continueToCut
     [cellsToRemove cutPoints] = NW_CutLongCells_richMed(icut,C_cellMaskSmall,q.Results.neckDepth);
+
+    % for debugging:
+    %figure
+    %imagesc(C_cellMaskSmall+2*imdilate(cutPoints,strel('disk',5)))
+    
     if max(max(cutPoints))==0
         continueToCut = false;
     else
-        cutPoints = bwmorph(cutPoints,'dilate',2);
-        C_cellMaskSmall(cutPoints)=0; %it could happen that not enough pixels are removed! but larger dilation -> stranger cell-pole shape
-    %    C_seeds2(cutPoints) = false; %cuts the long cells on the seeds image
-        icut(cutPoints) = false;
+        % ********************************
+        %create a divsion line -> similar to seg correction (updated NW
+        %2014-03)
+        
+        %get coordinates of cutPoints (so far stored as points in a matrix)
+        [idxrow, idxcol]=find(cutPoints>0);
+        
+        %label areas preliminarily to find which cell is to be cut
+        C_prelimLabel=bwlabel(C_cellMaskSmall);
+        
+        for run=1:length(idxrow)          
+
+            % for simplicity: convert notation to same as in PN_manual_kant
+            cutx = idxrow(run); % CAREFUL! x stand here for rows!!!!
+            cuty = idxcol(run);
+
+            % extract cell that will be cut
+            chosencolor = C_prelimLabel(cutx,cuty);
+            cell = zeros(size(C_prelimLabel));
+            cell(C_prelimLabel==C_prelimLabel(cutx,cuty)) = 1;%Lout(Lout==chosencolor);
+            [fx,fy] = find(cell);
+            xmin = max(min(fx)-5,1);
+            xmax = min(max(fx)+5,size(cell,1));
+            ymin = max(min(fy)-5,1);
+            ymax = min(max(fy)+5,size(cell,2));
+            subcell = cell(xmin:xmax, ymin:ymax); % subcell is only cell that will be cut
+
+            % perim is perimeter of dilated cell
+            perim = bwperim(imdilate(subcell,strel('disk',1)));
+            % starting from cutPoitns-point, will increase a box until 2 sides are
+            % found: this will be perims
+            perims = zeros(size(perim));
+            radp = 1;
+            while max2(perims)<2 & radp<41
+                 pxmin = max(cutx-xmin+1-radp,1);
+                 pxmax = min(cutx-xmin+1+radp,size(perims,1));
+                 pymin = max(cuty-ymin+1-radp,1);
+                 pymax = min(cuty-ymin+1+radp,size(perims,2));
+                 perims(pxmin:pxmax,pymin:pymax) = bwlabel(perim(pxmin:pxmax,pymin:pymax));
+                 radp = radp+1;
+            end
+            % if indeed 2 sides are found, will cut
+            if max2(perims)>1
+                % kim is image with only clicked point drawn
+                kim=zeros(size(subcell));
+                kim(cutx-xmin+1,cuty-ymin+1)=1;
+
+                % look for start of drawline
+                kim1=kim;
+                % increase size of kim untill it hits perims
+                while ~any(any(kim1 & perims))
+                    kim1=imdilate(kim1,strel('disk',1));
+                end
+                % randomly select first point as start of drawline
+                [cut1x,cut1y]=find(kim1 & perims);
+
+                % now go for end of drawline, first remove points of side of start from perims
+                 color1=perims(cut1x(1),cut1y(1));
+                 perims(perims==color1)=0;
+                 kim2=kim;
+                 while ~any(any(kim2 & perims))
+                    kim2=imdilate(kim2,strel('disk',1));
+                 end
+                 % randomly select first point as end of drawline
+                 [cut2x,cut2y]=find(kim2 & perims);
+                 color2=perims(cut2x(1),cut2y(1));
+
+                 % cut cell by drawing a thick(!) line (different to seg
+                 % correction)
+                 linethick=zeros(size(subcell));
+                 linethick=drawline(linethick,[cut1x(1) cut1y(1)],[cut2x(1) cut2y(1)],1);
+                 % dilate (thicken) line vertical to its major axis (the
+                 % intuitive "thickening")
+                 lineangle=regionprops(linethick,'Orientation'); % major axis orientation
+                 lineangle=lineangle.Orientation;
+                 SE=strel('line',4,lineangle+90); %structuring element is a line vertical to the division line
+                 % a bit of an awkward way to thicken the strel line by 1
+                 % (otherwise artefacts may appear since the thickened line
+                 % can have holes)
+                 mystrel=getnhood(SE);
+                 mystrel=imdilate(mystrel,strel('disk',1));
+                 SE=strel('arbitrary',mystrel);
+                 % thicken division line
+                 linethick=imdilate(linethick,SE);
+                 subcell(linethick==1)=0;
+                 % cutcell is original cell, but now with seperate cells different colors
+                 cutcell = cell;
+                 cutcell(xmin:xmax,ymin:ymax) = bwlabel(subcell,4); % 4-connected
+
+                 % remove original cell in Lout
+                 C_prelimLabel(C_prelimLabel==C_prelimLabel(cutx,cuty))=0;
+
+                 % first cell gets original color
+                 C_prelimLabel(cutcell==1) = chosencolor;
+
+                 % new cells get new color
+                 for k = 2:max2(cutcell),
+                     C_prelimLabel(cutcell==k) = max2(C_prelimLabel)+k-1;
+                 end
+            end
+
+        % **********************************************
+        
+        end
+        C_cellMaskSmall=C_prelimLabel>0;
+        cutPointsDilated = bwmorph(cutPoints,'dilate',2);   %  is also original way how to cut cells
+        icut(cutPointsDilated) = false;
+
         icut= icut & ~cellsToRemove;
     end
 end

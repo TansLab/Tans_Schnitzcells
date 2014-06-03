@@ -835,7 +835,7 @@ function regNorm = normalize( reg, ...            % gfp image in camera units
                                binning, ...        % camera bin size (2)
                                micronsPerPixel, ... % micron per pixel (0.04065)
                                autoFluor2)           % autofluorescence of cells
-if (expt=='emptr')
+if (expt=='empty')%DE, 11/Nov/2013: was 'emptr', changed to 'empty'.
   disp('Warning! no exposure time specified for fluor image. Taking 1000 arbitrarily.');
   expt = 1000; 
 end
@@ -852,7 +852,7 @@ function regNorm = normalizeElowitz( reg, ...     % gfp image in camera units
                                       binning, ... % camera bin size (2)
                                       autoFluor2)    % autofluorescence of cells
 regNorm=double(reg)-double(back);
-if (expt=='emptr')
+if (expt=='empty')%DE, 11/Nov/2013: was 'emptr', changed to 'empty'.
   disp('Warning! no exposure time specified for fluor image');
   expt = 1; 
 end

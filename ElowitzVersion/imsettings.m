@@ -54,6 +54,11 @@ if exist(pname)==2,
          
          datenumber = datenum(year,month,day,hour,minute,second);
          
+         %DE 2014-04-11: exposure time is read from descrip too:
+         exptimepos = findstr('Exposure: ',descrip) + length('Exposure: ');
+         exptime = sscanf(descrip(exptimepos:end),'%f');
+         exptimestr = num2str(exptime);
+         
          %     elseif isfield(iminfo,'FileModDate'),     %%%ADDED SJT
          %         timestr = iminfo.FileModDate(13:20);
          %         hour = str2num(timestr(1:2));

@@ -391,6 +391,7 @@ for i= p.segRange
         LNsub = [0];          %if no cells segmented, add this so that we have an image
     end
 
+        
     [TSTa,TSTb,TSTc,TSTd,timestamp] = imsettings([p.imageDir,Dframe(1).name],'p'); % extract timestamp of first phase image
     clear TST*
 

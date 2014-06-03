@@ -60,6 +60,9 @@ O_PhImageFilt = medfilt2(imageToSegment);
 A_maskImage = rangefilt(O_PhImageFilt,true(q.Results.rangeFiltSize));              %detect zones of sufficient intensity variations
 A_maskImage = im2bw(A_maskImage,graythresh(A_maskImage));                  %threshold to black and white
 A_maskImage = imclose(A_maskImage,strel('disk',q.Results.maskMargin));                     %enlarge mask         
+% ** NW: activate "imdilate" if cells at edge are not detected properly
+%A_maskImage = imdilate(A_maskImage,strel('disk',q.Results.maskMargin));                     
+% **
 labelMaskImage = logical(A_maskImage);                                     %only keep the biggest connected part of the mask
 propsMaskImage = regionprops(labelMaskImage,'Area','BoundingBox','Image');
 [~,idx] = max([propsMaskImage.Area]);

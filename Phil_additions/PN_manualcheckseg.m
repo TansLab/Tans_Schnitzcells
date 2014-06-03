@@ -105,6 +105,7 @@ disp('                    ''s'' to save work to memory without writing to the fi
 disp('                    ''w'' to write a temporary partial correction to the file.')
 disp('              press ''x'' to black out an area.')
 disp('              press ''t'' to mark terraced area.')
+disp('              press ''v'' to define region of interest and restrict to this selection.')
 disp('              press ''c'' to morphologically close each cell area (imclose)')
 disp('              press ''r'' to renumber the cell you are pointing to.')
 disp('              press ''p'' to show a square around the position, on phase image.')

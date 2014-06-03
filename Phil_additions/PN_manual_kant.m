@@ -43,6 +43,13 @@ updatedCellNumbers=[];
 % initialize image for undo-step ('u')
 Lout_undo=Lout;
 
+% initialize image for undo-step ('u')
+Lout_undo=Lout;
+
+% initialize list of badly segmented files
+list_mark =0;
+
+
 while ~done
     clear j*  %j1=0;j2=0;
     
@@ -149,8 +156,16 @@ while ~done
     
     set(ourfig,'WindowButtonMotionFcn','');
     %if ct cc=get(1,'currentcharacter');else cc=get(1,'selectiontype');end
-    if ct % STAR KEYBOARD CLICKS
+    
+    % ****************************************************
+    % *********** START KEYBOARD KLICKS ******************
+    % ****************************************************
+     
+    if ct 
+
         % cc=get(ourfig,'currentcharacter');
+           
+        % save, continue etc
         if cc==' '
             OKorNot=1;
             done=1;
@@ -221,6 +236,7 @@ while ~done
             figure(ourfig)
             done=0;
         elseif cc=='x'
+            Lout_undo=Lout;   %for undo step NW 2014-01
             subcolroi=imresize_old(~roipoly,1/res);
             if size(subcolroi,1)~=size(Lout,1) | size(subcolroi,2)~=size(Lout,2)
                 subcolroi2=zeros(size(Lout));
@@ -271,6 +287,30 @@ while ~done
             %               Lout=renumberimage(Lout);
             % get cellnumbers that were affected by blacking out
             affectedcells=unique(Lout.*(1-subcolroi));
+            affectedcells=affectedcells(affectedcells>0);
+            updatedCellNumbers=[updatedCellNumbers;affectedcells]; %blubb
+            %
+            done=0;
+            
+        elseif cc=='v' %NW2014-02 opposite of terace 't' -> restricts to region of interest
+            
+            subcolroi=imresize_old(~roipoly,1/res);
+            if size(subcolroi,1)~=size(Lout,1) | size(subcolroi,2)~=size(Lout,2)
+                subcolroi2=zeros(size(Lout));
+                subcolroi2(1:size(subcolroi,1),1:size(subcolroi,2))=subcolroi;
+                subcolroi=subcolroi2;
+            end
+            [xe,ye]=find(edge(subcolroi)==1);
+            Lout_undo=Lout;   %for undo step NW 2014-01
+            for qe=1:length(xe) % examine edge of roi
+                if Lout(xe(qe),ye(qe))~=0
+                    Lout(Lout==Lout(xe(qe),ye(qe)))=0;
+                end
+            end
+            Lout=(double(Lout).*double(~subcolroi)); %inverted to 't'. % examine area of roi
+            %               Lout=renumberimage(Lout);
+            % get cellnumbers that were affected by blacking out
+            affectedcells=unique(Lout.*subcolroi); %TOBE CHECKED! unique(Lout.*(1-subcolroi));
             affectedcells=affectedcells(affectedcells>0);
             updatedCellNumbers=[updatedCellNumbers;affectedcells]; %blubb
             %
@@ -539,9 +579,10 @@ while ~done
                     % updated cellnumbers NW2012-05-10
                     updatedCellNumbers=[updatedCellNumbers;j1;j2];
 
-            % extend = shift+left button (or both?) -> press '7'to remove
+            % remove cell = shift+left button (or both?) -> press '7'to remove
             % cell
             elseif (cc=='7' & Lout(round(pos(1,2)),round(pos(1,1))))
+                
                 Lout_undo=Lout;   %for undo step NW 2014-01
                 % erase cell
                 Lout(Lout==Lout(round(pos(1,2)),round(pos(1,1))))=0;
@@ -650,12 +691,18 @@ while ~done
             % ----------- end NW 2013-05 replace mouse button functions --------
             
         end
+    
+    % ****************************************************
+    % *********** START MOUSE KLICKS *********************
+    % ****************************************************    
         
-    else % START MOUSE CLICKS (before: everything: keyboard clicks)
+    else 
+
         cz=get(ourfig,'selectiontype');
         
         % normal = left mouse button
         if cz(1)=='n'
+            Lout_undo=Lout;   %for undo step NW 2014-01
             % join cells
             pos1=pos;
             j1=Lout(round(pos(1,2)),round(pos(1,1)));
@@ -687,8 +734,9 @@ while ~done
             % updated cellnumbers NW2012-05-10
             updatedCellNumbers=[updatedCellNumbers;j1;j2];
             
-            % extend = shift+left button (or both?)
+            % delete cell = shift+left button (or both?)
         elseif (cz(1)=='e' & Lout(round(pos(1,2)),round(pos(1,1))))
+            Lout_undo=Lout;   %for undo step NW 2014-01
             % erase cell
             Lout(Lout==Lout(round(pos(1,2)),round(pos(1,1))))=0;
             
@@ -699,7 +747,8 @@ while ~done
             updatedCellNumbers=[updatedCellNumbers;Lout(round(pos(1,2)),round(pos(1,1)))];
             
         elseif (cz(1)=='a' & Lout(round(pos(1,2)),round(pos(1,1))))
-            
+            Lout_undo=Lout;   %for undo step NW 2014-01
+                        
             % cutx & cuty are coordinate that is clicked
             cutx = round(pos(1,2));
             cuty = round(pos(1,1));

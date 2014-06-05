@@ -146,12 +146,21 @@ for cell = 1:length(schnitzcells)
   if useAllcells | schnitzcells(cell).useForPlot
     if length(schnitzcells(cell).(fieldX)) & length(schnitzcells(cell).(fieldY)) & (~useColor | length(schnitzcells(cell).(fieldColor)))
       if ~isnan(schnitzcells(cell).(fieldX)(1)) & ~isnan(schnitzcells(cell).(fieldY)(1)) % remove NaN values
-        count = count + 1;
-        plot_X(count) = schnitzcells(cell).(fieldX)(1);
-        plot_Y(count) = schnitzcells(cell).(fieldY)(1);
-        if useColor
-          plot_Z(count) = p.fieldColor_func(schnitzcells(cell).(fieldColor));
-        end 
+
+          % Add single values to variables to plot plot_X, plot_Y (plot_Z
+          % encodes color) -  idx_schnitzarray loops over 
+          % vectors that are contained in the Schnitz.
+          for idx_schnitzarray = 1:length(schnitzcells(cell).(fieldX)) % 2014/6/5 MW
+              
+                count = count + 1;
+                plot_X(count) = schnitzcells(cell).(fieldX)(idx_schnitzarray);
+                plot_Y(count) = schnitzcells(cell).(fieldY)(idx_schnitzarray);
+                if useColor
+                  plot_Z(count) = p.fieldColor_func(schnitzcells(cell).(fieldColor));
+                end 
+                
+          end
+          
       end
     end
   end

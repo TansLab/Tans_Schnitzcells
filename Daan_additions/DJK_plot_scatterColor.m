@@ -265,10 +265,16 @@ if p.plotRegression
   text(0.02,0.93,['Regression line         : y = ' DJK_setDecimalPlaces(stat_fitCoef1(1),3) ' * x + ' DJK_setDecimalPlaces(stat_fitCoef1(2),2)], 'sc','FontName','FixedWidth','FontWeight','bold','FontSize',11);
   text(0.02,0.91,['P=0.05 slope is between : ' DJK_setDecimalPlaces(stat_fitCoef1(1) - stat_plusmin,3) ' & ' DJK_setDecimalPlaces(stat_fitCoef1(1) + stat_plusmin,3)], 'sc','FontName','FixedWidth','FontWeight','bold','FontSize',11);
 
+  text(0.02,0.89,['(Assuming X contains no observational errors.)'],      'sc','FontName','FixedWidth','FontWeight','bold','FontSize',11); % added MW 2014/06/05
+  disp('WARNING: Least squares assumes X contains no observational errors (noise).'); % added MW 2014/06/05
+  disp('   Use total least squares (TLS) if X and Y both contain observational errors.'); % added MW 2014/06/05
+  disp('   (This functionality is not available in this code.)'); % added MW 2014/06/05
+  
   text(0.02,0.03,['var in Y caused by X    : ' DJK_setDecimalPlaces(stat_rxy_2,2)], 'sc','FontName','FixedWidth','FontWeight','bold','FontSize',11);
 
   text(0.80,0.05,['noise Y : ' DJK_setDecimalPlaces(stat_stdY/stat_meanY,2)], 'sc','FontName','FixedWidth','FontWeight','bold','FontSize',11);
   text(0.80,0.03,['noise X : ' DJK_setDecimalPlaces(stat_stdX/stat_meanX,2)], 'sc','FontName','FixedWidth','FontWeight','bold','FontSize',11);
+  
 end
 
 % label axes

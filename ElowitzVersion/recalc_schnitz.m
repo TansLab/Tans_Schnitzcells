@@ -44,11 +44,13 @@ for i=1:size(cellid,   2)
 for j=1:max(size(cellid{i}))    
     % JCR Modified
     % frames{i}(j)=i;
-    frames{i}(j)=trackRange(i)+1;  % JCR Hack- add 1 for schntizedit 
+    % frames{i}(j)=trackRange(i)+1;  % JCR Hack- add 1 for schntizedit  % MW 2014/06/11 removal JCR hack, aka removal N+1 bug
+    
+    frames{i}(j)=trackRange(i);  % MW 2014/06/11 removal JCR hack, aka removal N+1 bug
 end
 end
     
-schnitz=toschnitz(cellid,schnitz,'frames',frames);
+schnitz=toschnitz(cellid,schnitz,'frame_nrs',frames);
 
 for i=1:2: floor(length(varargin)/2)*2;
     schnitz=toschnitz(cellid,schnitz,varargin{i},varargin{i+1});

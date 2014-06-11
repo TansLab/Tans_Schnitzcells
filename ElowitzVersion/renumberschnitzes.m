@@ -6,11 +6,11 @@ N0 = length(s);
 keepit = zeros(N0,1);
 for i = 1:N0,
     keepit(i)=0;
-    if ~isempty(s(i).frames),
-        if length(s(i).frames)>0,
+    if ~isempty(s(i).frame_nrs), % MW removal N+1 bug, 2014/06/11
+        if length(s(i).frame_nrs)>0,
             keepit(i) = 1;
         end;
-        if length(s(i).frames)==1,
+        if length(s(i).frame_nrs)==1, % MW removal N+1 bug, 2014/06/11
             if (s(i).P<1),
                 if s(i).D<1
                     if s(i).E<1,
@@ -67,7 +67,7 @@ end;
 
 % finally, find everyone who lacks cenx/ceny definitions and fill those in:
 for i = 1:length(snew),
-    if length(s(i).frames)>0,
+    if length(s(i).frame_nrs)>0, % MW removal N+1 bug, 2014/06/11
         if length(s(i).cenx)==0,
             disp(['adding cenx/ceny info to: ',num2str(i)]);
             snew(i) = addcenxceny(p,snew(i));
@@ -81,8 +81,8 @@ end;
 function newschnitz = addcenxceny(p,schnitz);
 
 newschnitz = schnitz;
-for i = 1:length(newschnitz.frames),
-    [Lc] = loadseg(p,newschnitz.frames(i),'Lc');
+for i = 1:length(newschnitz.frame_nrs), 
+    [Lc] = loadseg(p,newschnitz.frame_nrs(i),'Lc'); % MW removal N+1 bug, 2014/06/11
     [x,y] = find(Lc==schnitz.cellno(i));
     newschnitz.cenx(i) = mean(y);
     newschnitz.ceny(i) = mean(x);
@@ -92,7 +92,7 @@ end;
 
 
 function [varargout] = loadseg(p,fr,varargin);
-filename = [p.segmentationDir,p.movieName,'seg',str3(fr-1),'.mat'];
+filename = [p.segmentationDir,p.movieName,'seg',str3(fr),'.mat']; % MW removal N+1 bug, 2014/06/11
 if exist(filename),
     for i = 1:length(varargin),
         if ~isempty(who('-file',filename,char(varargin{i}))),

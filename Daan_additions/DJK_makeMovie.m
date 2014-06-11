@@ -382,15 +382,15 @@ for fr = p.manualRange
   %------------------------------------------------------------------------
   for uind = 1:length(u),
     % cellno uind in framenum fr is 'just born', 'growing' or 'dividing'
-    temp_schnitz = slookup(fr+1,u(uind));
+    temp_schnitz = slookup(fr,u(uind)); % MW 2014/06/11 removal N+1 bug
     if temp_schnitz==0
       disp(['In frame ' str3(fr) ' cellno ' str3(uind) ' is not linked to schnitz']);
       continue;
     end
     temp_schnitz_P = lineage.schnitzcells(temp_schnitz).P;
-    temp_schnitz_frames = lineage.schnitzcells(temp_schnitz).frames;
+    temp_schnitz_frames = lineage.schnitzcells(temp_schnitz).frame_nrs;
     temp_schnitz_cellno = lineage.schnitzcells(temp_schnitz).cellno;
-    frIndex = find(temp_schnitz_frames==(fr+1));
+    frIndex = find(temp_schnitz_frames==(fr)); % MW 2014/06/11 removal N+1 bug
 
     % fl are the locations in image where cellno uind is located
     fl = find(subim==u(uind));
@@ -435,12 +435,12 @@ for fr = p.manualRange
       % mode=tree, color cells according to schnitzNr
       elseif (case_tree)
         % color according to schnitzNr+1 (+1 cause else schnitz 1 is black)
-        subim_color(fl) = slookup(fr+1,u(uind))+1;
+        subim_color(fl) = slookup(fr,u(uind))+1; % MW 2014/06/11 removal N+1 bug
         
       % mode=division, color cells according to schnitzNr, but only at division
       elseif (case_division)
         % just born cells, give color of parent schnitz
-        if (temp_schnitz_frames(1)==fr+1 & fr~=1) 
+        if (temp_schnitz_frames(1)==fr & fr~=1) % MW 2014/06/11 removal N+1 bug
           % in case no parent, give no color
           if temp_schnitz_P>0
             subim_color(fl) = temp_schnitz_P+1;
@@ -449,7 +449,7 @@ for fr = p.manualRange
           end
 
         % cell about to divide, give own color
-        elseif (temp_schnitz_frames(end)==fr+1 & fr~=p.manualRange(end)) 
+        elseif (temp_schnitz_frames(end)==fr & fr~=p.manualRange(end)) % MW 2014/06/11 removal N+1 bug
           subim_color(fl) = temp_schnitz+1;
         else
           subim_color(fl) = color_cell; % light grey
@@ -568,7 +568,7 @@ for fr = p.manualRange
     % WRITE NUMBERS (SCHNITZ NUMBERS OR CELL NUMBERS)
     %----------------------------------------------------------------------
     if (case_writeNum)
-      ref_fr = find(temp_schnitz_frames==fr+1);
+      ref_fr = find(temp_schnitz_frames==fr); % MW 2014/06/11 removal N+1 bug
 
       % if we are in problem mode check whether correct frame/cell, else continue 
       if p.problemCells
@@ -590,7 +590,7 @@ for fr = p.manualRange
       nr_y = lineage.schnitzcells(temp_schnitz).ceny(ref_fr);
 
       % write number
-      if (temp_schnitz_frames(1)==fr+1 | case_writeSchnitzAll | ~case_writeSchnitz)
+      if (temp_schnitz_frames(1)==fr | case_writeSchnitzAll | ~case_writeSchnitz) % MW 2014/06/11 removal N+1 bug
         subim_text = DJK_imagePlace(subim_text, nr_im, nr_x, nr_y);
       end
     end
@@ -660,16 +660,22 @@ end
 
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-% Makesloopup makes array: schnitz = slookup( frame+1, cellno)
+% Makesloopup makes array: schnitz = slookup( frame, cellno) % MW 2014/06/11 removal N+1 bug
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-function slookup = makeslookup(s);
-for i = 1:length(s),
-  for j = 1:length(s(i).frames),
-    if ~isempty(s(i).frames),
-      if s(i).frames
-        slookup(s(i).frames(j),s(i).cellno(j))=i;
+function slookup = makeslookup(myschnitzcells);
+% Creates lookup table that associates frame and cell number to schnitznr
+
+for i = 1:length(myschnitzcells),
+  for j = 1:length(myschnitzcells(i).frame_nrs),
+      
+    if ~isempty(myschnitzcells(i).frame_nrs),
+      if myschnitzcells(i).frame_nrs
+          
+        slookup(myschnitzcells(i).frame_nrs(j),myschnitzcells(i).cellno(j))=i;
+        
       end;
     end;
+    
   end;
 end;
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%

@@ -150,7 +150,7 @@ disp(['Load from ''' p.schnitzName ''' completed...']);
 % is saved: lincellnum {a} (b) returns schnitznum of cellno b in frame a
 
 % Get trackRange (frames that will be extracted). Note: image 001 is frame 2 -> -1
-trackRange = sort(unique([schnitzcells.frames])) - 1;
+trackRange = sort(unique([schnitzcells.frame_nrs])); % MW 2014/06/11 removal N+1 bug
 
 % initialize lincellnum to have zero'd arrays for each frame 
 lincellnum = {};
@@ -165,8 +165,8 @@ end
 % Now, step through each schnitz, store schnitz number in lincellnum
 for schnitznum = 1:length(schnitzcells)
   s = schnitzcells(schnitznum);
-  for age = 1:length(s.frames)
-    framenum = s.frames(age) - 1; % hack - schnitzedit is 1-based, correct here
+  for age = 1:length(s.frame_nrs)
+    framenum = s.frame_nrs(age); % MW 2014/06/11 removal N+1 bug
 
     % look up that frame number's index within trackRange
     lincellnumIndex = find(trackRange==framenum);
@@ -328,7 +328,7 @@ else
 
       for i = nonZeroSchnitzes
         % figure out index within this schnitz' age-based arrays
-        age     = find((schnitzcells(i).frames-1) == fr);
+        age     = find((schnitzcells(i).frame_nrs) == fr); % MW 2014/06/11 removal N+1 bug
         cellno  = schnitzcells(i).cellno(age);
 
         if isempty(age)

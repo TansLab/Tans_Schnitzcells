@@ -107,7 +107,7 @@ load(p.lineageName);
 schnitzcells = rmfield(schnitzcells, ['ang      '; 'len      ']); % DJK 090619 'cenx     '; 'ceny     '; 
 
 % Get trackRange (frames that will be extracted). Note: image 001 is frame 2 -> -1
-trackRange = sort(unique([schnitzcells.frames])) - 1;
+trackRange = sort(unique([schnitzcells.frame_nrs])); % MW 2014/06/11 removal N+1 bug
 
 % initialize lincellnum to have zero'd arrays for each frame 
 lincellnum = {};
@@ -122,8 +122,8 @@ end
 % Now, step through each schnitz, store schnitz number in lincellnum
 for schnitznum = 1:length(schnitzcells)
   s = schnitzcells(schnitznum);
-  for age = 1:length(s.frames)
-    framenum = s.frames(age) - 1; % hack - schnitzedit is 1-based, correct here
+  for age = 1:length(s.frame_nrs) % MW 2014/06/11 removal N+1 bug
+    framenum = s.frame_nrs(age); % MW 2014/06/11 removal N+1 bug
 
     % look up that frame number's index within trackRange
     lincellnumIndex = find(trackRange==framenum);
@@ -197,7 +197,7 @@ for i = 1:length(trackRange)
   nonZeroSchnitzes = schnitzesForFrame(schnitzesForFrame~=0); % with correction you sometimes end up with unexisting schnitzes (0)
   for s = nonZeroSchnitzes
     % figure out index within this schnitz' age-based arrays
-    age = find((schnitzcells(s).frames-1) == currFrameNum);
+    age = find((schnitzcells(s).frame_nrs) == currFrameNum); % MW 2014/06/11 removal N+1 bug
     if isempty(age)
       error(['lincellnum says schnitz num ' s 'exists in frame ' currFrameNum ', but that frame can''t be found in the schnitz' frames array']);
     end
@@ -291,7 +291,7 @@ for i = 1:length(trackRange)
          eval(['schnitzcells(s).' fluor1_frames_all '(age)   = NaN;']);
          eval(['existfluor=exist(''' reg1 ''');']) % check if fluorescence picture
          if existfluor==1
-             eval(['schnitzcells(s).' fluor1_frames_all '(age) = schnitzcells(s).frames(age);']);
+             eval(['schnitzcells(s).' fluor1_frames_all '(age) = schnitzcells(s).frame_nrs(age);']); % MW 2014/06/11 removal N+1 bug
              fluor1counter=fluor1counter+1;
          end
     end 
@@ -300,7 +300,7 @@ for i = 1:length(trackRange)
          eval(['schnitzcells(s).' fluor2_frames_all '(age)   = NaN;']);
          eval(['existfluor=exist(''' reg2 ''');']) % check if fluorescence picture
          if existfluor==1
-             eval(['schnitzcells(s).' fluor2_frames_all '(age) = schnitzcells(s).frames(age);']);
+             eval(['schnitzcells(s).' fluor2_frames_all '(age) = schnitzcells(s).frame_nrs(age);']); % MW 2014/06/11 removal N+1 bug
              fluor2counter=fluor2counter+1;
          end
     end 
@@ -309,7 +309,7 @@ for i = 1:length(trackRange)
          eval(['schnitzcells(s).' fluor3_frames_all '(age)   = NaN;']);
          eval(['existfluor=exist(''' reg3 ''');']) % check if fluorescence picture
          if existfluor==1
-             eval(['schnitzcells(s).' fluor3_frames_all '(age) = schnitzcells(s).frames(age);']);
+             eval(['schnitzcells(s).' fluor3_frames_all '(age) = schnitzcells(s).frame_nrs(age);']); % MW 2014/06/11 removal N+1 bug
              fluor3counter=fluor3counter+1;
          end
     end 
@@ -399,7 +399,7 @@ for i = 1:length(schnitzcells)
   schnitzcells(i).gen = gen;
   
   % Add phase
-  schnitzcells(i).phase = NaN * schnitzcells(i).frames;
+  schnitzcells(i).phase = NaN * schnitzcells(i).frame_nrs;
   if (schnitzcells(i).completeCycle)
     schnitzcells(i).phase = (schnitzcells(i).time - schnitzcells(i).birthTime) / schnitzcells(i).interDivTime;
   end

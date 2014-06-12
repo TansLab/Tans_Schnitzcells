@@ -23,13 +23,20 @@
 % OPTIONAL ARGUMENTS:
 % 'schnitzName'       
 % 'micronsPerPixel'   default = 0.04065 (1.5x magnification of Killer Mike)
-% 'onScreen' = 0      automatically save and close images
+% 'onScreen' = 0      automatically save and close images (default only
+%                     schnitz 1, see p.schnitzNum parameter below)
 %              1      will ask to save and close images
 %              2      will not show or save images (default)
 % 'schnitzNum'        Array with schnitz numbers whose data will be plotted
 %                     default: 1st schnitz only
 % 'DJK_saveDir'       directory where images will be saved. 
 %                     default: [p.analysisDir 'schnitzLength\']
+%
+% p.schnitzNum        If onScreen = 0 or 1, one can use p.schnitzNum=[a..b] 
+%                     to give range of which Schnitzes to save as figure. 
+%                     Keyword p.schnitzNum='all' will output all of them 
+%                     (if onscreen = 0 or 1).
+%
 %
 
 function [p,schnitzcells] = DJK_addToSchnitzes_length(p,varargin) 
@@ -122,8 +129,8 @@ end
 % starting with image 001 (frame 2), the link between schnitznum and cellno
 % is saved: lincellnum {a} (b) returns schnitznum of cellno b in frame a
 
-% Get trackRange (frames that will be extracted). Note: image 001 is frame 2 -> -1
-trackRange = sort(unique([schnitzcells.frames])) - 1;
+% Get trackRange (frames that will be extracted). 
+trackRange = sort(unique([schnitzcells.frame_nrs])); % MW 2014/06/11 removal N+1 bug
 
 % initialize lincellnum to have zero'd arrays for each frame 
 lincellnum = {};
@@ -138,8 +145,8 @@ end
 % Now, step through each schnitz, store schnitz number in lincellnum
 for schnitznum = 1:length(schnitzcells)
   s = schnitzcells(schnitznum);
-  for age = 1:length(s.frames)
-    framenum = s.frames(age) - 1; % hack - schnitzedit is 1-based, correct here
+  for age = 1:length(s.frame_nrs)
+    framenum = s.frame_nrs(age); % MW 2014/06/11 removal N+1 bug
 
     % look up that frame number's index within trackRange
     lincellnumIndex = find(trackRange==framenum);
@@ -180,7 +187,7 @@ for i = 1:length(trackRange)
   
   for s = nonZeroSchnitzes
     % figure out index within this schnitz' age-based arrays
-    age = find((schnitzcells(s).frames-1) == currFrameNum);
+    age = find((schnitzcells(s).frame_nrs) == currFrameNum); % MW 2014/06/11 removal N+1 bug
     if isempty(age)
       error(['lincellnum says schnitz num ' s 'exists in frame ' currFrameNum ', but that frame can''t be found in the schnitz' frames array']);
     end
@@ -192,7 +199,6 @@ for i = 1:length(trackRange)
     phi = schnitzcells(s).phi(age);
     fitCoef2 = schnitzcells(s).fitCoef2(age,:);
     fitCoef3 = schnitzcells(s).fitCoef3(age,:);
-<<<<<<< HEAD
     fitCoef4 = schnitzcells(s).fitCoef4(age,:); % RUTGER ADDED
    
     % HIGHER ORDER FIT
@@ -202,17 +208,6 @@ for i = 1:length(trackRange)
  %  func_3rd = @(x) x.^3 .* fitCoef3(1) + x.^2 .* fitCoef3(2) + x .* fitCoef3(3) + fitCoef3(4);
  %   func_3rd_deriv = @(x) x.^2 .* (3*fitCoef3(1)) + x .* (2*fitCoef3(2)) + fitCoef3(3);
 %   func_length = @(x) sqrt( abs( 3 .* x.^2 .* fitCoef3(1) + 2 .* x .* fitCoef3(2) + fitCoef3(3) + 1 ) );
-
-
-
-=======
-    func_3rd = @(x) x.^3 .* fitCoef3(1) + x.^2 .* fitCoef3(2) + x .* fitCoef3(3) + fitCoef3(4);
-%     func_3rd_deriv = @(x) x.^2 .* (3*fitCoef3(1)) + x .* (2*fitCoef3(2)) + fitCoef3(3);
-
-% corrected length function 2014-02 NW
-func_length = @(x) sqrt( ( 3 .* x.^2 .* fitCoef3(1) + 2 .* x .* fitCoef3(2) + fitCoef3(3)).^2 + 1 );
->>>>>>> develop
-
 
     % [y,x] are pixels in Lc image where this cell is located
     [y,x] = find(Lc == cellnum); % note: returns (row, column), which will be used as (y,x)
@@ -343,7 +338,7 @@ func_length = @(x) sqrt( ( 3 .* x.^2 .* fitCoef3(1) + 2 .* x .* fitCoef3(2) + fi
     s;
     framenum;
 
-    if p.onScreen ~= 2 & find(p.schnitzNum==s) 
+    if p.onScreen ~= 2 & find(p.schnitzNum==s) % set range to output as fig with p.schnitzNum
       %--------------------------------------------------------------------
       % calculate some data
       %--------------------------------------------------------------------
@@ -410,8 +405,8 @@ func_length = @(x) sqrt( ( 3 .* x.^2 .* fitCoef3(1) + 2 .* x .* fitCoef3(2) + fi
       % Make figure
       %--------------------------------------------------------------------    
       scrsz = get(0, 'ScreenSize');
-      figureName = [p.movieDate ' ' p.movieName ' schnitz ' str4(s) ' frame ' str3(schnitzcells(s).frames(age)-1)];
-      figureFileName = ['length_schnitz' str4(s) 'frame' str3(schnitzcells(s).frames(age)-1)];
+      figureName = [p.movieDate ' ' p.movieName ' schnitz ' str4(s) ' frame ' str3(schnitzcells(s).frame_nrs(age))]; % MW 2014/06/11 removal N+1 bug
+      figureFileName = ['length_schnitz' str4(s) 'frame' str3(schnitzcells(s).frame_nrs(age))]; % MW 2014/06/11 removal N+1 bug
       fig1 = figure('Position', [151 scrsz(4)-200 scrsz(3)-130 scrsz(4)-200], 'Name', figureName, 'visible','off'); %[1 scrsz(4)-200 scrsz(3) scrsz(4)-200]
 
       %--------------------------------------------------------------------

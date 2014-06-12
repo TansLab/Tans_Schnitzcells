@@ -364,7 +364,7 @@ else
           close(fig1);
           pause(0.2);
       end
-    disp([' * Saved plot in ' figureFileName '.png']);
+    disp([' * Saved plot in ' p.DJK_saveDir figureFileName '.png']);
   end
 end
 %--------------------------------------------------------------------------

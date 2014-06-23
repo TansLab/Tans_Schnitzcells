@@ -125,7 +125,27 @@ elseif strmatch('Exposure:',descrip)     %%%%%%%%%%%%%%%ADDED SJT not so nice..i
 end
 
 %end
-datenumber = datenum(year,month,day,hour,minute,second);
+
+%NW 2014-06 read out date for imageJ/micromanager (was not implemented
+%previously ?!)
+if ~isempty(descrip)  % should only exist for micromanager images
+    datetimepos = findstr('DateTime: ',descrip) + length('DateTime: ');
+    datetimestr = descrip(datetimepos:end);
+    %datetimestr = num2str(datetime);    
+    datestr = datetimestr(1:10);
+    timestr = datetimestr(12:19);
+
+    year = str2num(datestr(1:4));
+    month = str2num(datestr(6:7));
+    day = str2num(datestr(9:10));
+
+    hour = str2num(timestr(1:2));
+    minute = str2num(timestr(4:5));
+    second = str2num(timestr(7:8));
+end
+
+datenumber = datenum(year,month,day,hour,minute,second); 
+
 % keyboard;
 % if exptime < 1,
 %     exptimestr = ['0',exptimestr];
@@ -134,15 +154,20 @@ exptimestr(exptimestr=='.')=[];
 
 gainpos = findstr('Gain: Gain ',descrip) + length('Gain: Gain ');
 gain = sscanf(descrip(gainpos:end), '%f');
-switch(gain),
-    case 1,
-        gainstr = 'low';
-    case 2,
-        gainstr = 'med';
-    case 3,
-        gainstr = 'high';
-    otherwise,
-        disp('can''t find gain setting -- using high');
-        gainstr = 'high';
+if ~isempty(gain) % NW 2014-06 (otherwise micromanager fiels produce error)
+    switch(gain),
+        case 1,
+            gainstr = 'low';
+        case 2,
+            gainstr = 'med';
+        case 3,
+            gainstr = 'high';
+        otherwise,
+            disp('can''t find gain setting -- using high');
+            gainstr = 'high';
+    end
+else
+    disp('can''t find gain setting -- using high');
+    gainstr = 'high';
 end;
 

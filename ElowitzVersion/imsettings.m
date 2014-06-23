@@ -24,6 +24,7 @@ if exist(pname)==2,
         descrip = [];
     end;
     
+    
     % ST 4/10/05:
     if isfield(iminfo,'Software'),
         software = iminfo.Software;
@@ -36,17 +37,37 @@ if exist(pname)==2,
     end;
     
     
+    
     if isfield(iminfo,'DateTime'),
         datetime = iminfo.DateTime;
-    elseif isfield(iminfo,'FileModDate'),     %%%ADDED SJT
-        timestr = iminfo.FileModDate(13:20);
-        hour = str2num(timestr(1:2));
-        minute = str2num(timestr(4:5));
-        second = str2num(timestr(7:8));
-        year = 2000;
-        month = 10;
-        day = 10;
-        datenumber = datenum(year,month,day,hour,minute,second);
+    elseif ~isempty(strfind(descrip,'DateTime')) %DE 2013/11/05
+         ps2=(strfind(descrip,'DateTime: '))+length('DateTime: ');
+         datetime=descrip(ps2:ps2+18);
+         
+         year=str2num(datetime(1:4));
+         month=str2num(datetime(6:7));
+         day=str2num(datetime(9:10));
+         hour=str2num(datetime(12:13));
+         minute=str2num(datetime(15:16));
+         second=str2num(datetime(18:19));
+         
+         
+         datenumber = datenum(year,month,day,hour,minute,second);
+         
+         %DE 2014-04-11: exposure time is read from descrip too:
+         exptimepos = findstr('Exposure: ',descrip) + length('Exposure: ');
+         exptime = sscanf(descrip(exptimepos:end),'%f');
+         exptimestr = num2str(exptime);
+         
+         %     elseif isfield(iminfo,'FileModDate'),     %%%ADDED SJT
+         %         timestr = iminfo.FileModDate(13:20);
+         %         hour = str2num(timestr(1:2));
+         %         minute = str2num(timestr(4:5));
+         %         second = str2num(timestr(7:8));
+         %         year = 2000;
+         %         month = 10;
+         %         day = 10;
+         %         datenumber = datenum(year,month,day,hour,minute,second);
     else
         datetime = [];
     end;
@@ -125,49 +146,40 @@ elseif strmatch('Exposure:',descrip)     %%%%%%%%%%%%%%%ADDED SJT not so nice..i
 end
 
 %end
-
-%NW 2014-06 read out date for imageJ/micromanager (was not implemented
-%previously ?!)
-if ~isempty(descrip)  % should only exist for micromanager images
-    datetimepos = findstr('DateTime: ',descrip) + length('DateTime: ');
-    datetimestr = descrip(datetimepos:end);
-    %datetimestr = num2str(datetime);    
-    datestr = datetimestr(1:10);
-    timestr = datetimestr(12:19);
-
-    year = str2num(datestr(1:4));
-    month = str2num(datestr(6:7));
-    day = str2num(datestr(9:10));
-
-    hour = str2num(timestr(1:2));
-    minute = str2num(timestr(4:5));
-    second = str2num(timestr(7:8));
-end
-
-datenumber = datenum(year,month,day,hour,minute,second); 
-
+datenumber = datenum(year,month,day,hour,minute,second);
 % keyboard;
 % if exptime < 1,
 %     exptimestr = ['0',exptimestr];
 % end;
 exptimestr(exptimestr=='.')=[];
 
-gainpos = findstr('Gain: Gain ',descrip) + length('Gain: Gain ');
-gain = sscanf(descrip(gainpos:end), '%f');
-if ~isempty(gain) % NW 2014-06 (otherwise micromanager fiels produce error)
-    switch(gain),
+
+% gainpos = findstr('Gain: Gain ',descrip) + length('Gain: Gain ');
+% ORIGINAL LINE - MW
+gainpos = strfind(descrip, 'Gain: Gain ') + length('Gain: Gain ');
+
+% EDITED -MW
+if isempty(gainpos)
+    % Use high setting if not found.    
+    disp('can''t find gain setting -- using high');
+    gainstr = 'high';
+else
+    
+    % Mark beginning of gain value
+    gain = sscanf(descrip(gainpos:end), '%f');
+
+    % And convert numerical value to string value
+   switch(gain),
         case 1,
             gainstr = 'low';
         case 2,
             gainstr = 'med';
         case 3,
-            gainstr = 'high';
+            gainstr = 'high';        
+        % Or otherwise not found
         otherwise,
-            disp('can''t find gain setting -- using high');
+            disp('gain setting not recognized -- using high');
             gainstr = 'high';
-    end
-else
-    disp('can''t find gain setting -- using high');
-    gainstr = 'high';
+    end;
 end;
 

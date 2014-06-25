@@ -403,13 +403,13 @@ if ~isempty(framesWithCellsMoving)
               % Pythagoras
               distanceMoved = sqrt( (cenx_new-cenx)^2 + (ceny_new-ceny)^2 );
               dispAndWrite(fid, ['     |  |  |--- schnitz ' str3(cell) ' : ' num2str( round(distanceMoved) ) ' pixels']);
-              
-          end
 
-          % MW 2014/6/3 || bugfix 2014/06/24
-          % missing frames might introduce extra movement, could tell user that
-          if (find(schnitzcells(cell).frame_nrs==next_fr_idx)-find(schnitzcells(cell).frame_nrs==current_fr_idx) ~= 1)
-              dispAndWrite(fid, ['     |  |--- (but missing frame detected, this might be the cause.)' ]);    
+              % MW 2014/6/3 || bugfix 2014/06/24
+              % missing frames might introduce extra movement, could tell user that
+              if ((find(schnitzcells(cell).frame_nrs==next_fr_idx) - find(schnitzcells(cell).frame_nrs==current_fr_idx)) ~= 1)
+                  dispAndWrite(fid, ['     |  |--- (but missing frame detected, this might be the cause.)' ]);    
+              end
+              
           end
           
       end
@@ -444,13 +444,14 @@ if ~isempty(framesWithCellsGrowingWeird)
           if schnitzcells(cell).inTracking & ~isempty(idx) % MW TODO 2014/6, probably this should be & ~isempty(idx)??
             lengthIncrease = schnitzcells(cell).len(next_fr_idx) - schnitzcells(cell).len(current_fr_idx);
             dispAndWrite(fid, ['     |  |  |--- schnitz ' str3(cell) ' : ' num2str( round(lengthIncrease) ) ' pixels']);
-          end
 
-          % MW 2014/6/3 || bugfix 2014/06/24
-          % missing frames might introduce extra movement, could tell user that
-          if (find(schnitzcells(cell).frame_nrs==next_fr_idx)-find(schnitzcells(cell).frame_nrs==current_fr_idx) ~= 1)
-              dispAndWrite(fid, ['     |  |--- (but missing frame detected, this might be the cause.)' ]);    
-          end          
+            % MW 2014/6/3 || bugfix 2014/06/24
+            % missing frames might introduce extra movement, could tell user that
+            if (find(schnitzcells(cell).frame_nrs==next_fr_idx)-find(schnitzcells(cell).frame_nrs==current_fr_idx) ~= 1)
+                dispAndWrite(fid, ['     |  |--- (but missing frame detected, this might be the cause.)' ]);    
+            end          
+            
+          end
           
       end
       
@@ -483,13 +484,14 @@ if ~isempty(framesWithCellsChangingAfterDivision)
           % Calculate length increase
           lengthIncrease = schnitzcells(D).len(1) +  schnitzcells(E).len(1) - schnitzcells(cell).len(end);
           dispAndWrite(fid, ['        |  |--- parent schnitz ' str3(cell) ' : ' num2str( round(lengthIncrease) ) ' pixels']);
-        end
-        
-        % MW 2014/6/3 || bugfix 2014/6/24
-        % missing frames might introduce extra movement, could tell user that
-        if (find(schnitzcells(cell).frame_nrs==next_fr_idx)-find(schnitzcells(cell).frame_nrs==current_fr_idx) ~= 1)
-            dispAndWrite(fid, ['     |  |--- (but missing frame detected, this might be the cause.)' ]);    
-        end
+          
+          % MW 2014/6/3 || bugfix 2014/6/24
+          % missing frames might introduce extra movement, could tell user that
+          if (find(schnitzcells(cell).frame_nrs==next_fr_idx)-find(schnitzcells(cell).frame_nrs==current_fr_idx) ~= 1)
+              dispAndWrite(fid, ['     |  |--- (but missing frame detected, this might be the cause.)' ]);    
+          end          
+          
+        end        
         
       end      
       

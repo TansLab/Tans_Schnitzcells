@@ -137,12 +137,17 @@ if ~existfield(p,'problemCells')
   p.problemCells = false;
 end
 
-  
 % If explicit manualRange is not given, take all segmentation files
+% Note that the paramter manualRange is used and edited throughout this 
+% file to indicate which frames should be analyzed.
+% Edit MW 2014/06/24 (see also below)
 if ~existfield(p,'manualRange')
-  segNameStrings = char(S);
-  p.manualRange = str2num(segNameStrings(:,numpos:numpos+2))';
-  if p.problemCells % problemcells, select frames with problem cells, also before & after
+    segNameStrings = char(S);
+    p.manualRange = str2num(segNameStrings(:,numpos:numpos+2))'; % MW 2014/6/24
+end
+
+% Determine range which cells are analyzed - edit MW 2014/06/24
+if p.problemCells % problemcells, select frames with problem cells, also before & after
     errorFramesRange = [];
     errorFrames = unique(p.problemCells(:,2))';
     for fr = errorFrames
@@ -152,14 +157,17 @@ if ~existfield(p,'manualRange')
       if (idx+1<=length(p.manualRange)) , errorFramesRange = [errorFramesRange p.manualRange(idx+1)]; end
     end
     p.manualRange = unique( errorFramesRange );
+end
+    
 %     fr_min = p.manualRange(1); fr_max = p.manualRange(end); p.manualRange = [];
 %     errorFrames = unique(p.problemCells(:,2))';
 %     for fr = errorFrames
 %       p.manualRange = [p.manualRange fr-1 fr fr+1];
 %     end
 %     p.manualRange = unique(  p.manualRange(p.manualRange>fr_min-1 & p.manualRange<fr_max+1)  );
-  end
-end
+
+
+
 disp(['Analyzing ' num2str(length(p.manualRange)) ' frames ', num2str(p.manualRange(1)), ' to ', num2str(p.manualRange(end))]);
 
 % Check whether there are frames without a corrected segmentation

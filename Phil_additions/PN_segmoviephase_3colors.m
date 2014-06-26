@@ -186,7 +186,7 @@ if (strcmp(p.method,'phasecontrast')==1)
         if isempty(DphaseAll)
             error(['Can''t find any images in directory ' p.imageDir]);
         else
-            p.numphaseslices = int8(ceil(length(DphaseAll)/length(Dphase1)));
+            p.numphaseslices = int8(round(length(DphaseAll)/length(Dphase1))); % MW edit 2014/06/23 - if there's a missing file ceil makes it crash
             disp(['You appear to have ' num2str(p.numphaseslices) ' phase image per frame.']);
         end
     end
@@ -217,9 +217,9 @@ elseif (strcmp(p.method,'brightfield')==1)
     if ~isfield(p,'numphaseslices')
         if isempty(DphaseAll)
             error(['Can''t find any images in directory ' p.imageDir]);
-        else
-            p.numphaseslices = int8(ceil(length(DphaseAllsingle)/length(Dphase1single)));
-            p.numimagerepetitions = int8(ceil(length(DphaseAll)/length(DphaseAllsingle)));
+        else            
+            p.numphaseslices = int8(ceil(length(DphaseAllsingle)/length(Dphase1single))); % MW 2014/06 TODO, if there's a file missing, round might be better than ceil
+            p.numimagerepetitions = int8(ceil(length(DphaseAll)/length(DphaseAllsingle))); % MW 2014/06 TODO, if there's a file missing, round might be better than ceil
             disp(['You appear to have ' num2str(p.numphaseslices) ' brightfield images per frame.']);
             disp(['You appear to have ' num2str(p.numimagerepetitions) ' brightfield images per layer per frame.']);
         end

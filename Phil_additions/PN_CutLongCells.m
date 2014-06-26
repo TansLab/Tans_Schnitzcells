@@ -1,6 +1,24 @@
 %by Philippe Nghe 16/01/2012
 
 function [nonCutCells cutImage] = PN_CutLongCells(skelim,refim,neckDepth)
+% Parameters that can be set in this function: 
+%
+% LONGFACTOR:       determines when to inspect cells for division; based on
+%                   ratio to mean length.
+% MINCELLS :        number of cells below which absolute cutoff for
+%                   identifying suspiciously long (possibly dividing) is
+%                   used.
+% SUSPICIOUSSIZE :  the absolute size mentioned above.
+
+% CONFIG VARS FOR THIS FUNCTION--------------------------------------------
+LONGFACTOR = 1.5;
+MINCELLS = 8;   % MW added to handle cuts of very small colonies, below 
+                % this number of cells, absolute length will be used
+SUSPICIOUSSIZE = 30; % If #cells < mincells, use this criterion to 
+                     % detect long cells
+% -------------------------------------------------------------------------
+
+
 
 sref = size(refim);
 cutImage = zeros(sref);
@@ -10,7 +28,22 @@ dimage = bwdist(~refim);%distance transform
 cc=bwconncomp(skelim);
 stats = regionprops(cc,'Area','BoundingBox','Image');
 characSize = median([stats.Area]);
-idx = find([stats.Area] > characSize*1.5); %suspicious cells
+
+% detect cells that are long relative to the mean of all cells, 
+% these cells will be analyzed for cell division
+idx = find([stats.Area] > characSize*LONGFACTOR);  %suspicious cells
+                                            % parameter can be changed for 
+                                            % different conditions.
+
+% MW addition 2014/06/22
+% If the colony has few cells, deviation from average length doesn't tell 
+% you much, and cells might not be cut. Following code in that situation
+% adds cells with a large absolute size (defined by SUSPICIOUSSIZE) to the
+% index of cells to be inspected.
+if length(stats)<MINCELLS
+   idx = unique([idx find([stats.Area] > SUSPICIOUSSIZE)]);
+end
+
 
 for ii = idx  %study the case of long cells individually
     

@@ -165,6 +165,8 @@ if ~existfield(p,'len')
   p.len = 80;
 end
 
+%% Function appears to be unused - MW 2014/06/24
+%{
 
 % Get directory of existing segmentation files 
 outprefix = [p.movieName 'seg'];
@@ -221,7 +223,6 @@ se= strel('diamond', 1);
 
 % Internally, code is set up to use the track range in reverse
 numFrames = max(size(p.trackRange));
-
 
 % Short cut: If segmentation is fillinator output, we can take a shortcut
 % Note: Now that 'original' is not the default, fillinator users have to 
@@ -557,3 +558,4 @@ save(p.trackName, 'trackRange', 'cellmat', 'badcells', 'orphansold');
 
 % Convert the tracking results into a schnitzcells structure
 p = makeschnitz(p);
+%}

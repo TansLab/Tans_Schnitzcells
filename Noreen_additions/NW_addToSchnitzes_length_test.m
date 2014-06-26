@@ -120,7 +120,7 @@ end
 % is saved: lincellnum {a} (b) returns schnitznum of cellno b in frame a
 
 % Get trackRange (frames that will be extracted). Note: image 001 is frame 2 -> -1
-trackRange = sort(unique([schnitzcells.frames])) - 1;
+trackRange = sort(unique([schnitzcells.frame_nrs])); % MW fix N+1 bug 2014/06/18
 
 % initialize lincellnum to have zero'd arrays for each frame 
 lincellnum = {};
@@ -135,8 +135,8 @@ end
 % Now, step through each schnitz, store schnitz number in lincellnum
 for schnitznum = 1:length(schnitzcells)
   s = schnitzcells(schnitznum);
-  for age = 1:length(s.frames)
-    framenum = s.frames(age) - 1; % hack - schnitzedit is 1-based, correct here
+  for age = 1:length(s.frame_nrs)
+    framenum = s.frame_nrs(age); % MW fix N+1 bug 2014/06/18
 
     % look up that frame number's index within trackRange
     lincellnumIndex = find(trackRange==framenum);
@@ -178,7 +178,7 @@ for i = 1:length(trackRange)
   
   for s = nonZeroSchnitzes
     % figure out index within this schnitz' age-based arrays
-    age = find((schnitzcells(s).frames-1) == currFrameNum);
+    age = find((schnitzcells(s).frame_nrs) == currFrameNum); % MW fix N+1 bug 2014/06/18
     if isempty(age)
       error(['lincellnum says schnitz num ' s 'exists in frame ' currFrameNum ', but that frame can''t be found in the schnitz' frames array']);
     end
@@ -401,8 +401,8 @@ for i = 1:length(trackRange)
       % Make figure
       %--------------------------------------------------------------------    
       scrsz = get(0, 'ScreenSize');
-      figureName = [p.movieDate ' ' p.movieName ' schnitz ' str4(s) ' frame ' str3(schnitzcells(s).frames(age)-1)];
-      figureFileName = ['length_schnitz' str4(s) 'frame' str3(schnitzcells(s).frames(age)-1)];
+      figureName = [p.movieDate ' ' p.movieName ' schnitz ' str4(s) ' frame ' str3(schnitzcells(s).frame_nrs(age))]; % MW fix N+1 bug 2014/06/18
+      figureFileName = ['length_schnitz' str4(s) 'frame' str3(schnitzcells(s).frame_nrs(age))]; % MW fix N+1 bug 2014/06/18
       fig1 = figure('Position', [151 scrsz(4)-200 scrsz(3)-130 scrsz(4)-200], 'Name', figureName, 'visible','off'); %[1 scrsz(4)-200 scrsz(3) scrsz(4)-200]
 
       %--------------------------------------------------------------------

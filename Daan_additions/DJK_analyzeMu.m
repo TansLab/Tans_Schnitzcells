@@ -80,7 +80,7 @@ if ~existfield(p,'fitLength')
 end
 % If explicit manualRange is not given, take all in schnitzcells
 if ~existfield(p,'manualRange')
-  p.manualRange = unique( [schnitzcells.frames] -1);
+  p.manualRange = unique( [schnitzcells.frame_nrs]); % MW edit N+1 bug 2014/06/18
 end
 % If onScreen, nothing is saved to disc automatically
 if ~existfield(p,'onScreen')
@@ -145,7 +145,7 @@ end
 useAllcells = ~existfield(schnitzcells(1),'useForPlot');
 
 % initialize alldata
-for fr = unique( [schnitzcells.frames] -1);
+for fr = unique( [schnitzcells.frame_nrs]); % MW edit N+1 bug 2014/06/18
   alldata_muField_sum(fr) = 0;
   alldata_cellsContributing(fr) = 0;
   alldata_time(fr) = 0;
@@ -158,17 +158,23 @@ for cell = 1:length(schnitzcells)
   if useAllcells | schnitzcells(cell).useForPlot
     nrCells = nrCells + 1;
     % loop over frames where cell lives
-    for age = 1:length(schnitzcells(cell).frames)
+    for age = 1:length(schnitzcells(cell).frame_nrs) % MW edit N+1 bug 2014/06/18
       if length(schnitzcells(cell).(p.muField)) > 0
         
-        fr = schnitzcells(cell).frames(age)-1;
+        % age here is simply index of frames in schnitzcells
+        % get current frame number
+        fr = schnitzcells(cell).frame_nrs(age); % MW edit N+1 bug 2014/06/18 TODO not sure here..
+        % increase counter of cells contributing
         alldata_cellsContributing(fr) = alldata_cellsContributing(fr) + 1;
+        % obtain corresponding point in time
         alldata_time(fr) = schnitzcells(cell).(p.timeField)(age);
+                
         if onlyOneDataPoint
           alldata_muField_sum(fr) = alldata_muField_sum(fr) + schnitzcells(cell).(p.muField)(1);
         else
           alldata_muField_sum(fr) = alldata_muField_sum(fr) + schnitzcells(cell).(p.muField)(age);
         end
+        
       end
     end
   end

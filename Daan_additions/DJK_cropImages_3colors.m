@@ -193,7 +193,7 @@ for fr = cropRange, % go over each frame
     Dfluor3Range = dir([p.imageDir, [p.movieName, sprintf('-%s-',p.fluor3), str3(fr) ,'.tif'] ]);  % NW 11/12/02 + MW 2014/6
     
     if isempty(DphaseRange)
-        disp(['Searching for img with : ''', p.imageDir, p.movieName, '-p-*', str3(fr) ,'.tif', '''']);
+        disp(['Searching for img with : ''', p.movieName, '-p-*-', str3(fr) ,'.tif', '''']);
         error('Couldn''t find image, perhaps img dir empty/frame missing?')        
     end
    

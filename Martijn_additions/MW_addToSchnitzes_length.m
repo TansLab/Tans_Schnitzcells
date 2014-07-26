@@ -214,19 +214,25 @@ for i = 1:length(trackRange)
     x_rot = x*cos(phi) - y*sin(phi); % mathematical rotation
     y_rot = x*sin(phi) + y*cos(phi); % mathematical rotation
     
- xpixlength=max(x_rot)-min(x_rot);
+    xpixlength=max(x_rot)-min(x_rot);
+    
     if xpixlength <250; 
-        func_3rd = @(x) x.^3 .* fitCoef3(1) + x.^2 .* fitCoef3(2) + x .* fitCoef3(3) + fitCoef3(4);
-         func_length = @(x) sqrt( (abs( 3 .* x.^2 .* fitCoef3(1) + 2 .* x .* fitCoef3(2) + fitCoef3(3)).^2 + 1 ) ); 
-    %4TH DEGREE FIT
-%     func_3rd = @(x) x.^4 .* fitCoef4(1) + x.^3 .* fitCoef4(2) + x.^2 .* fitCoef4(3) + x .* fitCoef4(4) + fitCoef4(5);
-%     func_length = @(x) sqrt( abs( 4 .* x.^3 .* fitCoef4(1) + 3 .* x.^2 .* fitCoef4(2) +2 .* x .* fitCoef4(3)+ fitCoef4(4) + 1 ) );
-    order=3;
+         % function f(x) describing bacterial mid-axis
+            func_3rd = @(x)                  x.^3 .* fitCoef3(1) +      x.^2 .* fitCoef3(2) + x .* fitCoef3(3)  + fitCoef3(4);
+            
+         % function l(x) = sqrt(1+f'(x)^2), to be integrated to determine length   
+         func_length = @(x) sqrt( (abs( 3 .* x.^2 .* fitCoef3(1) + 2 .* x .* fitCoef3(2)    + fitCoef3(3)).^2   + 1 ) ); 
+         
+        order=3;
     else
- % 7TH DEGREE FIT
-    func_3rd = @(x)x.^7 .* fitCoef7(1)+x.^6 .* fitCoef7(2)+x.^5 .* fitCoef7(3) + x.^4 .* fitCoef7(4) +x.^3 .* fitCoef7(5) + x.^2 .* fitCoef7(6) + x .* fitCoef7(7) + fitCoef7(8);% RUTGER ADDED
-    func_length = @(x) sqrt( (abs( 7 .* x.^6 .* fitCoef7(1) +6 .*x.^5 .* fitCoef7(2) + 5 .*x.^4 .* fitCoef7(3) + 4 .*x.^3* fitCoef7(4)+ 3 .*x.^2* fitCoef7(5)+2 .*x.^1* fitCoef7(6)+fitCoef7(7)).^2 + 1) ); % RUTGER ADDED
-    order=7;
+        % 7TH DEGREE FIT
+        
+        % function f(x) describing bacterial mid-axis
+           func_3rd = @(x)                  x.^7 .* fitCoef7(1) +     x.^6 .* fitCoef7(2) +     x.^5 .* fitCoef7(3) +     x.^4 .* fitCoef7(4)       +     x.^3 .* fitCoef7(5) +    x.^2 .* fitCoef7(6) + x .* fitCoef7(7) + fitCoef7(8);% RUTGER ADDED
+        % function l(x) = sqrt(1+f'(x)^2), to be integrated to determine length   
+        func_length = @(x) sqrt( (abs( 7 .* x.^6 .* fitCoef7(1) + 6 .*x.^5 .* fitCoef7(2) + 5 .*x.^4 .* fitCoef7(3) + 4 .*x.^3  * fitCoef7(4)       + 3 .*x.^2  * fitCoef7(5) +2 .*x.^1  * fitCoef7(6) + fitCoef7(7)).^2 + 1) ); % RUTGER ADDED
+        
+        order=7;
     end 
 
 %  if s==1000;

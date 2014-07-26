@@ -142,12 +142,20 @@ nameFields = {};
 for i = 1:length(p.lengthFields)
   f = char(p.lengthFields(i));
   if isfield(schnitzcells, f)
+    % update total nr fields taken into account - MW 2014/07
     lengthFieldsCount               = lengthFieldsCount + 1;
+    % put name into "admin" struct - MW 2014/07
     lengthFields{lengthFieldsCount} = f;
-    idx                             = strfind(f, 'length');
-    nameFields{lengthFieldsCount}   = f(idx(1)+6:length(f));
     
-    disp(['Will calc mu for ' f]);
+    % filter length out of name - MW 2014/07 (bugfix)
+    f_renamed = strrep(f, 'length', ''); % MW 2014/07 (bugfix)
+    f_renamed = strrep(f_renamed, '_', ''); % MW extra feature
+    f_renamed = ['_' f_renamed]; % MW extra feature
+    
+    % name the field - MW 2014/07 (bugfix)
+    nameFields{lengthFieldsCount}   = f_renamed;
+    
+    disp(['Will calc mu for ' f '(''' f_renamed ''')']);  % MW extra feature
   end
 end
 for i = 1:length(p.frameSizes)

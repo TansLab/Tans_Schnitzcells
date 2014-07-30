@@ -33,7 +33,15 @@ function p = NW_tracker_centroid_vs_area(p, varargin)
 %   override      flag that when set to true or 1 permits this routine to 
 %                 perform tracking on pairs of frames even if tracking was 
 %                 previously performed for those frames (that is, the
-%                 segmentation file is older than the tracking file)   
+%                 segmentation file is older than the tracking file) 
+%   SwapcounterMax   How many subsequent rounds shall possibly mistracked
+%                 cells be pairwise swapped. default: 1
+%                 if swapped cells remain, increase this number and run
+%                 tracker again over this frame pair ('override')
+%
+% NOTE:
+% For tracking correction (cell swapping, division association) several
+% parameters are hard coded and can be changed within the script.
 %
 %--------------------------------------------------------------------------
 %
@@ -121,11 +129,15 @@ if ~existfield(p,'manualRange')
   segNameStrings = char(S);
   p.manualRange = str2num(segNameStrings(:,numpos:numpos+2))';
 end
+% if # of swapping cell attempts is not given, try only once
+if ~existfield(p,'SwapcounterMax')
+  p.SwapcounterMax=1;
+end
 
 % Keep only the frames in the range that contain a corrected segmentation (unless we're tracking un-checked frames)
 manualRangeChecked = [];
 for frameNum = p.manualRange
-  clear Lc;
+  clear Lc 
   load([p.segmentationDir,p.movieName,'seg',str3(frameNum)]);
   if exist('Lc')==1 | p.trackUnCheckedFrames 
     manualRangeChecked = [manualRangeChecked frameNum];
@@ -150,6 +162,7 @@ disp(['Tracking ' num2str(length(p.manualRange)) ' frames ', num2str(p.manualRan
 %**********************************************************************************************************frameNum = 0;
 %dataLeft_previousRound = false; not applicable any more since areas <-> centroids
 for count = 2:length(p.manualRange);
+    clear allcentroidstoday allcentroidsyesterday;
     
   %frameNum_previousRound = frameNum; not applicable any more: area<->centroids
   % today is frameNum
@@ -444,24 +457,35 @@ for count = 2:length(p.manualRange);
               old_parent_idx=find(trackLink(:,4)==tracked_cellno_today); %should be same as tracked_cellno_today
               old_parent=trackLink(old_parent_idx);
               daughters=find(trackLink(:,1)==old_parent); % how many daughters were there?
-              % if only 2 daughters before rewiring, just one track is left
-              % after rewiring -> remove from today_dividing list
-              if length(daughters)<=2
-                  remove_cells_from_divlist=trackLink(daughters,4);
-                  fprintf(['Will remove today cells ' num2str(daughters') ' from dividing list.'])
-              end
-                  
+                               
               
               clear mindistVec cellidx sortedCellDist;
 
               % update barren cell with new connection to closest (daughter) cell
-              fprintf(['\n                               ' str3(cellno_yesterday) ' in fr' str3(yesterdayFrameNum) ... 
+              fprintf(['\n                ' str3(cellno_yesterday) ' in fr' str3(yesterdayFrameNum) ... 
                     ' was not linked. Corrected: ' num2str(trackLink(tracked_cellno_today,:)) ' to ' ...
                     num2str([cellno_yesterday 0 0 tracked_cellno_today])]);
               % recalc
               trackLink(tracked_cellno_today,:) = [cellno_yesterday 0 0 tracked_cellno_today];
+              
+              % if only 2 daughters before rewiring, just one track is left
+              % after rewiring -> remove from today_dividing list
+              if length(daughters)<=2
+                  remove_cells_from_divlist=trackLink(daughters,4);
+                  fprintf([' \n             Will remove today cells ' num2str(daughters') ' from dividing list.'])
+              % if 3 links existed, remove only the daughter which is now
+              % newly connected to the former barren cell, i.e. is part of
+              % a non-div connection
+              else
+                  remove_cells_from_divlist=trackLink(tracked_cellno_today,4); %NW 2014-05
+                                            % trackLink(tracked_cellno_today,4)
+                                            % should be the same as
+                                            % 'tracked_cellno_today'
+                  fprintf([' \n             Will remove today cells ' num2str(trackLink(tracked_cellno_today,4)) ' from dividing list.'])
+              end
+              
         else
-            fprintf(['\n                               ' str3(cellno_yesterday) ' in fr' ... 
+            fprintf(['\n                  ' str3(cellno_yesterday) ' in fr' ... 
                 str3(yesterdayFrameNum) ' was not linked. Could not be corrected, cause no dividing cells!']);
       end
         
@@ -567,15 +591,18 @@ for count = 2:length(p.manualRange);
 % 2) Get areas of all (dividing and non-dividing) cells
 % 3) Calculate Delta(Area) for all cells (dividing cells: account for 2
 %    daughters) and select strange changes (e.g.: more than 150px)
+% XY) find dividing cells with suspicuously high displacement
 % 4) Seperate strange tracks into dividing and non-dividing cells
 % 5) Try relinking the dividing cells with another non-div cell
 %    Use a costfunction that accounts for area change & displacement as
 %    tracking evaluation
-% 6) Try relinking the non-dividing cells
+% 6) Find suspicuous non-dividing cells (area change or large movement).
+%     Try relinking the non-dividing cells
 
 
 % ******** ADJUST PARAMETERS ************************************************ 
-cutoff_Area=150; % which area change is suspicious?
+cutoff_Area=200; % which area change is suspicious?
+cutoff_Displacement=15; % which displacement (of non-dividing cells) is suspicious?
 % weighing parameters for cost functions:
 % -- if e.g. normalAreaChange=100 and
 % normalDisplacement(centroid<->area)=20, then a total area increase of
@@ -586,6 +613,16 @@ normalAreaChangeNonDiv=100; %(px)
 normalDisplacementNonDiv=20; %(px) 
 % ***************************************************************************
 
+% *****************************************************************************************
+% *************** STRANGE DIVISIONS **************
+% *****************************************************************************************
+
+%Brute force:
+% Run whole swapping x times so that triplett swaps etc can be detected
+% Should be improved by considering a matrix of possible cell swaps, not
+% only pairs.
+
+ for Swapcounter=1:p.SwapcounterMax
 
 % 1) find yesterday cells which are linked to 2 daugthers (>2 already
 % corrected for above) -> cell divisions
@@ -598,6 +635,10 @@ for cellno_maybeparent = all_cellno_yesterday
            parent_vec=[parent_vec; cellno_maybeparent];  
        end
 end
+
+% -----------------------------------------------------
+% Find strange area changes for non-dividing cells
+% -----------------------------------------------------
 
 % 2) get areas of all cells (today & yesterday)
 allareasyesterday=regionprops(Lc_yesterday_fullsize_resc_centered,'Area'); %use rescaled (?)
@@ -618,34 +659,89 @@ deltaArea=allareas_trackedtotoday-allareasyesterday;
 %find yesterday cells with strange change in area (e.g.: >150px,<-150px)
 yestcellsStrangeArea=find(abs(deltaArea)>=cutoff_Area); %-> yest cell nrs with strange area change
 
-if ~isempty(yestcellsStrangeArea)
+% -----------------------------------------------------
+% Find Strangely Moving Cells (Displacement (centroid-centroid [not area]))
+% -----------------------------------------------------
+% 1) if yesterday centroid vector doesn't exist, create it
+if ~exist('allcentroidsyesterday')
+    allcentroidsyesterday=zeros(max(all_cellno_yesterday),2);
+      for cellnorun=all_cellno_yesterday
+          cellnoruncentroid=getCentroidsOfCell(Lc_yesterday_fullsize_centered, cellnorun);
+          % only 1/2 centroid (and not 1/4 and 3/4) is needed
+          cellnoruncentroid=cellnoruncentroid([2 3]); %(y,x)=(row,column)
+          allcentroidsyesterday(cellnorun,:)=cellnoruncentroid;
+      end
+end
+% 2) calculate displacements of centroids
+allcentroids_trackedtotoday=zeros(size(allcentroidsyesterday));  % idx -> cell number of yesterday
+for cellno_yest=all_cellno_yesterday
+    linked_cells=find(trackLink(:,1)==cellno_yest);
+    % if the cell has dividided take the mean coordinates of all daughter
+    % centroids
+    if length(linked_cells)==1 %not divided
+        allcentroids_trackedtotoday(cellno_yest,:)=allcentroidstoday(linked_cells,:);
+    elseif length(linked_cells)>1 % divided
+        allcentroids_trackedtotoday(cellno_yest,:)=mean(allcentroidstoday(linked_cells,:));
+    end % if no link at all: entry is [0 0]
+end
+clear cellno_yest
+dummy=(allcentroids_trackedtotoday-allcentroidsyesterday);
+deltaDisplacement=sqrt(dummy(:,1).^2+dummy(:,2).^2);
+%find yesterday cells with strange movement (e.g.: >30px)
+% still includes div & non-div cells
+yestcellsStrangeDisplacement=find(deltaDisplacement>=cutoff_Displacement); %-> yest cell nrs with strange area change
+
+% --------------------------------------------------
+% ------- combine strange yest. cells and separate into div/non-div cells ---
+% --------------------------------------------------
+yestcellsStrange_Area_or_Displacement=unique([yestcellsStrangeArea, yestcellsStrangeDisplacement']);
+
+if ~isempty(yestcellsStrange_Area_or_Displacement)
     % 4) find dividing & non-dividing yesterday cells which have strange change in area
-    idxStrangeAreaDiv=find(ismember(yestcellsStrangeArea,parent_vec)); 
-    yestcellsStrangeAreaDiv=yestcellsStrangeArea(idxStrangeAreaDiv);
-    idxStrangeAreaNonDiv=find(~ismember(yestcellsStrangeArea,parent_vec));
-    yestcellsStrangeAreaNonDiv=yestcellsStrangeArea(idxStrangeAreaNonDiv);
+    idxStrangeDiv=find(ismember(yestcellsStrange_Area_or_Displacement,parent_vec)); 
+    yestcellsStrange_Area_or_Displacement_Div=yestcellsStrange_Area_or_Displacement(idxStrangeDiv);
+    idxStrangeNonDiv=find(~ismember(yestcellsStrange_Area_or_Displacement,parent_vec));
+    yestcellsStrange_Area_or_Displacement_NonDiv=yestcellsStrange_Area_or_Displacement(idxStrangeNonDiv);
+end
+
+
+% ------------------------------------------------------
+% Attempt correction of wrong division events
+% ------------------------------------------------------
+
+% div & non-div cells exist
+if ~isempty(yestcellsStrange_Area_or_Displacement)
+    if ~isempty(yestcellsStrange_Area_or_Displacement_Div) & ~isempty(yestcellsStrange_Area_or_Displacement_NonDiv)
     
     % 5) if strange divisions occured, correct first tracking in divisions
-    % (1x dividing cell, compared to 1x non-dividing cell)
-    if ~isempty(yestcellsStrangeAreaDiv) % if no divisions occured -> matrix is empty
-
+    
         % create cost function for possible tracking links. THIS IS VERY
         % EMPIRICAL AND MIGHT HAVE TO BE ADJUSTED!!
         % also no renormalization of areas & displacements
         % normalization parameters: defined above
+        %blubb mycostfunction = @ (deltaarea1, deltaarea2, deltadist1, deltadist2, deltadist3) ...
+            %(deltaarea1 + deltaarea2)/normalAreaChangeDiv + (deltadist1+deltadist2+deltadist3)/normalDisplacementDiv;
+            
+            % **** IMPORTANT ****
+            % Division event: deltaarea2, deltadist2, deltadist3.
+            % KEEP CORRECT ORDER OF INPUT ARGUMENTS!
+            % Divions event is weight stronger
+            % ******************
         mycostfunction = @ (deltaarea1, deltaarea2, deltadist1, deltadist2, deltadist3) ...
-            (deltaarea1 + deltaarea2)/normalAreaChangeDiv + (deltadist1+deltadist2+deltadist3)/normalDisplacementDiv;
+            (deltaarea1 + deltaarea2)/normalAreaChangeDiv + (deltadist1+deltadist2+deltadist3)/normalDisplacementDiv+ ...
+            + deltaarea2/normalAreaChangeNonDiv *10 + (deltadist2+deltadist3)/normalDisplacementNonDiv *10; %overemphasize divsion event
+        
         % input: all area changes (2), all displacements (3)
         % output: cost of tracking connection
 
         % loop over all strange-area dividing cells
-            for y1=yestcellsStrangeAreaDiv
+            for y1=yestcellsStrange_Area_or_Displacement_Div
                 CellsCorrected=0;
                 cellnos_todayDiv=find(trackLink(:,1)==y1);
                 t1=cellnos_todayDiv(1); t2=cellnos_todayDiv(2); % tracked division cells
                 % loop over all strange-area non-dividing cells (possible
                 % switch partners)
-                for y2=yestcellsStrangeAreaNonDiv
+                for y2=yestcellsStrange_Area_or_Displacement_NonDiv
                     % get all 3 cells of today which are linked to (cellno_yestDiv and cellno_yestNonDiv)
                     cellnos_todayNonDiv=find(trackLink(:,1)==y2);
                     if length(cellnos_todayNonDiv)~=1 
@@ -685,6 +781,9 @@ if ~isempty(yestcellsStrangeArea)
                     % recover the cell numbers
                     matrix_cellno_cost=zeros(6,3); % per row: non-div yest cell  --- non-div today cell --- cost
                                                    % 6 tracking options (1x div, 1x non-div)
+                    % ********* ALWAYS WRITE THE DIVISION AREA &
+                    % DISPLACEMEENT AS 2nd resp 2nd & 3rd *****
+                                                   
                     cost_y1t1_y2t2t3=mycostfunction(area_y1t1,area_y2t2t3,dist_y1t1,dist_y2t2,dist_y2t3); % y1->t1, y2->t2&t3
                     matrix_cellno_cost(1,:)=([y1,t1,cost_y1t1_y2t2t3]);
                     cost_y1t2_y2t1t3=mycostfunction(area_y1t2,area_y2t1t3,dist_y1t2,dist_y2t1,dist_y2t3);
@@ -728,8 +827,8 @@ if ~isempty(yestcellsStrangeArea)
                         % remove it of the list of non-dividing cells
                         % (don't try new tracking connections)
                         if newyestcellno_div==y2
-                            idxnondiv=find(yestcellsStrangeAreaNonDiv~=newyestcellno_div);
-                            yestcellsStrangeAreaNonDiv=yestcellsStrangeAreaNonDiv(idxnondiv);
+                            idxnondiv=find(yestcellsStrange_Area_or_Displacement_NonDiv~=newyestcellno_div);
+                            yestcellsStrange_Area_or_Displacement_NonDiv=yestcellsStrange_Area_or_Displacement_NonDiv(idxnondiv);
                         end 
                         
                         CellsCorrected=1;
@@ -746,117 +845,283 @@ if ~isempty(yestcellsStrangeArea)
                 end
                     
             end %loop over y1=strangeDivision
-    end % if ~isempty(strange divisions)
-    
-    
-    
-    % 6) loop over all non-dividing strange area cells -> check for swaps
-    % create cost function for possible tracking links. THIS IS VERY
-        % EMPIRICAL AND MIGHT HAVE TO BE ADJUSTED!!
-        % also no renormalization of areas & displacements
-        % Normalization Parameters: defined above
-        mycostfunction = @ (deltaarea1, deltaarea2, deltadist1, deltadist2) ...
-            (deltaarea1 + deltaarea2)/normalAreaChangeNonDiv + (deltadist1+deltadist2)/normalDisplacementNonDiv;
-        % input: all area changes (2), all displacements (2)
-        % output: cost of tracking connection
-        
-        yest_cells_to_skip=[];
-        
-        for idx_y1cell=1:length(yestcellsStrangeAreaNonDiv)
-            y1=yestcellsStrangeAreaNonDiv(idx_y1cell);
-            if ismember(y1, yest_cells_to_skip)
-                continue
+end % if ~isempty(yestCellsstrange.. Div & non-Div)
+end % if ~isempty(strange general)
+% end % loop SwapCounter
+
+% *****************************************************************************************
+% *************** SWAPPED CELLS **************
+% *****************************************************************************************
+
+%Brute force:
+% Run whole swapping x times so that triplett swaps etc can be detected
+% Should be improved by considering a matrix of possible cell swaps, not
+% only pairs.
+
+%for Swapcounter=1:p.SwapcounterMax
+
+% -----------------------------------------------------
+% Find strange area changes for non-dividing cells
+% -----------------------------------------------------
+% RECALCULATE STRANGE CELLS (OTHERWISE CORRECTED CELLS IN
+% DIVISION_CORRECTION MAY ACCIDENTLY BE IGNORED HERE
+
+% recalculate list because of potential new division associations
+%if ~isempty(yestcellsStrangeArea) % has to be done every wround if
+%SwapCounter is >1
+%    if ~isempty(yestcellsStrangeAreaDiv) % potential need to recalculate which cells are non-div
+        % find yesterday cells which are linked to 2 daugthers ->
+        % exclude them later
+        parent_vec=[];  
+        for cellno_maybeparent = all_cellno_yesterday
+            % get the cells they link to
+            linked_cells = find(trackLink(:,1)==cellno_maybeparent);
+            if length(linked_cells) == 2 % two 'today cell' are linked to yesterday cell 'cellno_maybeparent' -> cell division
+                parent_vec=[parent_vec; cellno_maybeparent];  
             end
-            CellsCorrected=0;
-            t1=find(trackLink(:,1)==y1);
-                % loop over all strange-area non-dividing cells (avoid
-                % double checking)
-                for idx_y2cell=idx_y1cell+1:length(yestcellsStrangeAreaNonDiv)
-                    y2=yestcellsStrangeAreaNonDiv(idx_y2cell);
-                    %disp('...')
-                    %disp(['y1 cell: ' num2str(y1) ' y2 cell: ' num2str(y2)])
-                    % get all cells of today which are linked to y1 & y2
-                    t2=find(trackLink(:,1)==y2);
-                    if length(t1)~=1 | length(t2)~=1
-                        fprintf(' \n Warning: Error in tracking (area) correction of non-dividing cells.')
-                        fprintf('\n y1 & y2 should have one link. Will continue with next y1&y2. Barren cell?')
-                        continue
-                        
-                    end
-                    % permute over tracking possibilities and find all abs. area
-                    % changes & centroid displacements (could be improved with
-                    % a loop/matrix)
-                    % for convenience and readability, precalculate all
-                    % possible abs area changes and centroid<->area
-                    % displacements
-                    area_y1t1=abs(allareastoday(t1)-allareasyesterday(y1));   % area y1->t1 (no division)
-                    area_y1t2=abs(allareastoday(t2)-allareasyesterday(y1));
-                    area_y2t1=abs(allareastoday(t1)-allareasyesterday(y2));
-                    area_y2t2=abs(allareastoday(t2)-allareasyesterday(y2));
-                    
-                    dist_y1t1=GetDistance_Point_from_Area(allpixellistYesterday(y1).PixelList(:,2), allpixellistYesterday(y1).PixelList(:,1), allcentroidstoday(t1,1), allcentroidstoday(t1,2));
-                    dist_y1t2=GetDistance_Point_from_Area(allpixellistYesterday(y1).PixelList(:,2), allpixellistYesterday(y1).PixelList(:,1), allcentroidstoday(t2,1), allcentroidstoday(t2,2));
-                    dist_y2t1=GetDistance_Point_from_Area(allpixellistYesterday(y2).PixelList(:,2), allpixellistYesterday(y2).PixelList(:,1), allcentroidstoday(t1,1), allcentroidstoday(t1,2));
-                    dist_y2t2=GetDistance_Point_from_Area(allpixellistYesterday(y2).PixelList(:,2), allpixellistYesterday(y2).PixelList(:,1), allcentroidstoday(t2,1), allcentroidstoday(t2,2));
-                    
-                    % calculate cost functions of tracking & create an array to easily
-                    % recover the cell numbers
-                    matrix_cellno_cost=zeros(2,3); % per row: first non-div yest cell  --- non-div today cell --- cost
-                    % 2 options: y1->t1 or y1->t2
-                    cost_y1t1_y2t2=mycostfunction(area_y1t1,area_y2t2,dist_y1t1,dist_y2t2); % y1->t1, y2->t2
-                    matrix_cellno_cost(1,:)=([y1,t1,cost_y1t1_y2t2]);
-                    cost_y1t2_y2t1=mycostfunction(area_y1t2,area_y2t1,dist_y1t2,dist_y2t1);
-                    matrix_cellno_cost(2,:)=([y1,t2,cost_y1t2_y2t1]);
-                    
-                    % find best tracking (least cost)
-                    matrix_cellno_cost_sort=sortrows(matrix_cellno_cost,3);
-                    newyestcellno_1=matrix_cellno_cost_sort(1,1);
-                    newtodaycellno_1=matrix_cellno_cost_sort(1,2);   
-                    NoSwitchHappened=(y1==newyestcellno_1 & t1==newtodaycellno_1) | (y2==newyestcellno_1 & t2==newtodaycellno_1);
-                    %disp(matrix_cellno_cost)
-                    if ~NoSwitchHappened
-                        allyest=[y1 y2];
-                        idxy=find(allyest~=newyestcellno_1);
-                        newyestcellno_2=allyest(idxy);
-                        alltoday=[t1 t2];
-                        idxt=find(alltoday~=newtodaycellno_1);
-                        newtodaycellno_2=alltoday(idxt);
-                        fprintf([' \n Found suspicious change in cell area (cutoff ' ...
-                            num2str(cutoff_Area) ' px): '])
-                        fprintf([' \n corrected ' num2str(y1) ' 0 0 ' num2str(t1)])
-                        fprintf([' \n           ' num2str(y2) ' 0 0 ' num2str(t2)])
-                        fprintf([' \n to:       ' num2str(newyestcellno_1) ' 0 0 ' num2str(newtodaycellno_1)])
-                        fprintf([' \n           ' num2str(newyestcellno_2) ' 0 0 ' num2str(newtodaycellno_2)])
-                        
-                        CellsCorrected=1;
-                        
-                        trackLink(newtodaycellno_1,:)=[newyestcellno_1 0 0 newtodaycellno_1];
-                        trackLink(newtodaycellno_2,:)=[newyestcellno_2 0 0 newtodaycellno_2];
-                        
-                        % if switch happened move on to next y1 cell
-                        % (yesterday). only allow one switch to happen. That is with
-                        % the first y2 cell where the swap is better than
-                        % the original trackings. Note: This could be
-                        % improved by finding global best switch, but
-                        % typically only one switch should be better than
-                        % the current tracking
-                        % remove the swapped y2 cell from the investigated
-                        % list:
-                        yest_cells_to_skip=[yest_cells_to_skip, y2];
-                        break
-                        
-                    end
-                end % loop over y2=non div cells
-                % if cell was not corrected, report this:
-                if CellsCorrected==0 & ~isempty(idx_y2cell)
-                    fprintf([' \n Found suspicious change in cell area (cutoff ' ...
-                            num2str(cutoff_Area) ' px): ' num2str(y1) ...
-                            ' -> ' num2str(t1) '. \n Did not correct for it because was ' ...
-                            'optimal in cost function'])
-                end                      
-            end %loop over y1=non div cells
-    
+        end
+        % get areas of all cells again(today & yesterday)
+        allareasyesterday=regionprops(Lc_yesterday_fullsize_resc_centered,'Area'); %use rescaled (?)
+        allareasyesterday=[allareasyesterday.Area];
+        allareastoday=regionprops(Lc_today_fullsize_centered,'Area');
+        allareastoday=[allareastoday.Area];
+        %calculate area increase of all tracked cells (if division: accounts for 2 daughters)
+        allareas_trackedtotoday=zeros(size(allareasyesterday));  % idx -> cell number of yesterday
+        for cellno_yest=all_cellno_yesterday
+            linked_cells=find(trackLink(:,1)==cellno_yest);
+            allareas_trackedtotoday(cellno_yest)=sum(allareastoday(linked_cells));
+            clear linked_cells
+        end
+        clear cellno_yest
+        deltaArea=allareas_trackedtotoday-allareasyesterday;
+        %find yesterday cells with strange change in area (e.g.: >150px,<-150px)
+        yestcellsStrangeArea=find(abs(deltaArea)>=cutoff_Area); %-> yest cell nrs with strange area change
+
+        % find non-dividing(!) yesterday cells which have strange change in area
+        % unnecessary here? [NW 2014-05]
+        if ~isempty(yestcellsStrangeArea)
+            idxStrangeAreaNonDiv=find(~ismember(yestcellsStrangeArea,parent_vec));
+            yestcellsStrangeAreaNonDiv=yestcellsStrangeArea(idxStrangeAreaNonDiv);
+        end
+%    end
+%end
+% -----------------------------------------------------
+% Find Strangely Moving Cells (Displacement (centroid-centroid [not area]))
+% -----------------------------------------------------
+% 1) if yesterday centroid vector doesn't exist, create it
+if ~exist('allcentroidsyesterday')
+    allcentroidsyesterday=zeros(max(all_cellno_yesterday),2);
+      for cellnorun=all_cellno_yesterday
+          cellnoruncentroid=getCentroidsOfCell(Lc_yesterday_fullsize_centered, cellnorun);
+          % only 1/2 centroid (and not 1/4 and 3/4) is needed
+          cellnoruncentroid=cellnoruncentroid([2 3]); %(y,x)=(row,column)
+          allcentroidsyesterday(cellnorun,:)=cellnoruncentroid;
+      end
 end
+% 2) calculate displacements of centroids
+allcentroids_trackedtotoday=zeros(size(allcentroidsyesterday));  % idx -> cell number of yesterday
+for cellno_yest=all_cellno_yesterday
+    linked_cells=find(trackLink(:,1)==cellno_yest);
+    % if the cell has dividided take the mean coordinates of all daughter
+    % centroids
+    if length(linked_cells)==1
+        allcentroids_trackedtotoday(cellno_yest,:)=allcentroidstoday(linked_cells,:);
+    elseif length(linked_cells)>1
+        allcentroids_trackedtotoday(cellno_yest,:)=mean(allcentroidstoday(linked_cells,:));
+    end
+end
+clear cellno_yest
+dummy=(allcentroids_trackedtotoday-allcentroidsyesterday);
+deltaDisplacement=sqrt(dummy(:,1).^2+dummy(:,2).^2);
+%find yesterday cells with strange movement (e.g.: >30px)
+% still includes div & non-div cells
+yestcellsStrangeDisplacement=find(deltaDisplacement>=cutoff_Displacement); %-> yest cell nrs with strange area change
+
+% % 1) if yesterday centroid vector doesn't exist, create it
+%if ~exist('allcentroidsyesterday')
+%    allcentroidsyesterday=zeros(max(all_cellno_yesterday),2);
+%      for cellnorun=all_cellno_yesterday
+%          cellnoruncentroid=getCentroidsOfCell(Lc_yesterday_fullsize_centered, cellnorun);
+%          % only 1/2 centroid (and not 1/4 and 3/4) is needed
+%          cellnoruncentroid=cellnoruncentroid([2 3]); %(y,x)=(row,column)
+%          allcentroidsyesterday(cellnorun,:)=cellnoruncentroid;
+%      end
+% end
+
+
+% 2) calculate displacements of centroids
+%allcentroids_trackedtotoday=zeros(size(allcentroidsyesterday));  % idx -> cell number of yesterday
+%for cellno_yest=all_cellno_yesterday
+%    linked_cells=find(trackLink(:,1)==cellno_yest);
+%    % if the cell has dividided the centroid thing is pointless -> leave
+%    % empty (=0). these dividing cells will be excluded later.
+%    if length(linked_cells)==1
+%        allcentroids_trackedtotoday(cellno_yest,:)=allcentroidstoday(linked_cells,:);
+%    end
+%end
+%clear cellno_yest
+%dummy=(allcentroids_trackedtotoday-allcentroidsyesterday);
+%deltaDisplacement=sqrt(dummy(:,1).^2+dummy(:,2).^2);
+% %find yesterday cells with strange movement (e.g.: >30px)
+% %  this also includes thedividing cells because the daughter centroid is set
+% % to (0,0). they will be excluded later.
+%yestcellsStrangeDisplacement=find(deltaDisplacement>=cutoff_Displacement); %-> yest cell nrs with strange area change
+
+
+
+% --------------------------------------------------
+% ------- combine strange yest. cells and restrict to non-dividing cells ---
+% --------------------------------------------------
+yestcellsStrange_Area_or_Displacement=unique([yestcellsStrangeArea, yestcellsStrangeDisplacement']);
+
+if ~isempty(yestcellsStrange_Area_or_Displacement)
+    idxStrangeNonDiv=find(~ismember(yestcellsStrange_Area_or_Displacement,parent_vec));
+    yestcellsStrange_Area_or_Displacement_NonDiv=yestcellsStrange_Area_or_Displacement(idxStrangeNonDiv);
+end
+
+
+
+% -----------------------------------------------------
+%  ----- Attempt correction of swapped cells --------
+% -----------------------------------------------------
+
+if ~isempty(yestcellsStrange_Area_or_Displacement)
+    % Non-Div cells move strange or change area a lot:
+    if ~isempty(yestcellsStrange_Area_or_Displacement_NonDiv)
+
+        % 6) loop over all non-dividing strange area cells -> check for swaps
+        % create cost function for possible tracking links. THIS IS VERY
+            % EMPIRICAL AND MIGHT HAVE TO BE ADJUSTED!!
+            % also no renormalization of areas & displacements
+            % Normalization Parameters: defined above
+% MAYBE TODO: EXTRA EMPHASIS ON THAT THE FIRST TRACK (LOWER CELL NO) IS CORRECT
+% (the higher nr can be corrected again in a subsequent loop)
+            % **** IMPORTANT ****
+            % First yest cell (y1, lower cenn nr counter): deltaarea1,
+            % deltadist1
+            % KEEP CORRECT ORDER OF INPUT ARGUMENTS!
+            % First cell is weighed stronger (2nd cell has 2nd chance to
+            % retrack
+            % ******************
+            mycostfunction = @ (deltaarea1, deltaarea2, deltadist1, deltadist2) ...
+               (deltaarea1 + deltaarea2)/normalAreaChangeNonDiv + (deltadist1+deltadist2)/normalDisplacementNonDiv ...
+                + deltaarea1/normalAreaChangeNonDiv *3 + deltadist1/normalDisplacementNonDiv *3; %overemphasize y1 cell (*3)    
+           %+ deltadist1/normalDisplacementNonDiv *10; %overemphasize dist y1 cell (*10)
+               
+           
+            
+           %blubbmycostfunction = @ (deltaarea1, deltaarea2, deltadist1, deltadist2) ...
+           %    (deltaarea1 + deltaarea2)/normalAreaChangeNonDiv + (deltadist1+deltadist2)/normalDisplacementNonDiv;
+ 
+            % input: all area changes (2), all displacements (2)
+            % output: cost of tracking connection
+
+            % cells which were already relinked
+            yest_cells_to_skip=[];
+
+            for idx_y1cell=1:length(yestcellsStrange_Area_or_Displacement_NonDiv)
+                y1=yestcellsStrange_Area_or_Displacement_NonDiv(idx_y1cell);
+                if ismember(y1, yest_cells_to_skip)
+                    continue
+                end
+                CellsCorrected=0;
+                t1=find(trackLink(:,1)==y1);
+                    % loop over all strange-area non-dividing cells (avoid
+                    % double checking)
+                    for idx_y2cell=idx_y1cell+1:length(yestcellsStrange_Area_or_Displacement_NonDiv)
+                        y2=yestcellsStrange_Area_or_Displacement_NonDiv(idx_y2cell);
+                        %disp('...')
+                        %disp(['y1 cell: ' num2str(y1) ' y2 cell: ' num2str(y2)])
+                        % get all cells of today which are linked to y1 & y2
+                        t2=find(trackLink(:,1)==y2);
+                        if length(t1)~=1 | length(t2)~=1
+                            fprintf(' \n Warning: Error in tracking (area) correction of non-dividing cells.')
+                            fprintf('\n y1 & y2 should have one link. Will continue with next y1&y2. Barren cell?')
+                            continue
+
+                        end
+                        % permute over tracking possibilities and find all abs. area
+                        % changes & centroid displacements (could be improved with
+                        % a loop/matrix)
+                        % for convenience and readability, precalculate all
+                        % possible abs area changes and centroid<->area
+                        % displacements
+                        area_y1t1=abs(allareastoday(t1)-allareasyesterday(y1));   % area y1->t1 (no division)
+                        area_y1t2=abs(allareastoday(t2)-allareasyesterday(y1));
+                        area_y2t1=abs(allareastoday(t1)-allareasyesterday(y2));
+                        area_y2t2=abs(allareastoday(t2)-allareasyesterday(y2));
+
+                        dist_y1t1=GetDistance_Point_from_Area(allpixellistYesterday(y1).PixelList(:,2), allpixellistYesterday(y1).PixelList(:,1), allcentroidstoday(t1,1), allcentroidstoday(t1,2));
+                        dist_y1t2=GetDistance_Point_from_Area(allpixellistYesterday(y1).PixelList(:,2), allpixellistYesterday(y1).PixelList(:,1), allcentroidstoday(t2,1), allcentroidstoday(t2,2));
+                        dist_y2t1=GetDistance_Point_from_Area(allpixellistYesterday(y2).PixelList(:,2), allpixellistYesterday(y2).PixelList(:,1), allcentroidstoday(t1,1), allcentroidstoday(t1,2));
+                        dist_y2t2=GetDistance_Point_from_Area(allpixellistYesterday(y2).PixelList(:,2), allpixellistYesterday(y2).PixelList(:,1), allcentroidstoday(t2,1), allcentroidstoday(t2,2));
+
+                        % calculate cost functions of tracking & create an array to easily
+                        % recover the cell numbers
+                        matrix_cellno_cost=zeros(2,3); % per row: first non-div yest cell  --- non-div today cell --- cost
+                        % 2 options: y1->t1 or y1->t2
+                        
+                        % *********** always begin with y1 area & y1 dist !!! ***********
+                        cost_y1t1_y2t2=mycostfunction(area_y1t1,area_y2t2,dist_y1t1,dist_y2t2); % y1->t1, y2->t2
+                        matrix_cellno_cost(1,:)=([y1,t1,cost_y1t1_y2t2]);
+                        cost_y1t2_y2t1=mycostfunction(area_y1t2,area_y2t1,dist_y1t2,dist_y2t1);
+                        matrix_cellno_cost(2,:)=([y1,t2,cost_y1t2_y2t1]);
+
+                        % find best tracking (least cost)
+                        matrix_cellno_cost_sort=sortrows(matrix_cellno_cost,3);
+                        newyestcellno_1=matrix_cellno_cost_sort(1,1);
+                        newtodaycellno_1=matrix_cellno_cost_sort(1,2);   
+                        NoSwitchHappened=(y1==newyestcellno_1 & t1==newtodaycellno_1) | (y2==newyestcellno_1 & t2==newtodaycellno_1);
+                        %disp(matrix_cellno_cost)
+                        if ~NoSwitchHappened
+                            allyest=[y1 y2];
+                            idxy=find(allyest~=newyestcellno_1);
+                            newyestcellno_2=allyest(idxy);
+                            alltoday=[t1 t2];
+                            idxt=find(alltoday~=newtodaycellno_1);
+                            newtodaycellno_2=alltoday(idxt);
+                            fprintf([' \n Found suspicious change in cell area (>' ...
+                                num2str(cutoff_Area) ' px) or displacement (>' num2str(cutoff_Displacement) ...
+                                 ' px) : '])
+                            fprintf([' \n corrected ' num2str(y1) ' 0 0 ' num2str(t1)])
+                            fprintf([' \n           ' num2str(y2) ' 0 0 ' num2str(t2)])
+                            fprintf([' \n to:       ' num2str(newyestcellno_1) ' 0 0 ' num2str(newtodaycellno_1)])
+                            fprintf([' \n           ' num2str(newyestcellno_2) ' 0 0 ' num2str(newtodaycellno_2)])
+
+                            CellsCorrected=1;
+
+                            trackLink(newtodaycellno_1,:)=[newyestcellno_1 0 0 newtodaycellno_1];
+                            trackLink(newtodaycellno_2,:)=[newyestcellno_2 0 0 newtodaycellno_2];
+
+                            % if switch happened move on to next y1 cell
+                            % (yesterday). only allow one switch to happen. That is with
+                            % the first y2 cell where the swap is better than
+                            % the original trackings. Note: This could be
+                            % improved by finding global best switch, but
+                            % typically only one switch should be better than
+                            % the current tracking
+                            % remove the swapped y2 cell from the investigated
+                            % list:
+                            yest_cells_to_skip=[yest_cells_to_skip, y2]; % necessary at all? NW 2014-05
+                            break
+
+                        end
+                    end % loop over y2=non div cells
+                    % if cell was not corrected, report this:
+                    if CellsCorrected==0 & ~isempty(idx_y2cell)
+                        fprintf([' \n Found suspicious change in cell area (>' ...
+                                num2str(cutoff_Area) ' px) or displacement (>' num2str(cutoff_Displacement) ...
+                                ' px): ' num2str(y1) ...
+                                ' -> ' num2str(t1) '. \n Did not correct for it because was ' ...
+                                'optimal in cost function'])
+                    end                      
+                end %loop over y1=non div cells
+    end % loop over yestcellsStrange..nonDiv
+    
+end % if ~isemptys(strange cells..)
+
+
+end % loop SwapCounter
 % -------------------------------------------------------------------------------------------------
 
   

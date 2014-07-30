@@ -2,7 +2,13 @@ function p = DJK_initschnitz (movieName, movieDate, movieKind, varargin);
 % function P = initschnitz (movieName, movieDate, movieKind, varargin);
 %
 %   Same as INITSCHNITZ but then allows e.coli.AMOLF movie kind. Also
-%   immediately sets up p.micronsPerPixel = 0.04065
+%   immediately sets up p.micronsPerPixel = 0.04065 (microsocope1)
+%   
+%   ----
+%   If the microscope2 (new setup) is used initialize with optional
+%   argument ('micromanager',1). This will also set the micronsPerPixel to
+%   the defaulft 0.04312
+%   ----
 %
 %   INITSCHNITZ allows users to get variables and directories set up 
 %   properly before performing cell tracking and analysis operations.  
@@ -259,8 +265,17 @@ end
 
 % If micronsPerPixel has not been set manually, set it now.
 if ~existfield(p,'micronsPerPixel')
-  p.micronsPerPixel = 0.04065;
-  pOrder.micronsPerPixel = 0;
+    % if setup1 is used:
+    if ~existfield(p,'micromanager')
+        p.micronsPerPixel = 0.04065;
+    else
+        if p.micromanager==1  %setup2 is used
+            p.micronsPerPixel = 0.04312;
+        else
+            p.micronsPerPixel = 0.04065; % micromanager field exists but is not=1 -> prob setup 1
+        end
+    end
+    pOrder.micronsPerPixel = 0;
 end
 
 % If less than 3 fluorescence colours have been set, fill others with

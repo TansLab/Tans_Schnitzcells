@@ -12,8 +12,8 @@
 % 'spacingError' you can set the maximum allowed offset from even spacing,
 % before a warning is shown.
 %
-% biased:         in Sxy(r) don't divide by (N-|r|) -> Nature439_608 way
-%                 for larger delay times the autocorrelation will always decrease
+% biased:         in Sxy(r) don't divide by (N-|r|) ->  way
+%                 for larger delay times the autocorrelatiNature439_608on will always decrease
 %
 % OUTPUT
 % 'branches'            branches structure with calculated cross covariance for each branch added

@@ -1,3 +1,5 @@
+% [branches, crossCov_composite] = DJK_getCrossCov(p, branches, fieldX, fieldY, varargin)
+%
 % DJK_getCrossCov returns the cross covariance of a set of branches,
 % together with the composite cross covariance. Different settings can be
 % set, such as: 
@@ -74,6 +76,7 @@ end
 % Override any schnitzcells parameters/defaults given optional fields/values
 % --------------------------------------------------------------------------
 if ~existfield(p,'timeField')
+  disp('p.timeField not set, reverting to default ''Y_time''.');
   p.timeField = 'Y_time';
 end
 
@@ -85,7 +88,7 @@ if ~existfield(branches(1),fieldY)
   disp(['Field ' fieldY ' does not exist. Exiting...!']); return;
 end
 if ~existfield(branches(1), p.timeField)
-  disp(['Field ' p.timeField ' does not exist. Exiting...!']); return;
+  disp(['Field ' p.timeField ' does not exist (defined in p.timeField). Exiting...!']); return;
 end
 
 % if too little data, exit

@@ -14,10 +14,11 @@ function p = PN_segmoviephase_3colors(p,varargin)
 %               the image (interesting feature = contrast changes laegely
 %               within this area). default: 35
 % 'maskMargin' : enlarge mask to avoid cutting cells at boundary of
-%                interesting region. default: 10 [nb: previously (before
+%                interesting region. default: 5 [nb: previously (before
 %                2014-07 the default was 20 for the imclose fct, now the
 %                margin is enlargened with imdilate].
 %                Enlarge if centre of colony is not detected.
+%                Set to =0 if segmentation runs in infinite loop
 % 'useFullImage' : default: 0. If set to =1 the segmentation is not
 %                restricted to the mask (use if segmentation failed)
 % 'LoG_Smoothing' : smoothing amplitude of the edge detection filter
@@ -26,6 +27,7 @@ function p = PN_segmoviephase_3colors(p,varargin)
 %               1.8, 1.9)
 % 'minCellArea' : minimum cell area (objects smaller than that will be erased)
 %               default: 250. default for rich meadium: 100
+%               decrease if several cells in colony are not detected
 % 'GaussianFilter' : clean cell mask before finding seeds: smoothing of the 
 %                original image to find local minima within cells. default: 5
 % 'minDepth'   : clean cell mask before finding seeds: find local minima
@@ -92,7 +94,7 @@ if ~existfield(p,'rangeFiltSize')                         %typical area for dect
     p.rangeFiltSize = 35;
 end
 if ~existfield(p,'maskMargin')                            %additional margin of the mask : enlarge if cells missing on the edge
-    p.maskMargin = 10;   % default used to be =20 but then image was imclosed not imdilated
+    p.maskMargin = 5;   % default used to be =20 but then image was imclosed not imdilated
 end
 if ~existfield(p,'useFullImage')                          % do/don't crop segmentation to ROI mask
     p.useFullImage=0;

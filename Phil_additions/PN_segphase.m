@@ -25,7 +25,7 @@ q.addRequired('imageToSegment', @isnumeric);
 
 %STEP A : finds a global mask and crop the image
 q.addParamValue('rangeFiltSize',35,@isnumeric);       %dectection of interesting parts of the image
-q.addParamValue('maskMargin',10,@isnumeric);          %additional margin of the mask : enlarge if cells missing on the edge
+q.addParamValue('maskMargin',5,@isnumeric);          %additional margin of the mask : enlarge if cells missing on the edge
 q.addParamValue('useFullImage',0,@isnumeric);         % use full image for segmentation of ROI mask
 
 %STEP B : find edges
@@ -60,6 +60,7 @@ O_PhImageFilt = medfilt2(imageToSegment);
 
 A_maskImage = rangefilt(O_PhImageFilt,true(q.Results.rangeFiltSize));              %detect zones of sufficient intensity variations
 A_maskImage = im2bw(A_maskImage,graythresh(A_maskImage));                  %threshold to black and white
+A_maskImage=imfill(A_maskImage,'holes');                            % fill interior holes
 A_maskImage = imdilate(A_maskImage,strel('disk',q.Results.maskMargin));                     %enlarge mask         
 % ** NW2014-07: used to be 'imclose' instead of 'imdilate' but this didn't really enlarge the mask, only close it
 

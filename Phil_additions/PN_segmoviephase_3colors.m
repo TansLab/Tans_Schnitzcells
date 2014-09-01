@@ -1,18 +1,53 @@
 function p = PN_segmoviephase_3colors(p,varargin)
 %
+% REQUIRED ARGUMENTS:
+% 'p' 
+%
 % OPTIONAL ARGUMENTS:
+% 'segRange'  : images to be segmented. default: all phase contrast images
+% 'slices'    : which phase contrast slices (above/below focus) to average.
+%               default: all slices.
+%               If segmentation failed, try different slice combination.
+%               for highly structured cells (rich medium) try slightly defocused
+%               slice (typically '1')
+% 'rangeFiltSize' : typical area for dectection of interesting features of
+%               the image (interesting feature = contrast changes laegely
+%               within this area). default: 35
+% 'maskMargin' : enlarge mask to avoid cutting cells at boundary of
+%                interesting region. default: 5 [nb: previously (before
+%                2014-07 the default was 20 for the imclose fct, now the
+%                margin is enlargened with imdilate].
+%                Enlarge if centre of colony is not detected.
+%                Set to =0 if segmentation runs in infinite loop
+% 'useFullImage' : default: 0. If set to =1 the segmentation is not
+%                restricted to the mask (use if segmentation failed)
+% 'LoG_Smoothing' : smoothing amplitude of the edge detection filter
+%               (laplacian of gaussian). default: 2
+%               If segmentation fails try a slightly different value (e.g.
+%               1.8, 1.9)
+% 'minCellArea' : minimum cell area (objects smaller than that will be erased)
+%               default: 250. default for rich meadium: 100
+%               decrease if several cells in colony are not detected
+% 'GaussianFilter' : clean cell mask before finding seeds: smoothing of the 
+%                original image to find local minima within cells. default: 5
+% 'minDepth'   : clean cell mask before finding seeds: find local minima
+%                with a certain minimum depth. default: 5
+% 'neckDepth' : cutting long cells: minimum neckDepth (difference in width
+%               of cell body vs connecting neck) necessary to cut a long cell.
+%               default: 2
 % 'medium'    : 'rich'  . Special segmentation of images that accounts for
 %                 substructures occuring in ruch medium. more time
 %                 consuming but better results in rich medium
 %                 default: 'normal'
+%
 % 'method'    : 'brightfield'. Pretreatment of images in French style
 %               (brightfield and 32 layers. 1 image per layer). default:
 %               'phasecontrast' (NOT UPDATED)
-
 % numimagesperlayer : which of the repeated images of the same layer are to
 %               be taken and averaged. Default: all. Possible alternative: [1]
+%               brightfield. NOT UPDATED.
 % quickMode: 1: Load directly averaged images from previous treatment.
-%            Default: 0
+%            Default: 0. brightfield. NOT UPDATED.
 
 %-------------------------------------------------------------------------------
 % Parse the input arguments, input error checking. Use inputParser in
@@ -59,7 +94,10 @@ if ~existfield(p,'rangeFiltSize')                         %typical area for dect
     p.rangeFiltSize = 35;
 end
 if ~existfield(p,'maskMargin')                            %additional margin of the mask : enlarge if cells missing on the edge
-    p.maskMargin = 20;
+    p.maskMargin = 5;   % default used to be =20 but then image was imclosed not imdilated
+end
+if ~existfield(p,'useFullImage')                          % do/don't crop segmentation to ROI mask
+    p.useFullImage=0;
 end
 %STEP B : find edges
 if ~existfield(p,'LoG_Smoothing')                         %smoothing amplitude of the edge detection filter
@@ -370,13 +408,14 @@ for i= p.segRange
     
     saveDirectory = [p.segmentationDir p.PN_saveDir 'seg' str3(i) filesep];
     [status,msg,id] = mkdir(saveDirectory);
-    inputsOfSegmentation = {'rangeFiltSize',p.rangeFiltSize,'maskMargin',p.rangeFiltSize,...
-        'LoG_Smoothing',p.LoG_Smoothing,'minCellArea',p.minCellArea,...
+    inputsOfSegmentation = {'rangeFiltSize',p.rangeFiltSize,'maskMargin',p.maskMargin,...
+        'useFullImage',p.useFullImage, 'LoG_Smoothing',p.LoG_Smoothing,'minCellArea',p.minCellArea,...
         'GaussianFilter',p.GaussianFilter,'minDepth',p.minDepth,...
         'neckDepth',p.neckDepth,'saveSteps',p.saveSteps,'saveDir',saveDirectory};
     
     %---------------------------------------------------------------------------
-    % the real and true segmentation now comes:
+    %---------------------------------------------------------------------------
+    % THE REAL AND TRUE SEGMENTATION IS HERE:
     if strcmp(p.medium,'normal')==1
         [phsub,LNsub,rect]= PN_segphase(imageToSegment,inputsOfSegmentation{:});    
     elseif strcmp(p.medium,'rich')==1
@@ -386,6 +425,7 @@ for i= p.segRange
     end
     
     %----------------------------------------------------------------------
+    %---------------------------------------------------------------------------
     % Prepare segmentation and fluorescence data for saving
     if isempty(LNsub) 
         LNsub = [0];          %if no cells segmented, add this so that we have an image

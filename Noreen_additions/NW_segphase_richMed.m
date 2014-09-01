@@ -26,7 +26,8 @@ q.addRequired('imageToSegment', @isnumeric);
 
 %STEP A : finds a global mask and crop the image
 q.addParamValue('rangeFiltSize',35,@isnumeric);       %dectection of interesting parts of the image
-q.addParamValue('maskMargin',20,@isnumeric);          %additional margin of the mask : enlarge if cells missing on the edge
+q.addParamValue('maskMargin',5,@isnumeric);          %additional margin of the mask : enlarge if cells missing on the edge
+q.addParamValue('useFullImage',0,@isnumeric);         % use full image for segmentation of ROI mask
 
 %STEP XYZ
 q.addParamValue('LoG_Smoothing',2,@isnumeric);         %smoothing amplitude of the edge detection filter
@@ -60,13 +61,27 @@ O_PhImageFilt = medfilt2(imageToSegment);
 
 A_maskImage = rangefilt(O_PhImageFilt,true(q.Results.rangeFiltSize));              %detect zones of sufficient intensity variations
 A_maskImage = im2bw(A_maskImage,graythresh(A_maskImage));                  %threshold to black and white
-A_maskImage = imclose(A_maskImage,strel('disk',q.Results.maskMargin));                     %enlarge mask         
+A_maskImage=imfill(A_maskImage,'holes');                            % fill interior holes
+A_maskImage = imdilate(A_maskImage,strel('disk',q.Results.maskMargin));                     %enlarge mask         
+% ** NW2014-07: used to be 'imclose' instead of 'imdilate' but this didn't really enlarge the mask, only close it
+
 labelMaskImage = logical(A_maskImage);                                     %only keep the biggest connected part of the mask
 propsMaskImage = regionprops(labelMaskImage,'Area','BoundingBox','Image');
 [~,idx] = max([propsMaskImage.Area]);
-A_cropMaskImage = propsMaskImage(idx).Image;                               %cropped mask
-bb = propsMaskImage(idx).BoundingBox;
-ROI_segmentation = [ceil(bb([2 1])) ceil(bb([2 1]))+bb([4 3])-[1 1]];   %ymin xmin ymax xmax
+if q.Results.useFullImage~=1  % default: crop image to ROI
+    A_cropMaskImage = propsMaskImage(idx).Image;                               %cropped mask
+    bb = propsMaskImage(idx).BoundingBox;
+    ROI_segmentation = [ceil(bb([2 1])) ceil(bb([2 1]))+bb([4 3])-[1 1]];   %ymin xmin ymax xmax
+else  % exception: skip cropping
+   % A_cropMaskImage=labelMaskImage;
+   % %crop a little bit, otherwise background calculation of fluor is going
+   % %to fail
+   % myIncr=15;
+   % ROI_segmentation=[1+myIncr 1+myIncr size(A_cropMaskImage,1)-myIncr size(A_cropMaskImage,2)-myIncr];
+   % A_cropMaskImage=A_cropMaskImage(ROI_segmentation(1):ROI_segmentation(3),ROI_segmentation(2):ROI_segmentation(4));
+   error('Rich medium & useFullImage will probably fail (extensive calculation time). Use default medium.')
+end
+
 A_cropPhImage = O_PhImageFilt(ROI_segmentation(1):ROI_segmentation(3),ROI_segmentation(2):ROI_segmentation(4)); %cropped ph image image
 
 if q.Results.saveSteps

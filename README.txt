@@ -95,22 +95,24 @@ PART X
 SOME CONVENTIONS USED FOR CODING
 ____________________________________________________________
 
+GENERAL STYLE
+===
+Please follow this styleguide:
+http://www.mathworks.com/matlabcentral/fileexchange/2529-matlab-programming-style-guidelines
+*
+For constants that are set in functions, please use cap locks, and place them at the start of a function, so that users can easily find them. Preferably, also mention constants in the function description (i.e. first chunk of comments).
+
 
 KEYWORDS AND STYLE IN THE CODE
 ===
-TODO or "blubb" (depricated) indicates codes is "shaky", i.e. there is no bug
-observed, but there might be a better/neater way to program this. It might also
-indicate that there is a problem which needs to be solved.
+TODO or "blubb" (depricated) indicates codes is "shaky", i.e. there is no bug observed, but there might be a better/neater way to program this. It might also indicate that there is a problem which needs to be solved.
 *
 There is no convention for sectioning yet.
 
 
 CHANGING THE CODE
 ===
-When you change a line in the code, please add your initials and the current 
-date behind that line in comments, so people importing the changes know 
-when something changed. (For clearity, the reason of the change can sometimes
-also be added.)
+When you change a line in the code, please add your initials and the current date behind that line in comments, so people importing the changes know when something changed. (For clearity, the reason of the change can sometimes also be added.)
 
 
 

@@ -163,7 +163,8 @@ for r = rs
   total_weight = 0; % calc total weight for this r
 
   % loop over branches
-  for br = 1:length(branches)
+  for br = 1:length(branches)      
+      
     X = branches(br).(fieldX);
     Y = branches(br).(fieldY);
   
@@ -236,18 +237,26 @@ end
 % check whether we're dealing with an autocorrelation
 % if p.override, already doing only 0
 if strcmp(fieldX, fieldY) & ~p.override
-  idx = find(crossCov_composite.X==0);
-  idx(2) = length(crossCov_composite.X);
-  crossCov_composite.X = crossCov_composite.X(idx(1):idx(2));
-  crossCov_composite.Y = crossCov_composite.Y(idx(1):idx(2));
+  
+  % Find location of zero on x-axis (tau)
+  idx = find(crossCov_composite.X==0); %MW 2014/07/30 neater code
+  
+  % Select only values from X=0 to X(end).
+  crossCov_composite.X = crossCov_composite.X(idx:end); % MW 2014/07/30 neater code
+  crossCov_composite.Y = crossCov_composite.Y(idx:end); % MW 2014/07/30 neater code
 
-  % loop over branches
+  % now same as above for all branches
   for br = 1:length(branches)
-    idx = find(branches(br).corr_time==0);
-    idx(2) = length(branches(br).corr_time);
-    branches(br).corr_time = branches(br).corr_time(idx(1):idx(2));
-    branches(br).(targetField) = branches(br).(targetField)(idx(1):idx(2));
-  end
+      
+    % Find location of zero on x-axis (tau)
+    idx = find(branches(br).corr_time==0); % MW 2014/07/30 neater code
+    
+    % Select only values from X=0 to X(end).
+    branches(br).corr_time = branches(br).corr_time(idx:end); % MW 2014/07/30 neater code
+    branches(br).(targetField) = branches(br).(targetField)(idx:end); % MW 2014/07/30 neater code
+       
+  end 
+  
 end
 % --------------------------------------------------------------------------
 
@@ -285,8 +294,9 @@ max_br_length = 0;
 min_br_length  = realmax('double');
 for br = 1:length(branches)
   max_br_length = max(max_br_length, length(branches(br).schnitzNrs));
-  min_br_length = min(min_br_length, length(branches(br).schnitzNrs));
+  min_br_length = min(min_br_length, length(branches(br).schnitzNrs));  
 end
+
 if (max_br_length == min_br_length)
   %disp([' * All branches have same length: ' num2str(min_br_length) '
   %timepoints.']); blubb NW2012-010 just commented out

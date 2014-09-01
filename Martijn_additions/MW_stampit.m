@@ -2,38 +2,26 @@ function theimg = MW_stampit(theimg,p)
 %
 %
 % Function to show user which frames have already been approved. It will
-% add a green circle to frames that are in list of approved frames. This
-% list is called "whitelist".
+% add a green circle to frames that are in list of approved frames.
 %
-% TODO MW: this function is somewhat redundant, because whitelist is not
-% necessary to determine whether a frame is approved. (See e.g. also
-% DJK_analyzeseg.m.)
-
+% Whether the current frame is approved is saved in 
+% p.CurrentFrameApprovedFlag.
+%
 % For efficiency, the watermark image is already loaded in
-% MW_manualcheckseg.m.
+% MW_manualcheckseg.m. It is stored in p.mywatermark.
+%
+% function theimg = MW_stampit(theimg,p)
 
-global whitelist mywatermark; % MW
-
-% This checks whether the frame is on the whitelist,
-% if so, it adds a small circle ('watermark') to the plot
+% If a frame is approved, a small circle ('watermark') is added to the plot
 % as a flag to the user.   
 if p.CurrentFrameApprovedFlag
     offset=5;
-    for i = 1:size(mywatermark,1)
-        for j = 1:size(mywatermark,2)
-            if mywatermark(i,j,2)>0
+    for i = 1:size(p.mywatermark,1)
+        for j = 1:size(p.mywatermark,2)
+            if p.mywatermark(i,j,2)>0
                 theimg(i+offset,j+offset,2) = 1;
             end
         end
     end
-    
-    % Old way of doing it:
-    %{
-    figure(ourfig);
-    hold on
-    h=imshow(mywatermark);
-    set(h, 'AlphaData', mywatermark(:,:,2));
-    hold off;
-    %}
     
 end

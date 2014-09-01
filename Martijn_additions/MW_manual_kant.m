@@ -57,7 +57,7 @@ while ~done
             Lshow = PN_imshowlabel(p,Lout,rect,L_prec,rect_prec,'phaseImage',phsub);
             Lshow = imresize_old(Lshow,res);
                        
-            imshow(Lshow);            
+            imshow(Lshow);
         else
              DJK_imshowlabel(imresize_old(p,Lout,res),'phaseImage',imresize_old(phsub,res));
         end
@@ -79,15 +79,20 @@ while ~done
         %get(ourfig,'Position')
         %stop3=toc
         if assistedCorrection && ~isempty(L_prec)
+                              
+            % (Note that this is the default case with current Excel
+            % file function inputs.) MW 2014/09/01
+            
             Lshow = PN_imshowlabel(p,Lout,rect,L_prec,rect_prec,'phaseImage',phsub); %slow step 0.45sec! (NW 2012-05-10)
             %stop4a=toc %PN_imshow.. is slow step (0.45 sec)
+            
             Lshow = imresize_old(Lshow,res);
+            
             %stop5a=toc
             figure(ourfig) % NW2012-05-10
             %clf reset;% NW2012-05-10
-                                       
-            imshow(Lshow,'InitialMagnification','fit');
-            
+                               
+            imshow(Lshow,'InitialMagnification','fit');           
             
             %stop6a=toc
         else

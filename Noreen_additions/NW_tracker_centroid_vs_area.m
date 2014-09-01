@@ -71,17 +71,18 @@ function p = NW_tracker_centroid_vs_area(p, varargin)
 %--------------------------------------------------------------------------
 
 % CONSTANTS THAT ARE SET IN THE FUNCTION BELOW-----------------------------
-% TODO: move setting these constants to this point. (Something to be done
-% in general. MW - 2014/09/01).
-% 
-% cutoff_Area
-% cutoff_Displacement
-% normalAreaChangeDiv
-% normalDisplacementDiv
-% normalAreaChangeNonDiv
-% normalDisplacementNonDiv
-% 
-% (See below for more information.)
+% ******** ADJUST PARAMETERS ************************************************ 
+CUTOFFAREA=200; % which area change is suspicious?
+CUTOFFDISPLACEMENT=15; % which displacement (of non-dividing cells) is suspicious?
+% weighing parameters for cost functions:
+% -- if e.g. normalAreaChange=100 and
+% normalDisplacement(centroid<->area)=20, then a total area increase of
+% 100px at a track link has the same penalty as a total displacement of 20px.
+NORMALAREACHANGEDIV=100; %(px) % 2x cell area growth
+NORMALDISPLACEMENTDIV=20; %(px) % 3x displacement of centroid<->area !
+NORMALAREACHANGENONDIV=100; %(px)
+NORMALDISPLACEMENTNONDIV=20; %(px) 
+% ***************************************************************************
 %--------------------------------------------------------------------------
 % Input error checking
 %--------------------------------------------------------------------------
@@ -610,19 +611,6 @@ for count = 2:length(p.manualRange);
 %     Try relinking the non-dividing cells
 
 
-% ******** ADJUST PARAMETERS ************************************************ 
-cutoff_Area=200; % which area change is suspicious?
-cutoff_Displacement=15; % which displacement (of non-dividing cells) is suspicious?
-% weighing parameters for cost functions:
-% -- if e.g. normalAreaChange=100 and
-% normalDisplacement(centroid<->area)=20, then a total area increase of
-% 100px at a track link has the same penalty as a total displacement of 20px.
-normalAreaChangeDiv=100; %(px) % 2x cell area growth
-normalDisplacementDiv=20; %(px) % 3x displacement of centroid<->area !
-normalAreaChangeNonDiv=100; %(px)
-normalDisplacementNonDiv=20; %(px) 
-% ***************************************************************************
-
 % *****************************************************************************************
 % *************** STRANGE DIVISIONS **************
 % *****************************************************************************************
@@ -667,7 +655,7 @@ end
 clear cellno_yest
 deltaArea=allareas_trackedtotoday-allareasyesterday;
 %find yesterday cells with strange change in area (e.g.: >150px,<-150px)
-yestcellsStrangeArea=find(abs(deltaArea)>=cutoff_Area); %-> yest cell nrs with strange area change
+yestcellsStrangeArea=find(abs(deltaArea)>=CUTOFFAREA); %-> yest cell nrs with strange area change
 
 % -----------------------------------------------------
 % Find Strangely Moving Cells (Displacement (centroid-centroid [not area]))
@@ -699,7 +687,7 @@ dummy=(allcentroids_trackedtotoday-allcentroidsyesterday);
 deltaDisplacement=sqrt(dummy(:,1).^2+dummy(:,2).^2);
 %find yesterday cells with strange movement (e.g.: >30px)
 % still includes div & non-div cells
-yestcellsStrangeDisplacement=find(deltaDisplacement>=cutoff_Displacement); %-> yest cell nrs with strange area change
+yestcellsStrangeDisplacement=find(deltaDisplacement>=CUTOFFDISPLACEMENT); %-> yest cell nrs with strange area change
 
 % --------------------------------------------------
 % ------- combine strange yest. cells and separate into div/non-div cells ---
@@ -738,8 +726,8 @@ if ~isempty(yestcellsStrange_Area_or_Displacement)
             % Divions event is weight stronger
             % ******************
         mycostfunction = @ (deltaarea1, deltaarea2, deltadist1, deltadist2, deltadist3) ...
-            (deltaarea1 + deltaarea2)/normalAreaChangeDiv + (deltadist1+deltadist2+deltadist3)/normalDisplacementDiv+ ...
-            + deltaarea2/normalAreaChangeNonDiv *10 + (deltadist2+deltadist3)/normalDisplacementNonDiv *10; %overemphasize divsion event
+            (deltaarea1 + deltaarea2)/NORMALAREACHANGEDIV + (deltadist1+deltadist2+deltadist3)/NORMALDISPLACEMENTDIV+ ...
+            + deltaarea2/NORMALAREACHANGENONDIV *10 + (deltadist2+deltadist3)/NORMALDISPLACEMENTNONDIV *10; %overemphasize divsion event
         
         % input: all area changes (2), all displacements (3)
         % output: cost of tracking connection
@@ -821,7 +809,7 @@ if ~isempty(yestcellsStrange_Area_or_Displacement)
                         idxdivDE=find(alltoday~=newtodaycellno_nondiv);
                         newtodaycellno_div=alltoday(idxdivDE);
                         fprintf([' \n Found suspicious cell division with large change in area (cutoff ' ...
-                            num2str(cutoff_Area) ' px): '])
+                            num2str(CUTOFFAREA) ' px): '])
                         fprintf([' \n corrected ' num2str(y1) ' 0 0 ' num2str(t1)])
                         fprintf([' \n           ' num2str(y1) ' 0 0 ' num2str(t2)])
                         fprintf([' \n           ' num2str(y2) ' 0 0 ' num2str(t3)])
@@ -849,7 +837,7 @@ if ~isempty(yestcellsStrange_Area_or_Displacement)
                 % report , if no correction happened
                 if CellsCorrected==0
                     fprintf([' \n Found suspicious cell division with large change in area (cutoff ' ...
-                        num2str(cutoff_Area) ' px): ' num2str(y1) ...
+                        num2str(CUTOFFAREA) ' px): ' num2str(y1) ...
                         ' -> ' num2str(t1) ' & ' num2str(t2) '. \n Did not correct for it because was ' ...
                         'optimal in cost function'])
                 end
@@ -905,7 +893,7 @@ end % if ~isempty(strange general)
         clear cellno_yest
         deltaArea=allareas_trackedtotoday-allareasyesterday;
         %find yesterday cells with strange change in area (e.g.: >150px,<-150px)
-        yestcellsStrangeArea=find(abs(deltaArea)>=cutoff_Area); %-> yest cell nrs with strange area change
+        yestcellsStrangeArea=find(abs(deltaArea)>=CUTOFFAREA); %-> yest cell nrs with strange area change
 
         % find non-dividing(!) yesterday cells which have strange change in area
         % unnecessary here? [NW 2014-05]
@@ -945,7 +933,7 @@ dummy=(allcentroids_trackedtotoday-allcentroidsyesterday);
 deltaDisplacement=sqrt(dummy(:,1).^2+dummy(:,2).^2);
 %find yesterday cells with strange movement (e.g.: >30px)
 % still includes div & non-div cells
-yestcellsStrangeDisplacement=find(deltaDisplacement>=cutoff_Displacement); %-> yest cell nrs with strange area change
+yestcellsStrangeDisplacement=find(deltaDisplacement>=CUTOFFDISPLACEMENT); %-> yest cell nrs with strange area change
 
 % % 1) if yesterday centroid vector doesn't exist, create it
 %if ~exist('allcentroidsyesterday')
@@ -1014,8 +1002,8 @@ if ~isempty(yestcellsStrange_Area_or_Displacement)
             % retrack
             % ******************
             mycostfunction = @ (deltaarea1, deltaarea2, deltadist1, deltadist2) ...
-               (deltaarea1 + deltaarea2)/normalAreaChangeNonDiv + (deltadist1+deltadist2)/normalDisplacementNonDiv ...
-                + deltaarea1/normalAreaChangeNonDiv *3 + deltadist1/normalDisplacementNonDiv *3; %overemphasize y1 cell (*3)    
+               (deltaarea1 + deltaarea2)/NORMALAREACHANGENONDIV + (deltadist1+deltadist2)/NORMALDISPLACEMENTNONDIV ...
+                + deltaarea1/NORMALAREACHANGENONDIV *3 + deltadist1/NORMALDISPLACEMENTNONDIV *3; %overemphasize y1 cell (*3)    
            %+ deltadist1/normalDisplacementNonDiv *10; %overemphasize dist y1 cell (*10)
                
            
@@ -1091,7 +1079,7 @@ if ~isempty(yestcellsStrange_Area_or_Displacement)
                             idxt=find(alltoday~=newtodaycellno_1);
                             newtodaycellno_2=alltoday(idxt);
                             fprintf([' \n Found suspicious change in cell area (>' ...
-                                num2str(cutoff_Area) ' px) or displacement (>' num2str(cutoff_Displacement) ...
+                                num2str(CUTOFFAREA) ' px) or displacement (>' num2str(CUTOFFDISPLACEMENT) ...
                                  ' px) : '])
                             fprintf([' \n corrected ' num2str(y1) ' 0 0 ' num2str(t1)])
                             fprintf([' \n           ' num2str(y2) ' 0 0 ' num2str(t2)])
@@ -1120,7 +1108,7 @@ if ~isempty(yestcellsStrange_Area_or_Displacement)
                     % if cell was not corrected, report this:
                     if CellsCorrected==0 & ~isempty(idx_y2cell)
                         fprintf([' \n Found suspicious change in cell area (>' ...
-                                num2str(cutoff_Area) ' px) or displacement (>' num2str(cutoff_Displacement) ...
+                                num2str(CUTOFFAREA) ' px) or displacement (>' num2str(CUTOFFDISPLACEMENT) ...
                                 ' px): ' num2str(y1) ...
                                 ' -> ' num2str(t1) '. \n Did not correct for it because was ' ...
                                 'optimal in cost function'])

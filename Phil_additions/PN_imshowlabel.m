@@ -12,6 +12,15 @@
 %
 % REQUIRED ARGUMENTS:
 % 'L'                 seg image
+% 'rect'              [MW: I'm suspecting this is the recteangle defining
+%                     the location of the selected area from the ph image]
+% 'Lp'                [MW: I'm suspecting this is the L from previous
+%                     frame]
+% 'rectp'             [MW: I'm suspecting this is idem to rect, but from
+%                     from previous frame.]
+% %% MW 2014/08/29 - TODO: I'm not sure whether these descriptions are
+% %%                 correct.
+%
 %
 % OPTIONAL ARGUMENTS:
 % 'phaseImage'        phase image of same size as seg, will be shown as
@@ -20,13 +29,15 @@
 % TODO: 'recalcCellNumbers' array for which region properties have to be
 %                     recalculated because cell was updated. default: all
 %                     cells. taking fewer cells will speed up process
-
+%
+%
+%
+% function outim = PN_imshowlabel(L,rect,Lp,rectp,varargin)
 
 % elapsed time for frame 444 in 2012-05-08. 390 cells
 
 
-function outim = PN_imshowlabel(L,rect,Lp,rectp,varargin)
-global whitelist mywatermark currentFrameNo; % MW
+function outim = PN_imshowlabel(p,L,rect,Lp,rectp,varargin)
 
 %--------------------------------------------------------------------------
 % Input error checking and parsing
@@ -34,10 +45,10 @@ global whitelist mywatermark currentFrameNo; % MW
 % Settings
 fractionbelowwhite = 0.2; % cells which are a fraction of <fractionbelowwhite>
                          % smaller than the median are marked white.
-numRequiredArgs = 4; functionName = 'PN_imshowlabel'; p_internal = struct;
+numRequiredArgs = 5; functionName = 'PN_imshowlabel'; p_internal = struct;
 
 if (nargin < numRequiredArgs) | (mod(nargin,2) ~= (mod(numRequiredArgs,2)))
-    errorMessage = sprintf('%s\n%s',['Error width input arguments of ' functionName],['Try "help ' functionName '".']);
+    errorMessage = sprintf('%s\n%s',['Error with input arguments of ' functionName],['Try "help ' functionName '".']);
     error(errorMessage);
 end
 
@@ -154,7 +165,7 @@ L2(logical(imdilate(imcentroids,strel('square',2)))) = 0; % costs 0.017 sec
 Lrgb = ind2rgb(L2,mymap); % costs 0.04 sec
 
 % Edit MW - adds green marker if framenr is in whitelist.
-Lrgb = MW_stampit(Lrgb,currentFrameNo);
+Lrgb = MW_stampit(Lrgb,p);
 
 % elapsed time: 0.40
 %stop3=toc

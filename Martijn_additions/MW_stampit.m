@@ -1,4 +1,4 @@
-function theimg = MW_stampit(theimg,framenr)
+function theimg = MW_stampit(theimg,p)
 %
 %
 % Function to show user which frames have already been approved. It will
@@ -17,7 +17,7 @@ global whitelist mywatermark; % MW
 % This checks whether the frame is on the whitelist,
 % if so, it adds a small circle ('watermark') to the plot
 % as a flag to the user.   
-if(ismember(framenr,whitelist))
+if p.CurrentFrameApprovedFlag
     offset=5;
     for i = 1:size(mywatermark,1)
         for j = 1:size(mywatermark,2)

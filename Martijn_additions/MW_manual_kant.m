@@ -12,7 +12,7 @@ function  [Lout,OKorNot,quit_now,dontsave,addtolist,crop_pop,newrect,savetemp,ba
 
 iptsetpref('imshowborder','tight');
 backwards = 0;
-global pos Limage ourfig res pp phfig whitelist mywatermark currentFrameNo
+global pos Limage ourfig res pp phfig
 
 %set(phfig,'Visible', 'on') % ugly way to force phase image away from foreground during computation time NW2012-10-05
 
@@ -54,13 +54,12 @@ while ~done
         clf reset;
     
         if assistedCorrection && ~isempty(L_prec)
-            % currentFrameNo needs to be set for PN_imshowlabel to work -MW
-            Lshow = PN_imshowlabel(Lout,rect,L_prec,rect_prec,'phaseImage',phsub);
+            Lshow = PN_imshowlabel(p,Lout,rect,L_prec,rect_prec,'phaseImage',phsub);
             Lshow = imresize_old(Lshow,res);
                        
             imshow(Lshow);            
         else
-             DJK_imshowlabel(imresize_old(Lout,res),'phaseImage',imresize_old(phsub,res));
+             DJK_imshowlabel(imresize_old(p,Lout,res),'phaseImage',imresize_old(phsub,res));
         end
     
         pos11 = get(phfig,'position'); % current position
@@ -80,7 +79,7 @@ while ~done
         %get(ourfig,'Position')
         %stop3=toc
         if assistedCorrection && ~isempty(L_prec)
-            Lshow = PN_imshowlabel(Lout,rect,L_prec,rect_prec,'phaseImage',phsub); %slow step 0.45sec! (NW 2012-05-10)
+            Lshow = PN_imshowlabel(p,Lout,rect,L_prec,rect_prec,'phaseImage',phsub); %slow step 0.45sec! (NW 2012-05-10)
             %stop4a=toc %PN_imshow.. is slow step (0.45 sec)
             Lshow = imresize_old(Lshow,res);
             %stop5a=toc
@@ -93,11 +92,7 @@ while ~done
             %stop6a=toc
         else
             clf reset; %NW2012-05-10
-             % MW - REMOVE THIS WATERMARK CODE
-             % Decide whether to use watermark (do if frame approved)
-             % watermarkyesno=inlist(whitelist,currentFrameNo);
-             % Show image with cells and color overlay
-             DJK_imshowlabel(imresize_old(Lout,res),'phaseImage',imresize_old(phsub,res)); %slow step 0.2sec! (NW 2012-05-10)
+             DJK_imshowlabel(p,imresize_old(Lout,res),'phaseImage',imresize_old(phsub,res)); %slow step 0.2sec! (NW 2012-05-10)
              set(ourfig, 'position', pos11); % DJK 090117 % a little awkward to redo, but should only affect first image
             %stop4b=toc
         end

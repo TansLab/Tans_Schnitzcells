@@ -128,9 +128,8 @@ disp('              press ''u'' to go back one step (possible once).')
 disp(' ')
 
 quit_now=0;
-global pos Limage ourfig res pp phfig whitelist mywatermark currentFrameNo% flfig % DJK 071206
-    % whitelist added by MW 7-3-2014
-
+global pos Limage ourfig res pp phfig% flfig % DJK 071206
+    
 ourfig = figure;
 phfig  = figure;
 % flfig  = figure; % former version: fluor picture
@@ -148,11 +147,12 @@ end
 D = dir([p.segmentationDir, p.outprefix, '*.mat']);
 [s,I] = sort({D.name}');
 D = D(I);
-numpos= findstr(D(1).name, '.mat')-3;
+numposStart= length(p.outprefix)+1; % MW handle any length fr nrs, 2014/09/01
+numposEnd  = findstr(D(1).name, '.mat')-1; % MW handle any length fr nrs, 2014/09/01
 if ~existfield(p,'manualRange')
     % p.manualRange=1:length(dir([p.segmentationDir, p.outprefix, '*.mat']));
     segNameStrings = char(s);
-    p.manualRange = str2num(segNameStrings(:,numpos:numpos+2))';
+    p.manualRange = str2num(segNameStrings(:,numposStart:numposEnd))';
 end
 
 if existfield(p,'override')~=1
@@ -222,19 +222,7 @@ maxValidImageSize=myScreenSize(3:4)-[150,150]; % empirical
 
 % Load the watermark
 % Note that only the green channel is used, and only binary form.
-mywatermark=imread('watermark.png');
-
-% loading of whitelist
-
-% if file w. list found, load
-if exist([p.movieDir,'whitelist.mat'])==2
-    load([p.movieDir,'whitelist.mat'],'whitelist');
-else
-    whitelist = [];
-end
-
-whitelist
-% end edit by MW
+p.mywatermark=imread('watermark.png');
 
 backwards = 0;
 gotoframenum=0;
@@ -278,8 +266,10 @@ while loopindex <= length(p.manualRange);
         
         if exist('Lc')==1
             LNsub=Lc;
-        end
-        
+            p.CurrentFrameApprovedFlag = 1; % Addition MW 2014/09/01
+        else
+            p.CurrentFrameApprovedFlag = 0; % Addition MW 2014/09/01
+        end       
         
         %----------------------------------------------------------------------
         % Show Phase Image
@@ -328,30 +318,7 @@ while loopindex <= length(p.manualRange);
       
         % ******************************************************
         % here in former versions a fluor image was displayed
-        % ******************************************************
-                
-        % addition by MW // 6-3-2014 -- displays cross on rejected
-        % frames
-        
-%         HAS BEEN MOVED TO PN_imshowlabel
-        
-        % if on blacklist, then let user know (by adding cross)
-%         if (inlist(whitelist,i) == 0)
-%             % whitelist
-%             % 
-%              disp(['badly segmented frame (i=' str3(i) ')'])
-% %              [MWcolor,MWoverlay] = approval_mask(g_resized,0);
-% %              hold on            
-%              % gcf
-%              % ourfig
-% %              ourfig = imshow(MWcolor);
-% %              set(ourfig, 'AlphaData', MWoverlay);
-% %              hold on
-%              currentname = get(gcf,'name');
-%              set(gcf,'name',[currentname,' -- in APPROVED list']);
-%         end
-        % end addition MW
-        
+        % ******************************************************       
         is_done=0;
         savelist=['''Lc'''];
         crop_pop=0;
@@ -366,7 +333,6 @@ while loopindex <= length(p.manualRange);
         while ~is_done
            
             % This executes the function that asks for keyboard input.
-            currentFrameNo = i; % Passes current frame number to subfunctions (required MW_stampit.m)
             [Lc,is_done,quit_now,dontsave,addtolist,crop_pop,newrect,savetemp,backwards,gotoframenum,DJK_settings] = ...
                 MW_manual_kant(p, LNsub, L_prec, g, rect,rect_prec,phsub, DJK_settings,p.assistedCorrection);
             
@@ -390,12 +356,10 @@ while loopindex <= length(p.manualRange);
                 % if ishandle(flfig), close(flfig); end
                 clear global pos Limage ourfig res pp phfig;
                 
-                % Edit by MW - 7-3-2014, shows whitelist of frames
-                if (exist('whitelist') & ~isempty(whitelist))
-                    whitelist=sort(whitelist);
-                    save([p.movieDir,'whitelist.mat'],'whitelist');
-                    disp(['whitelist=' mat2str(whitelist)])
-                end
+                % Edit by MW - 01-09-2014, shows list approved framenrs
+                % ("whitelist")
+                whitelist = MW_printapprovedframes(p);                
+                disp(['whitelist=' mat2str(whitelist)])               
                 
                 return;
             end;
@@ -461,54 +425,15 @@ while loopindex <= length(p.manualRange);
         p.finetuneimage = DJK_settings.finetuneimage; p.figs = DJK_settings.figs; p.fill_cut = DJK_settings.fill_cut;
         
         if ~dontsave,
+            
             tempsegcorrect=0;
             eval(['save(''',name,''',',savelist,',''tempsegcorrect'',''-append'');']);
             disp(['Updated file ',name(outl:end),'   # of cells: ',num2str(max2(Lc))]);
             
-            % MW edit 7-3-2014 - if we save (==approve) the frame, add it 
-            % to the whitelist.
-            if (isempty(find(whitelist==i)) == 1)                
-                whitelist=[whitelist,i];
-            end
-            
-        elseif addtolist
-            
-            % MW edit 6-3-2014
-            %
-            % Whitelist is list of approved frames (TODO: this might be
-            % a redundant function).
-            %
-            % This code mostly serves to remove frames from the whitelist,
-            % because frames are also added to the whitelist when the 
-            % spacebar is pressed.
-
-            % Note that list is loaded at initialization of this function
-            whitelist
-            
-            % if list doesn't exist, make
-            %if exist('whitelist')~=1
-            %    whitelist=[];
-            %end
-            
-            % Add this frame to list if wasn't already there
-            if (isempty(find(whitelist==i)) == 1)                
-                whitelist=[whitelist,i];
-                disp(['Added frame ',name(outl:end),' to whitelist.']);
-            else
-                % Otherwise remove it from the list
-                whitelist = whitelist(whitelist~=i);
-                disp(['Removed frame ',name(outl:end),' from whitelist.']);
-            end
-            
-            % and save list
-            % TODO: one could also only do this when the loop is exited.
-            save([p.movieDir,'whitelist.mat'],'whitelist');            
-            
-            % show list to user
-            whitelist
-            
         else
+            
             disp(['Skipped file ',name(outl:end),' <--']);
+            
         end;
     end
     if backwards~=2
@@ -525,14 +450,7 @@ while loopindex <= length(p.manualRange);
     end
     
 end;
-
-% Edit by MW - 7-3-2014, shows whitelist of frames
-if (exist('whitelist') & ~isempty(whitelist))
-    whitelist=sort(whitelist);
-    save([p.movieDir,'whitelist.mat'],'whitelist');
-    disp(['whitelist=' mat2str(whitelist)])
-end
-    
+   
 close(phfig); close(ourfig); end
 
 

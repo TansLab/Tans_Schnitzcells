@@ -13,14 +13,13 @@
 % 'randomize' = 0     no randomizing of colormap (default:1)
 %
 
-function outim = DJK_imshowlabel(L,varargin);
-global whitelist mywatermark currentFrameNo; % MW
+function outim = DJK_imshowlabel(p,L,varargin);
 
 %--------------------------------------------------------------------------
 % Input error checking and parsing
 %--------------------------------------------------------------------------
 % Settings
-numRequiredArgs = 1; functionName = 'DJK_imshowlabel'; p_internal = struct;
+numRequiredArgs = 2; functionName = 'DJK_imshowlabel'; p_internal = struct;
 
 if (nargin < numRequiredArgs) | (mod(nargin,2) ~= (mod(numRequiredArgs,2)))
   errorMessage = sprintf('%s\n%s',['Error with input arguments of ' functionName],['Try "help ' functionName '".']);
@@ -101,7 +100,7 @@ else
   outim = L2;
   
   % Edit MW - adds green marker if framenr is in whitelist.
-  outim = MW_stampit(outim,currentFrameNo);    
+  outim = MW_stampit(outim,p);    
 
   
 end

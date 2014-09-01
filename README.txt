@@ -83,7 +83,12 @@ THE L STRUCTURE
 
 The "L" structure contains the segmented bacteria. This is simply a N * M matrix with zeros with each area that comprises a bacteria marked by a unique number that is not zero. N * M equals the pixel size of the picture.
 
-
+L matrices are stored in \posXcrop\segmentation\posYcropsegZZZ.mat. These files contain a few matrices. 
+- phsub     This contains the orginal phase ("ph") contrast image that was taken.
+- LNsub     This contains the uncorrected segmented image.
+- Lc        This contains the corrected segmented image.
+Note that if Lc exists in the .m file, this means that the image has been corrected. 
+See MW_illustrative_plotting_L_matrices.m for an example where these matrices are plotted. 
 
 ____________________________________________________________
 PART X

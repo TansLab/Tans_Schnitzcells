@@ -25,10 +25,10 @@ if exist(pname)==2,
     end;
     
     
-    % ST 4/10/05:
-    if isfield(iminfo,'Software'),
+    % Read Software
+    if isfield(iminfo,'Software'),  %(metamorph/metaseries: orig images)
         software = iminfo.Software;
-    elseif ~isempty(descrip) %DE 2013/11/05
+    elseif ~isempty(descrip) %DE 2013/11/05 (for micromanager: orig&crop, for metamorph/metaseries: crop images)
         descrip = iminfo.ImageDescription;
         ps1=(strfind(descrip,'Software: '))+length('Software: ');
         software = descrip(ps1:end);
@@ -37,10 +37,18 @@ if exist(pname)==2,
     end;
     
     
-    
-    if isfield(iminfo,'DateTime'),
+    % Read Acquisition Date
+    if isfield(iminfo,'DateTime'),  %(metamorph/metaseries: orig images)
         datetime = iminfo.DateTime;
-    elseif ~isempty(strfind(descrip,'DateTime')) %DE 2013/11/05
+    elseif ~isempty(strfind(descrip,'DateTime')) & strmatch('MetaMorph',software)   % (metamorph 7.1: crop images)
+        ps2=(strfind(descrip,'DateTime: '))+length('DateTime: ');
+        datetime = descrip(ps2:ps2+18); %to be tested! NW 2014-11
+        
+    elseif ~isempty(strfind(descrip,'DateTime')) & strmatch('MetaSeries',software)   % (metamorph 7.8 (=metaseries): crop images)
+        ps2=(strfind(descrip,'DateTime: '))+length('DateTime: ');
+        datetime = descrip(ps2:ps2+20);
+    
+    elseif ~isempty(strfind(descrip,'DateTime')) %DE 2013/11/05  (micromanager and hopefully no other cases)
          ps2=(strfind(descrip,'DateTime: '))+length('DateTime: ');
          datetime=descrip(ps2:ps2+18);
          
@@ -87,7 +95,7 @@ if isempty(descrip),
     cube=-1;
     return;
 end;
-if strmatch('Image-Pro',software)
+if strmatch('Image-Pro',software)   % unused software in Amolf
     exptimepos = findstr('Exptime=',descrip) + length('Exptime=');
     exptime = sscanf(descrip(exptimepos:end),'%f');
     exptimestr = num2str(exptime);
@@ -108,14 +116,14 @@ if strmatch('Image-Pro',software)
     minute = str2num(timestr(4:5));
     second = str2num(timestr(7:8));
 
-elseif strmatch('MetaMorph',software)     %%%%%%%%%%%%%%%ADDED SJT
+elseif strmatch('MetaMorph',software)     % old Metamorph version 7.1. Used at Amolf until 2014-10 
     exptimepos = findstr('Exposure: ',descrip) + length('Exposure: ');
     exptime = sscanf(descrip(exptimepos:end),'%f');
     exptimestr = num2str(exptime);
     %     cubestrpos = findstr('Cube=',descrip) + length('Cube=');
     %     cube = sscanf(descrip(cubestrpos:end),'%d');
 
-    datestr = datetime(1:10);
+    datestr = datetime(1:10);   % example: 2013:12:14
     timestr = datetime(12:19);
 
     year = str2num(datestr(1:4));
@@ -125,23 +133,42 @@ elseif strmatch('MetaMorph',software)     %%%%%%%%%%%%%%%ADDED SJT
     hour = str2num(timestr(1:2));
     minute = str2num(timestr(4:5));
     second = str2num(timestr(7:8));
-elseif strmatch('Exposure:',descrip)     %%%%%%%%%%%%%%%ADDED SJT not so nice..if can not add extra fields
+    
+elseif strmatch('MetaSeries',software)      % new Metamorph version 7.8. Used at Amolf from 2014-10 on
     exptimepos = findstr('Exposure: ',descrip) + length('Exposure: ');
     exptime = sscanf(descrip(exptimepos:end),'%f');
     exptimestr = num2str(exptime);
-    datetimepos = findstr('DateTime: ',descrip) + length('DateTime: ');
-    datetimestr = descrip(datetimepos:end);
-    %datetimestr = num2str(datetime);    
-    datestr = datetimestr(1:10);
-    timestr = datetimestr(12:19);
-
+    
+    datestr = datetime(1:8);    % example: 20141111   (different in old metamorph)
+    timestr = datetime(10:end);  %
+    
     year = str2num(datestr(1:4));
-    month = str2num(datestr(6:7));
-    day = str2num(datestr(9:10));
+    month = str2num(datestr(5:6));
+    day = str2num(datestr(7:8));
 
     hour = str2num(timestr(1:2));
     minute = str2num(timestr(4:5));
-    second = str2num(timestr(7:8));
+    second = round(str2num(timestr(7:end)));    % round to full seconds (to adjust to older version)
+
+
+% below: useless? NW 2014-11
+%elseif strmatch('Exposure:',descrip)     %%%%%%%%%%%%%%%ADDED SJT not so nice..if can not add extra fields
+%    exptimepos = findstr('Exposure: ',descrip) + length('Exposure: ');
+%    exptime = sscanf(descrip(exptimepos:end),'%f');
+%    exptimestr = num2str(exptime);
+%    datetimepos = findstr('DateTime: ',descrip) + length('DateTime: ');
+%    datetimestr = descrip(datetimepos:end);
+%    %datetimestr = num2str(datetime);    
+%    datestr = datetimestr(1:10);
+%    timestr = datetimestr(12:19);
+
+%    year = str2num(datestr(1:4));
+%    month = str2num(datestr(6:7));
+%    day = str2num(datestr(9:10));
+
+%    hour = str2num(timestr(1:2));
+%    minute = str2num(timestr(4:5));
+%    second = str2num(timestr(7:8));
 %    keyboard;
 end
 
@@ -161,8 +188,8 @@ gainpos = strfind(descrip, 'Gain: Gain ') + length('Gain: Gain ');
 % EDITED -MW
 if isempty(gainpos)
     % Use high setting if not found.    
-    disp('can''t find gain setting -- using high');
-    gainstr = 'high';
+    disp('can''t find gain setting -- set to n/a'); %NW2014-11
+    gainstr = 'n/a';
 else
     
     % Mark beginning of gain value
@@ -178,8 +205,8 @@ else
             gainstr = 'high';        
         % Or otherwise not found
         otherwise,
-            disp('gain setting not recognized -- using high');
-            gainstr = 'high';
+            disp('gain setting not recognized -- set to n/a'); %NW2014-11
+            gainstr = 'set to n/a';
     end;
 end;
 

@@ -248,7 +248,11 @@ for branchNr = 1:length(branches)
   
   % alter branches
   branches(branchNr).schnitzNrs = branches(branchNr).schnitzNrs(min_idx(1):max_idx(end));
-  % if errormessage: 2 options (dependeing on error):
+  % This can lead to e.g. wrong time fields if a timefield with more
+  % entries (e.g. R_time) is cut to a time field with less entries (e.g.
+  % dR5_time)
+  % ***
+  % and: if errormessage: 2 options (dependeing on error):
   % - if one branch is too short, delete it out of the "branches"right
   % before this loop
   % - if fitTime(2) is too high (larger than framerange), rates will be one

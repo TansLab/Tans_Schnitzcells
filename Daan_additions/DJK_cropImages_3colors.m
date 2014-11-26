@@ -214,10 +214,26 @@ for fr = cropRange, % go over each frame
             if p.micromanager==1
             im_description=DE_adjustiminfo(p, DphaseRange(i).name);
             else
-                im_description = [im_info.ImageDescription 'DateTime: ' im_info.DateTime 'Software: ' im_info.Software];
+                % old version only allowed to add one extra field.
+               % im_description = [im_info.ImageDescription 'DateTime: ' im_info.DateTime 'Software: ' im_info.Software];
+                
+                % NW 2014-11. Add Date&Software info which are otherwise
+                % lost. Some weird matlab behaviour requires the extra
+                % fields to be converted to strings ('char' not enough!)
+                % first. Otherweise only the first field (Date) is stored
+                % in image info - yes even though the im_description
+                % contains both fields only the first field will be stored!
+                im_description = [im_info.ImageDescription];
+                extraInfo1=sprintf(['DateTime: ' im_info.DateTime]);
+                extraInfo2=sprintf([' Software: ' im_info.Software]);
+                im_description=[im_description extraInfo1 extraInfo2];
             end
         else
-            im_description = [im_info.ImageDescription 'DateTime: ' im_info.DateTime 'Software: ' im_info.Software];
+            % Add Date&Software info. Details see above.
+            im_description = [im_info.ImageDescription];
+            extraInfo1=sprintf(['DateTime: ' im_info.DateTime]);
+            extraInfo2=sprintf([' Software: ' im_info.Software]);
+            im_description=[im_description extraInfo1 extraInfo2];
         end
         
         % write image data
@@ -243,10 +259,18 @@ for fr = cropRange, % go over each frame
             if p.micromanager==1
             im_description=DE_adjustiminfo(p, Dfluor1Range(i).name);
             else
-                im_description = [im_info.ImageDescription 'DateTime: ' im_info.DateTime 'Software: ' im_info.Software];
+               % Add Date&Software info. Details see above.
+               im_description = [im_info.ImageDescription];
+               extraInfo1=sprintf(['DateTime: ' im_info.DateTime]);
+               extraInfo2=sprintf([' Software: ' im_info.Software]);
+               im_description=[im_description extraInfo1 extraInfo2];
             end
         else
-            im_description = [im_info.ImageDescription 'DateTime: ' im_info.DateTime 'Software: ' im_info.Software];
+              % Add Date&Software info. Details see above.
+               im_description = [im_info.ImageDescription];
+               extraInfo1=sprintf(['DateTime: ' im_info.DateTime]);
+               extraInfo2=sprintf([' Software: ' im_info.Software]);
+               im_description=[im_description extraInfo1 extraInfo2];
         end
     
         % write image data
@@ -270,10 +294,19 @@ for fr = cropRange, % go over each frame
             if p.micromanager==1
             im_description=DE_adjustiminfo(p, Dfluor2Range(i).name);
             else
-                im_description = [im_info.ImageDescription 'DateTime: ' im_info.DateTime 'Software: ' im_info.Software];
+                % Add Date&Software info. Details see above.
+               im_description = [im_info.ImageDescription];
+               extraInfo1=sprintf(['DateTime: ' im_info.DateTime]);
+                extraInfo2=sprintf([' Software: ' im_info.Software]);
+               im_description=[im_description extraInfo1 extraInfo2];
             end
         else
-            im_description = [im_info.ImageDescription 'DateTime: ' im_info.DateTime 'Software: ' im_info.Software];
+                           % Add Date&Software info. Details see above.
+               im_description = [im_info.ImageDescription];
+               extraInfo1=sprintf(['DateTime: ' im_info.DateTime]);
+                extraInfo2=sprintf([' Software: ' im_info.Software]);
+               im_description=[im_description extraInfo1 extraInfo2];
+     
         end
         
         % write image data
@@ -296,11 +329,21 @@ for fr = cropRange, % go over each frame
             if p.micromanager==1
                 im_description=DE_adjustiminfo(p, Dfluor3Range(i).name);
             else
-                im_description = [im_info.ImageDescription 'DateTime: ' im_info.DateTime 'Software: ' im_info.Software];
+               % Add Date&Software info. Details see above.
+               im_description = [im_info.ImageDescription];
+               extraInfo1=sprintf(['DateTime: ' im_info.DateTime]);
+                extraInfo2=sprintf([' Software: ' im_info.Software]);
+               im_description=[im_description extraInfo1 extraInfo2];
+     
             end
 
         else
-            im_description = [im_info.ImageDescription 'DateTime: ' im_info.DateTime 'Software: ' im_info.Software];
+               % Add Date&Software info. Details see above.
+               im_description = [im_info.ImageDescription];
+               extraInfo1=sprintf(['DateTime: ' im_info.DateTime]);
+                extraInfo2=sprintf([' Software: ' im_info.Software]);
+               im_description=[im_description extraInfo1 extraInfo2];
+     
         end
         
         % write image data

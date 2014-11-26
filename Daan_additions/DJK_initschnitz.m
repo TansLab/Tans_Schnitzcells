@@ -125,14 +125,24 @@ function p = DJK_initschnitz (movieName, movieDate, movieKind, varargin);
 %     micronsPerPixel Preferably set automatically via micromanager/camera.
 %                     Manual setting overwrites the automatic defaults
 %
-%     micromanager    1 : sets micronsPerPixel for setup2. default: 0
-%                     (setup1)
+%     The three parameters below will adjust some settings according to 
+%     your setup.
 %
-%     camera          'hamamatsu'. sets micronsPerPixel for setup1, new
-%                     hamamatsu camera (2014-11). Can be chosen as default
-%                     later on. Input 'camera' only relevant when
-%                     micromanger=1.
-%                     Default: 'unknown'
+%     setup           This allows you to let SchnitzCells know which setup
+%                     was used for measuring. Settings will be loaded
+%                     accordingly.
+%
+%     softwarePackage This allows you to select a software package, i.e.
+%                     'metamorph' or 'micromanager' in our case. If
+%                     setup=='setup1', 'metamorph' is chosen per default,
+%                     if setup=='setup2', micromanager' is chosen by
+%                     default.
+%
+%     camera          Important for the micronsPerPixel parameter.
+%                     Defualt is 'hamamatsu' when setup=='setup1', and
+%                     'unkown' when setup=='setup2'. According to camera
+%                     settings, the micronsperpixel will be chosen.
+%
 %                         
 % ----- some old or derived parameters below -----    
 %     
@@ -285,40 +295,60 @@ if numExtraArgs > 0
   end
 end
 
-% if camera is not set manually, set it now to 'unknown'
-if ~existfield(p,'camera')
-    p.camera='unknown';
-    pOrder.camera=0; % place holder for ordering
-end
-if strcmp(lower(p.camera),'unknown')==0 & strcmp(lower(p.camera),'hamamatsu')==0
-    disp('WARNING: Cannot recognize your camera specification! Will follow ''unknown'' specifications.')
+% MW 2014/11
+% if setup is not set manually, assume setup1 
+if ~existfield(p,'setup') 
+    p.setup='setup1';
+    disp('WARNING: no setup specified, will assume you used microscope 1!');
 end
 
+% if software package is not set manually, asume Metamorph (= setup1)
+% note there is also 'p.Software', which is actually the software version 
+% (This is a TODO.)
+if ~existfield(p,'softwarePackage') 
+    if strcmp(p.setup,'setup1')
+        p.softwarePackage='metamorph'; % default software for setup1
+    elseif strcomp(p.setup,'setup2') 
+        p.softwarePackage='micromanager'; % default software for setup2
+    else
+        p.softwarePackage='metamorph'; % default software in general
+    end
+    disp(['WARNING: no software Package (metamorph or micromanager) specified, will assume you used ' p.softwarePackage '!']);
+end
+
+% if camera is not set manually, set it now to hamamatsu (the setup1 new one from 2014/11)
+if ~existfield(p,'camera')
+    if strcomp(p.setup,'setup1')
+        p.camera='hamamatsu'; % default camera for setup1
+    elseif strcomp(p.setup,'setup2')
+        p.camera='unknown'; % default camera for setup2
+    else
+        p.camera='unknown'; % default camera in general
+    end
+    pOrder.camera=0; % place holder for ordering
+    disp(['WARNING: no camera defined, assuming ' p.camera ' !']);
+end
 
 % If micronsPerPixel has not been set manually, set it now.
+% Depends on setup.
 if ~existfield(p,'micronsPerPixel')
-    % if setup1 is used:
-    if ~existfield(p,'micromanager')
-        % if new hamamatsu camera is used (and old setup1)
-        if strcmp(lower(p.camera),'hamamatsu')==1
-            p.micronsPerPixel = 0.0438;
-        else %old CoolSnap camera (setup1)
-            p.micronsPerPixel = 0.04065;
-        end
-    else
-        if p.micromanager==1  %setup2 is used
-            p.micronsPerPixel = 0.04312;
-        else % micromanager field exists but is not=1 -> prob setup 1
-            if strcmp(lower(p.camera),'hamamatsu')==1
-                 p.micronsPerPixel = 0.0438;
-            else
-                 p.micronsPerPixel = 0.04065;
+    switch p.setup 
+        case 'setup1'
+            if strcomp(p.camera, 'hamamatsu')
+                % hamamatsu camera, setup 2
+                p.micronsPerPixel = 0.0438;
+            elseif strcomp(p.camera, 'coolsnap')
+                % CoolSnap camera, setup 1
+                p.micronsPerPixel = 0.04065;
             end
-            
-        end
+        case 'setup2'
+            % camera xxx, setup 2 (always same camera)
+            p.micronsPerPixel = 0.04312;
+        otherwise
+            error('Couldn''t set micronsPerPixel')
     end
     pOrder.micronsPerPixel = 0;
-end
+end 
 
 % If less than 3 fluorescence colours have been set, fill others with
 % 'none'                                                                 NW 11/12/02

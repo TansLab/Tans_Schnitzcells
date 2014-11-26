@@ -209,32 +209,27 @@ for fr = cropRange, % go over each frame
         % read iminfo
         im_info = imfinfo([p.imageDir DphaseRange(i).name]);
        
-        % this image info will be added to crop
-        if isfield(p,'micromanager')
-            if p.micromanager==1
+        % this image info will be added to crop        
+        if strcomp(p.softwarePackage, 'micromanager')
             im_description=DE_adjustiminfo(p, DphaseRange(i).name);
-            else
-                % old version only allowed to add one extra field.
-               % im_description = [im_info.ImageDescription 'DateTime: ' im_info.DateTime 'Software: ' im_info.Software];
-                
-                % NW 2014-11. Add Date&Software info which are otherwise
-                % lost. Some weird matlab behaviour requires the extra
-                % fields to be converted to strings ('char' not enough!)
-                % first. Otherweise only the first field (Date) is stored
-                % in image info - yes even though the im_description
-                % contains both fields only the first field will be stored!
-                im_description = [im_info.ImageDescription];
-                extraInfo1=sprintf(['DateTime: ' im_info.DateTime]);
-                extraInfo2=sprintf([' Software: ' im_info.Software]);
-                im_description=[im_description extraInfo1 extraInfo2];
-            end
-        else
-            % Add Date&Software info. Details see above.
+        elseif strcomp(p.softwarePackage, 'metamorph')
+            % old version only allowed to add one extra field.
+           % im_description = [im_info.ImageDescription 'DateTime: ' im_info.DateTime 'Software: ' im_info.Software];
+
+            % NW 2014-11. Add Date&Software info which are otherwise
+            % lost. Some weird matlab behaviour requires the extra
+            % fields to be converted to strings ('char' not enough!)
+            % first. Otherweise only the first field (Date) is stored
+            % in image info - yes even though the im_description
+            % contains both fields only the first field will be stored!
             im_description = [im_info.ImageDescription];
             extraInfo1=sprintf(['DateTime: ' im_info.DateTime]);
             extraInfo2=sprintf([' Software: ' im_info.Software]);
             im_description=[im_description extraInfo1 extraInfo2];
+        else
+            error('No software package was set in p.softwarePackage or not recognized.')
         end
+
         
         % write image data
         im_crop_filename = [cropDirImageDir regexprep(DphaseRange(i).name, p.movieName, p.cropName)];
@@ -255,23 +250,17 @@ for fr = cropRange, % go over each frame
 
         
          % this image info will be added to crop
-        if isfield(p,'micromanager')
-            if p.micromanager==1
+        if strcomp(p.softwarePackage,'micromanager')
             im_description=DE_adjustiminfo(p, Dfluor1Range(i).name);
-            else
+        elseif strcomp(p.softwarePackage,'metamorph')
                % Add Date&Software info. Details see above.
                im_description = [im_info.ImageDescription];
                extraInfo1=sprintf(['DateTime: ' im_info.DateTime]);
                extraInfo2=sprintf([' Software: ' im_info.Software]);
                im_description=[im_description extraInfo1 extraInfo2];
-            end
         else
-              % Add Date&Software info. Details see above.
-               im_description = [im_info.ImageDescription];
-               extraInfo1=sprintf(['DateTime: ' im_info.DateTime]);
-               extraInfo2=sprintf([' Software: ' im_info.Software]);
-               im_description=[im_description extraInfo1 extraInfo2];
-        end
+            error('No software package was set in p.softwarePackage or not recognized.')
+        end        
     
         % write image data
         im_crop_filename = [cropDirImageDir regexprep(Dfluor1Range(i).name, p.movieName, p.cropName)];
@@ -290,23 +279,16 @@ for fr = cropRange, % go over each frame
         im_info = imfinfo([p.imageDir Dfluor2Range(i).name]);
         
           % this image info will be added to crop
-        if isfield(p,'micromanager')
-            if p.micromanager==1
+        if strcomp(p.softwarePackage,'micromanager')
             im_description=DE_adjustiminfo(p, Dfluor2Range(i).name);
-            else
+        elseif strcomp(p.softwarePackage,'metamorph')
                 % Add Date&Software info. Details see above.
                im_description = [im_info.ImageDescription];
                extraInfo1=sprintf(['DateTime: ' im_info.DateTime]);
                 extraInfo2=sprintf([' Software: ' im_info.Software]);
                im_description=[im_description extraInfo1 extraInfo2];
-            end
         else
-                           % Add Date&Software info. Details see above.
-               im_description = [im_info.ImageDescription];
-               extraInfo1=sprintf(['DateTime: ' im_info.DateTime]);
-                extraInfo2=sprintf([' Software: ' im_info.Software]);
-               im_description=[im_description extraInfo1 extraInfo2];
-     
+            error('No software package was set in p.softwarePackage or not recognized.')
         end
         
         % write image data
@@ -325,26 +307,18 @@ for fr = cropRange, % go over each frame
         im_info = imfinfo([p.imageDir Dfluor3Range(i).name]);
         
          % this image info will be added to crop
-        if isfield(p,'micromanager')
-            if p.micromanager==1
+        if strcomp(p.softwarePackage,'micromanager')
                 im_description=DE_adjustiminfo(p, Dfluor3Range(i).name);
-            else
+        elseif strcomp(p.softwarePackage,'metamorph')
                % Add Date&Software info. Details see above.
                im_description = [im_info.ImageDescription];
                extraInfo1=sprintf(['DateTime: ' im_info.DateTime]);
                 extraInfo2=sprintf([' Software: ' im_info.Software]);
                im_description=[im_description extraInfo1 extraInfo2];
-     
-            end
-
         else
-               % Add Date&Software info. Details see above.
-               im_description = [im_info.ImageDescription];
-               extraInfo1=sprintf(['DateTime: ' im_info.DateTime]);
-                extraInfo2=sprintf([' Software: ' im_info.Software]);
-               im_description=[im_description extraInfo1 extraInfo2];
-     
+            error('No software package was set in p.softwarePackage or not recognized.')
         end
+
         
         % write image data
         im_crop_filename = [cropDirImageDir regexprep(Dfluor3Range(i).name, p.movieName, p.cropName)];

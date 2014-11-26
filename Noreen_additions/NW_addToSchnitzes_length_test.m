@@ -419,7 +419,7 @@ for i = 1:length(trackRange)
       % plot segmentation of cell
       %--------------------------------------------------------------------    
       subplot(2,3,4);
-      DJK_imshowlabel(Lc_cell,'randomize',0);
+      DJK_imshowlabel(p,Lc_cell,'randomize',0);
       
       %--------------------------------------------------------------------
       % plot rotated x & y

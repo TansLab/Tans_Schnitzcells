@@ -42,11 +42,16 @@ idx = find([stats.Area] > characSize*LONGFACTOR);  %suspicious cells
 % index of cells to be inspected.
 if length(stats)<MINCELLS
    idx = unique([idx find([stats.Area] > SUSPICIOUSSIZE)]);
+   
+   if isempty(idx) % this is to deal with the fact that unique([]) returns 
+                   % an empty 0-by-1 matrix, which will start loop below..
+                   % MW 2014/11
+       idx = [];
+   end
 end
 
-
 for ii = idx  %study the case of long cells individually
-    
+
     %extracts the subimage containing the long cell
     s = stats(ii);
     xb = ceil(s.BoundingBox(1));    yb = ceil(s.BoundingBox(2));

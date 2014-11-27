@@ -210,9 +210,9 @@ for fr = cropRange, % go over each frame
         im_info = imfinfo([p.imageDir DphaseRange(i).name]);
        
         % this image info will be added to crop        
-        if strcomp(p.softwarePackage, 'micromanager')
+        if strcmp(p.softwarePackage, 'micromanager')
             im_description=DE_adjustiminfo(p, DphaseRange(i).name);
-        elseif strcomp(p.softwarePackage, 'metamorph')
+        elseif strcmp(p.softwarePackage, 'metamorph')
             % old version only allowed to add one extra field.
            % im_description = [im_info.ImageDescription 'DateTime: ' im_info.DateTime 'Software: ' im_info.Software];
 
@@ -250,9 +250,9 @@ for fr = cropRange, % go over each frame
 
         
          % this image info will be added to crop
-        if strcomp(p.softwarePackage,'micromanager')
+        if strcmp(p.softwarePackage,'micromanager')
             im_description=DE_adjustiminfo(p, Dfluor1Range(i).name);
-        elseif strcomp(p.softwarePackage,'metamorph')
+        elseif strcmp(p.softwarePackage,'metamorph')
                % Add Date&Software info. Details see above.
                im_description = [im_info.ImageDescription];
                extraInfo1=sprintf(['DateTime: ' im_info.DateTime]);
@@ -279,9 +279,9 @@ for fr = cropRange, % go over each frame
         im_info = imfinfo([p.imageDir Dfluor2Range(i).name]);
         
           % this image info will be added to crop
-        if strcomp(p.softwarePackage,'micromanager')
+        if strcmp(p.softwarePackage,'micromanager')
             im_description=DE_adjustiminfo(p, Dfluor2Range(i).name);
-        elseif strcomp(p.softwarePackage,'metamorph')
+        elseif strcmp(p.softwarePackage,'metamorph')
                 % Add Date&Software info. Details see above.
                im_description = [im_info.ImageDescription];
                extraInfo1=sprintf(['DateTime: ' im_info.DateTime]);
@@ -307,9 +307,9 @@ for fr = cropRange, % go over each frame
         im_info = imfinfo([p.imageDir Dfluor3Range(i).name]);
         
          % this image info will be added to crop
-        if strcomp(p.softwarePackage,'micromanager')
+        if strcmp(p.softwarePackage,'micromanager')
                 im_description=DE_adjustiminfo(p, Dfluor3Range(i).name);
-        elseif strcomp(p.softwarePackage,'metamorph')
+        elseif strcmp(p.softwarePackage,'metamorph')
                % Add Date&Software info. Details see above.
                im_description = [im_info.ImageDescription];
                extraInfo1=sprintf(['DateTime: ' im_info.DateTime]);

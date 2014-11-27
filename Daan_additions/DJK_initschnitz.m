@@ -130,13 +130,20 @@ function p = DJK_initschnitz (movieName, movieDate, movieKind, varargin);
 %
 %     setup           This allows you to let SchnitzCells know which setup
 %                     was used for measuring. Settings will be loaded
-%                     accordingly.
+%                     accordingly. Also defaults for softwarePackage and
+%                     camera are adjusted accordingly.
 %
 %     softwarePackage This allows you to select a software package, i.e.
 %                     'metamorph' or 'micromanager' in our case. If
 %                     setup=='setup1', 'metamorph' is chosen per default,
 %                     if setup=='setup2', micromanager' is chosen by
 %                     default.
+%                     Note there is also a metadata parameter called 
+%                     'Software', which is loaded from the image
+%                     information (but this information can only be
+%                     extracted with knowledge of which softwarePackage was
+%                     used - since metadata is stored differently depending
+%                     on the package).
 %
 %     camera          Important for the micronsPerPixel parameter.
 %                     Defualt is 'hamamatsu' when setup=='setup1', and
@@ -290,7 +297,7 @@ if numExtraArgs > 0
     p.(fieldName) = varargin{i+1};
     % also need to append placeholder for any custom fields to pOrder structure
     if (~existfield(pOrder,fieldName))
-      pOrder.(fieldName) = 0;
+      pOrder.(fieldName) = 0; % place holder for ordering
     end
   end
 end
@@ -300,6 +307,7 @@ end
 if ~existfield(p,'setup') 
     p.setup='setup1';
     disp('WARNING: no setup specified, will assume you used microscope 1!');
+    pOrder.setup = 0; % place holder for ordering
 end
 
 % if software package is not set manually, asume Metamorph (= setup1)
@@ -314,13 +322,14 @@ if ~existfield(p,'softwarePackage')
         p.softwarePackage='metamorph'; % default software in general
     end
     disp(['WARNING: no software Package (metamorph or micromanager) specified, will assume you used ' p.softwarePackage '!']);
+    pOrder.softwarePackage = 0; % place holder for ordering
 end
 
 % if camera is not set manually, set it now to hamamatsu (the setup1 new one from 2014/11)
 if ~existfield(p,'camera')
-    if strcomp(p.setup,'setup1')
+    if strcmp(p.setup,'setup1')
         p.camera='hamamatsu'; % default camera for setup1
-    elseif strcomp(p.setup,'setup2')
+    elseif strcmp(p.setup,'setup2')
         p.camera='unknown'; % default camera for setup2
     else
         p.camera='unknown'; % default camera in general
@@ -332,12 +341,12 @@ end
 % If micronsPerPixel has not been set manually, set it now.
 % Depends on setup.
 if ~existfield(p,'micronsPerPixel')
-    switch p.setup 
+    switch p.setup  % default values depend on used camera
         case 'setup1'
-            if strcomp(p.camera, 'hamamatsu')
+            if strcmp(p.camera, 'hamamatsu')
                 % hamamatsu camera, setup 2
                 p.micronsPerPixel = 0.0438;
-            elseif strcomp(p.camera, 'coolsnap')
+            elseif strcmp(p.camera, 'coolsnap')
                 % CoolSnap camera, setup 1
                 p.micronsPerPixel = 0.04065;
             end

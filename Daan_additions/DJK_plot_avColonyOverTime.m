@@ -76,7 +76,7 @@ end
 %--------------------------------------------------------------------------
 % If explicit manualRange is not given, take all in schnitzcells
 if ~existfield(p,'manualRange')
-  p.manualRange = unique( [schnitzcells.frames] -1);
+  p.manualRange = unique( [schnitzcells.frame_nrs] ); % MW fix 2014/11
 end
 % If onScreen, nothing is saved to disc automatically
 if ~existfield(p,'onScreen')
@@ -178,8 +178,9 @@ for cell = 1:length(schnitzcells)
     % check whether cell has relevant data
     if length(schnitzcells(cell).(field)) > 0
       % loop over frames where cell lives
-      for age = 1:length(schnitzcells(cell).frames)
-        fr = schnitzcells(cell).frames(age)-1;
+      for age = 1:length(schnitzcells(cell).frame_nrs)
+          
+        fr = schnitzcells(cell).frame_nrs(age); % fix mw 2014/11
         i = find( p.manualRange == fr);
 
         if i

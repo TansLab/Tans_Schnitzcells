@@ -186,8 +186,29 @@ Lrgb = MW_stampit(Lrgb,p);
 % elapsed time: 0.40
 %stop3=toc
 if existfield(p, 'showPerim') && p.showPerim % show cell outlines        
-    % MW 2014/12
+    % MW 2014/12        
     
+    % Get phaseimg
+    phaseImg = double(p_internal.phaseImage);
+    phaseImg = DJK_scaleRange(phaseImg, [max(max(phaseImg)) min(min(phaseImg))], [0 1]);
+    phaseImg = (1-phaseImg); % negative
+    
+    % Make 3d phaseimg
+    outim=zeros([size(phaseImg),3]); % phase as base          
+    outim(:,:,1) = phaseImg;
+    outim(:,:,2) = phaseImg;
+    outim(:,:,3) = phaseImg;  
+    
+    % Get perimeter image
+    perimImg = bwperim(L).*L; % make outline image; *.L colors the perims
+    perimImg = ind2rgb(perimImg+1,mymap); % map indices to colours
+          
+    % Put perimeters in phase image
+    nonZeroIdx = find(perimImg>0);
+    outim(nonZeroIdx)=perimImg(nonZeroIdx);  
+
+    % IF YOU WANT WHITE LINES:
+    %{
     % Get phaseimg
     phaseImg = double(p_internal.phaseImage);
     phaseImg = DJK_scaleRange(phaseImg, [max(max(phaseImg)) min(min(phaseImg))], [0 1]);
@@ -200,21 +221,6 @@ if existfield(p, 'showPerim') && p.showPerim % show cell outlines
     outim = phaseImg;    % original phase
     nonZeroIdx = find(perimImg>0); % get perimeter indexes
     outim(nonZeroIdx)=1; % mark them in phase img
-    
-    %{
-    % One could also color it; but tricky since perims don't fully fall
-    % onto colored areas
-    perimImg = bwperim(L).*L; % make outline image; *.L colors the perims
-    perimImg = ind2rgb(perimImg,mymap);
-    
-    % Also requires phaseImg to be made 3d
-    outim=zeros([size(phaseImg),3]); % phase as base          
-    outim(:,:,1) = phaseImg;
-    outim(:,:,2) = phaseImg;
-    outim(:,:,3) = phaseImg;    
-    
-    nonZeroIdx = find(perimImg>0);
-    outim(nonZeroIdx)=perimImg(nonZeroIdx);    
     %}
     
 elseif addPhaseImage % costs 0.045 sec

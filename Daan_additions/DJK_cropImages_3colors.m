@@ -237,7 +237,7 @@ for fr = cropRange, % go over each frame
         disp(['Written: ' im_crop_filename]);
         %disp([ num2str(leftTop(2)) ':' num2str(rightBottom(2)) '-' num2str(leftTop(1)) ':' num2str(rightBottom(1))]);
     end
-    
+        
     %crop fluor images (if existent)
     for i = [1:length(Dfluor1Range)],  % go over each fluor1 image of this frame (NW 11/12/02)
         

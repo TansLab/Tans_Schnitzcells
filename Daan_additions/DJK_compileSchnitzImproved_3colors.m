@@ -63,7 +63,8 @@ if ~existfield(p,'lineageName')
   p.lineageName = [p.tracksDir,p.movieName,'_lin.mat'];
 end
 if ~existfield(p,'micronsPerPixel')
-  p.micronsPerPixel = 0.04065;
+  p.micronsPerPixel = 0.04065; % CoolSnap camera, setup 1
+  disp('WARNING: p.micronsPerPixel was not set. Assuming CoolSnap camera, setup 1.');
 end
 if ~existfield(p,'cropLeftTop')
   disp('Warning! p.cropLeftTop not set');

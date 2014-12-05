@@ -149,6 +149,8 @@ function p = DJK_initschnitz (movieName, movieDate, movieKind, varargin);
 %                     Defualt is 'hamamatsu' when setup=='setup1', and
 %                     'unkown' when setup=='setup2'. According to camera
 %                     settings, the micronsperpixel will be chosen.
+%                     For setup1, available cameras are coolsnap (oldest one) 
+%                     and hamamatsu (the new one per 2014/12). 
 %
 %                         
 % ----- some old or derived parameters below -----    
@@ -330,7 +332,7 @@ if ~existfield(p,'camera')
     if strcmp(p.setup,'setup1')
         p.camera='hamamatsu'; % default camera for setup1
     elseif strcmp(p.setup,'setup2')
-        p.camera='unknown'; % default camera for setup2
+        p.camera='hamamatsu2'; % default camera for setup2
     else
         p.camera='unknown'; % default camera in general
     end
@@ -344,14 +346,14 @@ if ~existfield(p,'micronsPerPixel')
     switch p.setup  % default values depend on used camera
         case 'setup1'
             if strcmp(p.camera, 'hamamatsu')
-                % hamamatsu camera, setup 2
+                % hamamatsu camera, setup 1 (new camera)
                 p.micronsPerPixel = 0.0438;
             elseif strcmp(p.camera, 'coolsnap')
-                % CoolSnap camera, setup 1
+                % CoolSnap camera, setup 1 (old camera)
                 p.micronsPerPixel = 0.04065;
             end
         case 'setup2'
-            % camera xxx, setup 2 (always same camera)
+            % camera hamamatsu, setup 2 (always same camera)
             p.micronsPerPixel = 0.04312;
         otherwise
             error('Couldn''t set micronsPerPixel')

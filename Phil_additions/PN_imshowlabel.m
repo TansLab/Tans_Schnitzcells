@@ -1,3 +1,6 @@
+function outim = PN_imshowlabel(p,L,rect,Lp,rectp,varargin)
+% function outim = PN_imshowlabel(p,L,rect,Lp,rectp,varargin)
+%
 % PN_imshowlabel is a modified version of DJK_imshowlabel which provides
 % visual aid for segmentation correction
 % - too small cells are shown in white
@@ -37,7 +40,7 @@
 % elapsed time for frame 444 in 2012-05-08. 390 cells
 
 
-function outim = PN_imshowlabel(p,L,rect,Lp,rectp,varargin)
+
 
 %--------------------------------------------------------------------------
 % Input error checking and parsing
@@ -46,6 +49,8 @@ function outim = PN_imshowlabel(p,L,rect,Lp,rectp,varargin)
 fractionbelowwhite = 0.2; % cells which are a fraction of <fractionbelowwhite>
                          % smaller than the median are marked white.
 numRequiredArgs = 5; functionName = 'PN_imshowlabel'; p_internal = struct;
+
+DISPLAY_REGION_ALPHA = 0.5; % alpha value for overlaying regions over phase img
 
 if (nargin < numRequiredArgs) | (mod(nargin,2) ~= (mod(numRequiredArgs,2)))
     errorMessage = sprintf('%s\n%s',['Error with input arguments of ' functionName],['Try "help ' functionName '".']);
@@ -180,18 +185,63 @@ Lrgb = MW_stampit(Lrgb,p);
 
 % elapsed time: 0.40
 %stop3=toc
-if addPhaseImage % costs 0.045 sec
-    rgb = 0.5 * Lrgb;
+if existfield(p, 'showPerim') && p.showPerim % show cell outlines        
+    % MW 2014/12
+    
+    % Get phaseimg
+    phaseImg = double(p_internal.phaseImage);
+    phaseImg = DJK_scaleRange(phaseImg, [max(max(phaseImg)) min(min(phaseImg))], [0 1]);
+    phaseImg = (1-phaseImg); % negative
+
+    % Get perimeter
+    perimImg = bwperim(L);%   
+    
+    % Create output image
+    outim = phaseImg;    % original phase
+    nonZeroIdx = find(perimImg>0); % get perimeter indexes
+    outim(nonZeroIdx)=1; % mark them in phase img
+    
+    %{
+    % One could also color it; but tricky since perims don't fully fall
+    % onto colored areas
+    perimImg = bwperim(L).*L; % make outline image; *.L colors the perims
+    perimImg = ind2rgb(perimImg,mymap);
+    
+    % Also requires phaseImg to be made 3d
+    outim=zeros([size(phaseImg),3]); % phase as base          
+    outim(:,:,1) = phaseImg;
+    outim(:,:,2) = phaseImg;
+    outim(:,:,3) = phaseImg;    
+    
+    nonZeroIdx = find(perimImg>0);
+    outim(nonZeroIdx)=perimImg(nonZeroIdx);    
+    %}
+    
+elseif addPhaseImage % costs 0.045 sec
+    %{
+    rgb = 0.5 * Lrgb; % rgb = 0.5 * Lrgb; % MW here alpha set, TODO
     bwscreen = double(p_internal.phaseImage); % bwscreen = 0.5 * bwscreen / max(max(bwscreen));
     bwscreen = DJK_scaleRange(bwscreen, [max(max(bwscreen)) min(min(bwscreen))], [0 1]);
     bwscreen = DJK_scaleRange(bwscreen, [0.25 1], [0 0.5]);
     rgb(:,:,1) = rgb(:,:,1) + bwscreen;
     rgb(:,:,2) = rgb(:,:,2) + bwscreen;
     rgb(:,:,3) = rgb(:,:,3) + bwscreen;
-    outim = rgb;
+    %}
+    
+    % (From http://en.wikipedia.org/wiki/Alpha_compositing)   
+    outim = Lrgb.*DISPLAY_REGION_ALPHA; % region image as base    
+    
+    phaseImg = double(p_internal.phaseImage);
+    phaseImg = DJK_scaleRange(phaseImg, [max(max(phaseImg)) min(min(phaseImg))], [0 1]);
+    phaseImg = (1-phaseImg).*(1-DISPLAY_REGION_ALPHA); % (1-img) can make img negative
+    
+    outim(:,:,1) = outim(:,:,1) + phaseImg;
+    outim(:,:,2) = outim(:,:,2) + phaseImg;
+    outim(:,:,3) = outim(:,:,3) + phaseImg;    
     
     % elapsed time: 0.45
     %stop4a=toc
+    
 else
     outim = Lrgb;
 

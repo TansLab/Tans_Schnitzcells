@@ -1,4 +1,4 @@
-function  [Lout,OKorNot,quit_now,dontsave,addtolist,crop_pop,newrect,savetemp,backwards,gotoframenum,DJK_settings] = ...
+function  [p,Lout,OKorNot,quit_now,dontsave,addtolist,crop_pop,newrect,savetemp,backwards,gotoframenum,DJK_settings] = ...
     PN_manual_kant(p,Lin,L_prec,phin,rect,rect_prec,phsub,DJK_settings,assistedCorrection)
 
 % *******
@@ -80,7 +80,7 @@ while ~done
         %get(ourfig,'Position')
         %stop3=toc
         if assistedCorrection && ~isempty(L_prec)
-            Lshow = PN_imshowlabel(Lout,rect,L_prec,rect_prec,'phaseImage',phsub); %slow step 0.45sec! (NW 2012-05-10)
+            Lshow = PN_imshowlabel(p, Lout,rect,L_prec,rect_prec,'phaseImage',phsub); %slow step 0.45sec! (NW 2012-05-10)
             %stop4a=toc %PN_imshow.. is slow step (0.45 sec)
             Lshow = imresize_old(Lshow,res);
             %stop5a=toc
@@ -414,12 +414,14 @@ while ~done
              %   for k = 2:max2(cell),
              %       Lout(cell==k) = max2(Lout)+k-1;
              %   end;
-        elseif cc == 'l'
-            disp(['currently not in use']) %NW 2012-05-10
-                %addtolist=1;
-                %OKorNot=1;
-                %done=1;
-                %dontsave=1;
+        elseif cc == 'l' % MW 2014/12
+            % Switch to show perimiter of bacteria instead of area
+            if ~existfield(p, 'showPerim')
+                % if not there create switch
+                p.showPerim = 1; % and turn it on
+            else
+                p.showPerim = ~p.showPerim; % otherwise just switch it
+            end
         elseif cc == 'o'
             % obliterate all but this cell
             cutx=round(pos(1,2));

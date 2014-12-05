@@ -71,6 +71,10 @@ if (nargin < 1) | ...
     error(errorMessage);
 end
 
+% Load the watermark (MW edit 2014/12)
+% Note that only the green channel is used, and only binary form.
+p.mywatermark=imread('watermark.png');
+
 %-------------------------------------------------------------------------------
 % Override any schnitzcells parameters/defaults given optional fields/values
 %-------------------------------------------------------------------------------
@@ -111,7 +115,6 @@ disp('              press ''r'' to renumber the cell you are pointing to.')
 disp('              press ''p'' to show a square around the position, on phase image.')
 disp('              press ''b'' to mark the cell you are pointing to, on phase image.  Do not use...')
 disp('              press ''o'' to obliterate all but the cell you''re pointing to.')
-disp('              press ''l'' to add frame to list of badly segmented frames.')
 disp('              press ''.'' to skip frame (without saving).')
 disp('              press '','' to go back a frame (without saving).')
 disp('              press ''a'' to add a new cell where the mouse is pointing.')
@@ -127,6 +130,7 @@ disp('              press ''h'' to reseed a cell.')
 disp('              press ''d'' to remove all ''cells'' which look like dirt (large convex hull).')
 disp('              press ''u'' to go back one step (possible once).')
 disp('              press ''m'' to switch between phase contrast and segmentation image.')
+disp('              press ''l'' to show perimeters of cell areas.')
 
 disp(' ')
 
@@ -259,12 +263,14 @@ while loopindex <= length(p.manualRange);
         p.override=true;
     end %DJK 071207
     % nitzan's changes June24th
-    if (exist('Lc')~=1 || backwards || p.override==1 || (exist('Lc')==1 && tempsegcorrect==1)) && ~mod(i-1,p.Dskip)
+    if (exist('Lc')~=1 || backwards || p.override==1 || (exist('Lc')==1 && tempsegcorrect==1)) && ~mod(i-1,p.Dskip)        
         
         if exist('Lc')==1
             LNsub=Lc;
-        end
-        
+            p.CurrentFrameApprovedFlag = 1; % Addition MW 2014/12
+        else
+            p.CurrentFrameApprovedFlag = 0; % Addition MW 2014/12
+        end      
         
         %----------------------------------------------------------------------
         % Show Phase Image
@@ -330,8 +336,8 @@ while loopindex <= length(p.manualRange);
         while ~is_done
            
             % This executes the function that asks for keyboard input.
-            [Lc,is_done,quit_now,dontsave,addtolist,crop_pop,newrect,savetemp,backwards,gotoframenum,DJK_settings] = ...
-                PN_manual_kant(p, LNsub, L_prec, g, rect,rect_prec,phsub, DJK_settings,p.assistedCorrection);
+            [p,Lc,is_done,quit_now,dontsave,addtolist,crop_pop,newrect,savetemp,backwards,gotoframenum,DJK_settings] = ...
+                PN_manual_kant(p, LNsub, L_prec, g, rect,rect_prec,phsub, DJK_settings,p.assistedCorrection); % p added 2014/12 MW
             
             if backwards==1 && (loopindex>1),
                 % JCR: Note this is kind of ugly- later loopindex is *incremented*

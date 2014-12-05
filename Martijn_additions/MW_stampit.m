@@ -19,8 +19,8 @@ if p.CurrentFrameApprovedFlag
     offset=5;
     for i = 1:size(p.mywatermark,1)
         for j = 1:size(p.mywatermark,2)
-            if p.mywatermark(i,j,2)>0
-                theimg(i+offset,j+offset,2) = 1;
+            if p.mywatermark(i,j,2)>0 % if green channel watermark value >0
+                theimg(i+offset,j+offset,2) = 1; % set green channel img
             end
         end
     end

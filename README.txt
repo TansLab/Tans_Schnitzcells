@@ -66,7 +66,9 @@ Often problems will be caused by incorrect segmentation, and need to be resolved
         Where pn is a parent of a nondividing cell, and ch its child in the next frame. If a cell divides, two lines are used. One links one child to the parent, and the other the other child to the parent. Somewhat unintuitively, the parent of child one is listed at p1, and the parent of child 2 is listed at p2 (but for one dividing cell, p1=p2). The child is always listed in the same place (but the ch is different for one dividing cell). 
         Note that there are two kinds of numbers: numbers for the Schnitzes (the "individuals") and a numbering per frame which simple numbers the areas in this frame identified as cells. Numbers in the /data/ folder files are necessarily these area numbers.
 
-        
+About schnitzcells structure
+---
+A minimal schnitz structure is described by P (the schnitz number of it's parent), children schnitz numbers D and E, sister schnitz number S, frame_nrs (an array) listing each frame this schnitz occurs in, cellno (an array) listing each cell number of the tracked cell within each of the frames, and N, the number of frames that distinct cell appears.        
 
 ____________________________________________________________
 PART 2

@@ -330,7 +330,7 @@ end
 % if camera is not set manually, set it now to hamamatsu (the setup1 new one from 2014/11)
 if ~existfield(p,'camera')
     if strcmp(p.setup,'setup1')
-        p.camera='hamamatsu'; % default camera for setup1
+        p.camera='coolsnap'; % default camera for setup1 % MW 2014/12 backwards compatib.
     elseif strcmp(p.setup,'setup2')
         p.camera='hamamatsu2'; % default camera for setup2
     else

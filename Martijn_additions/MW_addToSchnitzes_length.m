@@ -1,6 +1,35 @@
 % TODO MW
 % ===
 %
+% This function is depricated and should not be used!
+% 
+% It does contain some code to accomodate a 7-degree polynomial fit 
+% for the length, but rather not use different funtions for different
+% utilities. 
+% TODO: recode DJK_addToSchnitzes_length such that it will contain an
+% optino to use 7-degree polynomial.
+%
+%
+%
+%
+%
+%
+%
+%
+%
+%
+%
+%
+%
+%
+%
+%
+%
+%
+%
+%
+%
+%
 % This file is a quick and dirty merge of Rutgers code into the original
 % DJK_addToSchnitzes_length.m. This file should be thoroughly checked
 % whether it contains no bugs.
@@ -39,7 +68,10 @@
 %
 %
 
-function [p,schnitzcells] = DJK_addToSchnitzes_length(p,varargin) 
+function [p,schnitzcells] = MW_addToSchnitzes_length(p,varargin) 
+
+display('*ERROR*: This function should not be used; use DJK_addToSchnitzes_length instead');
+return % comment to forcefully use
 
 %--------------------------------------------------------------------------
 % Input error checking and parsing

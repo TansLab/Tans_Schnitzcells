@@ -144,6 +144,7 @@ end
 if ~existfield(p,'manualRange')
     segNameStrings = char(S);
     p.manualRange = str2num(segNameStrings(:,numpos:numpos+2))'; % MW 2014/6/24
+    disp('WARNING: p.manualRange was set to contain all segmented frames automatically.')
 end
 
 % Determine range which cells are analyzed - edit MW 2014/06/24
@@ -303,7 +304,7 @@ if ~exist('lineage') % if schnitzcells provided, no need to load
 end
 
 % slookup gives the schnitznr for each cellno in each frame.
-slookup = makeslookup(lineage.schnitzcells);
+slookup = makeslookup(lineage.schnitzcells); % note this is local sub func
 
 % Note: in color_map 1 to 251, corresponds to 0 to 250 in unint16 image
 % Note: in color_map 1 to 251, corresponds to 1 to 251 in double image
@@ -365,10 +366,11 @@ for fr = p.manualRange
     Lc = LNsub;
   end
 
-  % get the unique nrs in segmentation (u)
-  u = unique(Lc); 
+  % get the unique nrs in segmentation (uniqueCellNos previously u) 
+  % MW 2014/12
+  uniqueCellNos = unique(Lc); 
   % get 0 out of the list of unique cellno
-  u = setdiff(u,0);
+  uniqueCellNos = setdiff(uniqueCellNos,0);
 
   % get the segmented image (subim) 
   subim = double(Lc);
@@ -388,9 +390,9 @@ for fr = p.manualRange
   %------------------------------------------------------------------------
   % LOOPING OVER CELL NRS
   %------------------------------------------------------------------------
-  for uind = 1:length(u),
+  for uind = 1:length(uniqueCellNos),
     % cellno uind in framenum fr is 'just born', 'growing' or 'dividing'
-    temp_schnitz = slookup(fr,u(uind)); % MW 2014/06/11 removal N+1 bug
+    temp_schnitz = slookup(fr,uniqueCellNos(uind)); % MW 2014/06/11 removal N+1 bug
     if temp_schnitz==0
       disp(['In frame ' str3(fr) ' cellno ' str3(uind) ' is not linked to schnitz']);
       continue;
@@ -401,7 +403,7 @@ for fr = p.manualRange
     frIndex = find(temp_schnitz_frames==(fr)); % MW 2014/06/11 removal N+1 bug
 
     % fl are the locations in image where cellno uind is located
-    fl = find(subim==u(uind));
+    fl = find(subim==uniqueCellNos(uind));
 
     %----------------------------------------------------------------------
     % DO THE COLORING
@@ -443,7 +445,7 @@ for fr = p.manualRange
       % mode=tree, color cells according to schnitzNr
       elseif (case_tree)
         % color according to schnitzNr+1 (+1 cause else schnitz 1 is black)
-        subim_color(fl) = slookup(fr,u(uind))+1; % MW 2014/06/11 removal N+1 bug
+        subim_color(fl) = slookup(fr,uniqueCellNos(uind))+1; % MW 2014/06/11 removal N+1 bug
         
       % mode=division, color cells according to schnitzNr, but only at division
       elseif (case_division)
@@ -492,7 +494,7 @@ for fr = p.manualRange
     %----------------------------------------------------------------------
     if (case_drawLength) %& uind<7  & lineage.schnitzcells(temp_schnitz).angle>40 & lineage.schnitzcells(temp_schnitz).angle<50
       % get rotated pixels, so that cell lies straight
-      [y,x] = find(subim==u(uind)); % note: returns (row, column), which will be used as (y,x)
+      [y,x] = find(subim==uniqueCellNos(uind)); % note: returns (row, column), which will be used as (y,x)
       phi = lineage.schnitzcells(temp_schnitz).rp_angle(frIndex)*pi/180; % convert orientation to radians, and use opposite to rotate back
       x_rot = x*cos(phi) - y*sin(phi); % mathematical rotation
       y_rot = x*sin(phi) + y*cos(phi); % mathematical rotation
@@ -673,13 +675,13 @@ end
 function slookup = makeslookup(myschnitzcells);
 % Creates lookup table that associates frame and cell number to schnitznr
 
-for i = 1:length(myschnitzcells),
-  for j = 1:length(myschnitzcells(i).frame_nrs),
+for schnitzIdx = 1:length(myschnitzcells),
+  for frameIdx = 1:length(myschnitzcells(schnitzIdx).frame_nrs),
       
-    if ~isempty(myschnitzcells(i).frame_nrs),
-      if myschnitzcells(i).frame_nrs
+    if ~isempty(myschnitzcells(schnitzIdx).frame_nrs),
+      if myschnitzcells(schnitzIdx).frame_nrs
           
-        slookup(myschnitzcells(i).frame_nrs(j),myschnitzcells(i).cellno(j))=i;
+        slookup(myschnitzcells(schnitzIdx).frame_nrs(frameIdx),myschnitzcells(schnitzIdx).cellno(frameIdx))=schnitzIdx;
         
       end;
     end;

@@ -190,12 +190,18 @@ pOrder.fluor3=0;
 %-------------------------------------------------------------------------------
 % Parse the input arguments, input error checking
 %-------------------------------------------------------------------------------
+
 numRequiredArgs = 3;
 if (nargin < 3) | ...
    (~isstr(movieName) | ~isstr(movieDate) | ~isstr(movieKind)) | ...
    (mod(nargin,2) == 0) | ...
-   (length(movieDate) ~= 10)
+   (regexp(movieDate, '\d\d\d\d-\d\d-\d\d') ~= 1)
 %if ((nargin < 3) | (~isstr(movieName) | ~isstr(movieDate) | ~isstr(movieKind)) | (mod(nargin,2) == 0) | (length(movieDate) ~= 10))
+    
+    if (regexp(movieDate, '\d\d\d\d-\d\d-\d\d') ~= 1) % MW 2014/12
+        disp('*Note that date format wasn''t recognized in movieDate');
+    end
+    
   errorMessage = sprintf ('%s\n%s\n%s\n',...
       'Error using ==> initschnitz:',...
       '    Invalid input arguments.',...
@@ -249,7 +255,7 @@ end
 % (This *could* be overwritten if user again specifies any of 
 %  movieName,movieDate,movieKind passed in optional args!)
 p.movieName = movieName;
-p.movieDate = movieDate;
+p.movieDate = movieDate(1:10); % MW 2014/12
 p.movieKind = movieKind;
 
 % define default analysis root directory

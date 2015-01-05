@@ -1,5 +1,34 @@
+
+% Old fn, should not be used any more.
+% (Throw away once analysis runs without it. It should already.)
+% MW 2015/01
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 function  [Lout,OKorNot,quit_now,dontsave,addtolist,crop_pop,newrect,savetemp,backwards,gotoframenum,DJK_settings] = ...
     MW_manual_kant(p,Lin,L_prec,phin,rect,rect_prec,phsub,DJK_settings,assistedCorrection)
+
+disp('DEPRICATION WARNING! This function should not be used any more!')
 
 % *******
 % TODO: include "updatedCellNumbers" in program (PN_imshowlabel) so that

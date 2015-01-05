@@ -1,3 +1,53 @@
+
+% ===
+% THIS FUNCTION IS DEPRICATED AND SHOULD NOT BE USED ANY MORE
+% ===
+%
+% Use PN_imshowlabel instead. That fn has been modified such that it should
+% be equivalent to DJK_imshowlabel when its vars rect, Lp and rectp are set 
+% to 0.
+%
+% I.e. use 
+% PN_imshowlabel(p,L,0,0,0)
+% instead of
+% DJK_imshowlabel(L) or DJK_imshowlabel(p,L)
+%
+% MW, 2015/01
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 % DJK_imshowlabel is used to display an integer image 
 % Uses different kind of color map as before
 %
@@ -14,6 +64,8 @@
 %
 
 function outim = DJK_imshowlabel(p,L,varargin);
+
+disp('THIS FUNCTION (DJK_imshowlabel) IS DEPRICATED AND SHOULD NOT BE USED ANY MORE, USE PN_imshowlabel INSTEAD.')
 
 %--------------------------------------------------------------------------
 % Input error checking and parsing
@@ -82,27 +134,31 @@ end
 
 if addPhaseImage
 
-	rgb = 0.5 * ind2rgb(L2,mymap);
-	bwscreen = double(p_internal.phaseImage); % bwscreen = 0.5 * bwscreen / max(max(bwscreen));
-  bwscreen = DJK_scaleRange(bwscreen, [max(max(bwscreen)) min(min(bwscreen))], [0 1]);
-  bwscreen = DJK_scaleRange(bwscreen, [0.25 1], [0 0.5]);
-	rgb(:,:,1) = rgb(:,:,1) + bwscreen;
-	rgb(:,:,2) = rgb(:,:,2) + bwscreen;
-	rgb(:,:,3) = rgb(:,:,3) + bwscreen;
-  if nargout == 0
-    imshow(rgb);
-  end
-  outim = rgb;
-else
-  if nargout == 0
-    imshow(L2, mymap);
-  end
-  outim = L2;
-  
-  % Edit MW - adds green marker if framenr is in whitelist.
-  outim = MW_stampit(outim,p);    
+    rgb = 0.5 * ind2rgb(L2,mymap);
+    bwscreen = double(p_internal.phaseImage); % bwscreen = 0.5 * bwscreen / max(max(bwscreen));
+    bwscreen = DJK_scaleRange(bwscreen, [max(max(bwscreen)) min(min(bwscreen))], [0 1]);
+    bwscreen = DJK_scaleRange(bwscreen, [0.25 1], [0 0.5]);
 
-  
+    rgb(:,:,1) = rgb(:,:,1) + bwscreen;
+    rgb(:,:,2) = rgb(:,:,2) + bwscreen;
+    rgb(:,:,3) = rgb(:,:,3) + bwscreen;
+
+    outim = rgb;  
+    outim = MW_stampit(outim,p); % Edit MW - adds green marker if frame has been approved   
+    
+    if nargout == 0
+        imshow(outim);
+    end
+
+else
+    
+    outim = L2;
+    outim = MW_stampit(outim,p); % Edit MW - adds green marker if frame has been approved 
+
+    if nargout == 0
+        imshow(outim, mymap);
+    end  
+
 end
 
 

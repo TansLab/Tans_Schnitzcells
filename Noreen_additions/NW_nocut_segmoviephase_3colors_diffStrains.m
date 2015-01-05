@@ -388,7 +388,9 @@ for i= p.segRange
         slices = num2str(p.slices);
         slices(slices==' ') = [];
         png_filename = [png_dir 'seg' str3(i) p.PN_saveDir(7:end-1) '.png'];
-        imwrite(DJK_imshowlabel(LNsub,'phaseImage',phsub), png_filename, 'png','bitdepth',8); 
+        % MW TODO check whether "p.CurrentFrameApprovedFlag = 0;" needs to be
+        % added to remove green circles here? 2015/01 
+        imwrite(p,PN_imshowlabel(LNsub,'phaseImage',phsub),0,0,0, png_filename, 'png','bitdepth',8);             
     end
 end
 %-------------------------------------------------------------------------------

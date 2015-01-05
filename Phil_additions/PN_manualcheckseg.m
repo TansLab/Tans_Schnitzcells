@@ -231,7 +231,7 @@ loopindex = 1;
 while loopindex <= length(p.manualRange);
    i = p.manualRange(loopindex);
    
-   %former image data if available
+   %former image data if available (L_prec for L preceeding)
     L_prec=[];
     rect_prec=[];
     if i > 1 %if possible loads the preceeding segmented image, this is used only for assisted correction

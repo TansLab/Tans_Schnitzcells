@@ -1,5 +1,21 @@
 function  [p,Lout,OKorNot,quit_now,dontsave,addtolist,crop_pop,newrect,savetemp,backwards,gotoframenum,DJK_settings] = ...
     PN_manual_kant(p,Lin,L_prec,phin,rect,rect_prec,phsub,DJK_settings,assistedCorrection)
+% function  [p,Lout,OKorNot,quit_now,dontsave,addtolist,crop_pop,newrect,savetemp,backwards,gotoframenum,DJK_settings] = ...
+%    PN_manual_kant(p,Lin,L_prec,phin,rect,rect_prec,phsub,DJK_settings,assistedCorrection)
+%
+% Input arguments:
+% - p                   : holds general information about current movie
+% - Lin,                : segmented input image
+% - L_prec,             : segmented image of preceeding frame 
+% - phin,               : phase image with this frame
+% - rect,               : 
+% - rect_prec,          : 
+% - phsub,              : 
+% - DJK_settings,       : 
+% - assistedCorrection  : 
+%
+%
+%
 
 % *******
 % TODO: include "updatedCellNumbers" in program (PN_imshowlabel) so that
@@ -55,12 +71,12 @@ while ~done
         clf reset;
     
         if assistedCorrection && ~isempty(L_prec)
-            Lshow = PN_imshowlabel(Lout,rect,L_prec,rect_prec,'phaseImage',phsub);
+            Lshow = PN_imshowlabel(p,Lout,rect,L_prec,rect_prec,'phaseImage',phsub);
             Lshow = imresize_old(Lshow,res);
             imshow(Lshow);
             
         else
-            DJK_imshowlabel(imresize_old(Lout,res),'phaseImage',imresize_old(phsub,res));
+            PN_imshowlabel(p,imresize_old(Lout,res),0,0,0,'phaseImage',imresize_old(phsub,res)); % MW, 0,0,0, signals no susp. cell. detect.
         end
     
         pos11 = get(phfig,'position'); % current position
@@ -80,6 +96,7 @@ while ~done
         %get(ourfig,'Position')
         %stop3=toc
         if assistedCorrection && ~isempty(L_prec)
+            
             Lshow = PN_imshowlabel(p, Lout,rect,L_prec,rect_prec,'phaseImage',phsub); %slow step 0.45sec! (NW 2012-05-10)
             %stop4a=toc %PN_imshow.. is slow step (0.45 sec)
             Lshow = imresize_old(Lshow,res);
@@ -91,11 +108,14 @@ while ~done
             
             %stop6a=toc
         else
+            
             clf reset; %NW2012-05-10
-            DJK_imshowlabel(imresize_old(Lout,res),'phaseImage',imresize_old(phsub,res)); %slow step 0.2sec! (NW 2012-05-10)
-             set(ourfig, 'position', pos11); % DJK 090117 % a little awkward to redo, but should only affect first image
+            PN_imshowlabel(p,imresize_old(Lout,res),0,0,0,'phaseImage',imresize_old(phsub,res)); %slow step 0.2sec! (NW 2012-05-10)
+            
+            set(ourfig, 'position', pos11); % DJK 090117 % a little awkward to redo, but should only affect first image
             %stop4b=toc
         end
+        
         %  sometimes setting the image name leads ot an error
         % -> create dummy position value
         % NW2014-04
@@ -106,28 +126,8 @@ while ~done
         end
         set(ourfig,'name',['Pos: ',num2str(pos(1,2)),' , ',num2str(pos(1,1)),...
                 '  Val: ',num2str(curr_val1)]);
-    end
-        
+    end               
     
-    % ***********
-    
- % *** OLD ***
-  %  figure(ourfig);
-  %  clf reset;
-  %  
-  %  if assistedCorrection && ~isempty(L_prec)
-  %      Lshow = PN_imshowlabel(Lout,rect,L_prec,rect_prec,'phaseImage',phsub);
-  %      Lshow = imresize_old(Lshow,res);
-  %      imshow(Lshow);
-  %  else
-  %      DJK_imshowlabel(imresize_old(Lout,res),'phaseImage',imresize_old(phsub,res));
-  %  end
-    
-  %  pos11 = get(phfig,'position'); % current position
-  %  set(ourfig, 'position', pos11); % DJK 090117
-  %  *** OLD ***
-  
-  
     set(ourfig,'WindowButtonMotionFcn',['global pos Limage ourfig res pp phfig;pos=max(1,round((1/res)*get(gca,''CurrentPoint'')));',...
         'if (pos(1,2)>0 & pos(1,2)<size(Limage,1) & pos(1,1)>0 & pos(1,1)<size(Limage,2));',...
         'curr_val=num2str(double(Limage(pos(1,2),pos(1,1))));else;curr_val=''-1'';end;',...
@@ -136,7 +136,7 @@ while ~done
     %   '''  Val: '',curr_val]);pp=showbox(phfig,pos,pp,size(Limage),res);figure(ourfig);']);
     
     % blubb
-    % hier the regionprobs of the next and previous image could already be
+    % here the regionprobs of the next and previous image could already be
     % calculated to quicken update of image when frame changes
     % NW 2012-05-10
     

@@ -268,7 +268,7 @@ for count = 2:length(p.manualRange);
       image_today( round(centroids(4)) , round(centroids(5)) ) = centroids(1);
       image_today( round(centroids(6)) , round(centroids(7)) ) = centroids(1);
     end
-    figure(11); DJK_imshowlabel(image_today);
+    figure(11); PN_imshowlabel(p,image_today,0,0,0);
 
     image_yesterday = zeros(size(Lc_yesterday_fullsize_centered));
     for i = 1:size(coordinates_yesterday,1)
@@ -277,12 +277,12 @@ for count = 2:length(p.manualRange);
       image_yesterday( round(centroids(4)) , round(centroids(5)) ) = centroids(1);
       image_yesterday( round(centroids(6)) , round(centroids(7)) ) = centroids(1);
     end
-    figure(12); DJK_imshowlabel(image_yesterday);
+    figure(12); PN_imshowlabel(p,image_yesterday,0,0,0);
     
 %     figure(11); DJK_imshowlabel(Lc_today_fullsize);
 %     figure(12); DJK_imshowlabel(Lc_yesterday_fullsize);
-    figure(13); DJK_imshowlabel(Lc_today_fullsize_centered);
-    figure(14); DJK_imshowlabel(Lc_yesterday_fullsize_centered);
+    figure(13); PN_imshowlabel(p,Lc_today_fullsize_centered,0,0,0);
+    figure(14); PN_imshowlabel(p,Lc_yesterday_fullsize_centered,0,0,0);
     
     pause; close(11); close(12); close(13); close(14);
     DJK_writeSegImage(image_today,'image_today.png');

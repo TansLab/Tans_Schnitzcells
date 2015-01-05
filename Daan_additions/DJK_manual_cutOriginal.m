@@ -164,7 +164,7 @@ if figs
 
   % plot output cell
   subplot(2,1,2);
-  DJK_imshowlabel(subcellcut);
+  PN_imshowlabel(p,subcellcut,0,0,0);
 
   % plot original cell, perim, click point and line point
   subplot(2,1,1);
@@ -176,7 +176,7 @@ if figs
     output(round(px1),round(py1)) = 5; 
     if length(p2x)>0, output(round(px2),round(py2)) = 6; end
   end
-  DJK_imshowlabel(output);
+  PN_imshowlabel(p,output,0,0,0);
 
   pause; close(111);
 end

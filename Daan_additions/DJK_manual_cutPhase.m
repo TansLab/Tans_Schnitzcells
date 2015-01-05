@@ -266,7 +266,7 @@ if figs
 
   % plot output cell
   subplot(2,2,4);
-  DJK_imshowlabel(subcellcut);
+  PN_imshowlabel(p,subcellcut,0,0,0);
 
   pause;close(111);
 end

@@ -15,7 +15,8 @@ function theimg = MW_stampit(theimg,p)
 % If a frame is approved, a small circle ('watermark') is added to the plot
 % as a flag to the user.   
 if isfield(p, 'CurrentFrameApprovedFlag')
-if p.CurrentFrameApprovedFlag
+if p.CurrentFrameApprovedFlag    
+    
     offset=5;
     for i = 1:size(p.mywatermark,1)
         for j = 1:size(p.mywatermark,2)
@@ -25,5 +26,7 @@ if p.CurrentFrameApprovedFlag
         end
     end
 end
-    
+
+%figure, imshow(theimg,[]) TODO REMOVE
+
 end

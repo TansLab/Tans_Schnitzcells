@@ -1,3 +1,8 @@
+
+% TODO MW 2015/01
+% Investigate whether this function can be merged into PN_segphase as a
+% functionality. Idem for NW_segphase_diffStrains.
+
 % largely modified by Noreen Walker 2014-01
 % original by Philippe Nghe 16/01/2012
 %steps of the segmentation :

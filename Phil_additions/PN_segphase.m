@@ -1,3 +1,8 @@
+
+% TODO MW 2015/01
+% Check whether hard-coded algorithm constants in this algorithm can be
+% made into parameters with default values that can be adjusted.
+
 %by Philippe Nghe 16/01/2012
 %steps of the segmentation :
 %   A. Find a mask

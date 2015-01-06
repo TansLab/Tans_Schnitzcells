@@ -7,7 +7,7 @@
 % for the length, but rather not use different funtions for different
 % utilities. 
 % TODO: recode DJK_addToSchnitzes_length such that it will contain an
-% optino to use 7-degree polynomial.
+% option to use 7-degree polynomial.
 %
 %
 %

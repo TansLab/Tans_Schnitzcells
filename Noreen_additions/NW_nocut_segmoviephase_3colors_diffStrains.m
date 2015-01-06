@@ -1,3 +1,18 @@
+
+% TODO MW 2015/01
+% This function is redundant, its functionality should be merged into
+% PN_segmoviephase_3colors.m. The main difference of this fn with 
+% PN_segmoviephase_3colors is that it calls NW_segphase_diffStrains, which
+% doesn't select for central area w. most contrast.
+% Aim of this function is that you can choose to not "auto-detect" central
+% colony. (E.g. useful when there's dirt in sample or multiple colonies.)
+% TODO: make varargin argument for PN_segmoviephase_3colors such that you 
+% can choose "non-central-selection" option. 
+% TODO: I guess also NW_segphase_diffStrains can be merged into
+% PN_segphase. 
+% TODO: rename abovementioned fn names such that they match their
+% filenames.
+
 function p = NW_nocut_segmoviephase_3colors_diffStrains(p,varargin)
 %
 % OPTIONAL ARGUMENTS:

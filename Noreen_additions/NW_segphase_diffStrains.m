@@ -1,3 +1,8 @@
+
+% TODO MW 2015/01
+% Investigate whether this function can be merged into PN_segphase as a
+% functionality. Idem for NW_segphase_richMed.
+
 % NW (2013): No restriction to largest connected area -> cells that are far
 % apart are all detected. Segmentation is not restricted to central area.
 % Otherwise identical to Std Segmentation

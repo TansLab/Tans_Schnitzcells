@@ -60,6 +60,8 @@ updatedCellNumbers=[];
 % initialize image for undo-step ('u')
 Lout_undo=Lout;
 
+figureToFocusOn = ourfig;
+
 while ~done
     clear j*  %j1=0;j2=0;
     
@@ -67,6 +69,8 @@ while ~done
     
     if ~ishandle(ourfig) % if segmented image figure doesn't exist yet (should never be the case)
        
+        disp('WARNING: unexpected behavior detected in PN_manual_kant, segmented image figure doesn''t exist.');
+        
         figure(ourfig);
         clf reset;
     
@@ -84,38 +88,39 @@ while ~done
     
          set(ourfig,'name',['Pos: ',num2str(pos(1,2)),' , ',num2str(pos(1,1)),...
             '  Val: ',num2str(double(Limage(pos(1,2),pos(1,1))))]);
-    else
-        %tic %get time cost of operations
-        pos11 = get(phfig,'position'); % current position
-        %stop1=toc
-        set(ourfig, 'position', pos11); % DJK 090117
-        %stop2=toc
-        set(0,'CurrentFigure',ourfig);
-        %get(ourfig,'Position')
-        %clf reset %inserted further below
-        %get(ourfig,'Position')
-        %stop3=toc
+    else        
+        
         if assistedCorrection && ~isempty(L_prec)
+        
+            % If assisted correction desired call PN_imshowlabel with 
+            % suspicious cell detection functionality
             
             Lshow = PN_imshowlabel(p, Lout,rect,L_prec,rect_prec,'phaseImage',phsub); %slow step 0.45sec! (NW 2012-05-10)
-            %stop4a=toc %PN_imshow.. is slow step (0.45 sec)
-            Lshow = imresize_old(Lshow,res);
-            %stop5a=toc
-            figure(ourfig) % NW2012-05-10
-            %clf reset;% NW2012-05-10
+            %PN_imshow.. is slow step (0.45 sec)
+            
+            % resize and show
+            Lshow = imresize_old(Lshow,res);            
+            figure(ourfig) % NW2012-05-10            
             imshow(Lshow,'InitialMagnification','fit');
-            
-            
-            %stop6a=toc
+
         else
             
-            clf reset; %NW2012-05-10
-            PN_imshowlabel(p,imresize_old(Lout,res),0,0,0,'phaseImage',imresize_old(phsub,res)); %slow step 0.2sec! (NW 2012-05-10)
+            % If correction assistence not desired, call PN_imshowlabel
+            % with 0,0,0 values such that functionality is not invoked.
             
-            set(ourfig, 'position', pos11); % DJK 090117 % a little awkward to redo, but should only affect first image
+            figure(ourfig) % NW2012-05-10
+            % clf reset; %NW2012-05-10 <> NOT CLEAR DESIRED??!
+            PN_imshowlabel(p,imresize_old(Lout,res),0,0,0,'phaseImage',imresize_old(phsub,res)); %slow step 0.2sec! (NW 2012-05-10)            
+            % Note that for historic reasons PN_imshowlabel calls imshow
+            % when 3-5th parameters are 0,0,0.
+            % Note also here resized img is given as input, so resizing is
+            % not necessary.
+            
+            % MW 2015/01
+            % set(ourfig, 'position', pos11); % DJK 090117 % a little awkward to redo, but should only affect first image
             %stop4b=toc
-        end
-        
+        end                    
+                
         %  sometimes setting the image name leads to an error
         % -> create dummy position value
         % NW2014-04
@@ -124,10 +129,21 @@ while ~done
         else
              curr_val1=-1;
         end
+                
+        % Set phase and segmented image to same position
+        pos11 = get(phfig,'position'); % current position        
+        set(ourfig, 'position', pos11); % DJK 090117   
+                
+        % Setting title of figure 
         set(ourfig,'name',['Pos: ',num2str(pos(1,2)),' , ',num2str(pos(1,1)),...
                 '  Val: ',num2str(curr_val1)]);
+            
+        % Set focus on desired figure (segmented img per default)
+        set(0,'CurrentFigure',figureToFocusOn);
+
     end               
     
+    % Define function to retrieve mouseclick position.       
     set(ourfig,'WindowButtonMotionFcn',['global pos Limage ourfig res pp phfig;pos=max(1,round((1/res)*get(gca,''CurrentPoint'')));',...
         'if (pos(1,2)>0 & pos(1,2)<size(Limage,1) & pos(1,1)>0 & pos(1,1)<size(Limage,2));',...
         'curr_val=num2str(double(Limage(pos(1,2),pos(1,1))));else;curr_val=''-1'';end;',...
@@ -135,26 +151,35 @@ while ~done
         '''  Val: '',curr_val]);']);
     %   '''  Val: '',curr_val]);pp=showbox(phfig,pos,pp,size(Limage),res);figure(ourfig);']);
     
+    % MW 2015/01 also enable for phase fig (strictly not necessary)
+    set(phfig,'WindowButtonMotionFcn',['global pos Limage ourfig res pp phfig;pos=max(1,round((1/res)*get(gca,''CurrentPoint'')));',...
+        'if (pos(1,2)>0 & pos(1,2)<size(Limage,1) & pos(1,1)>0 & pos(1,1)<size(Limage,2));',...
+        'curr_val=num2str(double(Limage(pos(1,2),pos(1,1))));else;curr_val=''-1'';end;',...
+        'set(ourfig,''name'',[''Pos: '',num2str(pos(1,2)),'' , '',num2str(pos(1,1)),',...
+        '''  Val: '',curr_val]);']); 
+    
     % blubb
     % here the regionprops of the next and previous image could already be
     % calculated to quicken update of image when frame changes
     % NW 2012-05-10
-    
         
-    realpress = 0;
-    while ~realpress,
+    validPress = 0;
+    while ~validPress,
         
         ct=waitforbuttonpress; % wait for buttonpress
         cc=get(ourfig,'currentcharacter'); % obtain value button
         
         if (ct==1) && isempty(cc), % if keyboard pressed (ct==1), check if valid key (not ctrl etc)
-            realpress=0;
+            validPress=0;
         else % ct==0: mouseclick
-            realpress=1;
+            validPress=1;
         end;
+        
     end;
     
-    set(ourfig,'WindowButtonMotionFcn','');
+    % set(ourfig,'WindowButtonMotionFcn',''); MW REMOVE THIS LINE? Don't
+    % see point since above Fn was set. MW 2015/01
+    
     %if ct cc=get(1,'currentcharacter');else cc=get(1,'selectiontype');end
     
     % ****************************************************
@@ -164,24 +189,24 @@ while ~done
     % bring phase image to front (and background again)
     % treated independently of 'real' actions since update in segImage
     % colors is not wanted. [NW 2014-04]
- 
+    
+    
  % 'm' switch between phase contrast and segmentation image
     if ct & cc=='m'
         
         % MW 2015/01
         % Switching figure between phfig (phase image) and ourfig
-        % (segmented image). 
-        
-        % Obtain current figure
-        currentFigure = gcf;
+        % (segmented image). Note that PN_manual_kant is terminated and 
+        % called again when going to next img, so switch only remains valid
+        % during editing of this frame.
         
         % And switch
-        if currentFigure == phfig % if current is ph 
-            figure(ourfig); % switch to segmented
-        elseif currentFigure == ourfig % vice versa
-            figure(phfig);
+        if figureToFocusOn == phfig % if current is ph 
+            figureToFocusOn = ourfig; % switch to segmented
+        elseif figureToFocusOn == ourfig % vice versa
+            figureToFocusOn = phfig;
         else % if other figure is on focus (not to be the case)
-            figure(ourfig); % switch to default, i.e. segmented one
+            figureToFocusOn = ourfig; % switch to default, i.e. segmented one
         end
             
         done = 0; % continue keypress-loop

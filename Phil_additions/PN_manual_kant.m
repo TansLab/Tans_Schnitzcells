@@ -116,7 +116,7 @@ while ~done
             %stop4b=toc
         end
         
-        %  sometimes setting the image name leads ot an error
+        %  sometimes setting the image name leads to an error
         % -> create dummy position value
         % NW2014-04
         if pos(1,2)>0 & pos(1,2)<size(Limage,1) & pos(1,1)>0 & pos(1,1)<size(Limage,2)
@@ -136,15 +136,17 @@ while ~done
     %   '''  Val: '',curr_val]);pp=showbox(phfig,pos,pp,size(Limage),res);figure(ourfig);']);
     
     % blubb
-    % here the regionprobs of the next and previous image could already be
+    % here the regionprops of the next and previous image could already be
     % calculated to quicken update of image when frame changes
     % NW 2012-05-10
     
         
     realpress = 0;
     while ~realpress,
-        ct=waitforbuttonpress;
-        cc=get(ourfig,'currentcharacter');
+        
+        ct=waitforbuttonpress; % wait for buttonpress
+        cc=get(ourfig,'currentcharacter'); % obtain value button
+        
         if (ct==1) && isempty(cc), % if keyboard pressed (ct==1), check if valid key (not ctrl etc)
             realpress=0;
         else % ct==0: mouseclick
@@ -165,31 +167,25 @@ while ~done
  
  % 'm' switch between phase contrast and segmentation image
     if ct & cc=='m'
-        while ct==1 & cc=='m'
-            % introduce an if-statement if current figure is already the phase
-            % image (accident in updating)?
-            figure(phfig)
-            ctsub=waitforbuttonpress;
-            ccsub=get(phfig,'currentcharacter');
-            while ctsub~=1 | ccsub~='m' % wait until another 'm' is pressed
-                ctsub=waitforbuttonpress;
-                ccsub=get(phfig,'currentcharacter');
-            end
-                figure(ourfig)
-                % don't know why but apparently the windowsbuttonmotionfcn
-                % (track mouse position) has to be reactivated after
-                % changing the figure [NW 2014-04]
-                set(ourfig,'WindowButtonMotionFcn',['global pos Limage ourfig res pp phfig;pos=max(1,round((1/res)*get(gca,''CurrentPoint'')));',...
-                'if (pos(1,2)>0 & pos(1,2)<size(Limage,1) & pos(1,1)>0 & pos(1,1)<size(Limage,2));',...
-                'curr_val=num2str(double(Limage(pos(1,2),pos(1,1))));else;curr_val=''-1'';end;',...
-                'set(ourfig,''name'',[''Pos: '',num2str(pos(1,2)),'' , '',num2str(pos(1,1)),',...
-                '''  Val: '',curr_val]);']);
-                
-                clear ccsub ctsub
-                % wait for new button press in segImage
-                ct=waitforbuttonpress;
-                cc=get(ourfig,'currentcharacter');
+        
+        % MW 2015/01
+        % Switching figure between phfig (phase image) and ourfig
+        % (segmented image). 
+        
+        % Obtain current figure
+        currentFigure = gcf;
+        
+        % And switch
+        if currentFigure == phfig % if current is ph 
+            figure(ourfig); % switch to segmented
+        elseif currentFigure == ourfig % vice versa
+            figure(phfig);
+        else % if other figure is on focus (not to be the case)
+            figure(ourfig); % switch to default, i.e. segmented one
         end
+            
+        done = 0; % continue keypress-loop
+        
     end           
                 
     if ct 

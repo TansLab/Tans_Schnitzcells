@@ -90,8 +90,11 @@ while ~done
             '  Val: ',num2str(double(Limage(pos(1,2),pos(1,1))))]);
     else        
         
-        if assistedCorrection && ~isempty(L_prec)
+        % Update segmented figure
+        figure(ourfig) % NW2012-05-10
         
+        if assistedCorrection && ~isempty(L_prec)
+            
             % If assisted correction desired call PN_imshowlabel with 
             % suspicious cell detection functionality
             
@@ -99,8 +102,7 @@ while ~done
             %PN_imshow.. is slow step (0.45 sec)
             
             % resize and show
-            Lshow = imresize_old(Lshow,res);            
-            figure(ourfig) % NW2012-05-10            
+            Lshow = imresize_old(Lshow,res);                        
             imshow(Lshow,'InitialMagnification','fit');
 
         else
@@ -108,7 +110,6 @@ while ~done
             % If correction assistence not desired, call PN_imshowlabel
             % with 0,0,0 values such that functionality is not invoked.
             
-            figure(ourfig) % NW2012-05-10
             % clf reset; %NW2012-05-10 <> NOT CLEAR DESIRED??!
             PN_imshowlabel(p,imresize_old(Lout,res),0,0,0,'phaseImage',imresize_old(phsub,res)); %slow step 0.2sec! (NW 2012-05-10)            
             % Note that for historic reasons PN_imshowlabel calls imshow
@@ -134,7 +135,7 @@ while ~done
         pos11 = get(phfig,'position'); % current position        
         set(ourfig, 'position', pos11); % DJK 090117   
                 
-        % Setting title of figure 
+        % Title of figure 
         set(ourfig,'name',['Pos: ',num2str(pos(1,2)),' , ',num2str(pos(1,1)),...
                 '  Val: ',num2str(curr_val1)]);
             
@@ -167,7 +168,7 @@ while ~done
     while ~validPress,
         
         ct=waitforbuttonpress; % wait for buttonpress
-        cc=get(ourfig,'currentcharacter'); % obtain value button
+        cc=get(gcf,'currentcharacter'); % obtain value button % MW 2015/01
         
         if (ct==1) && isempty(cc), % if keyboard pressed (ct==1), check if valid key (not ctrl etc)
             validPress=0;

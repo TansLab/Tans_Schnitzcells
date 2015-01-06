@@ -405,7 +405,7 @@ for i= p.segRange
         png_filename = [png_dir 'seg' str3(i) p.PN_saveDir(7:end-1) '.png'];
         % MW TODO check whether "p.CurrentFrameApprovedFlag = 0;" needs to be
         % added to remove green circles here? 2015/01 
-        imwrite(p,PN_imshowlabel(LNsub,'phaseImage',phsub),0,0,0, png_filename, 'png','bitdepth',8);             
+        imwrite(PN_imshowlabel(p,LNsub,0,0,0,'phaseImage',phsub), png_filename, 'png','bitdepth',8);             
     end
 end
 %-------------------------------------------------------------------------------

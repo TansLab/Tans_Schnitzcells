@@ -91,7 +91,7 @@ while ~done
     else        
         
         % Update segmented figure
-        figure(ourfig) % NW2012-05-10
+        figure(ourfig) % NW2012-05-10        
         
         if assistedCorrection && ~isempty(L_prec)
             
@@ -132,8 +132,8 @@ while ~done
         end
                 
         % Set phase and segmented image to same position
-        pos11 = get(phfig,'position'); % current position        
-        set(ourfig, 'position', pos11); % DJK 090117   
+        pos11 = get(phfig,'position'); % current position
+        set(ourfig, 'position', pos11); % DJK 090117
                 
         % Title of figure 
         set(ourfig,'name',['Pos: ',num2str(pos(1,2)),' , ',num2str(pos(1,1)),...

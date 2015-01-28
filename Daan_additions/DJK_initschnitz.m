@@ -131,7 +131,7 @@ function p = DJK_initschnitz (movieName, movieDate, movieKind, varargin);
 %     camera          'hamamatsu'. sets micronsPerPixel for setup1, new
 %                     hamamatsu camera (2014-11). Can be chosen as default
 %                     later on. Input 'camera' only relevant when
-%                     micromanger=1.
+%                     micromanger is not 1.
 %                     Default: 'unknown'
 %                         
 % ----- some old or derived parameters below -----    

@@ -25,12 +25,12 @@ function [generations] =  distancelca(p, schnitzcells, schnitzIdx1, schnitzIdx2)
         ancestry2(end+1) = index2;
         
         % look if the list share values of entries
-        [hits1, distancestolca1] = ismember(ancestry1, ancestry2);
-        [hits2, distancestolca2] = ismember(ancestry2, ancestry1);
+        hits1 = ismember(ancestry1, ancestry2);
+        hits2 = ismember(ancestry2, ancestry1);
         
         % if there are hits the lca is found
         if ~isempty(find(hits1)) && ~isempty(find(hits2)) % TODO, could be programmed better?
-            totalDistance = (find(distancetolca1)-1+find(distancetolca2)-1)/2; % -1 bc nr of linkes, not elements
+            totalDistance = (min(find(hits1))-1+min(find(hits2))-1)/2; % -1 bc nr of linkes, not elements
                 % note that I assume there is only one distance found; 
                 % (i.e. one non-zero value in distancestolca2). this should be the case
                 
@@ -63,5 +63,6 @@ function [generations] =  distancelca(p, schnitzcells, schnitzIdx1, schnitzIdx2)
     if iterations>MAXITERATIONS
         disp('OOPS! Maximum iterations reached... This is not good.');
     end
-
+            
+    
 end

@@ -1,14 +1,21 @@
 
-function [generations] =  distancelca(p, schnitzcells, schnitzIdx1, schnitzIdx2)
-    % function [generations] =  givemeschnitzinfoforframe(p, schnitzcells, schnitzIdx1, schnitzIdx2)
+function [generations] =  distancelca(p, schnitzcells, schnitzIdx1, schnitzIdx2, maxdepth)
+    % function [generations] =  distancelca(p, schnitzcells, schnitzIdx1, schnitzIdx2, maxdepth)
     %
     % This functions returns the distance between the last common ancestor
     % (lca), defined as the sum of the number of generations from two given
     % schnitzes to the lca, divided by two.
+    %
+    % input params:
+    % - p, schnitzcells     standard of schnitzcells
+    % - schnitzIdx1         schnitzcel of interest 1 (possible relative of
+    %                       2)
+    % - schnitzIdx2         schnitzcel of interest 2 (possible relative of
+    %                       1)
+    % - maxdepth            algorithm will quit looking after going maxdepth
+    %                       generations back.
     
-    % Settings
-    MAXITERATIONS = 100;
-    
+        
     totalDistance = NaN;
     
     index1 = schnitzIdx1;
@@ -18,7 +25,7 @@ function [generations] =  distancelca(p, schnitzcells, schnitzIdx1, schnitzIdx2)
     ancestry2 = [];
     
     lcaFound = 0; deadend = 0; iterations = 0;
-    while ~lcaFound && ~deadend && ~(iterations>MAXITERATIONS)
+    while ~lcaFound && ~deadend && ~(iterations>maxdepth)
        
         % expand the list of ancestry on generation up
         ancestry1(end+1) = index1;
@@ -60,7 +67,7 @@ function [generations] =  distancelca(p, schnitzcells, schnitzIdx1, schnitzIdx2)
 
     generations = totalDistance;
     
-    if iterations>MAXITERATIONS
+    if iterations>maxdepth
         disp('OOPS! Maximum iterations reached... This is not good.');
     end
             

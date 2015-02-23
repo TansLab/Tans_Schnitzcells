@@ -67,9 +67,10 @@ function [generations] =  distancelca(p, schnitzcells, schnitzIdx1, schnitzIdx2,
 
     generations = totalDistance;
     
+    %{
     if iterations>maxdepth
         disp('OOPS! Maximum iterations reached... This is not good.');
     end
-            
+    %}      
     
 end

@@ -2,6 +2,14 @@
 function [generations] =  distancelca(p, schnitzcells, schnitzIdx1, schnitzIdx2, maxdepth)
     % function [generations] =  distancelca(p, schnitzcells, schnitzIdx1, schnitzIdx2, maxdepth)
     %
+    % IMPORTANT NOTE
+    % This function is not very optimized if you are interested in
+    % relatedness between multiple pairs of individuals in the same colony
+    % (i.e. schnitzcells file). Then it is probably more computationally 
+    % efficient to make a table crossing all schnitzes, and fill that
+    % whilst looping over a tree.
+    %
+    % DESCRIPTION
     % This functions returns the distance between the last common ancestor
     % (lca), defined as the sum of the number of generations from two given
     % schnitzes to the lca, divided by two.

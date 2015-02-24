@@ -35,6 +35,7 @@ function outim = PN_imshowlabel(p,L,rect,Lp,rectp,varargin)
 % 'phaseImage'        phase image of same size as seg, will be shown as
 %                     background
 % 'randomize' = 0     no randomizing of colormap (default:1)
+% 'customColors'      provide your own colormap
 % TODO: 'recalcCellNumbers' array for which region properties have to be
 %                     recalculated because cell was updated. default: all
 %                     cells. taking fewer cells will speed up process
@@ -163,23 +164,29 @@ end % note suspicious cell detection algorithm has a 2nd part below
 %stop1=toc
 
 %creation of a rgb colormap
-% L2 has every non-background blob in range [2,256] and 
-% sets background to one, corresp. to first entry in mymap
-L2 = mod(L,255)+2;
-L2(L==0) = 1;
-% M is the maximum color table entry, at most 256 colors
-M = min(max2(L)+2,256);
-% create a color map
-mymap = DJK_hsv(M); % DJK 071207
-% explicitly set the colormap's first entry to black for background
-mymap(1,:)=[0 0 0];
-if p_internal.randomize
-  % get sequence of random integers in range [1,maxcolors-1]
-  [s,I] = sort(rand(M-1,1));  
-  % randomly reorder mymap color entries [2,maxcolors]
-  mymap(2:end,:) = mymap(I+1,:);
+% Use custom colormap if it is set
+if isfield(p_internal,'customColors')
+    mymap = p_internal.customColors;
+    L2=uint8(L);
+else
+    % L2 has every non-background blob in range [2,256] and 
+    % sets background to one, corresp. to first entry in mymap
+    L2 = mod(L,255)+2;
+    L2(L==0) = 1;
+    % M is the maximum color table entry, at most 256 colors
+    M = min(max2(L)+2,256);
+    % create a color map
+    mymap = DJK_hsv(M); % DJK 071207
+    % explicitly set the colormap's first entry to black for background
+    mymap(1,:)=[0 0 0];
+    if p_internal.randomize
+      % get sequence of random integers in range [1,maxcolors-1]
+      [s,I] = sort(rand(M-1,1));  
+      % randomly reorder mymap color entries [2,maxcolors]
+      mymap(2:end,:) = mymap(I+1,:);
+    end
+    mymap = [mymap ; 1 1 1]; %add white
 end
-mymap = [mymap ; 1 1 1]; %add white
 
 % 2nd part of suspicious cell detection
 if Lp~=0
@@ -208,7 +215,11 @@ if existfield(p, 'showPerim') && p.showPerim % show cell outlines
     outim(:,:,3) = phaseImg;  
     
     % Get perimeter image
-    perimImg = bwperim(L).*L; % make outline image; *.L colors the perims
+    %perimImg = bwperim(L).*L; % make outline image; *.L colors the perims
+    perimImg = bwperim(L);
+    %perimImg = imdilate(perimImg,strel('disk',3,4)); % imdilate use TODO can be optimized
+    perimImg = perimImg.*L;
+    
     perimImg = ind2rgb(perimImg+1,mymap); % map indices to colours
           
     % Put perimeters in phase image

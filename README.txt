@@ -70,6 +70,23 @@ About schnitzcells structure
 ---
 A minimal schnitz structure is described by P (the schnitz number of it's parent), children schnitz numbers D and E, sister schnitz number S, frame_nrs (an array) listing each frame this schnitz occurs in, cellno (an array) listing each cell number of the tracked cell within each of the frames, and N, the number of frames that distinct cell appears.        
 
+
+
+Fluor corrections
+---
+
+1. The function DJK_correctFluorImage_anycolor corrects for artefacts that arise when taking fluorescence images with the microscope. It substracts the camera noise, by substracting an image taken w/o lighting (we refer to this as flatfield, but this termonology is a bit undefined). 
+2. Uneven illumination is compensated for by dividing by an image of only a fluorescent dye (normalized). 
+3. The image is deconvolved to 'computate out' scattering effects.
+
+Most important lines of this script, concerning steps 1-2, are:
+fluor2image = fluor2image-flatfield_crop;
+fluor2image = shading_mean.*fluor2image./shading_crop;
+
+
+
+
+
 ____________________________________________________________
 PART 2
 SOME NOTES ON HOW MATLAB CODE WORKS

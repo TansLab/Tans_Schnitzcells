@@ -1,3 +1,5 @@
+% function schnitzData = DJK_get_schnitzData(p, s, timeField, varargin)
+%
 % DJK_get_schnitzData takes schnitzcells and returns selected data such
 % that it can be plotted by DJK_plot_scatterColor. Mainly usefull as it can
 % return multiple datapoints per schnitz (otherwise not plottable in

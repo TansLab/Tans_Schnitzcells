@@ -1,8 +1,13 @@
 % generalized to any input color by NW 2012-04 
 %
-%DJK_addToSchnitzes_fluorRate takes a schnitzcells data set containing
+% DJK_addToSchnitzes_fluorRate takes a schnitzcells data set containing
 % fluor data, calculates the fluor rate for all schnitzes and returns the
 % schnitzcells data set with the rate.
+%
+% IMPORTANT NOTE
+% It is important to note that the rate determined here, is the absolute
+% change in fluorescence per unit time per cell, i.e. NOT per volume 
+% (or surface). Theoretically, it is expected to be always positive.
 %
 % Sanders suggestion: STORES AT Y_TIME !!!!
 %
@@ -20,6 +25,8 @@ load(schnitzname);
 
 
 % generate field names
+% For different ways of determining fluor; colorfield tells you which fluor
+% was used, and myindex allows manually determined different fields.
 d_sum = ['d' upper(colorfield) myindex '_sum'];
 d_sum_dt = ['d' upper(colorfield)  myindex '_sum_dt'];
 d_sum_dt_ph = ['d' upper(colorfield)  myindex '_sum_dt_ph'];
@@ -33,7 +40,7 @@ sum_all = [upper(colorfield)  myindex '_sum_all'];
 %sum_all = [upper(colorfield) '5_sum_all'];
 
 fluortime = [upper(colorfield) '_time'];
-phase_atfluor= ['phase_at' upper(colorfield)];
+phase_atfluor= ['phase_at' upper(colorfield)]; % phase = where in cell cycle 
 
 %--------------------------------------------------------------------------
 % INITIALIZE NEW MEASUREMENTS
@@ -63,13 +70,20 @@ for i = 1:length(schnitzcells)
   else
   
       if length(s.(fluortime)) > 1
+        % Loop over measured fluor values 
         for f = 1:length(s.(fluortime))-1
-          age                 = find(s.time == s.(fluortime)(f));
-          age2                = find(s.time == s.(fluortime)(f+1));
+          % Note that age is normalized 
+          age                 = find(s.time == s.(fluortime)(f)); % Age now
+          age2                = find(s.time == s.(fluortime)(f+1)); % Age at next point
 
+          % different ways of determining rate
+          % absolute point to point difference
           s.(d_sum)(end+1)         =  s.(sum_all)(age2) - s.(sum_all)(age);
+          % d(X)/d(t)
           s.(d_sum_dt)(end+1)      = (s.(sum_all)(age2) - s.(sum_all)(age)) /  (s.(fluortime)(f+1) - s.(fluortime)(f));
+          % phase corrected
           s.(d_sum_dt_ph)(end+1)   = (s.(sum_all)(age2) - s.(sum_all)(age)) / ((s.(fluortime)(f+1) - s.(fluortime)(f))*(1 + s.phase(age)));
+          % per volume
           s.(d_sum_dt_vol)(end+1)  = (s.(sum_all)(age2) - s.(sum_all)(age)) / ((s.(fluortime)(f+1) - s.(fluortime)(f))*(s.rp_volume(age)));
 
           s.(phase_atfluor)(end+1)       =  s.phase(age);

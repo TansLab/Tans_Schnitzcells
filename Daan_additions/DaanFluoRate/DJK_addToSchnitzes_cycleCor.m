@@ -1,8 +1,15 @@
 % DJK_addToSchnitzes_cycleCor takes a schnitzcells data set, and corrects a
 % parameter according to cell phase
 %
+% Procedure:
+% Find the mean trend of any parameter against the cell phase (i.e. where
+% the cell is in the cell cycle), and then correct that
+% parameter for the cell phase (substraction).
+%
 % OUTPUT
 % 'schnitzcells'      schnitzcells
+% A field will be added to schnitzcells with the suffix _cyccor, which is
+% the cell cycle corrected version of the given paramter.
 %
 % REQUIRED ARGUMENTS:
 % 'schnitzcells'      schnitzcells
@@ -96,7 +103,10 @@ for i = 1:length(schnitzcells)
         s.(newField)(f) = NaN;
       else
 %         cycleCor = meanOfBin( ceil(s.(phaseField)(f)/binWidth) );
+
+        % Determine extrapolated value at current cell phase
         cycleCor = polyval(fitCoef3,s.(phaseField)(f));
+        % subtract that value, but keep same mean
         s.(newField)(f) = s.(field)(f) + meanData - cycleCor;
       end
     end

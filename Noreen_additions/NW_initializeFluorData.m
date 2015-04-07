@@ -103,7 +103,7 @@ end
 %end
 
 % check if segmentedImages exist and are in folder /segmentation/
-segmentedImages=dir([p.segmentationDir, 'pos*seg*.mat']);
+segmentedImages=dir([p.segmentationDir, '*seg*.mat']); % MW 2015/04 
 if isempty(segmentedImages)
     error(['Can''t find any matlab files of segmented images in directory ' p.segmentationDir])
 end
@@ -139,7 +139,7 @@ fluor1counter=-1; fluor2counter=-1; fluor3counter=-1;
 for i= p.manualRange
     %----------------------------------------------------------------------
     % Search for [segmentation].mat file
-    segImage =  dir([p.segmentationDir, 'pos*seg', str3(i), '.mat']); % .mat file of current image
+    segImage =  dir([p.segmentationDir, '*seg', str3(i), '.mat']); % .mat file of current image % MW 2015/04
    
     % check if segmentation of this frame exists (and not falsely imposed
     % by manualRange)
@@ -180,6 +180,8 @@ for i= p.manualRange
                 % save to existing [segmentation].mat file (append)
                 eval(['save(''' p.segmentationDir segImage.name ''',''-append'',''' reg ''',''' back ''',''' binning ''',''' expt ''',''' gain ''');']);
                 clear reg back binning expt gain;
+            else
+                disp(['Tried looking for ' fluor1name ', but not fluor img found']);
             end
         end
                 

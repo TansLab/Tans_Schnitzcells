@@ -34,6 +34,25 @@
 %                     later (Y5xxx,Y6_mean,(+ElowitzStyle) etc).
 %                     =0: calculates everything (default: =0)  (NW 2012/04)
 %
+% NOTES ON PROCEDURE AND OUTPUT
+% ===
+% In principle, pixels are selected from the fluor image using the 
+% segmentation file, which contains the regions of the detected cells
+% encoded as indices in a matrix. 
+% There are however different corrections performed on the fluor images,
+% and one can determine either the sum or the average of the fluor
+% intensity within a cell. Furthermore, an additional method is introduced
+% here to take only the fluor values from a subset of the detected cell
+% area, namely only its central area, to prevent artifacts introduced by
+% (incorrect) border detection.
+% All these options lead to fluor values being calculated differently, and
+% these different values are all stored.
+% The parameters <fluor>1_suffix to <fluor>5_suffix (where <fluor> is a 
+% capital letter encoding for the fluor, e.g. G, C, Y, ..) hold the 
+% different consecutive corrections that were performed on the fluor image. 
+% fluor6 holds the fluor value determined from the central area. The
+% suffixes of these parameters tell you by which method the different pixel
+% intensities are summarized (e.g. sum, mean, ..).
 
 function [p,schnitzcells] = DJK_addToSchnitzes_fluor_anycolor(p,varargin) 
 

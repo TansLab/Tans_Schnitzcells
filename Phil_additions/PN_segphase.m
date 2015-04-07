@@ -18,7 +18,11 @@
 %   A_cropPhImage:  phase contrast image cropped (default is median filtered input image)
 %   Z_segmentedImage:    segmented image (smaller size)
 %   ROI_segmentation:   corner coordinates of the crop region in the original image
-
+% 
+% OPTIONAL INPUTS: (MW 2015/04)
+%   useFullImage:   Default value 1; if set to 0 allows you to handle the
+%                   image uncropped. (Mother function 
+%                   PN_segmoviephase_3colors.m accepts p.useFullImage).
 function [A_cropPhImage, Z_segmentedImage, ROI_segmentation] = PN_segphase(imageToSegment,varargin)
 
 
@@ -31,7 +35,7 @@ q.addRequired('imageToSegment', @isnumeric);
 %STEP A : finds a global mask and crop the image
 q.addParamValue('rangeFiltSize',35,@isnumeric);       %dectection of interesting parts of the image
 q.addParamValue('maskMargin',5,@isnumeric);          %additional margin of the mask : enlarge if cells missing on the edge
-q.addParamValue('useFullImage',0,@isnumeric);         % use full image for segmentation of ROI mask
+q.addParamValue('useFullImage',0,@isnumeric);         % use full image for segmentation of ROI mask, MW TODO @islogical?
 
 %STEP B : find edges
 q.addParamValue('LoG_Smoothing',2,@isnumeric);         %smoothing amplitude of the edge detection filter
@@ -48,6 +52,7 @@ q.addParamValue('neckDepth',2,@isnumeric);
 q.addParamValue('saveSteps',false,@islogical);  %indicate if you want to save intermediate images  
 q.addParamValue('saveDir',pwd,@ischar);    %directory where intermediate treatment images are saved      
 
+% Parse user values
 q.parse(imageToSegment, varargin{:});
 
 
@@ -63,6 +68,8 @@ O_PhImageFilt = medfilt2(imageToSegment);
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %STEP A : find a global mask and crop the image
 
+
+% Find a global mask if desired (see useFullImage param) and crop the image
 A_maskImage = rangefilt(O_PhImageFilt,true(q.Results.rangeFiltSize));              %detect zones of sufficient intensity variations
 A_maskImage = im2bw(A_maskImage,graythresh(A_maskImage));                  %threshold to black and white
 A_maskImage=imfill(A_maskImage,'holes');                            % fill interior holes
@@ -84,7 +91,6 @@ else  % exception: skip cropping
     ROI_segmentation=[1+myIncr 1+myIncr size(A_cropMaskImage,1)-myIncr size(A_cropMaskImage,2)-myIncr];
     A_cropMaskImage=A_cropMaskImage(ROI_segmentation(1):ROI_segmentation(3),ROI_segmentation(2):ROI_segmentation(4));
 end
-
 
 A_cropPhImage = O_PhImageFilt(ROI_segmentation(1):ROI_segmentation(3),ROI_segmentation(2):ROI_segmentation(4)); %cropped ph image image
 

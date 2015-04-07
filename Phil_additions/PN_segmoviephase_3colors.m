@@ -406,6 +406,8 @@ for i= p.segRange
     %----------------------------------------------------------------------
     
     
+    % Parameters for segmentation
+    % === 
     saveDirectory = [p.segmentationDir p.PN_saveDir 'seg' str3(i) filesep];
     [status,msg,id] = mkdir(saveDirectory);
     inputsOfSegmentation = {'rangeFiltSize',p.rangeFiltSize,'maskMargin',p.maskMargin,...

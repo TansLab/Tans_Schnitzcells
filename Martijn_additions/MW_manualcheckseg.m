@@ -1,4 +1,31 @@
+
+
+
+
+
+%
+%
+% OLD FUNCTION, USE PN_..
+%
+%
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 function p = MW_manualcheckseg (p, varargin);
+
+disp('WARNING: DON''T USE THIS FUNCTION ANY MORE - IT''S DEPRICATED!')
+
 % Lc will be saved as the corrected image
 %
 %   MANUALCHECKSEG allows users to review the results of image segmentation

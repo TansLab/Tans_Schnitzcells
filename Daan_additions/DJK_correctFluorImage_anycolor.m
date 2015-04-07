@@ -1,3 +1,4 @@
+% function DJK_correctFluorImage_anycolor(p, flatfield, shading, replace, varargin)
 % CHANGED BY NOREEN
 %
 % loads fluorimage which is not yet corrected with extra rescale correction
@@ -46,11 +47,15 @@
 %                 correction is needed (error in optics? etc) . Take around 
 %                 XXXX for CFP.
 %                 Default: =1
+%                 Note that the value of the binning parameter is stored in
+%                 the segfile.
 % 'minimalMode'       =1: only calculates values, that are actually used
 %                     later (Y5xxx,Y6_mean,(+ElowitzStyle) etc).
 %                     =0: calculates everything (default: =0)  (NW 2012/04)
 %
-
+% IMPLICIT ARGUMENTS
+%
+% Some arguments used in this function are loaded from the seg file.
 
 function DJK_correctFluorImage_anycolor(p, flatfield, shading, replace, varargin)
 
@@ -211,7 +216,6 @@ disp(['Analyzing ' num2str(length(p.manualRange)) ' frames from ' num2str(p.manu
 disp(['-------------------------------------------------']);
 %--------------------------------------------------------------------------
 
-
 %--------------------------------------------------------------------------
 % Prepare flatfield & shading & replace
 %--------------------------------------------------------------------------
@@ -243,8 +247,7 @@ else
     back=genvarname([p.fluorcolor 'back']);
     gain=genvarname(['gain' p.fluorcolor]);
     expt=genvarname(['expt' p.fluorcolor]);
-
-
+   
     %--------------------------------------------------------------------------
     % LOOP OVER SEG FILES AND NORMALIZATION OF FLUOR
     %--------------------------------------------------------------------------
@@ -261,12 +264,25 @@ else
 
       % load segmentation file
       if ~p.TIFFonly
-        filename = [p.segmentationDir, p.movieName, 'seg', str3(frameNum)];
+        filename = [p.segmentationDir, p.movieName, 'seg', str3(frameNum)]
         % The variables used to be cleared before reassignment but this is not possible with the
-        % general names any more. Thus assignment of empty matrices. (NW 11/12/08)
-        eval([reg '=[]; ' binning '=[]; ' back '=[]; ' gain '=[]; ' expt '=[]; ' ]);
+        % general names any more. Thus assignment of empty matrices. (NW
+        % 11/12/08) <-> think you can -MW
+        %eval([reg '=[]; ' binning '=[]; ' back '=[]; ' gain '=[]; ' expt '=[]; ' ]);
+        
+        % Clear and load parameters used for this frame
+        command = ['clear ' reg '; clear ' binning '; clear ' back '; clear ' gain '; clear ' expt '; ']; % MW 2015/04
+        eval(command); % MW 2015/04
         clear rect phaseFullSize Lc LNsub;
         load(filename);
+            % IMPORTANT NOTE: the segmentation file also stores important 
+            % parameters used below, such as e.g. binning.
+            % Parameters that are used below are cleared in the above
+            % command, where the names of these parameters are stored in 
+            % the parameters in the list above.
+            % (E.g. the parameter "binning" is a string that holds the name 
+            % of the parameter used for actual binning; i.e. this is a 
+            % string called ybinning.) MW 2015/04
  
         disp([' * ' str3(frameNum) ' -> loaded ' p.movieName 'seg' str3(frameNum) ' in ' p.segmentationDir]);
         if ~exist('Lc')      
@@ -274,7 +290,7 @@ else
           Lc = LNsub;
         end
       end
-
+     
       % still need to resize fluorimage
       eval(['fluorimage = imresize_old(fluorimage,' binning ',''nearest'');']);
           
@@ -307,7 +323,7 @@ else
         temp = fluorimage;
         temp(rect(1):rect(3), rect(2):rect(4)) = 0;
         fluorimageVect = temp(temp>0);
-       fluorimageVect=double( fluorimageVect);%DE
+        fluorimageVect=double( fluorimageVect);%DE
         eval([back '= uint16( median((fluorimageVect)) );']);
 
         % Alternative Background: median of fluor within subset (close to cells), but with cells disregarded
@@ -323,7 +339,7 @@ else
       %------------------------------------------------------------------------
       % Flatfield and Shading correction (ALSO THIS WHEN p.TIFFonly)
       fluor2image = double(fluorimage);
-
+      
       fluor2image = fluor2image-flatfield_crop;
       fluor2image = shading_mean.*fluor2image./shading_crop; % when dividing by shading, multiply by mean(shading), so average stays the same
       fluor2image = uint16(fluor2image);

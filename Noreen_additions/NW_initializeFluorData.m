@@ -12,7 +12,7 @@ function p = NW_initializeFluorData(p, varargin)
 % typical (addition MW 2015/04).
 % You can manually set the binning for the fluor images by supplying the
 % optional parameter binningOverwrite.
-% 
+%
 %
 % TODO: INCLUDE SAVEDIR PROPERLY OR LEAVE OUT! (now: automatically in
 % segmantation folder written
@@ -235,7 +235,8 @@ for i= p.manualRange
                 % exptfluor2str ...
                 
                 % save to existing [segmentation].mat file (append)
-                eval(['save(''' p.segmentationDir segImage.name ''',''-append'',''' reg ''',''' back ''',''' binning ''',''' expt ''',''' gain ''');']);
+                command = ['save(''' p.segmentationDir segImage.name ''',''-append'',''' reg ''',''' back ''',''' binning ''',''' expt ''',''' gain ''');'];
+                eval(command);
                 clear reg back binning expt gain;
             end
         end

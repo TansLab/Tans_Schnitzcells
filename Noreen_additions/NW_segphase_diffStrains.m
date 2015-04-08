@@ -1,7 +1,19 @@
 
-% TODO MW 2015/01
-% Investigate whether this function can be merged into PN_segphase as a
-% functionality. Idem for NW_segphase_richMed.
+
+
+
+% FUNCTION IS DEPRECATED
+%
+% Use option p1.useFullImage = 1 with PN_segmoviephase_3colors instead.
+% This calls the PN_segphase.m function with the right options.
+% 
+% This function will be removed.
+% - MW 2015/04
+
+
+
+
+
 
 % NW (2013): No restriction to largest connected area -> cells that are far
 % apart are all detected. Segmentation is not restricted to central area.
@@ -25,6 +37,7 @@
 
 function [A_cropPhImage, Z_segmentedImage, ROI_segmentation] = PN_segphase(imageToSegment,varargin)
 
+disp('WARNING: This function is deprecated, use p1.useFullImage = 1 with PN_segmoviephase_3colors instead.');
 
 %%%%%%%%%%%%%%%%%%%%%%  PARAMETERS INITIALIZATION  %%%%%%%%%%%%%%%%%%%%%%
 %Reads parameter values or initializes with default values not too bad for

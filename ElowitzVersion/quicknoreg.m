@@ -1,8 +1,11 @@
 function [xsubreg, xshift, xback, xbinning] = quicknoreg(L, imx, rect, deltamax, fullsize)
 % function [xsubreg, xshift, xback, xbinning] = quickreg(L, imx, rect, deltamax)
 %
-%  calculates translation between phase and fluorescent images
-
+% - Calculates translation between phase and fluorescent images
+% - Also calculates binning use for fluor image based on fluor image ("imx" 
+% gives the fluor file and is loaded), and the given size of the phase
+% image ("fullsize").
+%
 % load images if necessary
 
 if min(size(imx))==1,
@@ -16,6 +19,15 @@ end
 
 
 sizeratio = fullsize./size(imx);
+% I've build the following warning in because otherwise the error
+% introduced by this issue would remain hidden. There might be prettier
+% ways to do this though. 2048 is the current resolution of the camera,
+% when taking pictures at binning=1. MW 2015/04
+CURRENTCAMERARESOLUTION = 2048;
+if fullsize(1)<CURRENTCAMERARESOLUTION 
+    disp(['WARNING: size of your phase image is smaller than what is typical (per 2015);'...
+          ' If you have used binning for your phase image, binning of the fluor image will be determined incorrectly.']);
+end
 if sizeratio(1)==sizeratio(2) %& sizeratio(1)==round(sizeratio(1))
     if sizeratio(1)~=1
         disp(['fluor image is ',...
@@ -24,7 +36,7 @@ if sizeratio(1)==sizeratio(2) %& sizeratio(1)==round(sizeratio(1))
     end
     xbinning = sizeratio(1);
 else
-    disp('fluor image dimensions have different proportions that phase image.');
+    disp('fluor image dimensions have different proportions than phase image.');
     error(' not equipped for such cases.');
 end;
 % end nitzan editing 2005June25

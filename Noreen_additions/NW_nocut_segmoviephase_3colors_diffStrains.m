@@ -1,17 +1,27 @@
 
-% TODO MW 2015/01
-% This function is redundant, its functionality should be merged into
-% PN_segmoviephase_3colors.m. The main difference of this fn with 
-% PN_segmoviephase_3colors is that it calls NW_segphase_diffStrains, which
-% doesn't select for central area w. most contrast.
-% Aim of this function is that you can choose to not "auto-detect" central
-% colony. (E.g. useful when there's dirt in sample or multiple colonies.)
-% TODO: make varargin argument for PN_segmoviephase_3colors such that you 
-% can choose "non-central-selection" option. 
-% TODO: I guess also NW_segphase_diffStrains can be merged into
-% PN_segphase. 
-% TODO: rename abovementioned fn names such that they match their
-% filenames.
+
+% FUNCTION IS DEPRECATED
+%
+% Use option p1.useFullImage = 1 with PN_segmoviephase_3colors instead.
+% 
+% This function will be removed.
+% - MW 2015/04
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 function p = NW_nocut_segmoviephase_3colors_diffStrains(p,varargin)
 %
@@ -31,6 +41,9 @@ function p = NW_nocut_segmoviephase_3colors_diffStrains(p,varargin)
 % Parse the input arguments, input error checking. Use inputParser in
 % recent matlab releases.
 %-------------------------------------------------------------------------------
+
+disp('WARNING: This function is deprecated, use p1.useFullImage = 1 with PN_segmoviephase_3colors instead.');
+
 numRequiredArgs = 1;
 if (nargin < 1) | ...
         (mod(nargin,2) == 0) | ...

@@ -114,7 +114,7 @@ B_edgeImage1 = edge(B_negPh,'log',0,q.Results.LoG_Smoothing);                   
 %suppress noisy surroundings
 B_edgeImage2 = B_edgeImage1 & A_cropMaskImage;
 B_fillEdgeImage2 = imfill(B_edgeImage2,'holes');
-B_fillEdgeImage2 = bwareaopen(B_fillEdgeImage2,q.Results.minCellArea,4);           %suppress small stuff 
+B_fillEdgeImage2 = bwareaopen(B_fillEdgeImage2,q.Results.minCellArea,4);   %suppress small stuff 
 B_edgeImage2 = B_edgeImage1 & B_fillEdgeImage2;                            %keeps only edges that do not own to small stuff
 B_edgeImage2 = bwareaopen(B_edgeImage2,30);                                %remove small loops related to intracell variations
 
@@ -234,6 +234,11 @@ Z_segmentedImage = bwareaopen(Z_segmentedImage,10);
 Z_segmentedImage = bwlabel(Z_segmentedImage);                               %segmentation is finished here
 Z_segmentedImage = imdilate(Z_segmentedImage, strel('diamond',1));
 
+% addition MW 2015/04, re-surpressing small cells (since after all
+% operations, new artifacts might have been introduced).
+% So note: this is the second time this operation is performed
+Z_segmentedImage = MW_removesmallsegmented(Z_segmentedImage,q.Results.minCellArea); 
+
 if q.Results.saveSteps
 savePNGofImage(Z_maskToFill & ~Z_seeds,'Z_Mask and seeds',q.Results.saveDir);
 savePNGofImage(Z_segmentedImage,'Z_segmentedImage',q.Results.saveDir);
@@ -246,6 +251,7 @@ if max(max(Z_segmentedImage))==0                                           %let 
   disp([' * !! WATCH OUT !! no cells found on this frame...']);
 end;
 
+end
 
 
 
@@ -257,5 +263,5 @@ function savePNGofImage(image, name, saveDirectory)
         image = [ 0 ]; % will get error if image is empty
     end
     DJK_writeSegImage(image, filename);
-
+end
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%

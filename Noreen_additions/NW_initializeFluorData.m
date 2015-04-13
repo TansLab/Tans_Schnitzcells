@@ -168,7 +168,8 @@ for i= p.manualRange
         % ------------------extract data ---------------------------------
         %
         % NOTE that this code "loops" over the 3 fluor codes in a
-        % hard-coded way, i.e. code has been copied-pasted three times. 
+        % hard-coded way, i.e. code has been copied-pasted three times, for
+        % each possible fluor once. 
         % MW 2015/04
         %
         % fluor1: check for existence of image and add data to .mat file if

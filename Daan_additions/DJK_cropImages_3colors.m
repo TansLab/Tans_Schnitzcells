@@ -14,7 +14,14 @@ function DJK_cropImages_3colors(p, cropRange, leftTop, rightBottom, varargin)
 %
 %   'cropName'        New name for cropped images (standard: posXcrop)
 %
-
+% Optional inputs
+%   p.resizePhase     This is to handle very exceptional cases. If you have
+%                     a phaseimage with an incorrect size (e.g. because you
+%                     have binned your phase image to another binning than
+%                     the required 1x1 binning), you can correct that by
+%                     setting this parameter. E.g., if p.resizePhase = 2
+%                     than the cropped phase image will become twice as
+%                     large. 
 
 %--------------------------------------------------------------------------
 % Input error checking
@@ -203,9 +210,20 @@ for fr = cropRange, % go over each frame
         % read image       
         im_original = imread([p.imageDir DphaseRange(i).name]); 
 
+
+        % Resize the image. This is an option to be used for exceptional
+        % cases. E.g. when the phase image has been accidentally binned,
+        % other parts of the code will not function poroperly. Here, the
+        % phase image can be converted to a resolution that would
+        % correspond to 1x1 binning. (Currently, a resolution of
+        % 2048x2048.)
+        if isfield(p, 'resizePhase')
+            im_original = imresize(im_original, p.resizePhase);
+        end        
+        
         % crop the image
         im_crop = im_original( leftTop(2):rightBottom(2), leftTop(1):rightBottom(1));
-        
+       
         % read iminfo
         im_info = imfinfo([p.imageDir DphaseRange(i).name]);
        

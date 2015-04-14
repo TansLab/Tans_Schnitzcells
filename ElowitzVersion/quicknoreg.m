@@ -19,6 +19,11 @@ end
 
 
 sizeratio = fullsize./size(imx);
+% When you use a binned image, this calculation will be incorrect; which
+% will have consequences during the rest of the analysis. Unfortunately
+% making the algorithm handle these cases is not trivial, so for now I
+% added this warning message. Use the p.resizePhase in combination with 
+% DJK_cropImages_3colors to resolve this issue.
 % I've build the following warning in because otherwise the error
 % introduced by this issue would remain hidden. There might be prettier
 % ways to do this though. 2048 is the current resolution of the camera,
@@ -27,6 +32,7 @@ CURRENTCAMERARESOLUTION = 2048;
 if fullsize(1)<CURRENTCAMERARESOLUTION 
     disp(['WARNING: size of your phase image is smaller than what is typical (per 2015);'...
           ' If you have used binning for your phase image, binning of the fluor image will be determined incorrectly.']);
+    disp('p.resizePhase in combination with DJK_cropImages_3colors can be used as a quick fix.')
 end
 if sizeratio(1)==sizeratio(2) %& sizeratio(1)==round(sizeratio(1))
     if sizeratio(1)~=1

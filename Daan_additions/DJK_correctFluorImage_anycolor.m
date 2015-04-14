@@ -52,10 +52,6 @@
 % 'minimalMode'       =1: only calculates values, that are actually used
 %                     later (Y5xxx,Y6_mean,(+ElowitzStyle) etc).
 %                     =0: calculates everything (default: =0)  (NW 2012/04)
-% 'phaseBinning'  For very exceptional cases: in case you have binned the
-%                 phaseimage, this is not automatically handled, and this
-%                 parameter needs to be set to the binning. (See also
-%                 "NW_initializeFluorData".)
 %
 % IMPLICIT ARGUMENTS
 %
@@ -225,20 +221,13 @@ disp(['-------------------------------------------------']);
 %--------------------------------------------------------------------------
 % rectCrop are coordinates of crop within phaseFullSize
 rectCrop = [p.cropLeftTop(2), p.cropLeftTop(1), p.cropRightBottom(2), p.cropRightBottom(1)]; % [top, left, bottom, right]
-if isfield(p,'phaseBinning') % addition MW to handle binned phase images
-    rectCrop(1) = (rectCrop(1)-1) * p.phaseBinning + 1;
-    rectCrop(2) = (rectCrop(2)-1) * p.phaseBinning + 1;
-    rectCrop(3) = rectCrop(3) * p.phaseBinning;
-    rectCrop(4) = rectCrop(4) * p.phaseBinning;
-    disp(['Adjusted rectCrop to ' num2str(rectCrop)]);
-end
 
 % Get correct subset of flatfield & shading
 flatfield_crop  = double( flatfield( rectCrop(1):rectCrop(3), rectCrop(2):rectCrop(4) ) );
 shading_crop    = double(   shading( rectCrop(1):rectCrop(3), rectCrop(2):rectCrop(4) ) );
 replace_crop    = double(   replace( rectCrop(1):rectCrop(3), rectCrop(2):rectCrop(4) ) );
 
-shading_mean    = mean(shading(:));
+shading_mean    = mean2(shading);
 %--------------------------------------------------------------------------
 
 

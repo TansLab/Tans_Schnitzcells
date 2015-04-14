@@ -35,11 +35,7 @@ The segmentation needs to be checked manually; There is a matlab function availa
     This is also printed to screen, and gives a list of possible problems for tracking.
 *
 ADDITIONAL OPTIONS/PROBLEM SOLVING:
-Before segmentation, the algorithm selects a piece it deems relevant to segment. This is done by max. contrast [I think; check]. Sometimes it crops out a piece of dirt instead of actual bacteria. In that case one can use either of following functions to instead analyze the whole image:
-%NW_nocut_segmoviephase_3colors_diffStrains(...);
-%NW_segmoviephase_3colors_diffStrains(...);
-(Instead of PN_segmoviephase_3colors(...);.)
-OR one can set p.useFullImage = 1 [though I am currently experiencing problems with that - TODO MW].
+Before segmentation, the algorithm selects a piece it deems relevant to segment. This is done by max. contrast [I think; check]. Sometimes it crops out a piece of dirt instead of actual bacteria. In that case one can use either can set p.useFullImage = 1 with PN_segmoviephase_3colors.
 
 *
 NOTES: There are some "hidden" settings to the algorithm that determines whether cells might be incorrectly segmented. 

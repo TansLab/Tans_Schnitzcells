@@ -8,10 +8,8 @@ function p = NW_initializeFluorData(p, varargin)
 % the fluor image. However, if binning was also used for the phase image
 % (typically should not be the case), then the binning will be determined
 % incorrectly, which has consequences for the fluor correction later on.
-% Script (quicknoreg.m) will give a warning if the phase image size is not
-% typical (addition MW 2015/04).
-% You can manually set the binning for the fluor images by supplying the
-% optional parameter binningOverwrite.
+% Use the  p.resizePhase option in DJK_cropImages_3colors.m to address this
+% issue.
 %
 %
 % TODO: INCLUDE SAVEDIR PROPERLY OR LEAVE OUT! (now: automatically in
@@ -40,12 +38,6 @@ function p = NW_initializeFluorData(p, varargin)
 %                       overwrites the existing .mat files with new files
 %                       that now include fluorescence data. Default option
 %                       seems to be the most useful one.
-% binningOverwrite      You can manually set the binning for the fluor
-%                       images by supplying this optional parameter. 
-%                       This should be a vector 
-%                       [binningfluor1,binningfluor2, binningfluor3]
-%                       (put in 0 as a placeholder for non-used fluors).
-
 
 
 
@@ -181,10 +173,6 @@ for i= p.manualRange
                 disp('found fluor1 image');
                 fluor1counter=fluor1counter+1;
                 [fluor1reg, fluor1shift, fluor1back, fluor1binning] = quicknoreg(LNsub,fluor1name,rect,0,phaseFullSize); 
-                if isfield(p, 'binningOverwrite')
-                    fluor1binning = p.binningOverwrite(1);
-                    disp(['Binning overwritten to ' num2str(fluor1binning) '.']);
-                end
                 [exptfluor1str, gainfluor1, exptfluor1] = imsettings(fluor1name);
                 
                 % change names to actual color: fluor1back -> yback, or
@@ -219,10 +207,6 @@ for i= p.manualRange
                 disp('found fluor2 image');
                 fluor2counter=fluor2counter+1;
                 [fluor2reg, fluor2shift, fluor2back, fluor2binning] = quicknoreg(LNsub,fluor2name,rect,0,phaseFullSize); 
-                if isfield(p, 'binningOverwrite')
-                    fluor2binning = p.binningOverwrite(2);
-                    disp(['Binning overwritten to ' num2str(fluor2binning) '.']);
-                end                
                 [exptfluor2str, gainfluor2, exptfluor2] = imsettings(fluor2name);                                               
                 
                 % change names to actual color: fluor2back -> yback, or
@@ -251,10 +235,6 @@ for i= p.manualRange
                 disp('found fluor3 image');
                 fluor3counter=fluor3counter+1;
                 [fluor3reg, fluor3shift, fluor3back, fluor3binning] = quicknoreg(LNsub,fluor3name,rect,0,phaseFullSize); 
-                if isfield(p, 'binningOverwrite')
-                    fluor3binning = p.binningOverwrite(3);
-                    disp(['Binning overwritten to ' num2str(fluor3binning) '.']);
-                end                
                 [exptfluor3str, gainfluor3, exptfluor3] = imsettings(fluor3name);
                 
                 % change names to actual color: fluor3back -> yback, or

@@ -160,7 +160,7 @@ fields = {...
   'customColors', ...               % MW 2015-02  
   'fluorcolor',...                  % MW 2015-04
   'minimalMode',...
-  'rescaleCorrection'...            % TODO MW Check whether this field is OK
+  'rescaleCorrection'...            % MW 2015-04
   };
 
 upfields = upper(fields);

@@ -2,7 +2,7 @@
 
 ____________________________________________________________
 SOME DOCUMENTATION WITH SCHNITZCELLS (Tans lab version)
-2014/04/16 Martijn Wehrens
+Initial version: 2014/04/16 Martijn Wehrens
 ____________________________________________________________
 
 
@@ -109,6 +109,7 @@ Excerpt:
 
 Creating branches
 ===
+In order to be able to calculate cross correlations so-called branchgroups are created first. Key steps of that procedure are outlined below.
 See also Daan Kiviet's thesis: "The lac Operon: Fluctuations, Growth and Evolution", p. 106.
 
 To compute e.g. correlation functions, one should have a continuous function of two parameters for two parameters. E.g. growth rate mu and concentration of fluorescent reporter. This kind of data is however not available for lineages from the schnitzcells struct. Therefore, "branches" are created. These contains parameters X(t) per lineage. This necessitates that data is redundant. E.g. the trace X(t) for a 1st generation cell that has 100 offspring cells in the final colony, shuold be copied a 100 times because it exists in all lineages. 

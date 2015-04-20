@@ -1,4 +1,5 @@
 function [CorrData,composite_corr]=DJK_plot_crosscorrelation_standard_error_store(p,branch_groups, fieldX, fieldY,varargin);
+% function [CorrData,composite_corr]=DJK_plot_crosscorrelation_standard_error_store(p,branch_groups, fieldX, fieldY,varargin);
 % Daans function but saves the generated plots
 %
 % This function plots the cross-correlation of fieldX and fieldY. Further
@@ -39,21 +40,42 @@ function [CorrData,composite_corr]=DJK_plot_crosscorrelation_standard_error_stor
 %                 default: [p.analysisDir 'branches\']
 % 'onScreen'      =1: image is displayed on screen and saved
 %                 =0 (default): image is closed directly and saved
+%p.colorMode=1;   default=1; single branch groups are plotted in different 
+%                 colors. otherwise: plotted in gray works only for up to
+%                 12 branches (by now); TODO MW 2015-04: note that 
+%                 distinguishable_colors could be used to extend this
+%                 option. This fn is now available in
+%                 https://bitbucket.org/microscopeguerrillas/schnitzcells_tans_extensions.
+%                 schnitzcells_tans_extensions / Martijn_libs /.
+% Important parameters that are set in this function to well-performing
+% default values, these can be changed by using below arguments:
+% ===
+% p.weighing      sets weighing mode, 2 performs 3/4 weighing; see
+%                 DJK_getCrossCor for more info.
+% p.extraNorm     perform an extra normalization where the mean of each
+%                 branch is subtracted (default: 0), see DJK_getCrossCor 
+%                 for more info.
+% p.bias          See DJK_getCrossCor for more info.
 % 
 % %%% range of optional arguments could be extended %%%
 %
 % -------------------------------------------------------------------------
 
 % SETTINGS %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-bias = 0;      % 0 will adjust for less data at larger delay times
-weighing = 2;  % 2 performs 3/4 weighing
-extraNorm = 0; % 0 performs no extra normalization  %blubb
-
-colorMode=1;   %=1 single branch groups are plotted in different colors. otherwise: plotted in gray
-               % works only for up to 12 branches (by now)
+% These parameters are important for how this function performs. That is
+% why they are listed at the top of this function. Note that below more
+% paramters are set into the p struct.
+% Edit MW 2015/04: 
+if ~isfield(p,'bias')
+    p.bias = 0;      % 0 will adjust for less data at larger delay times
+end
+if ~isfield(p,'weighing')
+    p.weighing = 2;  % 2 performs 3/4 weighing
+end
+if ~isfield(p,'extraNorm')
+    p.extraNorm = 0; % 0 performs no extra normalization  %blubb
+end
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-
-
 
 
 %--------------------------------------------------------------------------
@@ -92,6 +114,10 @@ end
 if length(p.selectionName) > 0
   p.DJK_saveDir = [p.DJK_saveDir p.selectionName filesep];
 end  
+if ~isfield(p,'colorMode')
+    p.colorMode=1;   %=1 single branch groups are plotted in different colors. otherwise: plotted in gray
+                   % works only for up to 12 branches (by now)
+end
 % Make sure that DJK_saveDir directory exists
 if exist(p.DJK_saveDir)~=7
   [status,msg,id] = mymkdir([p.DJK_saveDir]);
@@ -124,7 +150,7 @@ end
 %                                       information about 'saveDir' (older version did not require
 %                                       'p'as a function-input.)
 for i = 1:length(branch_groups)
-  [trash, branch_groups(i).composite_corr] = DJK_getCrossCor(p, branch_groups(i).branches, fieldX, fieldY, 'bias', bias, 'weighing', weighing, 'extraNorm', extraNorm);
+  [trash, branch_groups(i).composite_corr] = DJK_getCrossCor(p, branch_groups(i).branches, fieldX, fieldY, 'bias', p.bias, 'weighing', p.weighing, 'extraNorm', p.extraNorm);
 end
 % -------------------------------------------------------------------------
 
@@ -151,11 +177,11 @@ end
 
 h=figure('visible',visibleOnOff); 
 % if single groups are to be plotted in color, get the colors
-if colorMode==1 %start one color earlier than in NW_makemovieBranchgroups!
+if p.colorMode==1 %start one color earlier than in NW_makemovieBranchgroups!
     myColor=[1 1 0.9; 1 0 0 ; 0 1 0 ; 0 0 1; 1 0.6 0.2;  0 1 1; 0 0.5 0.5; 0 0.6 0; 0.6 0 0.4; 0.8 0.5 0; 0.7 0 0; 0.4 0.2 0.6; 0.6 0.2 0; 1 0 0 ; 0 1 0 ; 0 0 1; 1 0.6 0.2;  0 1 1; 0 0.5 0.5; 0 0.6 0; 0.6 0 0.4; 0.8 0.5 0; 0.7 0 0; 0.4 0.2 0.6; 0.6 0.2 0];
 end
 for i = 1:length(branch_groups)
-    if colorMode==1
+    if p.colorMode==1
         colorindex=rem(i,size(myColor,1))+1;
           plot(branch_groups(i).composite_corr.X/60, branch_groups(i).composite_corr.Y, '-', 'LineWidth', 2, 'Color', myColor(colorindex,:)); hold on;
     else    
@@ -169,7 +195,7 @@ title(['single branch_groups (' fieldX ', ' fieldY ')'],'interpreter','none');
 hold on
 x_lim=get(gca,'xlim');y_lim=get(gca,'ylim');
 plot(x_lim,[0 0],'-k'); plot([0 0 ],y_lim,'-k');  % plot axis
-if colorMode==1 % legend with branch_group indices
+if p.colorMode==1 % legend with branch_group indices
     mylegend='''1'' ';
     for i=2:length(branch_groups)
         mylegend=[mylegend, ', ''', num2str(i),''''];

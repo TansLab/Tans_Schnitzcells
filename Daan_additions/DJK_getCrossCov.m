@@ -1,3 +1,4 @@
+function [branches, crossCov_composite] = DJK_getCrossCov(p, branches, fieldX, fieldY, varargin);
 % [branches, crossCov_composite] = DJK_getCrossCov(p, branches, fieldX, fieldY, varargin)
 %
 % DJK_getCrossCov returns the cross covariance of a set of branches,
@@ -44,8 +45,6 @@
 % 'extraNorm'=1   perform an extra normalization where the mean of each
 %                 branch is subtracted (default: 0)
 % 'override'=1    used for crossCor when only r=0 is needed
-
-function [branches, crossCov_composite] = DJK_getCrossCov(p, branches, fieldX, fieldY, varargin);
 
 %--------------------------------------------------------------------------
 % Input error checking

@@ -1,3 +1,5 @@
+function branches = DJK_addToBranches_noise(p, branches, varargin)
+% function branches = DJK_addToBranches_noise(p, branches, varargin)
 % DJK_addToBranches_noise 
 %
 % Of each field except the timefield (dataFields(1)) a noise and norm
@@ -6,6 +8,17 @@
 % noise: normalized by subtracting mean for this timepoint off all branches. 
 %
 % norm: normalized by subtracting the mean of the branch data for all timepoints.  
+%
+% Additional info (MW 2015-04)
+% ==
+% noise: To filter out effects of fluctuations that affect the whole 
+% colony, the colony-mean at each timepoint of observables is substracted 
+% at each timepoint from the observables for each lineage.
+% Mathematically: X_noise(t)=X_j(t)-<X_j(t)>_j, where j is the branch index.
+% This if referred to as noise, because this would be the technical term
+% for how this value can be interpreted. 
+% norm: norm produces a mean-substracted observable time series in the
+% classical sense, i.e. X_{norm,j}(t)=X_j(t)-<X(t)_j>_t.
 %
 % OUTPUT
 % 'branches'        cell structure with branches, with noise/norm added

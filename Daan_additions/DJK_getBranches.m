@@ -1,3 +1,5 @@
+% function branches = DJK_getBranches(p, s, varargin)
+%
 % DJK_getBranches takes schnitzcells and returns branch data of
 % particular branches & defined data. 
 %
@@ -53,7 +55,7 @@ function branches = DJK_getBranches(p, s, varargin)
 numRequiredArgs = 2; functionName = 'DJK_getBranches';
 
 if (nargin < numRequiredArgs) | (mod(nargin,2) ~= (mod(numRequiredArgs,2)) | ~isSchnitzParamStruct(p))
-  errorMessage = sprintf('%s\n%s',['Error width input arguments of ' functionName],['Try "help ' functionName '".']);
+  errorMessage = sprintf('%s\n%s',['Error with input arguments of ' functionName],['Try "help ' functionName '".']);
   error(errorMessage);
 end
 
@@ -160,8 +162,7 @@ for schnitzNr = length(s):-1:1
           temp = temp(end:-1:1);
           data_temp{i+1,:} = cat(2,data_temp{i+1,:}, temp);
         end        
-        
-      
+              
         % add schnitzNrs
         data_temp{1,:} = cat(2, data_temp{1,:}, cur_schnitzNr*ones(1,length(temp)));
 
@@ -178,8 +179,7 @@ for schnitzNr = length(s):-1:1
 
         % in case of singleSchnitz also done after 1 loop
         if p.singleSchnitz, done = 1; end
-        
-        
+               
         %end while:
       end
 

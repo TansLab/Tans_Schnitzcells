@@ -1,3 +1,6 @@
+function [branches, crossCor_composite] = DJK_getCrossCor(p, branches, fieldX, fieldY, varargin);
+% function [branches, crossCor_composite] = DJK_getCrossCor(p, branches, fieldX, fieldY, varargin);
+%
 % DJK_getCrossCor returns the cross correlation of a set of branches,
 % together with the composite cross correlation. Different settings can be
 % set, such as: 
@@ -36,9 +39,11 @@
 % 'spacingError'  error allowed in spacing (in fraction of average spacing)
 %                 default: 0.05
 % 'extraNorm'=1   perform an extra normalization where the mean of each
-%                 branch is subtracted (default: 0)
-
-function [branches, crossCor_composite] = DJK_getCrossCor(p, branches, fieldX, fieldY, varargin);
+%                 branch is subtracted (default: 0). Note that
+%                 normalization of branches should in principle already be
+%                 tackled by substracting the whole-colony average at
+%                 that timepoint. (One should use only noise_.. fields to
+%                 perform crosscorrelations on when using at branches.)
 
 %--------------------------------------------------------------------------
 % Input error checking

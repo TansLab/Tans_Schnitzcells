@@ -19,6 +19,7 @@ function branches = DJK_addToBranches_noise(p, branches, varargin)
 % for how this value can be interpreted. 
 % norm: norm produces a mean-substracted observable time series in the
 % classical sense, i.e. X_{norm,j}(t)=X_j(t)-<X(t)_j>_t.
+% See also README.txt.
 %
 % OUTPUT
 % 'branches'        cell structure with branches, with noise/norm added

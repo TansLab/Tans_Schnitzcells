@@ -1,9 +1,12 @@
+function branch_groups = DJK_divide_branch_data(branches);
 % DJK_divide_branch_data divides branch data in seperate groups, each
 % originating from the same parent cell. 
 %
+% This is done to be able to finally obtain an estimate of the error. See
+% also README.txt.
+%
 % returns a collection of branches (a struct of structs)
 %
-function branch_groups = DJK_divide_branch_data(branches);
 
 % FIRST CHECK HOW MANY BRANCHES IN DATA %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 for i=1:length(branches)

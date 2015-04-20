@@ -105,6 +105,49 @@ Excerpt:
 % suffixes of these parameters tell you by which method the different pixel
 % intensities are summarized (e.g. sum, mean, ..).
 
+[TODO MW: see also notes 27-11-2014 for more info]
+
+Creating branches
+===
+See also Daan Kiviet's thesis: "The lac Operon: Fluctuations, Growth and Evolution", p. 106.
+
+To compute e.g. correlation functions, one should have a continuous function of two parameters for two parameters. E.g. growth rate mu and concentration of fluorescent reporter. This kind of data is however not available for lineages from the schnitzcells struct. Therefore, "branches" are created. These contains parameters X(t) per lineage. This necessitates that data is redundant. E.g. the trace X(t) for a 1st generation cell that has 100 offspring cells in the final colony, shuold be copied a 100 times because it exists in all lineages. 
+|      ------           |      ------ branch1
+| -----          =>     | =====  
+|      ------           |      ------ branch2        
+|______________         |______________         
+
+There are however some complicating -but important - caveats/operations to this process, which will be outlined below.
+
+In general, the function DJK_getBranches 'copies' X_{n<N}(t) data to X_{n<N,i}(t) i={1..F} such that X(t) data is available for each lineage. (With points early in time being shared among lineages.)
+
+In principal, correlation functions can be determined from these "branches". However, there are additional important processes. 
+1. Weighing of X(t) data to construct the branches
+2. Substracting colony average at t
+3. Creating branch groups
+Typically in that order, although (3) and (2) can also be done the other way around.
+
+Default order:
+(1) Weighing.
+In DJK_getBranches data is weighed such that the redundancy in the data is compensated for. This is done by the "3/4" weighing procedure (See eq. 6.6 Daan Kiviet's thesis). Different weighing schemes are however possible. 
+(2) Substracting colony average 
+If - and this behavior is indeed qualitatively observed - there are whole colony fluctuations (in growth), this means that correlations not corrected for this are not single cell correlations, but correlations due to fluctuations in the whole colony. To filter out that effect, for each point X(t) the time average is substracted. (Note that this may be a non-intuitive procedure.) I.e. for a branch j, X_j(t)-<X(t)>_j. The function performing this correction is called DJK_addToBranches_noise. The prefix "noise_" is added, because technically this parameter will represent the noise of X_j(t) around <X(t)>_j. 
+This correction is quite important for how the final correlation will look. (One could plot the correlation function of the colony mean of the observables of interest to investigate the behavior that is filtered out.) 
+(3) Creating branch groups
+To get an estimate of the error in the correlation function, the colony branches are subdivided in groups, and error bars are calculated based on the correlations found for each subgroup. (This subgrouped branch data is referred to as branchgroups.) This is done by the function  DJK_divide_branch_data.
+[Comment MW: This procedure seems rather ad hoc, but seems to relate to bootstrapping procedures often performed in statistics. TODO: find out how well it relates, and whether an improvement might be to perform something more resembling bootstrapping.] 
+*
+Functions involved in this process are DJK_getBranches, DJK_addToBranches_noise, DJK_trim_branch_data, DJK_divide_branch_data (alternatively: NW_divide_branch_data_inittime), DJK_plot_crosscorrelation_standard_error_store.
+
+
+Alternative order:
+In principle, the different subgroup branches should follow similar colony average trends. However (especially working with small datasets) this might not always be the case. To prevent artefacts from being introduced here again, steps (2) and (3) of the previous order can be inverted. 
+The following functions should be used to follow that procedure:
+DJK_getBranches (standard), DJK_trim_branch_data (standard), DJK_divide_branch_data (standard), NW_addToBranchGroups_noise (non standard),  DJK_plot_crosscorrelation_standard_error_store (standard).
+
+
+
+
 
 ____________________________________________________________
 PART 2

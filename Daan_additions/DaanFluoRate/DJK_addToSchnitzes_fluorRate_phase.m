@@ -79,7 +79,7 @@ for i = 1:length(schnitzcells)
           % different ways of determining rate
           % absolute point to point difference
           s.(d_sum)(end+1)         =  s.(sum_all)(age2) - s.(sum_all)(age);
-          % d(X)/d(t)
+          % dY/dt
           s.(d_sum_dt)(end+1)      = (s.(sum_all)(age2) - s.(sum_all)(age)) /  (s.(fluortime)(f+1) - s.(fluortime)(f));
           % phase corrected
           s.(d_sum_dt_ph)(end+1)   = (s.(sum_all)(age2) - s.(sum_all)(age)) / ((s.(fluortime)(f+1) - s.(fluortime)(f))*(1 + s.phase(age)));

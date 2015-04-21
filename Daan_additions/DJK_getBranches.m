@@ -164,8 +164,10 @@ for schnitzNr = length(s):-1:1
         end        
               
         % add schnitzNrs
+        % I.e. add N times the current schnitzNr, where N is the length of
+        % the timespan of that schnitz's life.
         data_temp{1,:} = cat(2, data_temp{1,:}, cur_schnitzNr*ones(1,length(temp)));
-
+        
         % move to parent
         cur_schnitzNr = s(cur_schnitzNr).P;
 

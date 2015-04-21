@@ -36,7 +36,12 @@
 % OPTIONAL ARGUMENTS:
 % 'dataFields'        fields to be stored in branches
 %                     default: {'Y_time' 'Y6_mean' 'mu_fitNew'}
-%                     note: should have same # values!!!! Put time in first one!
+%                     IMPORTANT NOTES: 
+%                       - should have same # values!!!! 
+%                         (MW 2015/04 added throwing error msg in this case)
+%                       - Put time in first one!
+%                         (MW 2015/04 added warning when time not recogn.)
+%                     
 %
 % 'sameLength'=0      does not make branches the same length (default:1)
 %
@@ -91,6 +96,9 @@ end
 
 % first dataField should contain time (timeField)
 timeField = char(p.dataFields(1));
+if isempty(strfind(timeField,'time'))
+    warning('The term ''time'' doesn''t occur in the first field''s name; note that this should be a field with time values.');
+end
 
 if ~existfield(p,'singleSchnitz')
   p.singleSchnitz = 0;
@@ -105,6 +113,21 @@ if ~existfield(p,'fitTime')
   p.fitTime = [min([s.(timeField)]) max([s.(timeField)])];
 end
 %--------------------------------------------------------------------------
+
+%--------------------------------------------------------------------------
+% More input error checking
+%--------------------------------------------------------------------------
+
+% Throw error if fields are not same size, since function misbehaves in 
+% that case(e.g. schnitzNrs are not correct any more).
+% MW 2015/04
+numelsDatafields=[];
+for i = 1:length(p.dataFields)
+  numelsDatafields(end+1) = numel([s.(p.dataFields{i})]); % determine lengths  
+end
+numelsDatafields = numelsDatafields-numelsDatafields(1); % this should be zero if there all equal lengths
+% Throw error if not same size
+if any(numelsDatafields), error('Given datafields are not same size. This is required for proper functioning of DJK_getBranches.'), end
 
 
 %--------------------------------------------------------------------------
@@ -130,7 +153,7 @@ branchNr = 0;
 
 % loop over schnitzes, from last to first
 for schnitzNr = length(s):-1:1
-
+   
   % only consider schnitz if: 
   % * selected 
   % * not incorporated in another branch

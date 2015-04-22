@@ -628,6 +628,8 @@ else
     % LOOP OVER SCHNITZCELLS TO CONVERT _ALL FIELDS
     %--------------------------------------------------------------------------
     for i = 1:length(schnitzcells)
+        
+      % Find fluor indexes where value exists (i.e. not NaN).
       eval(['FluorIndex = find(~isnan(schnitzcells(i).' fluor_frames_all '));'])
 
       eval(['schnitzcells(i).autoFluor2       =  schnitzcells(i).autoFluor2_all( FluorIndex );'])

@@ -1,5 +1,14 @@
+% function [p,schnitzcells] = DJK_addToSchnitzes_mu(p,varargin) 
+%
 % DJK_addToSchnitzes_mu loads schnitzcells, calculates mu of length for
 % particular parts, and saves it again.
+% IMPORTANT NOTE:
+% This function creates the parameter muPXX_YY and muPXX_YY_all, where XX
+% is the width of the fit window (# frames), and YY is the length parameter
+% on which the calculation was based. muPXX_YY _only contains_ calculated
+% mu values that match with the points at which fluor images where taken.
+% [*MW TODO: and I think this corresponds to the first fluor*] muPXX_YY has
+% the fields with all mu values.
 %
 % DJK_compileSchnitzImproved must have been run before. For other length
 % measures than rp_length, also DJK_addToSchnitzes_length has to be run
@@ -38,7 +47,9 @@
 % 'DJK_saveDir'       directory where images will be saved. 
 %                     default: [p.analysisDir 'schnitzMu\']
 % 'frameSizes'        frame used for mu calc. default: [7]
-%                     must be uneven!
+%                     must be uneven! (I.e. width of window for which mu is
+%                     fitted. -MW) 
+%                     One can give multiple fit windows, e.g. [7 15].
 % 'lengthFields'      length measurements used to calc mu 
 %                     default: {'rp_length' 'length_fitCoef3b' 'length_fitNew'} 
 %                     could still add length_fitCoef3
@@ -171,6 +182,8 @@ for i = 1:length(schnitzcells)
 
   %--------------------------------------------------------------------
   % loop over each length measurement types
+  % (Allows for calculating mu based on various length measurements
+  % automatically.)
   %--------------------------------------------------------------------
   for num = 1:lengthFieldsCount
     lengthField   = char(lengthFields(num));
@@ -193,9 +206,9 @@ for i = 1:length(schnitzcells)
     schnitzcells(i).(['av_divLength' name])     = NaN;
     for frameSize = p.frameSizes
       schnitzcells(i).(['mu' num2str(frameSize) name '_all']) = [1:length(i_time)]*NaN;
-      schnitzcells(i).(['mu' num2str(frameSize) name]) = [];%[1:length(i_time)]*NaN;
+      schnitzcells(i).(['mu' num2str(frameSize) name '_atFluo1']) = []; % MW 2015/04, tell user fluo1 is reference
       schnitzcells(i).(['muP' num2str(frameSize) name '_all']) = [1:length(i_time)]*NaN;
-      schnitzcells(i).(['muP' num2str(frameSize) name]) = [];%[1:length(i_time)]*NaN;
+      schnitzcells(i).(['muP' num2str(frameSize) name '_atFluo1']) = []; % MW 2015/04, tell user fluo1 is reference      
     end
     %--------------------------------------------------------------------
     
@@ -224,6 +237,7 @@ for i = 1:length(schnitzcells)
    
     %--------------------------------------------------------------------
     % loop over frameSizes
+    % (Allows for calculating mu based on different fit window sizes.)    
     %--------------------------------------------------------------------
     for frameSize = p.frameSizes
 
@@ -367,6 +381,12 @@ for i = 1:length(schnitzcells)
       %--------------------------------------------------------------------
       
       fluor_used=0; % flag to see whether fluorescence images detected
+      
+      % MW 2015/04 give warning of inconvenient behavior for multiple
+      % fluors.
+      if (~strcmp(p.fluor1,'none')+~strcmp(p.fluor2,'none')+~strcmp(p.fluor3,'none'))>1
+          warning('You are using multiple fluors, muPXX_YY will match only the first fluor!');
+      end
       
       % Determine which fluors are used, and what they are.
       if strcmp(p.fluor1,'none')==0

@@ -41,6 +41,10 @@
 %                         (MW 2015/04 added throwing error msg in this case)
 %                       - Put time in first one!
 %                         (MW 2015/04 added warning when time not recogn.)
+%                       - Some default fields, like mu, contain values that
+%                         correspond to the timepoints of when the 
+%                         fluor1 images are taken (i.e. this might cause
+%                         issues when you are using multiple fluors).
 %                     
 %
 % 'sameLength'=0      does not make branches the same length (default:1)
@@ -94,7 +98,7 @@ for i = 1:length(p.dataFields)
   end
 end
 
-% first dataField should contain time (timeField)
+% first dataField should contain time (timeField) (MW 2015/04)
 timeField = char(p.dataFields(1));
 if isempty(strfind(timeField,'time'))
     warning('The term ''time'' doesn''t occur in the first field''s name; note that this should be a field with time values.');

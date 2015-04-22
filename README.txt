@@ -1,9 +1,13 @@
 
 
-____________________________________________________________
+================================================================================
+________________________________________________________________________________
 SOME DOCUMENTATION WITH SCHNITZCELLS (Tans lab version)
 Initial version: 2014/04/16 Martijn Wehrens
-____________________________________________________________
+________________________________________________________________________________
+
+================================================================================
+
 
 
 
@@ -16,17 +20,21 @@ Part 2.     Documentation about specific properties of the code.
 Part X.     Some conventions used for coding.
 
 
-____________________________________________________________
+================================================================================
+________________________________________________________________________________
 PART 1
 HOW TO USE EXCEL FILE AND MATLAB TO ANALYZE A POSITION
-____________________________________________________________
+________________________________________________________________________________
+
+================================================================================
 
 The Schnitzcells analysis constists of different steps. 
 
 (Step 0: Cropping the images)
 
+================================================================================
 Step 1: Segmentation of the cells
-===
+================================================================================
 The segmentation needs to be checked manually; There is a matlab function available to correct the segmentation (.._manualcheckseg()) and a function which tries to detect mistakes. It is convenient to combine the use of these two functions. The advised procedure is as follows:
     o First, run .._manualcheckseg() once to correct obvious errors. Cells that look incorrect to the algorithm are colored white by this function.
     o Second, run DJK_analyzeSeg(), this will identify cases which the algorithm thinks are incorrect. These can be corrected by running .._manualcheckseg() again.
@@ -45,8 +53,9 @@ Settings in PN_imshowlabel:
 
 
 
+================================================================================
 Step 2: Tracking, correcting again
-===
+================================================================================
 - Now tracking can be performed. (Use .._tracker_centroid_vs_area().)
 - Also here, problems can be detected by the algorithm. Execute ..._analyzeTracking() to run the detection algorithm and ..makeMovie() three times (with different settings) to produce images which highlight the problems. This produces the following output.
         >> ../analysis/tracking/manualRange...
@@ -67,10 +76,15 @@ About schnitzcells structure
 ---
 A minimal schnitz structure is described by P (the schnitz number of it's parent), children schnitz numbers D and E, sister schnitz number S, frame_nrs (an array) listing each frame this schnitz occurs in, cellno (an array) listing each cell number of the tracked cell within each of the frames, and N, the number of frames that distinct cell appears.        
 
+================================================================================
+Calculating parameters
+================================================================================
+The growth rate is calculated by the function DJK_addToSchnitzes_mu. Note that this function behaves somewhat inconvenient when multiple fluors are used. In general, this function creates the parameter muPXX_YY and muPXX_YY_all, where XX is the width of the fit window (# frames), and YY is the length parameter on which the calculation was based. muPXX_YY _only contains_ calculated mu values that match with the points at which fluor images where taken. If there were multiple fluor colors used, the muPXX_YY parameter added to the schnitzcells corresponds to the fluor listed first ("fluor1").
 
 
+================================================================================
 Fluor corrections
----
+================================================================================
 
 1. The function DJK_correctFluorImage_anycolor corrects for artefacts that arise when taking fluorescence images with the microscope. It substracts the camera noise, by substracting an image taken w/o lighting (we refer to this as flatfield, but this termonology is a bit undefined). 
 2. Uneven illumination is compensated for by dividing by an image of only a fluorescent dye (normalized). 
@@ -107,8 +121,9 @@ Excerpt:
 
 [TODO MW: see also notes 27-11-2014 for more info]
 
+================================================================================
 Creating branches
-===
+================================================================================
 In order to be able to calculate cross correlations so-called branchgroups are created first. Key steps of that procedure are outlined below.
 See also Daan Kiviet's thesis: "The lac Operon: Fluctuations, Growth and Evolution", p. 106.
 
@@ -147,13 +162,13 @@ The following functions should be used to follow that procedure:
 DJK_getBranches (standard), DJK_trim_branch_data (standard), DJK_divide_branch_data (standard), NW_addToBranchGroups_noise (non standard),  DJK_plot_crosscorrelation_standard_error_store (standard).
 
 
-
-
-
-____________________________________________________________
+================================================================================
+________________________________________________________________________________
 PART 2
 SOME NOTES ON HOW MATLAB CODE WORKS
-____________________________________________________________
+________________________________________________________________________________
+
+================================================================================
 
 
 See the "Schnitzcells_structure.xlsx" file for an overview of the matlab functions and a description.

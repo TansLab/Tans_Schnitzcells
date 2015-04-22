@@ -1,12 +1,14 @@
 function [dataPairsPerTau, iTausCalculated] = MW_getdelayedscatter(p, branches, fieldX, fieldY, allowedRedundancy, varargin);
-% [MW todo: add function declaration]
+% function [dataPairsPerTau, iTausCalculated] = MW_getdelayedscatter(p, branches, fieldX, fieldY, allowedRedundancy, varargin);
+%
+% [MW todo: update function declaration]
 % This function is based on DJK_getcrossCor.m.
 % MW 2015/04
 %
 % [MW todo: describe input/output of this function!]
 % INPUT
 % This function requires non-normalized data, i.e. "raw" branches, as
-% opposed to the (cross-)corr functions.
+% opposed to the (cross-)corr functions. <-> Does it? Maybe not??!
 %
 % - allowedRedundancy   This parameter sets how many times datapoints are
 %                       allowed to be used again. (Since a time delay is
@@ -21,7 +23,7 @@ function [dataPairsPerTau, iTausCalculated] = MW_getdelayedscatter(p, branches, 
 % Input error checking
 %--------------------------------------------------------------------------
 % Settings
-numRequiredArgs = 4; functionName = 'DJK_getCrossCov';
+numRequiredArgs = 5; functionName = 'MW_getdelayedscatter';
 
 if (nargin < numRequiredArgs) | (mod(nargin,2) ~= (mod(numRequiredArgs,2)) | ~isSchnitzParamStruct(p))
   errorMessage = sprintf('%s\n%s',['Error width input arguments of ' functionName],['Try "help ' functionName '".']);
@@ -50,6 +52,7 @@ if ~existfield(p,'timeField')
   p.timeField = 'Y_time';
 end
 
+
 % check whether fields exist
 if ~existfield(branches(1),fieldX)
   disp(['Field ' fieldX ' does not exist. Exiting...!']); return;
@@ -57,9 +60,11 @@ end
 if ~existfield(branches(1),fieldY)
   disp(['Field ' fieldY ' does not exist. Exiting...!']); return;
 end
+
 if ~existfield(branches(1), p.timeField)
   disp(['Field ' p.timeField ' does not exist (defined in p.timeField). Exiting...!']); return;
 end
+
 
 % if too little data, exit
 if (length(branches(1).(fieldX)) < 2), error('Not enough data'); end
@@ -92,6 +97,7 @@ for br = 1:length(branches)
     % error if there were no warnings.
     branches(br).corr_time = interval * [-maxBranchLength+1:maxBranchLength-1];    
 end
+
 % --------------------------------------------------------------------------
 
 % Delays, in terms of index, to be taken into account
@@ -105,9 +111,12 @@ end
 % manually, or better a manual range for tauIndices by the user.
 dataPairsPerTau = {};
 iTausCalculated = [];
-schnitzUseRegister = zeros(1,max([branches.schnitzNrs]));
 % Loop over iTau, i.e. the delay expressed in terms of the index.
 for iTau = p.tauIndices
+    
+  % Keep track of which schnitzes have been used, reset this per tau value
+  schnitzUseRegister = zeros(1,max([branches.schnitzNrs]));  
+    
   % Make list of iTau values treated (in principle this should be known by
   % the user already).
   iTausCalculated(end+1) = iTau;
@@ -130,14 +139,14 @@ for iTau = p.tauIndices
     % Loop over entries in branche in reverse such that least redundant 
     % part of the branche is analyzed first, take lag window in account
     endOfDomain = N; 
-    if iTau > 0, endOfDomain = endOfDomain-iTau, end % handle positive tau
+    if iTau > 0, endOfDomain = endOfDomain-iTau; end % handle positive tau
     startOfDomain = 1;
-    if iTau < 0, startOfDomain = startOfDomain-iTau, end % handle negative tau
+    if iTau < 0, startOfDomain = startOfDomain-iTau; end % handle negative tau
     for iTime = endOfDomain:-1:startOfDomain % reverse loop
 
         % which schnitzes are we going to use?
-        schnitzUsed1 = schnitzesInBranch(iTime)
-        schnitzUsed2 = schnitzesInBranch(iTime+iTau)
+        schnitzUsed1 = schnitzesInBranch(iTime);
+        schnitzUsed2 = schnitzesInBranch(iTime+iTau);
 
         % is this allowed?
         if schnitzUseRegister(schnitzUsed1)>allowedRedundancy | ...
@@ -150,7 +159,7 @@ for iTau = p.tauIndices
         end
 
         % collect a pair
-        currentPair = [X(iTime)  Y(iTime+iTau)]
+        currentPair = [X(iTime)  Y(iTime+iTau)];
 
         % Save this pair
         pairCollectionForTau = [pairCollectionForTau; currentPair];
@@ -164,7 +173,8 @@ for iTau = p.tauIndices
 
   end % end branch loop
 
-  dataPairsPerTau{i} = pairCollectionForTau;
+  dataPairsPerTau{end+1} = pairCollectionForTau;
+  disp(['Now at ' num2str(iTau) ', going to ' max(num2str(p.tauIndices)) '.']);
   
 end % end delay loop (tau)
 % -------------------------------------------------------------------------

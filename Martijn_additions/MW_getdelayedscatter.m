@@ -1,4 +1,4 @@
-function [dataPairsPerTau, iTausCalculated] = MW_getdelayedscatter(p, branches, fieldX, fieldY, varargin);
+function [dataPairsPerTau, iTausCalculated] = MW_getdelayedscatter(p, branches, fieldX, fieldY, allowedRedundancy, varargin);
 % [MW todo: add function declaration]
 % This function is based on DJK_getcrossCor.m.
 % MW 2015/04
@@ -7,7 +7,12 @@ function [dataPairsPerTau, iTausCalculated] = MW_getdelayedscatter(p, branches, 
 % INPUT
 % This function requires non-normalized data, i.e. "raw" branches, as
 % opposed to the (cross-)corr functions.
-% 
+%
+% - allowedRedundancy   This parameter sets how many times datapoints are
+%                       allowed to be used again. (Since a time delay is
+%                       involved, and branches are redundant, redundancy
+%                       cannot be avoided.)
+%
 % Optional arguments:
 % tauIndices    Custom range of taus to consider.
 
@@ -98,9 +103,9 @@ end
 % MW TODO: Note that this will in some cases produce a rather massive
 % dataset, so maybe it is more convenient to give a restraint to t_max
 % manually, or better a manual range for tauIndices by the user.
-dataPairsPerTau = struct;
+dataPairsPerTau = {};
 iTausCalculated = [];
-schnitzUseRegister = []
+schnitzUseRegister = zeros(1,max([branches.schnitzNrs]));
 % Loop over iTau, i.e. the delay expressed in terms of the index.
 for iTau = p.tauIndices
   % Make list of iTau values treated (in principle this should be known by
@@ -123,52 +128,45 @@ for iTau = p.tauIndices
 
     % Collect the datapairs
     % Loop over entries in branche in reverse such that least redundant 
-    % part of the branche is analyzed first
-    for iTime = N:-1:1
-        
-        % MW TODO: only when schnitzes not used too many times before
-        if 1 % MW TODO MAKE THIS IF STATEMENT! 
-            % collect a pair
-            currentPair = [X(iTime)  Y(iTime+iTau)]
+    % part of the branche is analyzed first, take lag window in account
+    endOfDomain = N; 
+    if iTau > 0, endOfDomain = endOfDomain-iTau, end % handle positive tau
+    startOfDomain = 1;
+    if iTau < 0, startOfDomain = startOfDomain-iTau, end % handle negative tau
+    for iTime = endOfDomain:-1:startOfDomain % reverse loop
 
-            % Save this pair         
-            pairCollectionForTau = [pairCollectionForTau; currentPair];
-                
-            % Increase in a register how many times both of these schnitzes 
-            % have already been used.
-            schnitzUsed1 = schnitzesInBranch(iTime)
-            schnitzUsed2 = schnitzesInBranch(iTime+iTau)
-        else
-            % break the loop, since we're entering redundant territory
+        % which schnitzes are we going to use?
+        schnitzUsed1 = schnitzesInBranch(iTime)
+        schnitzUsed2 = schnitzesInBranch(iTime+iTau)
+
+        % is this allowed?
+        if schnitzUseRegister(schnitzUsed1)>allowedRedundancy | ...
+           schnitzUseRegister(schnitzUsed2)>allowedRedundancy  
+
+            % if (since we're going backwards in the branches) we have
+            % reached a point we're the redundancy is already too high,
+            % we should stop running over this branch.
             break;
         end
-        
-    end
-    
-    %{
-    % in case lag is positive
-    if iTau >= 0
-        
-        % WHERE MAGIC SHOULD HAPPEN (1)
-        X(iTau) .* Y(1+iTau:N)
-        
-      %branches(br).(targetField)(N+iTau) = sum( X(1:N-iTau) .* Y(1+iTau:N) );
-      %crossCov_composite.Y(N+iTau) = crossCov_composite.Y(N+iTau) + sum( X(1:N-iTau) .* Y(1+iTau:N) .* W );
-    
-    % in case lag is negative
-    else
-        
-        % WHERE MAGIC SHOULD HAPPEN (2)        
-        
-        
-      %branches(br).(targetField)(N+iTau) = sum( Y(1:N+iTau) .* X(1-iTau:N) );
-      %crossCov_composite.Y(N+iTau) = crossCov_composite.Y(N+iTau) + sum( Y(1:N+iTau) .* X(1-iTau:N) .* W );
-    end
-    %}
-    
+
+        % collect a pair
+        currentPair = [X(iTime)  Y(iTime+iTau)]
+
+        % Save this pair
+        pairCollectionForTau = [pairCollectionForTau; currentPair];
+
+        % Increase in a register how many times both of these schnitzes 
+        % have already been used.
+        schnitzUseRegister(schnitzUsed1) = schnitzUseRegister(schnitzUsed1)+1;
+        schnitzUseRegister(schnitzUsed2) = schnitzUseRegister(schnitzUsed2)+1;
+
+    end % end time loop
+
   end % end branch loop
 
-end % end delay loop
+  dataPairsPerTau{i} = pairCollectionForTau;
+  
+end % end delay loop (tau)
 % -------------------------------------------------------------------------
 
 % Now final data should be produced, output struct is three dimensional:

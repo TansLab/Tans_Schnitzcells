@@ -38,7 +38,11 @@
 %                     default: {'Y_time' 'Y6_mean' 'mu_fitNew'}
 %                     IMPORTANT NOTES: 
 %                       - should have same # values!!!! 
-%                         (MW 2015/04 added throwing error msg in this case)
+%                         (MW 2015/04 added throwing warning msg in this 
+%                         case)
+%                         [MW TODO Special case to investigate: what
+%                         happens if rates are used? is time then correctly
+%                         used and how are fields selected?]
 %                       - Put time in first one!
 %                         (MW 2015/04 added warning when time not recogn.)
 %                       - Some default fields, like mu, contain values that
@@ -123,15 +127,16 @@ end
 %--------------------------------------------------------------------------
 
 % Throw error if fields are not same size, since function misbehaves in 
-% that case(e.g. schnitzNrs are not correct any more).
+% that case (e.g. schnitzNrs are not correct any more).
 % MW 2015/04
 numelsDatafields=[];
 for i = 1:length(p.dataFields)
   numelsDatafields(end+1) = numel([s.(p.dataFields{i})]); % determine lengths  
 end
 numelsDatafields = numelsDatafields-numelsDatafields(1); % this should be zero if there all equal lengths
-% Throw error if not same size
-if any(numelsDatafields), error('Given datafields are not same size. This is required for proper functioning of DJK_getBranches.'), end
+% Throw warning if not same size
+if any(numelsDatafields), warning(['Given datafields are not same size. This can result in undesired/incorrect behavior! ' ... 
+        'Only ignore this warning when you know what you''re doing! (Resuming in 10 seconds.)']), pause(10), end
 
 
 %--------------------------------------------------------------------------

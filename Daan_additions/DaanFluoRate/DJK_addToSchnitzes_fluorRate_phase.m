@@ -103,7 +103,7 @@ for i = 1:length(schnitzcells)
         if (length(sD.(fluortime)) > 0 & length(sE.(fluortime)) > 0)
          if i==1 % enable e.g. if first schnitzcell has no fluor at all
 
-             s.(d_sum)(end+1)         =  0;
+          s.(d_sum)(end+1)         =  0;
           s.(d_sum_dt)(end+1)      =  0;
           s.(d_sum_dt_ph)(end+1)   = 0 ;
           s.(d_sum_dt_vol)(end+1)  = 0;

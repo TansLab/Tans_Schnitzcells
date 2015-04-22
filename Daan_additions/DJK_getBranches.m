@@ -133,10 +133,10 @@ numelsDatafields=[];
 for i = 1:length(p.dataFields)
   numelsDatafields(end+1) = numel([s.(p.dataFields{i})]); % determine lengths  
 end
-numelsDatafields = numelsDatafields-numelsDatafields(1); % this should be zero if there all equal lengths
+deltaNumelsDatafields = numelsDatafields-numelsDatafields(1); % this should be zero if they're all equal lengths
 % Throw warning if not same size
-if any(numelsDatafields), warning(['Given datafields are not same size. This can result in undesired/incorrect behavior! ' ... 
-        'Only ignore this warning when you know what you''re doing! (Resuming in 10 seconds.)']), pause(10), end
+if any(deltaNumelsDatafields), warning(['Given datafields are not same size. This can result in undesired/incorrect behavior! ' ... 
+        'Only ignore this warning when you know what you''re doing! (Resuming in 10 seconds.)']), deltaNumelsDatafields, pause(10), end
 
 
 %--------------------------------------------------------------------------

@@ -1,5 +1,5 @@
-function [dataPairsPerTau, iTausCalculated, originColorPerTau] = MW_getdelayedscatter(p, branches, fieldX, fieldY, allowedRedundancy, varargin);
-% function [dataPairsPerTau, iTausCalculated, originColorPerTau] = MW_getdelayedscatter(p, branches, fieldX, fieldY, allowedRedundancy, varargin);
+function [dataPairsPerTau, iTausCalculated, originColorPerTau, correlationsPerTau] = MW_getdelayedscatter(p, branches, fieldX, fieldY, allowedRedundancy, varargin);
+% function [dataPairsPerTau, iTausCalculated, originColorPerTau, correlationsPerTau] = MW_getdelayedscatter(p, branches, fieldX, fieldY, allowedRedundancy, varargin);
 %
 % [MW todo: update function declaration]
 % This function is based on DJK_getcrossCor.m.
@@ -128,7 +128,8 @@ lineageColormap = colormap(lines(numelBranches));
 % dataset, so maybe it is more convenient to give a restraint to t_max
 % manually, or better a manual range for tauIndices by the user.
 dataPairsPerTau = {}; originColorPerTau = {};
-iTausCalculated = [];
+iTausCalculated = []; 
+correlationsPerTau = [];
 % Loop over iTau, i.e. the delay expressed in terms of the index.
 for iTau = p.tauIndices
     
@@ -174,12 +175,15 @@ for iTau = p.tauIndices
            (schnitzUsedPastLoop2~=schnitzUsed2)
        
             % Check 1: one of the contributions should be unique
-            if schnitzUseRegister(schnitzUsed1)>0 & ...
-               schnitzUseRegister(schnitzUsed2)>0  
+            if schnitzUseRegister(schnitzUsed1)>1 & ...
+               schnitzUseRegister(schnitzUsed2)>1
                 % if both are already used, this would be a duplicate
                 % datapoint, we don't want that.
+                % Note that we use ">1" since a calculation over one
+                % branch will hit a schnitz twice.
                 break;
             end
+            
             % Check 2: neither may be used too much
             if schnitzUseRegister(schnitzUsed1)>allowedRedundancy | ...
                schnitzUseRegister(schnitzUsed2)>allowedRedundancy  
@@ -208,7 +212,6 @@ for iTau = p.tauIndices
         % collect a pair
         currentPair = [X(iTime)  Y(iTime+iTau)];
 
-
         % Save this pair
         pairCollectionForTau = [pairCollectionForTau; currentPair];
         % And save its color code for the origin
@@ -222,8 +225,14 @@ for iTau = p.tauIndices
 
   end % end branch loop
 
+  % Calculate covariance for this tau value
+  correlationThisTau = corr(pairCollectionForTau(:,1),pairCollectionForTau(:,2));
+  
+  % Save data for this tau value
   dataPairsPerTau{end+1} = pairCollectionForTau;
   originColorPerTau{end+1} = originCollectionForTau;
+  correlationsPerTau(end+1) = correlationThisTau; 
+  
   disp(['Now at ' num2str(iTau) ', going to ' max(num2str(p.tauIndices)) '.']);
   
 end % end delay loop (tau)

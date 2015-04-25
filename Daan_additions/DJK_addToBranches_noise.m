@@ -28,7 +28,11 @@ function branches = DJK_addToBranches_noise(p, branches, varargin)
 % 'branches'        cell structure with branches
 %
 % OPTIONAL ARGUMENTS:
-% 'dataFields'        fields to be stored in branches
+% 'dataFields'        {timefield, ..}
+%                     cell that contains info about which fields to be 
+%                     store in branches
+%                     First field should be the timefield, of this field
+%                     the noise will not be calculated
 %                     default: {'Y_time' 'Y6_mean' 'mu_fitNew'}
 %
 
@@ -100,8 +104,10 @@ end
 
 datafield_mean = datafield_sum ./ datafield_count; %[comment NW: I think this is the 'normal' mean: Sum(YFP-intensities of all cells)/(# cells in this frames). I'm pretty sure that the weighing with 'count' is cancelled out
 
+p.dataFields % MW REMOVE!
+
 % loop over noiseFields in dataFields
-for i = 2:length(p.dataFields)
+for i = 2:length(p.dataFields) 
   field = char(p.dataFields(i));
   noisefield = ['noise_' field];
   normfield  = ['norm_' field];

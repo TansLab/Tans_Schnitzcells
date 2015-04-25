@@ -104,8 +104,6 @@ end
 
 datafield_mean = datafield_sum ./ datafield_count; %[comment NW: I think this is the 'normal' mean: Sum(YFP-intensities of all cells)/(# cells in this frames). I'm pretty sure that the weighing with 'count' is cancelled out
 
-p.dataFields % MW REMOVE!
-
 % loop over noiseFields in dataFields
 for i = 2:length(p.dataFields) 
   field = char(p.dataFields(i));

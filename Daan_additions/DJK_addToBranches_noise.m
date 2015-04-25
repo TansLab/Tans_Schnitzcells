@@ -32,7 +32,6 @@ function branches = DJK_addToBranches_noise(p, branches, varargin)
 %                     default: {'Y_time' 'Y6_mean' 'mu_fitNew'}
 %
 
-function branches = DJK_addToBranches_noise(p, branches, varargin)
 
 %--------------------------------------------------------------------------
 % Input error checking

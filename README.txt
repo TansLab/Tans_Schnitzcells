@@ -67,10 +67,11 @@ Step 2: Tracking, correcting again
 
 Often problems will be caused by incorrect segmentation, and need to be resolved by running .._manualcheckseg() again. In some other cases, problems will need to be resolved by manually editing the files with the lineage links:
         << /data/
+	The posXcrop-djk-output-YYY-to-ZZZ.txt files link schnitzes from frame YYY to frame ZZZ.  
         These files are structured as follows:
         pn p1 p2 ch
         Where pn is a parent of a nondividing cell, and ch its child in the next frame. If a cell divides, two lines are used. One links one child to the parent, and the other the other child to the parent. Somewhat unintuitively, the parent of child one is listed at p1, and the parent of child 2 is listed at p2 (but for one dividing cell, p1=p2). The child is always listed in the same place (but the ch is different for one dividing cell). 
-        Note that there are two kinds of numbers: numbers for the Schnitzes (the "individuals") and a numbering per frame which simple numbers the areas in this frame identified as cells. Numbers in the /data/ folder files are necessarily these area numbers.
+        Note that there are two kinds of numbers: numbers for the Schnitzes (the "individuals") and a numbering per frame which simple numbers the areas in this frame identified as cells. Numbers in the /data/ folder files are necessarily these area numbers. Based upon the lineage structure defined by the posXcrop-djk-output-YYY-to-ZZZ.txt files, schnitzes are identified.
 
 About schnitzcells structure
 ---
@@ -122,6 +123,7 @@ Excerpt:
 [TODO MW: see also notes 27-11-2014 for more info]
 
 ================================================================================
+
 Creating branches
 ================================================================================
 In order to be able to calculate cross correlations so-called branchgroups are created first. Key steps of that procedure are outlined below.

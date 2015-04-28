@@ -194,7 +194,7 @@ for i= p.manualRange
                 eval(['save(''' p.segmentationDir segImage.name ''',''-append'',''' reg ''',''' back ''',''' binning ''',''' expt ''',''' gain ''');']);
                 clear reg back binning expt gain;
             else
-                disp(['Tried looking for ' fluor1name ', but not fluor img found']);
+                disp(['Info: ' fluor1name ', has no fluor..']);
             end
         end
                 

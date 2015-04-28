@@ -1,5 +1,5 @@
-function [dataPairsPerTau, iTausCalculated] = MW_getdelayedscatter(p, branches, fieldX, fieldY, allowedRedundancy, varargin);
-% function [dataPairsPerTau, iTausCalculated] = MW_getdelayedscatter(p, branches, fieldX, fieldY, allowedRedundancy, varargin);
+function [dataPairsPerTau, iTausCalculated, originColorPerTau, correlationsPerTau] = MW_getdelayedscatter(p, branches, fieldX, fieldY, allowedRedundancy, varargin);
+% function [dataPairsPerTau, iTausCalculated, originColorPerTau, correlationsPerTau] = MW_getdelayedscatter(p, branches, fieldX, fieldY, allowedRedundancy, varargin);
 %
 % [MW todo: update function declaration]
 % This function is based on DJK_getcrossCor.m.
@@ -14,6 +14,16 @@ function [dataPairsPerTau, iTausCalculated] = MW_getdelayedscatter(p, branches, 
 %                       allowed to be used again. (Since a time delay is
 %                       involved, and branches are redundant, redundancy
 %                       cannot be avoided.)
+%                       Not sure how necessary this parameter is, since we
+%                       also require that one of the points in the
+%                       datapair is unique.
+%
+% OUTPUT
+% - dataPairsPerTau     data pairs per tau value, tau values are listed in
+%                       iTausCalculated. 
+% - originColorPerTau   originColorPerTau gives a color which relates to 
+%                       which branch (=lineage) was used for this datapair 
+%                       (indexing same as dataPairsPerTau).
 %
 % Optional arguments:
 % tauIndices    Custom range of taus to consider.
@@ -105,12 +115,21 @@ if ~isfield(p,'tauIndices')
     p.tauIndices = [-maxBranchLength+1:maxBranchLength-1];
 end
 
+% =========================================================================
+
+% Get total # branches
+numelBranches = numel(branches);
+
+% Create color map to identify branches
+lineageColormap = colormap(lines(numelBranches));
+
 % loop over different time-lags tau
 % MW TODO: Note that this will in some cases produce a rather massive
 % dataset, so maybe it is more convenient to give a restraint to t_max
 % manually, or better a manual range for tauIndices by the user.
-dataPairsPerTau = {};
-iTausCalculated = [];
+dataPairsPerTau = {}; originColorPerTau = {};
+iTausCalculated = []; 
+correlationsPerTau = [];
 % Loop over iTau, i.e. the delay expressed in terms of the index.
 for iTau = p.tauIndices
     
@@ -121,16 +140,16 @@ for iTau = p.tauIndices
   % the user already).
   iTausCalculated(end+1) = iTau;
   % Clear list of pairs from previous iTau value
-  pairCollectionForTau = [];
+  pairCollectionForTau = []; originCollectionForTau = [];
   
   % Loop over branches, adding data pairs X(t),Y(t+tau) only when they are
   % not redundant (or below a redundancy treshold).
-  for br = 1:length(branches)      
+  for br = 1:numelBranches
       
     % Load data in more conveniently named parameters
     X = branches(br).(fieldX);
     Y = branches(br).(fieldY);
-    schnitzesInBranch = branches(br).schnitzNrs;
+    schnitzesInBranch = branches(br).schnitzNrs;    
 
     %length of this particular branch
     N = length(X);
@@ -142,38 +161,78 @@ for iTau = p.tauIndices
     if iTau > 0, endOfDomain = endOfDomain-iTau; end % handle positive tau
     startOfDomain = 1;
     if iTau < 0, startOfDomain = startOfDomain-iTau; end % handle negative tau
+    schnitzUsedPastLoop1 = 0; schnitzUsedPastLoop2 = 0;
     for iTime = endOfDomain:-1:startOfDomain % reverse loop
 
         % which schnitzes are we going to use?
         schnitzUsed1 = schnitzesInBranch(iTime);
         schnitzUsed2 = schnitzesInBranch(iTime+iTau);
 
-        % is this allowed?
-        if schnitzUseRegister(schnitzUsed1)>allowedRedundancy | ...
-           schnitzUseRegister(schnitzUsed2)>allowedRedundancy  
+        % Is this allowed?
+        % Check only if we are entering a domain belonging to another
+        % schnitz. Since we do want multiple contributions per schnitz.
+        if (schnitzUsedPastLoop1~=schnitzUsed1) | ...
+           (schnitzUsedPastLoop2~=schnitzUsed2)
+       
+            % Check 1: one of the contributions should be unique
+            if schnitzUseRegister(schnitzUsed1)>1 & ...
+               schnitzUseRegister(schnitzUsed2)>1
+                % if both are already used, this would be a duplicate
+                % datapoint, we don't want that.
+                % Note that we use ">1" since a calculation over one
+                % branch will hit a schnitz twice.
+                break;
+            end
+            
+            % Check 2: neither may be used too much
+            if schnitzUseRegister(schnitzUsed1)>allowedRedundancy | ...
+               schnitzUseRegister(schnitzUsed2)>allowedRedundancy  
 
-            % if (since we're going backwards in the branches) we have
-            % reached a point we're the redundancy is already too high,
-            % we should stop running over this branch.
-            break;
+                % if (since we're going backwards in the branches) we have
+                % reached a point we're the redundancy is already too high,
+                % we should stop running over this branch.
+                break;
+            end
+
+            % Increase in a register how many times both of these schnitzes 
+            % have already been used.
+            schnitzUseRegister(schnitzUsed1) = schnitzUseRegister(schnitzUsed1)+1;
+            schnitzUseRegister(schnitzUsed2) = schnitzUseRegister(schnitzUsed2)+1;
+            
+            
         end
 
+        % How redundant is this datapoint?
+        % MW TODO!
+        % redundancyDatapoint = branches(br).count(XX) + branches(br).count(XX);
+        
+        % Color code for datapoint to know from which schnitzes it came
+        currentOriginColor = lineageColormap(br,:);
+        
         % collect a pair
         currentPair = [X(iTime)  Y(iTime+iTau)];
 
         % Save this pair
         pairCollectionForTau = [pairCollectionForTau; currentPair];
-
-        % Increase in a register how many times both of these schnitzes 
-        % have already been used.
-        schnitzUseRegister(schnitzUsed1) = schnitzUseRegister(schnitzUsed1)+1;
-        schnitzUseRegister(schnitzUsed2) = schnitzUseRegister(schnitzUsed2)+1;
-
+        % And save its color code for the origin
+        originCollectionForTau = [originCollectionForTau; currentOriginColor];
+        
+        % Remember we used these schnitzes
+        schnitzUsedPastLoop1 = schnitzUsed1;
+        schnitzUsedPastLoop2 = schnitzUsed2;
+        
     end % end time loop
 
   end % end branch loop
 
+  % Calculate covariance for this tau value
+  correlationThisTau = corr(pairCollectionForTau(:,1),pairCollectionForTau(:,2));
+  
+  % Save data for this tau value
   dataPairsPerTau{end+1} = pairCollectionForTau;
+  originColorPerTau{end+1} = originCollectionForTau;
+  correlationsPerTau(end+1) = correlationThisTau; 
+  
   disp(['Now at ' num2str(iTau) ', going to ' max(num2str(p.tauIndices)) '.']);
   
 end % end delay loop (tau)

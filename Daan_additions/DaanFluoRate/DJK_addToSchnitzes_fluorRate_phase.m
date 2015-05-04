@@ -1,8 +1,21 @@
+function [schnitzcells] = DJK_addToSchnitzes_fluorRate_phase(p,colorfield,myindex) 
+% function [schnitzcells] = DJK_addToSchnitzes_fluorRate_phase(p,colorfield,myindex) 
 % generalized to any input color by NW 2012-04 
 %
 % DJK_addToSchnitzes_fluorRate takes a schnitzcells data set containing
 % fluor data, calculates the fluor rate for all schnitzes and returns the
 % schnitzcells data set with the rate.
+% The rate is determined by taking into account two points, and generally
+% follows the formula: dY(t+dt)-dY(t). Additional fields are divided by dt
+% and/or normalized. Time of reference t corresponds to the 'X_time' field,
+% where X is the fluor (e.g. G, Y, C, R, ..).
+% Note that there are two functions that determine the rate, this one and 
+% PN_fluorRate_X. The latter has a different calculation, and takes into
+% account t-1, t, t+1, thus making the time of reference of the two
+% functions different. PN_fluorRate_X also adds the field dX5_time (this 
+% fn doesn't do that) from which it can be seen which function was used.
+% (-MW '15/04)
+
 %
 % IMPORTANT NOTE
 % It is important to note that the rate determined here, is the absolute
@@ -18,7 +31,6 @@
 % 'schnitzcells'      schnitzcells
 % 'lengthField'       name of length Field
 %
-function [schnitzcells] = DJK_addToSchnitzes_fluorRate_phase(p,colorfield,myindex) 
 
 schnitzname = [p.tracksDir,p.movieName,'-Schnitz.mat'];
 load(schnitzname);

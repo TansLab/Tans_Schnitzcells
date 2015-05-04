@@ -150,7 +150,10 @@ function p = DJK_initschnitz (movieName, movieDate, movieKind, varargin);
 %                     'unkown' when setup=='setup2'. According to camera
 %                     settings, the micronsperpixel will be chosen.
 %                     For setup1, available cameras are coolsnap (oldest one) 
-%                     and hamamatsu (the new one per 2014/12). 
+%                     and hamamatsu (the new one per ~2014/11/11*). 
+%                       *) TODO MW: check this; NW's experiment list has
+%                       1st exp. w. new one at 11/11 but might be earlier 
+%                       exp. w. new camera
 %
 %                         
 % ----- some old or derived parameters below -----    

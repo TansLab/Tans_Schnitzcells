@@ -1,5 +1,7 @@
 function [schnitzcells] = PN_fluorRate_C(schnitzcells)
 % same as PN_fluoRate but for CFP instead of YFP 
+% MW TODO: generalize these functions same as
+% DJK_addToSchnitzes_fluorRate_phase.
 
 %--------------------------------------------------------------------------
 % INITIALIZE NEW MEASUREMENTS
@@ -26,6 +28,8 @@ for i = 1:length(schnitzcells)
         sP = schnitzcells(s.P);
         if ~isempty(sP.C_time)
             fluo_sum = [sP.C5_sum(end)/2 fluo_sum];
+                % MW '15/04 TODO possible bug: I think this should be
+                % scaled w. the length of the daughter cells.
             fluo_time = [sP.C_time(end) fluo_time];
         end
     end

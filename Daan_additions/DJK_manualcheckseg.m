@@ -1,4 +1,16 @@
 function p = djk_manualcheckseg (p, varargin);
+
+warning('Old function. Use PN_manualcheckseg instead!...');
+
+% depricated, use PN_manualcheckseg instead!
+
+
+
+
+
+
+
+
 %
 % new: imfill-option (i) (Noreen 10/01/2012)
 %
@@ -119,6 +131,8 @@ disp('              press ''R'' to renumber all cells.')
 disp('              press ''i'' to fill the cell you are pointing to.')
 
 disp(' ')
+
+warning('Old function. Use PN_manualcheckseg instead!...');
 
 quit_now=0;
 global pos Limage ourfig res pp phfig % flfig % DJK 071206

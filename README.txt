@@ -28,6 +28,26 @@ ________________________________________________________________________________
 
 ================================================================================
 
+================================================================================
+General info on the Excel sheet
+================================================================================
+
+Generally, there are different matlab functions that perform the analysis. These functions add or edit files and folders in the data directory that contain analyzed data. A few files are plain text files, but the files containing the main body of data calculated are .mat files. The matlab functions also output images (to check the analysis intermediately) and plots (which are often the "end output" of the analysis). 
+
+The Matlab functions take certain parameters as input. One of the most important ones is the "p" struct. This holds the "overhead"/"administrative" information, like what is the current analysis directory, date of the experiment, which microscope was used, which fluor etc. Most main functions take p as input, they need it to know which directory to edit and how.
+
+Aside from parameters that are sometimes set (either constants at the top or sometimes hard-coded numbers!) in the function, there are also parameters that influence the segmentation and other parts of the analysis that can be given as input paramters. Important ones can be changed at the top of the Excel file, and are correspondingly updated in the rest of the sheet such that function are called with these parameter settings.
+
+The Excel sheet contains essentially a list of matlab functions that need to be executed consecutively to perform the analysis. Since every dataset is analyzed with slightly different parameters (e.g. different range of analyzed frames, different fluor colors, ..) at the end of the analysis, the Excel sheet contains important experimental parameters that need to be stored. Therefore, a copy of the Excel sheet used for a specific dataset is typically stored in the directory of the dataset. (In fact, most dataset contain multiple "positions" - i.e. movies of growing colonies, respectively - and thus also multiple Excel sheets.)
+
+Furthermore, because the analysis takes quite some effort to perform, a "preliminary" analysis is mostly performed. In such an analysis, not all frames are considered, and this analysis will only tell the user whether cells show normal growth behavior, and whether the dataset contains analyzable data. If that's the case, one can proceed with the full analysis. The matlab functions required for such a "preliminary" analysis are listed in a separate Excel file which contains the keyword "preliminary" (as opposed to the keyword "full_analysis").
+
+
+
+================================================================================
+More specific info on each of the steps.
+================================================================================
+
 The Schnitzcells analysis constists of different steps. 
 
 (Step 0: Cropping the images)

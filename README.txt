@@ -42,6 +42,23 @@ The Excel sheet contains essentially a list of matlab functions that need to be 
 
 Furthermore, because the analysis takes quite some effort to perform, a "preliminary" analysis is mostly performed. In such an analysis, not all frames are considered, and this analysis will only tell the user whether cells show normal growth behavior, and whether the dataset contains analyzable data. If that's the case, one can proceed with the full analysis. The matlab functions required for such a "preliminary" analysis are listed in a separate Excel file which contains the keyword "preliminary" (as opposed to the keyword "full_analysis").
 
+A short outline of the general analysis:
+- Files can be cropped to throw away area in the field of view that's not of interest.
+- Movie is segmented.
+- Segmentation is checked manually to correct for mistakes that the algorithm makes.
+- Tracking of the cell lineages is performed. I.e. 'individuals' are identified in each movie frames. 
+- Tracking is corrected manually. This might involve iteration of segmentation/tracking steps.
+- Where applicable, fluorescent images are corrected.
+- 'Schnitzcells' file is constructed. This contains a list of 'individual' bacteria (also known as 'schnitzes'), and the currently known paramters for that individual (e.g. cell size for each frame the bacteria is seen in). 
+- Additional parameters are calculated based upon this "schnitzcells" struct. E.g. growth speed at each frame, enzyme concentration, enzyme production rate, etc.
+|
+|-------------------- TODO continue editing
+|
+- Then <<<<BRANCHES, CORRS, ETC>>>>>
+
+
+
+A synopsis of the output generated:
 
 
 ================================================================================

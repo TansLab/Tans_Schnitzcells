@@ -70,7 +70,8 @@
 
 function [p,schnitzcells] = MW_addToSchnitzes_length(p,varargin) 
 
-display('*ERROR*: This function should not be used; use DJK_addToSchnitzes_length instead');
+disp('*ERROR*: This function should not be used; use DJK_addToSchnitzes_length instead');
+error('*ERROR*: This function should not be used; use DJK_addToSchnitzes_length instead');
 return % comment to forcefully use
 
 %--------------------------------------------------------------------------

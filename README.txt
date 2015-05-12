@@ -51,14 +51,30 @@ A short outline of the general analysis:
 - Where applicable, fluorescent images are corrected.
 - 'Schnitzcells' file is constructed. This contains a list of 'individual' bacteria (also known as 'schnitzes'), and the currently known paramters for that individual (e.g. cell size for each frame the bacteria is seen in). 
 - Additional parameters are calculated based upon this "schnitzcells" struct. E.g. growth speed at each frame, enzyme concentration, enzyme production rate, etc.
-|
-|-------------------- TODO continue editing
-|
-- Then <<<<BRANCHES, CORRS, ETC>>>>>
-
-
+- An additional normalization can be performed - which is referred to as "cyccor" - that normalizes for cell cycle effect. Here, parameters are normalized per schnitz, by dividing them by the individual-average behavior of that paramter. 
+- One of the most important analysis which are typically performed involve making correlation functions for two measured parameters. This can however not be done straightforwardly on lineage data. Thus "branches" - each giving a full parameter trace of one lineage - are generated, which are weighed in order to calculate the correlation functions. (And can also be used for other analyses.)
 
 A synopsis of the output generated:
+- segmentation files (matrix, stored as .mat file)
+- tracking files (text files, show ancestry relation frame to frame)
+- schnitzcells .mat file (hold all params per individual over time)
+- plots
+(branches generated are not saved currently)
+
+Where this output can be found:
+Everything is stored per "position". Per default each position is stored in posX. However, the cropping function creates a folder "posXcrop", where data generated is stored in subdirectories:
+*
+./images 
+    > directory contains the raw image files
+./segmentation contains segmentation in a matrix format, stored in .mat file
+    > depending on settings, subdir contains images that show intermediate steps of segmentation
+    > also different parameter settings which lead to different segmentation can be found in subdirs. 
+./data contains 
+    > The tracking of cells from frame to frame
+    > the file in which the central "schnitzcells" struct is stored (posXcrop-Schnitz.mat)
+./analysis
+    > contains output plots, sorted per topic.
+    > also movies, part of the manual tracking correction, are found here
 
 
 ================================================================================

@@ -48,11 +48,25 @@ for i = 1:nrImages
 end
 
 %% plot all histograms
-figure; clf; hold on;
+figure; clf; 
+subplot(2,1,1); hold on;
+xlabel('Intensity distribution raw imgs');
+ylabel('Count');
+%Set all fontsizes
+set(findall(gcf,'type','text'),'FontSize',15,'fontWeight','normal'); set(gca,'FontSize',15);
+subplot(2,1,2); hold on;
+xlabel('Normalized, processed');
+%Set all fontsizes
+set(findall(gcf,'type','text'),'FontSize',15,'fontWeight','normal'); set(gca,'FontSize',15);
 for i = 1:nrImages
+    subplot(2,1,1);
+    [myHist, xHist] = hist(allImages(i,:),HISTN);
+    plot(xHist, myHist, '-');   
+    subplot(2,1,2);
     [myHist, xHist] = hist(normAllImages(i,:),HISTN);
-    plot(xHist, myHist, '-');
+    plot(xHist, myHist, '-');    
 end
+
 
 
 %% calculate medians
@@ -75,9 +89,12 @@ figure; clf; hold on;
 plot(xMedianHist1,myMedianHist1,'b-');
 plot(xMedianHist2,myMedianHist2,'r-');
 plot(xMedianHist2,myMedianHistAll,'k-');
-xlabel('Intensity');
+xlabel('Distr. intensity after median multiple imgs');
 ylabel('Count');
 legend({'Uneven subset','Even subset','All imgs'},'Location','NorthWest')
+%Set all fontsizes
+set(findall(gcf,'type','text'),'FontSize',15,'fontWeight','normal'); set(gca,'FontSize',15);
+
 
 %% show images
 figure(); clf; hold on; 
@@ -87,6 +104,8 @@ subplottight(1,3,2);
 imshow(RBGmedianImage2); title('even subset');
 subplottight(1,3,3);
 imshow(RBGmedianImageAll); title('median all');
+%Set all fontsizes
+set(findall(gcf,'type','text'),'FontSize',15,'fontWeight','normal'); set(gca,'FontSize',15);
 
 % calculate percentage-wise-difference between subsets
 deviationImage = medianImage1./medianImage2;
@@ -96,8 +115,10 @@ figure;
 [myDevHist1, xDevHist1] = hist(deviationImage(:),HISTN);
 plot(xDevHist1, myDevHist1);
 xlim([0.8,1.2]);
-xlabel('distribution (matrix subset1)/(matrix subset2) values');
+xlabel('distribution (matrix subset1)./(matrix subset2) values');
 ylabel('count');
+%Set all fontsizes
+set(findall(gcf,'type','text'),'FontSize',15,'fontWeight','normal'); set(gca,'FontSize',15);
 
 %% Final output   
 shadingImage = medianImageAll;
@@ -105,6 +126,7 @@ shadingImage = medianImageAll;
 end
     
     
+
 
 
 

@@ -341,7 +341,7 @@ else
       % Flatfield and Shading correction (ALSO THIS WHEN p.TIFFonly)
       fluor2image = double(fluorimage);
       
-      fluor2image = fluor2image-flatfield_crop;
+      fluor2image = fluor2image-flatfield_crop; % TODO MW, flatfield should have dependency on illumination time.
       fluor2image = shading_mean.*fluor2image./shading_crop; % when dividing by shading, multiply by mean(shading), so average stays the same
       fluor2image = uint16(fluor2image);
       %------------------------------------------------------------------------

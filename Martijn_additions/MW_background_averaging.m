@@ -1,5 +1,5 @@
 function outputImage = MW_background_averaging(myFolder, myImages, settings)
-% function shadingImage = MW_shading_averaging(myFolder, myImages, NeighborAveraging)
+% function outputImage = MW_background_averaging(myFolder, myImages, settings)
 % MW shading images script
 %
 % Creates median image of supplied list of images, if NeighborAveraging =
@@ -21,12 +21,21 @@ function outputImage = MW_background_averaging(myFolder, myImages, settings)
 %                                   pixels.) Only use for shading, not for
 %                                   flatfield!
 %   settings.useNormalizedImages    Whether imgs should be normalized.
+%   settings.backgroundImage        If a (same sized) background image
+%                                   (sometimes called 'flatfield' throughout the script)
+%                                   is given, this will be substracted from
+%                                   the input images.
 %
 % Example list of input parameters and calling function:
-% myFolder = 'F:\A_Tans1_step1_incoming_not_backed_up\2015-05-07_shading_images\engfp\';
-% myImages = { 'gfp20ms-r1.tif', 'gfp20ms-r2.tif',... };
-% NeighborAveraging = 5;
-% shadingImage = MW_shading_averaging(myFolder, myImages, NeighborAveraging)
+% %%% Background image
+%   myFolder = 'F:\A_Tans0_step1_incoming_not_backed_up\2015-05-27_background\OPT-flatfield\10ms\'
+%   myImages = 'auto'; 
+%   settings.neighborAveraging = 0;
+%   settings.useNormalizedImages = 0;
+%   settings.maxImages = 500;
+%   settings.histN = 50;
+%   outputImage = MW_background_averaging(myFolder, myImages, settings);
+%
 %
 % Output is img that can be used as shading image, shuold be saves as
 % .mat file.
@@ -83,6 +92,11 @@ normAllImages = zeros(nrImages,myDimension(1), myDimension(2));
 for i = 1:nrImages
     % load image
     currentImage = double(imread([myFolder myImages{i}]));
+    % substract background if given
+    if isfield(settings, 'backgroundImage')
+        currentImage = currentImage-settings.backgroundImage;
+        disp('Substracting background.');
+    end
     % store raw image
     allImages(i,:,:) = currentImage;
     % store filtered and normalized image    

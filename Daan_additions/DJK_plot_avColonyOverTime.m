@@ -42,8 +42,13 @@
 % 'weightField'     Returns weighted average & variance. default: 0 -> not weighted
 % 'weightFrame'=1   For returning fit_mean use corrected version where each
 %                   frame has same weight (default: 0)
+%
+% Hard-coded parameters
+% FONTSIZE          Sets plotting fontsize
 
 function [fit_mean, fit_variance] = DJK_plot_avColonyOverTime(p, schnitzcells, field, varargin);
+
+FONTSIZE = 12;
 
 %--------------------------------------------------------------------------
 % Input error checking and parsing
@@ -291,9 +296,12 @@ if p.weightField ~= 0
 end
 
 % make figure with full screen size
+%{
 scrsz = get(0, 'ScreenSize');
 pos1=[scrsz(3)*0.1 scrsz(4)*0.1 scrsz(3)*0.8 scrsz(4)*0.7];
 fig1 = figure('Position', pos1, 'Name', figureName, 'visible','off');
+%}
+fig1=figure();
 
 hold on;
 
@@ -319,23 +327,32 @@ if fit_x
         'LineWidth',4, ...
         'Color','r', ...
         'Marker','none');
-  text(0.02,0.98,['Fit from (min)         : ' DJK_setDecimalPlaces(p.fitTime(1),0) ' to ' DJK_setDecimalPlaces(p.fitTime(2),0)],      'sc','FontName','FixedWidth','FontWeight','bold','FontSize',11);
-  text(0.02,0.96,['Fitted mean & variance : ' DJK_setDecimalPlaces(fit_mean,2) ' / ' DJK_setDecimalPlaces(fit_variance,2)],      'sc','FontName','FixedWidth','FontWeight','bold','FontSize',11);
-  text(0.02,0.94,['Fitted mean & variance : ' DJK_setDecimalPlaces(fit_mean_frame_corrected,2) ' / ' DJK_setDecimalPlaces(fit_variance_frame_corrected,2)],      'sc','FontName','FixedWidth','FontWeight','bold','FontSize',11);
-  text(0.35,0.96,['(cells equally contributing)'],'sc','FontName','FixedWidth','FontWeight','bold','FontSize',11);
-  text(0.35,0.94,['(frames equally contributing)'],'sc','FontName','FixedWidth','FontWeight','bold','FontSize',11);
+  line1= ['Fit from (min): ' sprintf('%0.0f', p.fitTime(1)) ' to ' sprintf('%0.0f',p.fitTime(2))];
+  line2= ['Fitted mean & variance: ' sprintf('%0.2f',fit_mean) ' / ' sprintf('%0.2f',fit_variance)];
+  line3= ['Fitted mean & variance: ' sprintf('%0.2f',fit_mean_frame_corrected) ' / ' sprintf('%0.2f',fit_variance_frame_corrected)];
+  line2a= [' (cells equally contributing)'];
+  line3a= [' (frames equally contributing)'];
+  figureTitle = [figureTitle,10,line1,10,line2,line2a,10,line3,line3a];
 end
-      
+
 % label axes
-xlabel(figureXlabel,'interpreter','none','FontWeight','bold','FontSize',12); % interpreter to avoid problem with underscores
-ylabel(figureYlabel,'interpreter','none','FontWeight','bold','FontSize',12);
+xlabel(figureXlabel,'interpreter','none','FontWeight','bold','FontSize',FONTSIZE); % interpreter to avoid problem with underscores
+ylabel(figureYlabel,'interpreter','none','FontWeight','bold','FontSize',FONTSIZE);
+  
+% Add title
+title(figureTitle,'interpreter','none','FontWeight','bold','FontSize',FONTSIZE);
+      %'Units', 'normalized', 'Position', [1 1], 'HorizontalAlignment', 'right');
+
+
+set(findall(gcf,'type','text'),'FontSize',FONTSIZE,'fontWeight','normal'); set(gca,'FontSize',FONTSIZE)
+
+
 
 % in case xlim or ylim
 if existfield(p,'xlim '), xlim(p.xlim); end
 if existfield(p,'ylim '), ylim(p.ylim); end
 
-% Add title
-title(figureTitle,'interpreter','none','FontWeight','bold','FontSize',12);
+
 %--------------------------------------------------------------------------
 
        

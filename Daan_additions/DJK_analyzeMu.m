@@ -34,8 +34,13 @@
 %
 % 'dumpPlot'        default: 0, when 1 dump line data to variables
 %
+% Hard coded parameters
+% FONTSIZE          sets plot fontsize
 
 function [fitTime, fitMu] = DJK_analyzeMu(p, schnitzcells, varargin);
+
+% Hard coded params
+FONTSIZE = 17;
 
 %--------------------------------------------------------------------------
 % Input error checking and parsing
@@ -247,12 +252,6 @@ fig1 = figure('Name', figureName, 'visible','off');
 semilogy(data_time, data_muField_sum, 'o-k', 'MarkerSize',12, 'LineWidth',2);
 hold on;
 
-% label axes
-xlabel('time (mins)','interpreter','none','FontWeight','bold','FontSize',12); % interpreter to avoid problem with underscores
-ylabel(['sum ' p.muField ' (um)'],'interpreter','none','FontWeight','bold','FontSize',12);
-% Add title
-title([p.movieDate ' ' p.movieName ' for ' num2str(nrCells) ' schnitzes in folder: schnitzcells\\' p.selectionName],'FontWeight','bold','FontSize',12);
-
 % add fitted line
 [fitMu A0] = DJK_ExponentialFit(data_time(fit_idx)/60, data_muField_sum(fit_idx));
 length_fitted = A0*power(2,fitMu/60*data_time);
@@ -261,11 +260,29 @@ semilogy(data_time, length_fitted, ':','LineWidth',3);
 hold on;
 semilogy(data_time(fit_idx), length_fitted(fit_idx), '-','LineWidth',4);
 
+stringWFittedMu = ['Fit from ', ...
+                    sprintf('%0.0f', p.fitLength(1)), 'um to ', sprintf('%0.0f',p.fitLength(2)), 'um', ...
+                    ' OR ',  ....
+                    sprintf('%0.0f', p.fitTime(1)), ' min to ', sprintf('%0.0f',p.fitTime(2)), ' min', ...
+                	10, ...
+                    'Fitted mu: ' sprintf('%0.3f', fitMu)];
+
+                
+% label axes
+xlabel('time (mins)','interpreter', 'None','FontWeight','bold'); % interpreter to avoid problem with underscores
+ylabel(['sum ' p.muField ' (um)'],'interpreter', 'None','FontWeight', 'bold');
+% Add title
+title([p.movieDate ' ' p.movieName ' for ' num2str(nrCells) ' schnitzes in folder:',10,' schnitzcells\\' p.selectionName ...
+        10,stringWFittedMu...
+    ],'FontWeight','bold','FontSize',FONTSIZE/2);
+                
 % output mu
-text(0.02,0.98,['Fit from (um)  : ' DJK_setDecimalPlaces(p.fitLength(1),0) ' to ' DJK_setDecimalPlaces(p.fitLength(2),0)], 'sc','FontName','FixedWidth','FontWeight','bold','FontSize',11);
-text(0.02,0.96,['Fit from (min) : ' DJK_setDecimalPlaces(p.fitTime(1),0) ' to ' DJK_setDecimalPlaces(p.fitTime(2),0)], 'sc','FontName','FixedWidth','FontWeight','bold','FontSize',11);
-text(0.02,0.94,['Fitted Mu is   : ' DJK_setDecimalPlaces(fitMu,3)], 'sc','FontName','FixedWidth','FontWeight','bold','FontSize',11);
-  
+%{
+text(0.02,0.98,['Fit from (um)  : ' DJK_setDecimalPlaces(p.fitLength(1),0) ' to ' DJK_setDecimalPlaces(p.fitLength(2),0)], 'sc','FontName','FixedWidth','FontWeight','bold','FontSize',FONTSIZE/2);
+text(0.02,0.96,['Fit from (min) : ' DJK_setDecimalPlaces(p.fitTime(1),0) ' to ' DJK_setDecimalPlaces(p.fitTime(2),0)], 'sc','FontName','FixedWidth','FontWeight','bold','FontSize',FONTSIZE/2);
+text(0.02,0.94,['Fitted Mu is   : ' DJK_setDecimalPlaces(fitMu,3)], 'sc','FontName','FixedWidth','FontWeight','bold','FontSize',FONTSIZE/2);
+%}
+
 % in case xlim or ylim
 if existfield(p,'xlim ')
   xlim(p.xlim);
@@ -273,6 +290,9 @@ end
 if existfield(p,'ylim ')
   ylim(p.ylim);
 end
+
+% MW 2015/06 let's make the font a readable size
+set(findall(gcf,'type','text'),'FontSize',FONTSIZE,'fontWeight','normal'), set(gca,'FontSize',FONTSIZE)
 
 %--------------------------------------------------------------------------
 

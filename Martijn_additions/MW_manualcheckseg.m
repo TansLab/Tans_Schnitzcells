@@ -24,7 +24,9 @@
 
 function p = MW_manualcheckseg (p, varargin);
 
-disp('WARNING: DON''T USE THIS FUNCTION ANY MORE - IT''S DEPRICATED!')
+disp('WARNING: DON''T USE THIS FUNCTION ANY MORE - IT''S DEPRICATED!');
+disp('Use PN_manualcheckseg instead!');
+pause(5);
 
 % Lc will be saved as the corrected image
 %

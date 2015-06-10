@@ -136,15 +136,22 @@ end
 
 %% calculate medians
 
-% median images (also for two subsets)
+% Normalize if desired
 if settings.useNormalizedImages
-    medianImageAll =  squeeze(median(normAllImages(:,:,:))); % squeeze removes singleton dim
-    medianImage1 = squeeze(median(normAllImages(set1,:,:))); % squeeze removes singleton dim
-    medianImage2 = squeeze(median(normAllImages(set2,:,:))); % squeeze removes singleton dim
+    theImages = normAllImages;
+end
+
+% median images (also for two subsets)
+medianImageAll =  squeeze(median(theImages(:,:,:))); % squeeze removes singleton dim
+if numel(set1)>1
+    medianImage1 = squeeze(median(theImages(set1,:,:))); % squeeze removes singleton dim
 else
-    medianImageAll =  squeeze(median(allImages(:,:,:))); % squeeze removes singleton dim
-    medianImage1 = squeeze(median(allImages(set1,:,:))); % squeeze removes singleton dim
-    medianImage2 = squeeze(median(allImages(set2,:,:))); % squeeze removes singleton dim
+    medianImage1 = squeeze(theImages(set1,:,:)); 
+end
+if numel(set2)>1
+    medianImage2 = squeeze(median(theImages(set2,:,:))); % squeeze removes singleton dim
+else
+    medianImage2 = squeeze(theImages(set2,:,:)); 
 end
 
 % Create RGB version of those

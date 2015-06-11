@@ -81,7 +81,7 @@ end
 
 
 %--------------------------------------------------------------------------
-% Override any schnitzcells parameters/defaults given optional fields/values
+% Overwrite any schnitzcells parameters/defaults given optional fields/values
 %--------------------------------------------------------------------------
 
 if existfield(p_internal,'phaseImage') & length(p_internal.phaseImage)>0

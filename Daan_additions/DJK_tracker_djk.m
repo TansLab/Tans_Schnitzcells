@@ -19,7 +19,7 @@ function p = DJK_tracker_djk (p, varargin)
 %                 routine to perform tracking on segmentation files that were 
 %                 not manually verified or corrected (i.e. they do not have Lc)
 %   
-%   override      flag that when set to true or 1 permits this routine to 
+%   overwrite      flag that when set to true or 1 permits this routine to 
 %                 perform tracking on pairs of frames even if tracking was 
 %                 previously performed for those frames
 %   
@@ -82,7 +82,7 @@ end
 
 %--------------------------------------------------------------------------
 % Parse the input arguments
-% Override any schnitzcells parameters/defaults given optional fields/values
+% Overwrite any schnitzcells parameters/defaults given optional fields/values
 %--------------------------------------------------------------------------
 % lineageName is the primary tracking output
 if ~existfield(p,'lineageName')
@@ -95,8 +95,12 @@ if ~existfield(p,'trackUnCheckedFrames')
     p.trackUnCheckedFrames = 0;
 end
 
-if ~existfield(p,'override')
-  p.override = false;
+if ~existfield(p,'overwrite')
+  p.overwrite = 0;
+end
+if existfield(p,'override') % backwards compatibility
+  p.overwrite = p.override;
+  disp('Please use p.overwrite instead of p.override.');
 end
 
 % Get names of segmentation files in segmentation directory
@@ -162,7 +166,7 @@ for count = 2:length(p.manualRange);
   % assume this pair of frames still need to be tracked
   needToTrack = true;
 
-  if exist(trackOutputFile)==2 & ~p.override
+  if exist(trackOutputFile)==2 & ~p.overwrite
     % if trackOutputFile already exists, might not need to track
     needToTrack = false;
     
@@ -225,7 +229,7 @@ for count = 2:length(p.manualRange);
   fprintf([' * frame pair ',str3(yesterdayFrameNum),' -> ', str3(frameNum) ' : ']);
   if ~needToTrack
     dataLeft_previousRound = false;
-    fprintf(1,' -> Skipping, cause seg older than previous tracking (use p.override=1 to redo)\n');
+    fprintf(1,' -> Skipping, cause seg older than previous tracking (use p.overwrite=1 to redo)\n');
     continue
   end
   

@@ -21,7 +21,7 @@ if (nargin < 1) | ...
 end
 
 %-------------------------------------------------------------------------------
-% Override any schnitzcells parameters/defaults given optional fields/values
+% Overwrite any schnitzcells parameters/defaults given optional fields/values
 %-------------------------------------------------------------------------------
 
 % Loop over pairs of optional input arguments and save the given fields/values 

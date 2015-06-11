@@ -61,7 +61,7 @@ end
 
 
 % --------------------------------------------------------------------------
-% Override any schnitzcells parameters/defaults given optional fields/values
+% Overwrite any schnitzcells parameters/defaults given optional fields/values
 % --------------------------------------------------------------------------
 if ~existfield(p,'timeField')
   p.timeField = 'Y_time';

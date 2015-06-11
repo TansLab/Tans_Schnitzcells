@@ -12,7 +12,7 @@ function [p, processed] = DJK_tracker_tps(p,varargin)
 %   TRACKER_TPS(P,'Field1',Value1,'Field2',Value2,...) also performs cell
 %   tracking using segmentation results, but the extra arguments permit users 
 %   to adjust any parameters describing the movie or parameters controlling 
-%   the cell tracking process.  The extra arguments can override any specific 
+%   the cell tracking process.  The extra arguments can overwrite any specific 
 %   parameters provided in P by setting P.Field1 = Value1, P.Field2 = Value2, 
 %   etc.  Thus any/all schnitzcells parameter values can be defined in the 
 %   function call via these optional field/value pairs.  (This is in the style 
@@ -45,7 +45,7 @@ function [p, processed] = DJK_tracker_tps(p,varargin)
 %                 routine to perform tracking on segmentation files that were 
 %                 not manually verified or corrected (i.e. they do not have Lc)
 %   
-%   override      flag that when set to true or 1 permits this routine to 
+%   overwrite      flag that when set to true or 1 permits this routine to 
 %                 perform tracking on pairs of frames even if tracking was 
 %                 previously performed for those frames
 %   
@@ -87,7 +87,7 @@ if (nargin < 1) | ...
 end
 
 %-------------------------------------------------------------------------------
-% Override any schnitzcells parameters/defaults given optional fields/values
+% Overwrite any schnitzcells parameters/defaults given optional fields/values
 %-------------------------------------------------------------------------------
 
 % Loop over pairs of optional input arguments and save the given fields/values 
@@ -108,8 +108,12 @@ if numExtraArgs > 0
   end
 end
 
-if ~existfield(p,'override')
-  p.override = false;
+if ~existfield(p,'overwrite')
+  p.overwrite = 0;
+end
+if existfield(p,'override') % backwards compatibility
+  p.overwrite = p.override;
+  disp('Please p.overwrite use instead of p.override');
 end
 
 % lineageName is the primary tracking output
@@ -351,8 +355,8 @@ for frameNum = p.trackRange(2:end)
     end
 % END DJK 081107
    
-    if exist(trackOutputFile)==2 & ~(p.override) & ~segUpdated% DJK 081107
-      fprintf(1,' -> Skipping cause previously tracked (use p.override=1 to redo)\n');
+    if exist(trackOutputFile)==2 & ~(p.overwrite) & ~segUpdated% DJK 081107
+      fprintf(1,' -> Skipping cause previously tracked (use p.overwrite=1 to redo)\n');
       i = i+1;
       continue
     end

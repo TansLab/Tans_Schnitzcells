@@ -1,4 +1,4 @@
-function [schnitzcells] = PN_fluorRate(schnitzcells)
+function [schnitzcells] = PN_fluorRate_Y(schnitzcells)
 
 %--------------------------------------------------------------------------
 % INITIALIZE NEW MEASUREMENTS

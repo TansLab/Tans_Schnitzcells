@@ -7,6 +7,9 @@ function MW_determinecroparea(p, range)
     % Determine and load last phase image
     lastIndex = range(end)+(range(end)-range(end-1)); % otherwise issue going from prelim. to full analysis
     DlastPhase = dir([p.imageDir, [p.movieName,'-p-*' num2str(lastIndex) '.tif'] ]);
+    if numel(DlastPhase)==0
+        error(['No images found w. index ' num2str(lastIndex)]);
+    end
     imToLoad = DlastPhase(round(numel(DlastPhase)/2));
     myImg = imread([p.imageDir imToLoad.name]);
     myImgSize = size(myImg);

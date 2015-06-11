@@ -69,7 +69,7 @@ end
 
 %--------------------------------------------------------------------------
 % Parse the input arguments
-% Override any schnitzcells parameters/defaults given optional fields/values
+% overwrite any schnitzcells parameters/defaults given optional fields/values
 %--------------------------------------------------------------------------
 if ~existfield(p,'muField')
   p.muField = 'length_fitNew';

@@ -82,7 +82,7 @@ end
 
 
 %--------------------------------------------------------------------------
-% Override any schnitzcells parameters/defaults given optional fields/values
+% overwrite any schnitzcells parameters/defaults given optional fields/values
 %--------------------------------------------------------------------------
 % Set default parameter values if they don't exist yet
 if ~existfield(p,'schnitzName')
@@ -130,7 +130,7 @@ disp(['Load from ''' p.schnitzName ''' completed...']);
 
 
 %--------------------------------------------------------------------------
-% Override any schnitzcells parameters/defaults given optional fields/values
+% overwrite any schnitzcells parameters/defaults given optional fields/values
 %--------------------------------------------------------------------------
 % Reintroducing option to plot all fits - MW 23/3/2014
 if existfield(p,'schnitzNum')  

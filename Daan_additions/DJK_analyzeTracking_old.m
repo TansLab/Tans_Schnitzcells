@@ -57,7 +57,7 @@ end
 
 
 %--------------------------------------------------------------------------
-% Override any schnitzcells parameters/defaults given optional fields/values
+% overwrite any schnitzcells parameters/defaults given optional fields/values
 %--------------------------------------------------------------------------
 % If explicit lineageName is not given, use standard
 if ~existfield(p,'lineageName')

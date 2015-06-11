@@ -89,7 +89,7 @@ end
 
 %--------------------------------------------------------------------------
 % Parse the input arguments
-% Override any schnitzcells parameters/defaults given optional fields/values
+% Overwrite any schnitzcells parameters/defaults given optional fields/values
 %--------------------------------------------------------------------------
 if ~existfield(p,'schnitzNameCycCor')
  % p.schnitzNameCycCor = [p.tracksDir,p.movieName,'-Schnitz-CycCor.mat'];

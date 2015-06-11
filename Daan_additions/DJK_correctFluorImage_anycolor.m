@@ -100,7 +100,7 @@ if (p.fluorcolor == 'none')
 end
 
 %--------------------------------------------------------------------------
-% Override any schnitzcells parameters/defaults given optional fields/values
+% overwrite any schnitzcells parameters/defaults given optional fields/values
 %--------------------------------------------------------------------------
 % If explicit manualRange is not given, take all segmentation files
 if ~existfield(p,'manualRange')

@@ -77,7 +77,7 @@ end
 
 %--------------------------------------------------------------------------
 % Parse the input arguments
-% Override any schnitzcells parameters/defaults given optional fields/values
+% Overwrite any schnitzcells parameters/defaults given optional fields/values
 %--------------------------------------------------------------------------
 % If explicit manualRange is not given, take all in schnitzcells
 if ~existfield(p,'manualRange')

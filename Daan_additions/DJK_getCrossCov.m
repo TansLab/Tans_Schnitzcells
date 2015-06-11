@@ -72,7 +72,7 @@ end
 
 
 % --------------------------------------------------------------------------
-% Override any schnitzcells parameters/defaults given optional fields/values
+% overwrite any schnitzcells parameters/defaults given optional fields/values
 % --------------------------------------------------------------------------
 if ~existfield(p,'timeField')
   disp('p.timeField not set, reverting to default ''Y_time''.');

@@ -71,7 +71,7 @@ end
 
 
 %--------------------------------------------------------------------------
-% Override any schnitzcells parameters/defaults given optional fields/values
+% Overwrite any schnitzcells parameters/defaults given optional fields/values
 %--------------------------------------------------------------------------
 if ~existfield(s(1),char(timeField))
   disp(['timeField ' timeField ' does not exist. Exiting...!']);

@@ -289,7 +289,7 @@ p.analysisDir     = [p.rootDir,fs,movieDate,fs,movieName,fs,'analysis',fs]; % DJ
 %p.partialDir      = [p.rootDir,fs,movieDate,fs,movieName,fs,'partial',fs];
 
 %-------------------------------------------------------------------------------
-% Override any schnitzcells parameters/defaults given optional fields/values
+% Overwrite any schnitzcells parameters/defaults given optional fields/values
 %-------------------------------------------------------------------------------
 
 % Loop over pairs of optional input arguments and save the given fields/values 

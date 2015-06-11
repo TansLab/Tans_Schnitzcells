@@ -499,14 +499,16 @@ for count = 2:length(p.manualRange);
                                             % 'tracked_cellno_today'
                   fprintf([' \n             Will remove today cells ' num2str(trackLink(tracked_cellno_today,4)) ' from dividing list.'])
               end
-              
+
+              % MW 2015/06
+              % now remove cells which are not dividing any more from the list:
+              today_dividing_list=today_dividing_list(~ismember(today_dividing_list,remove_cells_from_divlist));
+             
         else
             fprintf(['\n                  ' str3(cellno_yesterday) ' in fr' ... 
                 str3(yesterdayFrameNum) ' was not linked. Could not be corrected, cause no dividing cells!']);
       end
-        
-      % now remove cells which are not dividing any more from the list:
-      today_dividing_list=today_dividing_list(~ismember(today_dividing_list,remove_cells_from_divlist));
+
       
     end
   end

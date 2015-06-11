@@ -48,6 +48,8 @@ function p = PN_segmoviephase_3colors(p,varargin)
 %               brightfield. NOT UPDATED.
 % quickMode: 1: Load directly averaged images from previous treatment.
 %            Default: 0. brightfield. NOT UPDATED.
+% overwrite :   default:1, if set to 0, segmentation of frames for which
+%               a segfile already exists are skipped. 
 
 %-------------------------------------------------------------------------------
 % Parse the input arguments, input error checking. Use inputParser in
@@ -158,7 +160,10 @@ end
 if ~existfield(p,'quickMode') %extract already averaged images
     p.quickMode = 0;
 end
-
+%overwrite
+if ~existfield(p,'overwrite') % don't seg for already segged frames
+    p.overwrite = 1;
+end
 
 
 
@@ -295,11 +300,21 @@ disp (p);
 %--------------------------------------------------------------------------
 
 
-
 %--------------------------------------------------------------------------
 % Loop over frames : load images and do segmentation
 %--------------------------------------------------------------------------
-for i= p.segRange
+for i= p.segRange        
+
+    % create directory to save result.
+    saveDirectory = [p.segmentationDir p.PN_saveDir 'seg' str3(i) filesep];    
+    [status,msg,id] = mkdir(saveDirectory);
+    
+    % MW 2015/06 addition to skip frames for which segmentation was already
+    % performed during previous (preliminary) analysis.
+    if strcmp(id,'MATLAB:MKDIR:DirectoryExists') && p.overwrite==0
+        disp(['Skipping frame ' str3(i) ' because old segfile already detected (p.overwrite==0).']);
+        continue;
+    end
     
     %----------------------------------------------------------------------
     % PHASECONTRAST
@@ -408,8 +423,6 @@ for i= p.segRange
     
     % Parameters for segmentation
     % === 
-    saveDirectory = [p.segmentationDir p.PN_saveDir 'seg' str3(i) filesep];
-    [status,msg,id] = mkdir(saveDirectory);
     inputsOfSegmentation = {'rangeFiltSize',p.rangeFiltSize,'maskMargin',p.maskMargin,...
         'useFullImage',p.useFullImage, 'LoG_Smoothing',p.LoG_Smoothing,'minCellArea',p.minCellArea,...
         'GaussianFilter',p.GaussianFilter,'minDepth',p.minDepth,...
@@ -427,7 +440,7 @@ for i= p.segRange
     end
     
     %----------------------------------------------------------------------
-    %---------------------------------------------------------------------------
+    %----------------------------------------------------------------------
     % Prepare segmentation and fluorescence data for saving
     if isempty(LNsub) 
         LNsub = [0];          %if no cells segmented, add this so that we have an image

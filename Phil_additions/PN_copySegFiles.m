@@ -1,4 +1,12 @@
 function PN_copySegFiles(p,varargin)
+% function PN_copySegFiles(p,varargin)
+%
+% (comments by MW 2015/06)
+% Copies segmentation files from subdirectory with annotated parameter
+% values to main dir with segmentation files.
+%
+% overwrite     defualt=1, will overwrite old segfiles. if overwrite=0, old
+%               segfiles won't be overwritten.
 
 numRequiredArgs = 1;
 if (nargin < 1) | ...
@@ -56,6 +64,9 @@ end
 if ~isfield(p,'segRange')
     error('Field segRange empty : please specify the images number to copy.')
 end
+if ~existfield(p,'overwrite')                         %minimum neck width to cut a too long cell
+    p.overwrite = 1;
+end
 
 
 %--------------------------------------------------------------------------
@@ -74,7 +85,17 @@ for i= p.segRange
         warningmessage = sprintf('%s\n%s\n','The following file does not exist :',[directory filename]);
         warning(warningmessage);
     end
+       
+    % MW addition to keep already existing segfiles
+    if p.overwrite==0 && exist([p.segmentationDir filename],'file')~=0
+        disp(['Didn''t copy ' filename ' because old segfile already detected (p.overwrite==0).']);
+        continue;
+    else
+        disp('WARNING: old segfile is being overwritten.');
+    end    
     
     copyfile([directory filename],[p.segmentationDir filename]);                % copy *.mat files
 end
+
+
 

@@ -17,7 +17,7 @@ function []=NW_Backup_SegTrack(p)
 % 
 % This implies: 
 % - By reperforming tracking, the DJK_tracker does not (accidently) overwrite
-%   the tracking files because they are newer then the segmentation files.
+%   the tracking files because they are newer than the segmentation files.
 % - If you wish them to be overwritten you need to save the segmentation
 %   file again or set ('override',1) in DJK_tracker.
 %
@@ -91,6 +91,7 @@ if ~isempty(mysegfiles)
         disp(['Warning: unable to copy segmentation files : ' msg]);
     return;
     end
+    disp(['Segmentation files back-upped.']);
 else
     disp('No segmentation files found. Will continue with tracking files.')
 end
@@ -132,6 +133,7 @@ if ~isempty(mytrackfiles)
         fwrite(fid, byte); %write first byte back into the file
         fclose(fid); %close file again
     end
+    disp(['Tracking files back-upped.']);
 else
     disp('No tracking files found.')
 end
@@ -140,5 +142,6 @@ end
 
 disp('-------------------------------------------')
 disp('Finished copying files to backup folder.')
+disp(['(' mySaveDir ')']);
 disp('-------------------------------------------')
 

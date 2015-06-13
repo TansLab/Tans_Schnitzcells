@@ -80,7 +80,7 @@ while ~done
             imshow(Lshow);
             
         else
-            PN_imshowlabel(p,imresize_old(Lout,res),0,0,0,'phaseImage',imresize_old(phsub,res)); % MW, 0,0,0, signals no susp. cell. detect.
+            PN_imshowlabel(p,imresize_old(Lout,res),[],[],[],'phaseImage',imresize_old(phsub,res)); % MW, [],[],[] signals no susp. cell. detect.
         end
     
         pos11 = get(phfig,'position'); % current position
@@ -111,9 +111,9 @@ while ~done
             % with 0,0,0 values such that functionality is not invoked.
             
             % clf reset; %NW2012-05-10 <> NOT CLEAR DESIRED??!
-            PN_imshowlabel(p,imresize_old(Lout,res),0,0,0,'phaseImage',imresize_old(phsub,res)); %slow step 0.2sec! (NW 2012-05-10)            
+            PN_imshowlabel(p,imresize_old(Lout,res),[],[],[],'phaseImage',imresize_old(phsub,res)); %slow step 0.2sec! (NW 2012-05-10)            
             % Note that for historic reasons PN_imshowlabel calls imshow
-            % when 3-5th parameters are 0,0,0.
+            % when 3-5th parameters are [],[],[].
             % Note also here resized img is given as input, so resizing is
             % not necessary.
             

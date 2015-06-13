@@ -7,7 +7,7 @@ function outim = PN_imshowlabel(p,L,rect,Lp,rectp,varargin)
 % - cells with potential overlap with 2 cells in the former image are
 % shown in white
 %
-% When rect, Lp and rectp are set to 0, suspicious cell detection will not
+% When rect, Lp and rectp are set to [], suspicious cell detection will not
 % be activated. This should be done when running a "preliminary analysis".
 % (Because this analysis relies on previous frames being present.)
 % (In practice, susp. cell detection is activated if Lp is unequal to zero)
@@ -109,7 +109,7 @@ end;
 %tic
 
 % If previous (preceeding) frame provided, perform suspicious cell. detection
-if Lp~=0
+if ~isempty(Lp)
 
     %Detect cells that have certainly been divided in the preceeding image
     [rw clm] = find(Lp);
@@ -189,7 +189,7 @@ else
 end
 
 % 2nd part of suspicious cell detection
-if Lp~=0
+if ~isempty(Lp)
     % elapsed time: 0.34
     %stop2=toc
     L2(logical(Lsuspicious)) = M+1;
@@ -245,7 +245,7 @@ if existfield(p, 'showPerim') && p.showPerim % show cell outlines
     % Edit MW - adds green marker if frame is approved
     outim = MW_stampit(outim,p);
     
-    if nargout == 0 && Lp==0
+    if nargout == 0 && isempty(Lp)
         imshow(outim);
     end
     
@@ -277,7 +277,7 @@ elseif addPhaseImage % costs 0.045 sec
     % Edit MW - adds green marker if frame is approved
     outim = MW_stampit(outim,p); % TODO CHECK MW
     
-    if nargout == 0 && Lp==0
+    if nargout == 0 && isempty(Lp)
         imshow(outim);
     end
     
@@ -286,7 +286,7 @@ else
     outim = Lrgb;
     outim = MW_stampit(outim,p); % TODO CHECK MW
 
-    if nargout == 0 && Lp==0
+    if nargout == 0 && isempty(Lp)
         imshow(outim);
     end
     

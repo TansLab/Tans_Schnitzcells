@@ -266,7 +266,7 @@ if figs
 
   % plot output cell
   subplot(2,2,4);
-  PN_imshowlabel(p,subcellcut,0,0,0);
+  PN_imshowlabel(p,subcellcut,[],[],[]);
 
   pause;close(111);
 end

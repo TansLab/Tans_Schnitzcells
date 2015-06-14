@@ -73,6 +73,10 @@ if (nargin < 1) | ...
     error(errorMessage);
 end
 
+if ~existfield(p,'showAll')  
+    p.showAll=0;  
+end
+
 % Load the watermark (MW edit 2014/12)
 % Note that only the green channel is used, and only binary form.
 p.mywatermark=imread('watermark.png');

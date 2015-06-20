@@ -17,8 +17,12 @@
 % REQUIRED ARGUMENTS:
 % 'schnitzcells'      schnitzcells
 % 'lengthField'       name of length Field
-%
+% 'myindex'           string allowing you to give a custom name to this field
 function [schnitzcells] = DJK_addToSchnitzes_fluorRate_phase(p,colorfield,myindex) 
+
+if ~ischar(myindex)
+    error('myindex input parameter should be string');
+end
 
 schnitzname = [p.tracksDir,p.movieName,'-Schnitz.mat'];
 load(schnitzname);

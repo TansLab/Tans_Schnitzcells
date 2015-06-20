@@ -30,14 +30,14 @@ function p = NW_tracker_centroid_vs_area(p, varargin)
 %                 routine to perform tracking on segmentation files that were 
 %                 not manually verified or corrected (i.e. they do not have Lc)
 %   
-%   override      flag that when set to true or 1 permits this routine to 
+%   overwrite      flag that when set to true or 1 permits this routine to 
 %                 perform tracking on pairs of frames even if tracking was 
 %                 previously performed for those frames (that is, the
 %                 segmentation file is older than the tracking file) 
 %   SwapcounterMax   How many subsequent rounds shall possibly mistracked
 %                 cells be pairwise swapped. default: 1
 %                 if swapped cells remain, increase this number and run
-%                 tracker again over this frame pair ('override')
+%                 tracker again over this frame pair ('overwrite')
 %
 % NOTE:
 % For tracking correction (cell swapping, division association) several
@@ -111,7 +111,7 @@ end
 
 %--------------------------------------------------------------------------
 % Parse the input arguments
-% Override any schnitzcells parameters/defaults given optional fields/values
+% Overwrite any schnitzcells parameters/defaults given optional fields/values
 %--------------------------------------------------------------------------
 % lineageName is the primary tracking output
 if ~existfield(p,'lineageName')
@@ -124,8 +124,13 @@ if ~existfield(p,'trackUnCheckedFrames')
     p.trackUnCheckedFrames = 0;
 end
 
-if ~existfield(p,'override')
-  p.override = false;
+
+if ~existfield(p,'overwrite')
+  p.overwrite = 0;
+end
+if existfield(p,'override') % backwards compatibility
+  p.overwrite = p.override;
+  disp('Please use p.overwrite instead of p.override');
 end
 
 % Get names of segmentation files in segmentation directory
@@ -192,7 +197,7 @@ for count = 2:length(p.manualRange);
   % assume this pair of frames still need to be tracked
   needToTrack = true; 
   
-  if exist(trackOutputFile)==2 & ~p.override
+  if exist(trackOutputFile)==2 & ~p.overwrite
     % if trackOutputFile already exists, might not need to track
     needToTrack = false;
     
@@ -269,7 +274,7 @@ for count = 2:length(p.manualRange);
   fprintf([' * frame pair ',str3(yesterdayFrameNum),' -> ', str3(frameNum) ' : ']);
   if ~needToTrack
     %dataLeft_previousRound = false;  %not applicable any more (area<->centroid)
-    fprintf(1,' -> Skipping, cause seg older than previous tracking (use p.override=1 to redo)\n');
+    fprintf(1,' -> Skipping, cause seg older than previous tracking (use p.overwrite=1 to redo)\n');
     continue
   end          
             
@@ -494,14 +499,16 @@ for count = 2:length(p.manualRange);
                                             % 'tracked_cellno_today'
                   fprintf([' \n             Will remove today cells ' num2str(trackLink(tracked_cellno_today,4)) ' from dividing list.'])
               end
-              
+
+              % MW 2015/06
+              % now remove cells which are not dividing any more from the list:
+              today_dividing_list=today_dividing_list(~ismember(today_dividing_list,remove_cells_from_divlist));
+             
         else
             fprintf(['\n                  ' str3(cellno_yesterday) ' in fr' ... 
                 str3(yesterdayFrameNum) ' was not linked. Could not be corrected, cause no dividing cells!']);
       end
-        
-      % now remove cells which are not dividing any more from the list:
-      today_dividing_list=today_dividing_list(~ismember(today_dividing_list,remove_cells_from_divlist));
+
       
     end
   end

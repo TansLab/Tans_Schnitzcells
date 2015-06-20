@@ -14,12 +14,11 @@ function schnitzcells = MW_calculateframe_nrs(schnitzcells)
 % OUTPUT
 % Schnitzcells struct
 
-
-for i = 1:numel(schnitzcells)
+% backwards compatibility
+if isfield(schnitzcells,'frames')
     
-    % backwards compatibility
-    if isfield(schnitzcells,'frames')
-        schnitzcells(i).frame_nrs = schnitzcells(i).frames-1; % N+1 bug
+    for i = 1:numel(schnitzcells)           
+        schnitzcells(i).frame_nrs = schnitzcells(i).frames-1; % N+1 bug    
     end
     
 end

@@ -8,7 +8,7 @@
 % to 0.
 %
 % I.e. use 
-% PN_imshowlabel(p,L,0,0,0)
+% PN_imshowlabel(p,L,[],[],[])
 % instead of
 % DJK_imshowlabel(L) or DJK_imshowlabel(p,L)
 %
@@ -93,7 +93,7 @@ end
 
 
 %--------------------------------------------------------------------------
-% Override any schnitzcells parameters/defaults given optional fields/values
+% Overwrite any schnitzcells parameters/defaults given optional fields/values
 %--------------------------------------------------------------------------
 addPhaseImage = false;
 if existfield(p_internal,'phaseImage') & length(p_internal.phaseImage)>0

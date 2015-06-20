@@ -30,7 +30,7 @@ clear j*  %j1=0;j2=0;
 figure(ourfig);
 clf reset;
 
-PN_imshowlabel(p,imresize_old(Lout,res),0,0,0,'phaseImage',imresize_old(phsub,res));
+PN_imshowlabel(p,imresize_old(Lout,res),[],[],[],'phaseImage',imresize_old(phsub,res));
 
 pos11 = get(phfig,'position'); % current position
 set(ourfig, 'position', pos11); % DJK 090117

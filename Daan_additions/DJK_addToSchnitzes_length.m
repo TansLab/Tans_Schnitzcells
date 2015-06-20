@@ -58,7 +58,7 @@ end
 
 
 %--------------------------------------------------------------------------
-% Override any schnitzcells parameters/defaults given optional fields/values
+% overwrite any schnitzcells parameters/defaults given optional fields/values
 %--------------------------------------------------------------------------
 % Set default parameter values if they don't exist yet
 if ~existfield(p,'schnitzName')
@@ -99,7 +99,7 @@ disp(['Load from ''' p.schnitzName ''' completed...']);
 
 
 %--------------------------------------------------------------------------
-% Override any schnitzcells parameters/defaults given optional fields/values
+% overwrite any schnitzcells parameters/defaults given optional fields/values
 %--------------------------------------------------------------------------
 if ~existfield(p,'schnitzNum')
  % p.schnitzNum = [1:100:length(schnitzcells)]; %; %blubb
@@ -356,7 +356,7 @@ func_length = @(x) sqrt( ( 3 .* x.^2 .* fitCoef3(1) + 2 .* x .* fitCoef3(2) + fi
       % plot segmentation of cell
       %--------------------------------------------------------------------    
       subplot(2,3,4);
-      PN_imshowlabel(p, Lc_cell,0,0,0,'randomize',0);
+      PN_imshowlabel(p, Lc_cell,[],[],[],'randomize',0);
       
       %--------------------------------------------------------------------
       % plot rotated x & y

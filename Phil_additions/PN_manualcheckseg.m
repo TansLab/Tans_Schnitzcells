@@ -10,7 +10,7 @@ function p = PN_manualcheckseg (p, varargin);
 %   to adjust any parameters describing the movie or parameters controlling
 %   the manual segmentation checking process.  The routine first sets all of
 %   the movie analysis parameters to their default values defined for the given
-%   movieKind, and then overrides any specific parameters provided by setting
+%   movieKind, and then overwrites any specific parameters provided by setting
 %   P.Field1 = Value1, P.Field2 = Value2, etc.  Thus any/all schnitzcells
 %   parameter values can be defined in the function call via these optional
 %   field/value pairs.  (This is in the style of setting MATLAB properties
@@ -25,12 +25,12 @@ function p = PN_manualcheckseg (p, varargin);
 %-------------------------------------------------------------------------------
 % Schnitzcells Fields / Parameters that you can adjust to control manualcheckseg
 %
-%   outprefix     overrides [p.movieName 'seg']
+%   outprefix     overwrites [p.movieName 'seg']
 %   manualRange   specify frame range to check
-%   override      if 1, program will redo frames already having Lc; default=0
+%   overwrite     if 1, program will redo frames already having Lc; default=0
 %   expandvalue   increases each segmentation image border by this amount
 %                 (in case the segmentation cut off some cells); defaults to 30
-%   frnum         check one frame only, also sets p.override = 1
+%   frnum         check one frame only, also sets p.overwrite = 1
 %   Dskip         (what does this do? probably frame skipping?), defaults to 1
 %   upend         frame size / location; default is 680
 %   leftend       frame size / location; default is 516
@@ -43,6 +43,8 @@ function p = PN_manualcheckseg (p, varargin);
 %                    Works sometimes only if every frame is used (or stepsize not too big)! otherwise error
 %                    when backing up. exact conditions...no idea (comment NW2012-05-10)
 %   maxImage      if 1, image will be resized to fill screen. default=1
+%   showAll       default =0; if showAll=1 will show all frames to user.
+%                 (not sure of its behavior, testing still -MW 2015/06)
 %
 %-------------------------------------------------------------------------------
 %
@@ -71,12 +73,16 @@ if (nargin < 1) | ...
     error(errorMessage);
 end
 
+if ~existfield(p,'showAll')  
+    p.showAll=0;  
+end
+
 % Load the watermark (MW edit 2014/12)
 % Note that only the green channel is used, and only binary form.
 p.mywatermark=imread('watermark.png');
 
 %-------------------------------------------------------------------------------
-% Override any schnitzcells parameters/defaults given optional fields/values
+% Overwrite any schnitzcells parameters/defaults given optional fields/values
 %-------------------------------------------------------------------------------
 
 % Loop over pairs of optional input arguments and save the given fields/values
@@ -161,8 +167,12 @@ if ~existfield(p,'manualRange')
     p.manualRange = str2num(segNameStrings(:,numpos:numpos+2))';
 end
 
-if existfield(p,'override')~=1
-    p.override=0;
+if ~existfield(p,'overwrite')
+    p.overwrite=0;
+end
+if existfield(p,'override') % backward compatibility; legacy
+    disp('Please use p.overwrite instead of p.override');
+    p.overwrite=p.override;
 end
 
 if ~existfield(p,'expandvalue'),
@@ -177,7 +187,7 @@ if existfield(p,'frnum')
             ' because it is not in the manualRange of segmented files.']);
     else
         p.manualRange=frnum;
-        p.override=1;
+        p.overwrite=1;
     end
 end
 
@@ -251,26 +261,33 @@ while loopindex <= length(p.manualRange);
     name= [p.segmentationDir,p.movieName,'seg',str3(i)];
     tempsegcorrect=0;
     load(name);
+    
     % nitzan's changes June24th
     if exist('phaseFullSize')==1
         p.fullsize = phaseFullSize;
     end
+    
     if ~isfield(p,'fullsize')
         p.fullsize = [1024 , 1344];
         disp('setting size of images arbitrarily to [1024 , 1344].');
     end
-    if (gotoframenum && exist('Lc')==1 && p.override==false)
-        p.override=true;
+    
+    if (gotoframenum && exist('Lc')==1 && p.overwrite==false)
+        p.overwrite=true; % MW todo ?! 
+        disp('WARNING: p.overwrite=true (MW todo; doesn''t seem correct behavior).');
     end %DJK 071207
+    
+    % Set flag if file was already checked before.
+    if exist('Lc')==1
+        LNsub=Lc;
+        p.CurrentFrameApprovedFlag = 1; % Addition MW 2014/12
+    else
+        p.CurrentFrameApprovedFlag = 0; % Addition MW 2014/12
+    end    
+    
     % nitzan's changes June24th
-    if (exist('Lc')~=1 || backwards || p.override==1 || (exist('Lc')==1 && tempsegcorrect==1)) && ~mod(i-1,p.Dskip)        
-        
-        if exist('Lc')==1
-            LNsub=Lc;
-            p.CurrentFrameApprovedFlag = 1; % Addition MW 2014/12
-        else
-            p.CurrentFrameApprovedFlag = 0; % Addition MW 2014/12
-        end      
+    if p.showAll || ... % MW 2015/06
+        ((exist('Lc')~=1 || backwards || p.overwrite==1 || (exist('Lc')==1 && tempsegcorrect==1)) && ~mod(i-1,p.Dskip))
         
         %----------------------------------------------------------------------
         % Show Phase Image

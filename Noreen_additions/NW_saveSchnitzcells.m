@@ -52,7 +52,7 @@ end
 
 
 %--------------------------------------------------------------------------
-% Override any schnitzcells parameters/defaults given optional fields/values
+% Overwrite any schnitzcells parameters/defaults given optional fields/values
 %--------------------------------------------------------------------------
 % Set default parameter values if they don't exist yet
 % Save directory

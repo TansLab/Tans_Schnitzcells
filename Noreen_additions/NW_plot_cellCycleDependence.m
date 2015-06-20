@@ -185,7 +185,7 @@ end
 
 %--------------------------------------------------------------------------
 % Parse the input arguments
-% Override any schnitzcells parameters/defaults given optional fields/values
+% Overwrite any schnitzcells parameters/defaults given optional fields/values
 %--------------------------------------------------------------------------
 % If onScreen, nothing is saved to disc automatically
 if ~existfield(p,'onScreen')

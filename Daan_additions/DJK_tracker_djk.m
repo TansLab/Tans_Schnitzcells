@@ -19,7 +19,7 @@ function p = DJK_tracker_djk (p, varargin)
 %                 routine to perform tracking on segmentation files that were 
 %                 not manually verified or corrected (i.e. they do not have Lc)
 %   
-%   override      flag that when set to true or 1 permits this routine to 
+%   overwrite      flag that when set to true or 1 permits this routine to 
 %                 perform tracking on pairs of frames even if tracking was 
 %                 previously performed for those frames
 %   
@@ -82,7 +82,7 @@ end
 
 %--------------------------------------------------------------------------
 % Parse the input arguments
-% Override any schnitzcells parameters/defaults given optional fields/values
+% Overwrite any schnitzcells parameters/defaults given optional fields/values
 %--------------------------------------------------------------------------
 % lineageName is the primary tracking output
 if ~existfield(p,'lineageName')
@@ -95,8 +95,12 @@ if ~existfield(p,'trackUnCheckedFrames')
     p.trackUnCheckedFrames = 0;
 end
 
-if ~existfield(p,'override')
-  p.override = false;
+if ~existfield(p,'overwrite')
+  p.overwrite = 0;
+end
+if existfield(p,'override') % backwards compatibility
+  p.overwrite = p.override;
+  disp('Please use p.overwrite instead of p.override.');
 end
 
 % Get names of segmentation files in segmentation directory
@@ -162,7 +166,7 @@ for count = 2:length(p.manualRange);
   % assume this pair of frames still need to be tracked
   needToTrack = true;
 
-  if exist(trackOutputFile)==2 & ~p.override
+  if exist(trackOutputFile)==2 & ~p.overwrite
     % if trackOutputFile already exists, might not need to track
     needToTrack = false;
     
@@ -225,7 +229,7 @@ for count = 2:length(p.manualRange);
   fprintf([' * frame pair ',str3(yesterdayFrameNum),' -> ', str3(frameNum) ' : ']);
   if ~needToTrack
     dataLeft_previousRound = false;
-    fprintf(1,' -> Skipping, cause seg older than previous tracking (use p.override=1 to redo)\n');
+    fprintf(1,' -> Skipping, cause seg older than previous tracking (use p.overwrite=1 to redo)\n');
     continue
   end
   
@@ -268,7 +272,7 @@ for count = 2:length(p.manualRange);
       image_today( round(centroids(4)) , round(centroids(5)) ) = centroids(1);
       image_today( round(centroids(6)) , round(centroids(7)) ) = centroids(1);
     end
-    figure(11); PN_imshowlabel(p,image_today,0,0,0);
+    figure(11); PN_imshowlabel(p,image_today,[],[],[]);
 
     image_yesterday = zeros(size(Lc_yesterday_fullsize_centered));
     for i = 1:size(coordinates_yesterday,1)
@@ -277,12 +281,12 @@ for count = 2:length(p.manualRange);
       image_yesterday( round(centroids(4)) , round(centroids(5)) ) = centroids(1);
       image_yesterday( round(centroids(6)) , round(centroids(7)) ) = centroids(1);
     end
-    figure(12); PN_imshowlabel(p,image_yesterday,0,0,0);
+    figure(12); PN_imshowlabel(p,image_yesterday,[],[],[]);
     
 %     figure(11); DJK_imshowlabel(Lc_today_fullsize);
 %     figure(12); DJK_imshowlabel(Lc_yesterday_fullsize);
-    figure(13); PN_imshowlabel(p,Lc_today_fullsize_centered,0,0,0);
-    figure(14); PN_imshowlabel(p,Lc_yesterday_fullsize_centered,0,0,0);
+    figure(13); PN_imshowlabel(p,Lc_today_fullsize_centered,[],[],[]);
+    figure(14); PN_imshowlabel(p,Lc_yesterday_fullsize_centered,[],[],[]);
     
     pause; close(11); close(12); close(13); close(14);
     DJK_writeSegImage(image_today,'image_today.png');

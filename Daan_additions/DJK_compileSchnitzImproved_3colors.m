@@ -50,7 +50,7 @@ end
 
 
 %--------------------------------------------------------------------------
-% Override any schnitzcells parameters/defaults given optional fields/values
+% overwrite any schnitzcells parameters/defaults given optional fields/values
 %--------------------------------------------------------------------------
 % Set default parameter values if they don't exist yet
 if ~existfield(p,'schnitzName')

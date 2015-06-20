@@ -28,6 +28,59 @@ ________________________________________________________________________________
 
 ================================================================================
 
+================================================================================
+General info on the Excel sheet
+================================================================================
+
+Generally, there are different matlab functions that perform the analysis. These functions add or edit files and folders in the data directory that contain analyzed data. A few files are plain text files, but the files containing the main body of data calculated are .mat files. The matlab functions also output images (to check the analysis intermediately) and plots (which are often the "end output" of the analysis). 
+
+The Matlab functions take certain parameters as input. One of the most important ones is the "p" struct. This holds the "overhead"/"administrative" information, like what is the current analysis directory, date of the experiment, which microscope was used, which fluor etc. Most main functions take p as input, they need it to know which directory to edit and how.
+
+Aside from parameters that are sometimes set (either constants at the top or sometimes hard-coded numbers!) in the function, there are also parameters that influence the segmentation and other parts of the analysis that can be given as input paramters. Important ones can be changed at the top of the Excel file, and are correspondingly updated in the rest of the sheet such that function are called with these parameter settings.
+
+The Excel sheet contains essentially a list of matlab functions that need to be executed consecutively to perform the analysis. Since every dataset is analyzed with slightly different parameters (e.g. different range of analyzed frames, different fluor colors, ..) at the end of the analysis, the Excel sheet contains important experimental parameters that need to be stored. Therefore, a copy of the Excel sheet used for a specific dataset is typically stored in the directory of the dataset. (In fact, most dataset contain multiple "positions" - i.e. movies of growing colonies, respectively - and thus also multiple Excel sheets.)
+
+Furthermore, because the analysis takes quite some effort to perform, a "preliminary" analysis is mostly performed. In such an analysis, not all frames are considered, and this analysis will only tell the user whether cells show normal growth behavior, and whether the dataset contains analyzable data. If that's the case, one can proceed with the full analysis. The matlab functions required for such a "preliminary" analysis are listed in a separate Excel file which contains the keyword "preliminary" (as opposed to the keyword "full_analysis").
+
+A short outline of the general analysis:
+- Files can be cropped to throw away area in the field of view that's not of interest.
+- Movie is segmented.
+- Segmentation is checked manually to correct for mistakes that the algorithm makes.
+- Tracking of the cell lineages is performed. I.e. 'individuals' are identified in each movie frames. 
+- Tracking is corrected manually. This might involve iteration of segmentation/tracking steps.
+- Where applicable, fluorescent images are corrected.
+- 'Schnitzcells' file is constructed. This contains a list of 'individual' bacteria (also known as 'schnitzes'), and the currently known paramters for that individual (e.g. cell size for each frame the bacteria is seen in). 
+- Additional parameters are calculated based upon this "schnitzcells" struct. E.g. growth speed at each frame, enzyme concentration, enzyme production rate, etc.
+- An additional normalization can be performed - which is referred to as "cyccor" - that normalizes for cell cycle effect. Here, parameters are normalized per schnitz, by dividing them by the individual-average behavior of that paramter. 
+- One of the most important analysis which are typically performed involve making correlation functions for two measured parameters. This can however not be done straightforwardly on lineage data. Thus "branches" - each giving a full parameter trace of one lineage - are generated, which are weighed in order to calculate the correlation functions. (And can also be used for other analyses.)
+
+A synopsis of the output generated:
+- segmentation files (matrix, stored as .mat file)
+- tracking files (text files, show ancestry relation frame to frame)
+- schnitzcells .mat file (hold all params per individual over time)
+- plots
+(branches generated are not saved currently)
+
+Where this output can be found:
+Everything is stored per "position". Per default each position is stored in posX. However, the cropping function creates a folder "posXcrop", where data generated is stored in subdirectories:
+*
+./images 
+    > directory contains the raw image files
+./segmentation contains segmentation in a matrix format, stored in .mat file
+    > depending on settings, subdir contains images that show intermediate steps of segmentation
+    > also different parameter settings which lead to different segmentation can be found in subdirs. 
+./data contains 
+    > The tracking of cells from frame to frame
+    > the file in which the central "schnitzcells" struct is stored (posXcrop-Schnitz.mat)
+./analysis
+    > contains output plots, sorted per topic.
+    > also movies, part of the manual tracking correction, are found here
+
+
+================================================================================
+More specific info on each of the steps.
+================================================================================
+
 The Schnitzcells analysis constists of different steps. 
 
 (Step 0: Cropping the images)

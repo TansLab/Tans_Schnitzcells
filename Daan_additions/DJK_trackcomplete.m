@@ -12,7 +12,7 @@ function p = DJK_trackcomplete (p, varargin)
 %   TRACKCOMPLETE(P,'Field1',Value1,'Field2',Value2,...) also performs cell
 %   tracking using segmentation results, but the extra arguments permit users 
 %   to adjust any parameters describing the movie or parameters controlling 
-%   the cell tracking process.  The extra arguments can override any specific 
+%   the cell tracking process.  The extra arguments can overwrite any specific 
 %   parameters provided in P by setting P.Field1 = Value1, P.Field2 = Value2, 
 %   etc.  Thus any/all schnitzcells parameter values can be defined in the 
 %   function call via these optional field/value pairs.  (This is in the style 
@@ -48,7 +48,7 @@ function p = DJK_trackcomplete (p, varargin)
 %                 routine to perform tracking on segmentation files that were 
 %                 not manually verified or corrected (i.e. they do not have Lc)
 %   
-%   override      flag that when set to true or 1 permits this routine to 
+%   overwrite      flag that when set to true or 1 permits this routine to 
 %                 perform tracking on pairs of frames even if tracking was 
 %                 previously performed for those frames
 %   
@@ -93,7 +93,7 @@ if (nargin < 1) | ...
 end
 
 %-------------------------------------------------------------------------------
-% Override any schnitzcells parameters/defaults given optional fields/values
+% Overwrite any schnitzcells parameters/defaults given optional fields/values
 %-------------------------------------------------------------------------------
 
 % Loop over pairs of optional input arguments and save the given fields/values 
@@ -288,7 +288,7 @@ reverseTrackRange = p.trackRange(numFrames:-1:2);
 % % Load partial tracking results if they exist and if the trackrange matches
 % partialname= [p.partialDir, 'partialtracks.mat'];
 % usepartial = false;
-% if exist(partialname)==2 & ~p.override % instead of: "if exist(partialname)==2"
+% if exist(partialname)==2 & ~p.overwrite % instead of: "if exist(partialname)==2"
 %     partialtracks = load(partialname);
 %     disp('Checking partial tracks file...');
 %     if (length(partialtracks.trackRange) == length(p.trackRange))
@@ -315,7 +315,7 @@ for frameNum = reverseTrackRange
     if (usepartial)
         if (frameNum >= lastFrameNumTracked)
             disp(['Skipping previously tracked frame pair ',...
-		    mynum_y,' , ',mynum_t,'  (use p.override=1 to redo)']);
+		    mynum_y,' , ',mynum_t,'  (use p.overwrite=1 to redo)']);
 	    i = i-1;
 	    continue
         end

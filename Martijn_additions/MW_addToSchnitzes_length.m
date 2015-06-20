@@ -70,7 +70,8 @@
 
 function [p,schnitzcells] = MW_addToSchnitzes_length(p,varargin) 
 
-display('*ERROR*: This function should not be used; use DJK_addToSchnitzes_length instead');
+disp('*ERROR*: This function should not be used; use DJK_addToSchnitzes_length instead');
+error('*ERROR*: This function should not be used; use DJK_addToSchnitzes_length instead');
 return % comment to forcefully use
 
 %--------------------------------------------------------------------------
@@ -99,7 +100,7 @@ end
 
 
 %--------------------------------------------------------------------------
-% Override any schnitzcells parameters/defaults given optional fields/values
+% Overwrite any schnitzcells parameters/defaults given optional fields/values
 %--------------------------------------------------------------------------
 % Set default parameter values if they don't exist yet
 if ~existfield(p,'schnitzName')
@@ -140,7 +141,7 @@ disp(['Load from ''' p.schnitzName ''' completed...']);
 
 
 %--------------------------------------------------------------------------
-% Override any schnitzcells parameters/defaults given optional fields/values
+% Overwrite any schnitzcells parameters/defaults given optional fields/values
 %--------------------------------------------------------------------------
 % Reintroducing option to plot all fits - MW 23/3/2014
 if existfield(p,'schnitzNum')  

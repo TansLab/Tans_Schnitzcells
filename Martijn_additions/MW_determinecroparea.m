@@ -5,10 +5,18 @@ function MW_determinecroparea(p, range)
 % to then output leftTop and rightBottom positions for cropping.
 
     % Determine and load last phase image
-    DlastPhase = dir([p.imageDir, [p.movieName,'-p-*' num2str(range(end)) '.tif'] ]);
+    lastIndex = range(end)+(range(end)-range(end-1)); % otherwise issue going from prelim. to full analysis
+    DlastPhase = dir([p.imageDir, [p.movieName,'-p-*' num2str(lastIndex) '.tif'] ]);
+    if numel(DlastPhase)==0
+        error(['No images found w. index ' num2str(lastIndex)]);
+    end
     imToLoad = DlastPhase(round(numel(DlastPhase)/2));
     myImg = imread([p.imageDir imToLoad.name]);
     myImgSize = size(myImg);
+    
+    if (range(end)-range(end-1))>1
+        disp('I''m taking some extra frames after the last in range since your deltaframe>1.');
+    end
 
     % Show figure and getrect
     figure, imshow(myImg,[])

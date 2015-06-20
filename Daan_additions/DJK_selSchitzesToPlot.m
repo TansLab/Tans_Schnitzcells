@@ -50,7 +50,7 @@ end
 
 %--------------------------------------------------------------------------
 % Parse the input arguments
-% Override any schnitzcells parameters/defaults given optional fields/values
+% Overwrite any schnitzcells parameters/defaults given optional fields/values
 %--------------------------------------------------------------------------
 if ~existfield(in,'manualRange')
   manualRange = false; % will use all cells

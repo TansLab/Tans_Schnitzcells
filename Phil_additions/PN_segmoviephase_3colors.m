@@ -308,10 +308,17 @@ for i= p.segRange
     % create directory to save result.
     saveDirectory = [p.segmentationDir p.PN_saveDir 'seg' str3(i) filesep];    
     [status,msg,id] = mkdir(saveDirectory);
+
+    % generate filename to save result
+    if isfield(p,'PN_saveDir')
+        Lname = [p.PN_saveDir, p.movieName, 'seg', str3(i)];
+    else
+        Lname = [p.movieName, 'seg', str3(i)];
+    end    
     
     % MW 2015/06 addition to skip frames for which segmentation was already
-    % performed during previous (preliminary) analysis.
-    if strcmp(id,'MATLAB:MKDIR:DirectoryExists') && p.overwrite==0
+    % performed during previous (preliminary) analysis.    
+    if (exist(Lname, 'file') == 2) && p.overwrite==0
         disp(['Skipping frame ' str3(i) ' because old segfile already detected (p.overwrite==0).']);
         continue;
     end
@@ -461,11 +468,6 @@ for i= p.segRange
     
     
     % Save segmentation file
-    if isfield(p,'PN_saveDir')
-        Lname = [p.PN_saveDir, p.movieName, 'seg', str3(i)];
-    else
-        Lname = [p.movieName, 'seg', str3(i)];
-    end
     eval(['save(''',p.segmentationDir,Lname,''',',savelist,');']);
     disp(['saved file ',p.segmentationDir,Lname]);
 

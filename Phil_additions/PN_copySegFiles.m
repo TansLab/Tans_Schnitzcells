@@ -90,11 +90,17 @@ for i= p.segRange
     if p.overwrite==0 && exist([p.segmentationDir filename],'file')~=0
         disp(['Didn''t copy ' filename ' because old segfile already detected (p.overwrite==0).']);
         continue;
-    else
+    elseif exist([p.segmentationDir filename],'file')~=0
         disp('WARNING: old segfile is being overwritten.');
     end    
     
-    copyfile([directory filename],[p.segmentationDir filename]);                % copy *.mat files
+    disp(['Copying ' filename '..']);
+    try
+        copyfile([directory filename],[p.segmentationDir filename]);                % copy *.mat files
+    catch 
+        disp(['ERROR: File not found: ' filename '; Continuing anyway.']);
+    end
+    
 end
 
 

@@ -238,7 +238,7 @@ end
 
 % If explicit DJK_saveDir is not given, define it
 if ~existfield(p,'DJK_saveDir')
-  datePrefix = [datestr(now,'YYYY-MM-DD') '_' datestr(now,'HHMM') '_'];
+  datePrefix = [datestr(now,'yyyy-mm-dd') '_' datestr(now,'HHMM') '_'];
   p.DJK_saveDir = [p.analysisDir 'movies' filesep datePrefix filnameBase filesep];
 end
 

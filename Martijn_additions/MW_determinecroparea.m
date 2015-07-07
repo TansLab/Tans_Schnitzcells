@@ -1,4 +1,4 @@
-function MW_determinecroparea(p, range)
+function [leftTop, rightBottom] = MW_determinecroparea(p, range)
 % 'little helper' function determinecroparea(p, range)
 % ===
 % Tries to determine last image in range, and simply calls getrect for that
@@ -6,8 +6,10 @@ function MW_determinecroparea(p, range)
 
     % Determine and load last phase image
     lastIndex = range(end)+(range(end)-range(end-1)); % otherwise issue going from prelim. to full analysis
-    DlastPhase = dir([p.imageDir, [p.movieName,'-p-*' num2str(lastIndex) '.tif'] ]);
+    fileNameSearchString = [p.imageDir, [p.movieName,'-p-*' num2str(lastIndex) '.tif'] ]
+    DlastPhase = dir(fileNameSearchString);
     if numel(DlastPhase)==0
+        disp(['Looking for ' fileNameSearchString]);
         error(['No images found w. index ' num2str(lastIndex)]);
     end
     imToLoad = DlastPhase(round(numel(DlastPhase)/2));

@@ -4,6 +4,9 @@ function linklistschnitz = MW_linkframes(p, frame1Number, frame2Number)
 % Performs tracking for frames frame1Number and frame2Number.
 %
 % if p.debug is valid field, then also figures are plotted.
+%
+% Note term parent and daughter are here also used to link the same
+% individual over two frames!
 
 %% Parameters 
 
@@ -11,8 +14,8 @@ DISKSIZE=15;
 MARGIN=10;
 
 if ~exist('frame1Number')
-    frame1Number=178;
-    frame2Number=179;
+    frame1Number=202;
+    frame2Number=203;
 end
 
 if isfield(p,'debugmode')
@@ -57,19 +60,22 @@ frame2BWarea=imerode(frame2BWarea,se);
 
 
 %% Perimiter image
-% Find 
-perimImg = bwperim(frame2BWarea);
-%perimImg = imdilate(perimImg,strel('disk',3,4)); % imdilate use TODO can be optimized
-areaImg = frame2BWarea+frame2;
-
 if debugmode
-    figure(4)
-    PN_imshowlabel(p,areaImg,[],[],[]);
+    % Find 
+    perimImg = bwperim(frame2BWarea);
+    %perimImg = imdilate(perimImg,strel('disk',3,4)); % imdilate use TODO can be optimized
+
+    areaImg1 = frame1BWarea+frame1;
+    figure(4), PN_imshowlabel(p,areaImg1,[],[],[]);
+
+    areaImg2 = frame2BWarea+frame2;
+    figure(5), PN_imshowlabel(p,areaImg2,[],[],[]);    
+    
 end
 
 %%
-STATS1 = regionprops(frame1BWarea, 'Area', 'Centroid', 'EulerNumber');
-STATS2 = regionprops(frame2BWarea, 'Area', 'BoundingBox', 'Centroid', 'EulerNumber');
+STATS1 = regionprops(frame1BWarea, 'Area');
+STATS2 = regionprops(frame2BWarea, 'Area');
     
 if (numel(STATS1) > 1) || (numel(STATS2) > 1)
     error('Failed to detect single colony area.');
@@ -83,14 +89,26 @@ if debugmode
     resizeratio
     figure(6), PN_imshowlabel(p,frame1resized,[],[],[]);
 end
-   
+
+ 
 %% create aligned frame #1
 % MARGIN defined at top
+
+% Create dilate/erode frame1resized
+frame1resizedBW = (frame1resized>0);
+frame1resizedBWarea=imdilate(frame1resizedBW,se);
+frame1resizedBWarea=imerode(frame1resizedBWarea,se);
+% Find centroids
+STATS1 = regionprops(frame1resizedBWarea, 'Centroid');
+STATS2 = regionprops(frame2BWarea, 'Centroid');
+if (numel(STATS1) > 1) || (numel(STATS2) > 1)
+    error('Failed to detect single colony area.');
+end
 
 % Create frame that has equal size to frame 2, but contains info from
 % frame1, with centroid at same position as frame 2.
 
-sizeframe1 = size(frame1);
+sizeframe1 = size(frame1resized);
 sizeframe2 = size(frame2);
 
 deltaSize = sizeframe2-sizeframe1;
@@ -100,11 +118,12 @@ frame1recentered = zeros(sizeframe2);
 
 % determine translation
 deltacentroids = round(STATS2.Centroid-STATS1.Centroid);
-deltacentroidi = deltacentroids(1); deltacentroidj = deltacentroids(2);
+%deltacentroids = [0,0]; % MW DEBUG REMOVE
+deltacentroidi = deltacentroids(2); deltacentroidj = deltacentroids(1);
 
 % Get the coordinates for the resized frame 1
-iInEnlarged = [1,sizeframe1(1)]+deltacentroids(1);
-jInEnlarged = [1,sizeframe1(2)]+deltacentroids(2);
+iInEnlarged = [1,sizeframe1(1)]+deltacentroidi; % MW grr
+jInEnlarged = [1,sizeframe1(2)]+deltacentroidj; % MW grr
 iInOriginal = [1,sizeframe1(1)]; 
 jInOriginal = [1,sizeframe1(2)];
 
@@ -123,7 +142,7 @@ if debugmode
 end    
 
 frame1recentered(iInEnlarged(1):iInEnlarged(2), jInEnlarged(1):jInEnlarged(2)) = ...
-    frame1(iInOriginal(1):iInOriginal(2), jInOriginal(1):jInOriginal(2));
+    frame1resized(iInOriginal(1):iInOriginal(2), jInOriginal(1):jInOriginal(2));
 
 % Recenter image
 %{
@@ -135,8 +154,21 @@ frame1recentered = imtranslate(frame1recentered,deltacentroids); % align
 %% plot overlay of aligned images
              
 if debugmode
+    frameBW = (frame1recentered>0);
+    frameBWarea=imdilate(frameBW,se);
+    frameBWarea=imerode(frameBWarea,se);
+    
+    overlayareas = frameBWarea+frame2BWarea;
+    figure, PN_imshowlabel(p,overlayareas,[],[],[]);
+    
     overlaycentered = frame1recentered+frame2;
     figure, PN_imshowlabel(p,overlaycentered,[],[],[]);
+    
+    % plotting areas
+    m1=(frameBWarea>0)*1;
+    m2=(frame2BWarea>0)*2;
+    m=m1+m2;
+    figure, PN_imshowlabel(p,m,[],[],[]);
 end
 
 %% multiply the two

@@ -1,7 +1,7 @@
-function linklistschnitz = MW_linkframes(p, frameNumber)
+function linklistschnitz = MW_linkframes(p, frame1Number, frame2Number)
 % function linklistschnitz = MW_linkframes(p, frameNumber)
 %
-% Performs tracking for frames frameNumber and frameNumber+1.
+% Performs tracking for frames frame1Number and frame2Number.
 %
 % if p.debug is valid field, then also figures are plotted.
 
@@ -10,25 +10,28 @@ function linklistschnitz = MW_linkframes(p, frameNumber)
 DISKSIZE=15;
 MARGIN=10;
 
-if ~exist('frameNumber')
-    frameNumber=190;
+if ~exist('frame1Number')
+    frame1Number=190;
+    frame2Number=191;
 end
 
-if isfield(p,'debug')
+if isfield(p,'debugmode')
     debugmode=1;
 else
     debugmode=0;
 end
 
 %% Load data
-data=load(['F:\A_Tans1_step1_incoming_not_backed_up\2015-06-02\pos7crop\segmentation\pos7cropseg'  sprintf('%03d', frameNumber) '.mat'],'LNsub');
+myFileStringStart = [p.dateDir p.movieName '\segmentation\' p.movieName 'seg'];
+
+data=load([myFileStringStart  sprintf('%03d', frame1Number) '.mat'],'LNsub');
 frame1=data.LNsub;
 if debugmode
     figure(1)
     PN_imshowlabel(p,frame1,[],[],[]);
 end
 
-data=load(['F:\A_Tans1_step1_incoming_not_backed_up\2015-06-02\pos7crop\segmentation\pos7cropseg' sprintf('%03d', frameNumber+1) '.mat'],'LNsub');
+data=load([myFileStringStart sprintf('%03d', frame2Number) '.mat'],'LNsub');
 frame2=data.LNsub;
 if debugmode
     figure(2), PN_imshowlabel(p,frame2,[],[],[]);
@@ -38,10 +41,6 @@ myColors = [0,0,0; distinguishable_colors(max([frame1(:); frame2(:)]),[0,0,0])];
 
 %%
 % DISKSIZE defined at top
-
-% Resize such that they are equally big
-size(frame1)
-size(frame2)
 
 se = strel('disk',DISKSIZE,8);
 
@@ -76,11 +75,12 @@ if (numel(STATS1) > 1) || (numel(STATS2) > 1)
     error('Failed to detect single colony area.');
 end
 
-ratio = STATS2.Area/STATS1.Area
+ratio = STATS2.Area/STATS1.Area;
     
-frame1resized = imresize(frame1, ratio);
+frame1resized = imresize(frame1, ratio,'nearest');
+
 if debugmode
-    figure(6), imshow(frame1resized)
+    figure(6), PN_imshowlabel(p,frame1resized,[],[],[]);
 end
    
 %% create aligned frame #1
@@ -153,8 +153,8 @@ end
 %% Make an origin picture    
 close all;
 
-parentlist=linklist(:,1)
-daughterlist=linklist(:,2)
+parentlist=linklist(:,1);
+daughterlist=linklist(:,2);
 frame2parents = changem(frame2, parentlist, daughterlist );
 
 if debugmode
@@ -189,6 +189,9 @@ for idx=dividesInLinkList'
         disp('ERROR: parent has more than 2 daughters! Leaving untouched!');
     end
 end
+
+% sort
+linklistschnitz = sortrows(linklistschnitz,4);
     
 if debugmode
     dividingrowsafter = linklistschnitz(dividesInLinkList,:)    
@@ -230,7 +233,30 @@ if checksPassed
 end
     
     
-    
+%% Writing output
+
+% Code re. trackOutputFile stolen from: NW_tracker_centroid_vs_area
+% ===
+
+trackOutputFile = [p.tracksDir,p.movieName,'-djk-output-',str3(frame1Number),'-to-',str3(frame2Number),'.txt'];
+
+% clean up any existing output
+if exist(trackOutputFile) == 2
+    disp('WARNING: deleted old trackingfile.');
+    delete(trackOutputFile)
+end
+
+% Open trackOutputFile
+fid = fopen(trackOutputFile,'wt');
+
+% loop over results and print to file
+for i = 1:length(linklistschnitz(:,1))
+    fprintf(fid, '%u %u %u %u\n', linklistschnitz(i,1), linklistschnitz(i,2), linklistschnitz(i,3), linklistschnitz(i,4)); 
+end
+
+% Close trackOutputFile
+fclose(fid);
+
     
     
     

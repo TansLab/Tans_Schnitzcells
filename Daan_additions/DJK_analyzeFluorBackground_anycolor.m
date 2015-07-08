@@ -1,6 +1,17 @@
+function DJK_analyzeFluorBackground_anycolor(p,varargin)
+
+
+% Function has been marked as obsolete.
+
+warning('This function has been marked as obsolete');
+
+
+
+
+% function DJK_analyzeFluorBackground_anycolor(p,varargin)
 % CHANGED BY NOREEN
 %
-% loads the extra rescaled corrected fluorescence data aus .mat file resp.
+% loads the extra rescaled corrected fluorescence data from .mat file resp.
 % the not corrected data from original fluorimage (NW 2012-02-27) (image directory) 
 % resp corrected fluorimages from the directories c2, c3, c4 etc
 %
@@ -37,7 +48,6 @@
 %                     =0: calculates everything (default: =0)  (NW 2012/04)
 %
 
-function DJK_analyzeFluorBackground_anycolor(p,varargin)
 
 %--------------------------------------------------------------------------
 % Input error checking
@@ -452,6 +462,8 @@ else
       fclose(fid);
     end
     %--------------------------------------------------------------------------
+    
+    warning('This function has been marked as obsolete');
     
 end
 

@@ -15,12 +15,12 @@ function [schnitzcells] = PN_smooth_field(schnitzcells,field,varType)
 
 % check input (very basic)
 if strcmp(upper(varType),'INTENSIVE')==1
-    typeInt=true;
+    typeIntensive=true;
 elseif strcmp(upper(varType),'EXTENSIVE')==1
-    typeInt=false;
+    typeIntensive=false;
 else
     disp('Don''t recognize variable type (intensive, extensive). Will assume intensive.')
-    typeInt=true;
+    typeIntensive=true;
 end
 
 
@@ -50,10 +50,16 @@ for i = 1:length(schnitzcells)
         if s.P ~= 0
             sP = schnitzcells(s.P);
             if ~isempty(sP.(field))
-                if typeInt %intensive
+                if typeIntensive %intensive
                     field_temp = [sP.(field)(end) field_temp];
                 else %extensive
-                    field_temp = [sP.(field)(end)/2 field_temp]; %assumes equal distribution btw daughters
+                    
+                    % get ratio of length daughter:parent. -MW 2015-07
+                    thisGuysLengths = s.(lengthField);
+                    parentLengths = sP.(lengthField);
+                    lengthRatio = thisGuysLengths(1)/parentLengths(end);
+                    
+                    field_temp = [sP.(field)(end)*lengthRatio field_temp]; %assumes equal distribution btw daughters
                 end
                 beginning_time = 2;
             end
@@ -64,7 +70,7 @@ for i = 1:length(schnitzcells)
             sD = schnitzcells(s.D);
             sE = schnitzcells(s.E);
             if ~isempty(sD.(field)) && ~isempty(sE.(field))
-                if typeInt
+                if typeIntensive
                     field_temp(end+1) = (sD.(field)(1) + sE.(field)(1))/2;
                 else
                     field_temp(end+1) = sD.(field)(1) + sE.(field)(1);

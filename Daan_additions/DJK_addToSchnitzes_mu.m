@@ -385,7 +385,7 @@ for i = 1:length(schnitzcells)
       % MW 2015/04 give warning of inconvenient behavior for multiple
       % fluors.
       if (~strcmp(p.fluor1,'none')+~strcmp(p.fluor2,'none')+~strcmp(p.fluor3,'none'))>1
-          warning('You are using multiple fluors, muPXX_YY will match only the first fluor!');
+          disp('INFO: You are using multiple fluors, muPXX_YY will match only the first fluor!');
       end
       
       % Determine which fluors are used, and what they are.

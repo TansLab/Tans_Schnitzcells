@@ -51,6 +51,7 @@ end
 % set threshold for slow-growth detection
 if ~existfield(p,'muThreshold ')
   p.muThreshold=0;
+  disp('Treshold set to default value (0).');
 end
 % Set saveDir
 if ~existfield(p,'NW_saveDir')
@@ -106,6 +107,7 @@ slowSchnitzes=[];
 
 for schnitzrun=1:length(schnitzcells)
       isBelowThreshold=find(schnitzcells(1,schnitzrun).(muField)<p.muThreshold);
+      isBelowThreshold=[isBelowThreshold, find(isnan(schnitzcells(1,schnitzrun).(muField)))]; % MW 2015/07
       if ~isempty(isBelowThreshold); 
           slowSchnitzes=[slowSchnitzes;schnitzrun]; % add schnitz to output-array
           % keep track of frames and growth rate in output file
@@ -121,6 +123,9 @@ end
 
 % close file
 fclose(fid);
+
+disp('Identified following as slow/NaN:');
+disp(mat2str(slowSchnitzes));
 
 
 

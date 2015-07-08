@@ -186,8 +186,8 @@ for i = 1:length(trackRange)
     func_3rd = @(x) x.^3 .* fitCoef3(1) + x.^2 .* fitCoef3(2) + x .* fitCoef3(3) + fitCoef3(4);
 %     func_3rd_deriv = @(x) x.^2 .* (3*fitCoef3(1)) + x .* (2*fitCoef3(2)) + fitCoef3(3);
 
-% corrected length function 2014-02 NW
-func_length = @(x) sqrt( ( 3 .* x.^2 .* fitCoef3(1) + 2 .* x .* fitCoef3(2) + fitCoef3(3)).^2 + 1 );
+    % corrected length function 2014-02 NW
+    func_length = @(x) sqrt( ( 3 .* x.^2 .* fitCoef3(1) + 2 .* x .* fitCoef3(2) + fitCoef3(3)).^2 + 1 );
 
 
     % [y,x] are pixels in Lc image where this cell is located
@@ -239,6 +239,9 @@ func_length = @(x) sqrt( ( 3 .* x.^2 .* fitCoef3(1) + 2 .* x .* fitCoef3(2) + fi
     for i = 1:length(x_rot_line_left)
       dist_squared_left = (x_rot-x_rot_line_left(i)).^2 + (y_rot-y_line_rot_left(i)).^2;
       dist_squared_left_sorted = sort(dist_squared_left);
+      %if numel(dist_squared_left_sorted)<25 % MW debug, redundant.
+      %    dist_squared_left_sorted
+      %end
       total_dist_25_points_left(i) = sum(dist_squared_left_sorted(1:25)) * 0.01;
       
       dist_squared_right = (x_rot-x_rot_line_right(length(x_rot_line_left)+1-i)).^2 + (y_rot-y_line_rot_right(length(x_rot_line_left)+1-i)).^2;

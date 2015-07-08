@@ -11,12 +11,12 @@ DISKSIZE=15;
 MARGIN=10;
 
 if ~exist('frame1Number')
-    frame1Number=190;
-    frame2Number=191;
+    frame1Number=178;
+    frame2Number=179;
 end
 
 if isfield(p,'debugmode')
-    debugmode=1;
+    debugmode=p.debugmode;
 else
     debugmode=0;
 end
@@ -24,15 +24,15 @@ end
 %% Load data
 myFileStringStart = [p.dateDir p.movieName '\segmentation\' p.movieName 'seg'];
 
-data=load([myFileStringStart  sprintf('%03d', frame1Number) '.mat'],'LNsub');
-frame1=data.LNsub;
+data=load([myFileStringStart  sprintf('%03d', frame1Number) '.mat'],'Lc');
+frame1=data.Lc;
 if debugmode
     figure(1)
     PN_imshowlabel(p,frame1,[],[],[]);
 end
 
-data=load([myFileStringStart sprintf('%03d', frame2Number) '.mat'],'LNsub');
-frame2=data.LNsub;
+data=load([myFileStringStart sprintf('%03d', frame2Number) '.mat'],'Lc');
+frame2=data.Lc;
 if debugmode
     figure(2), PN_imshowlabel(p,frame2,[],[],[]);
 end
@@ -75,11 +75,12 @@ if (numel(STATS1) > 1) || (numel(STATS2) > 1)
     error('Failed to detect single colony area.');
 end
 
-ratio = STATS2.Area/STATS1.Area;
+resizeratio = sqrt(STATS2.Area/STATS1.Area);
     
-frame1resized = imresize(frame1, ratio,'nearest');
+frame1resized = imresize(frame1, resizeratio,'nearest');
 
 if debugmode
+    resizeratio
     figure(6), PN_imshowlabel(p,frame1resized,[],[],[]);
 end
    
@@ -89,12 +90,46 @@ end
 % Create frame that has equal size to frame 2, but contains info from
 % frame1, with centroid at same position as frame 2.
 
-frame1recentered = zeros(size(frame2));
-deltacentroids = round(STATS2.Centroid-STATS1.Centroid);
 sizeframe1 = size(frame1);
-frame1recentered([1:sizeframe1(1)]+deltacentroids(1), ...
-                 [1:sizeframe1(2)]+deltacentroids(2)) = frame1;
+sizeframe2 = size(frame2);
 
+deltaSize = sizeframe2-sizeframe1;
+%deltaSize(find(deltaSize<0)) = 0; % if shrinks, shouldn't happen
+
+frame1recentered = zeros(sizeframe2);
+
+% determine translation
+deltacentroids = round(STATS2.Centroid-STATS1.Centroid);
+deltacentroidi = deltacentroids(1); deltacentroidj = deltacentroids(2);
+
+% Get the coordinates for the resized frame 1
+iInEnlarged = [1,sizeframe1(1)]+deltacentroids(1);
+jInEnlarged = [1,sizeframe1(2)]+deltacentroids(2);
+iInOriginal = [1,sizeframe1(1)]; 
+jInOriginal = [1,sizeframe1(2)];
+
+% Some horrible administration for when translated falls outside window
+if iInEnlarged(1)<1, iInEnlarged(1)= 1; iInOriginal(1)= 1-deltacentroidi;  end
+if iInEnlarged(2)>sizeframe2(1), iInEnlarged(2)= sizeframe2(1); iInOriginal(2)= sizeframe2(1)-deltacentroidi;  end
+if jInEnlarged(1)<1, jInEnlarged(1)= 1; jInOriginal(1)= 1-deltacentroidj;  end
+if jInEnlarged(2)>sizeframe2(2), jInEnlarged(2)= sizeframe2(2); jInOriginal(2)= sizeframe2(2)-deltacentroidj;  end
+
+if debugmode
+    sizeframe1
+    sizeframe2
+    iInEnlarged, iInOriginal
+    jInEnlarged, jInOriginal
+    deltacentroids
+end    
+
+frame1recentered(iInEnlarged(1):iInEnlarged(2), jInEnlarged(1):jInEnlarged(2)) = ...
+    frame1(iInOriginal(1):iInOriginal(2), jInOriginal(1):jInOriginal(2));
+
+% Recenter image
+%{
+frame1recentered = padarray(frame1,deltaSize,'post'); % resize to have equal size
+frame1recentered = imtranslate(frame1recentered,deltacentroids); % align
+%}
              
              
 %% plot overlay of aligned images
@@ -133,11 +168,20 @@ for cellidxsin2 = 1:max(frame2(:)) % by construction these are indices
     %unique(frame1filtered(currentcell))
     
     % Quantify the overlap w. respect to previous frame.
-    [pixcounts,possibleParentsList] = hist(frame1filtered(currentcellidx2),unique(frame1filtered(currentcellidx2)));
+    uniqueExclZeros = unique(frame1filtered(currentcellidx2));
+    uniqueExclZeros = uniqueExclZeros(find(uniqueExclZeros>0));   
+    if numel(uniqueExclZeros)>1
+        [pixcounts,possibleParentsList] = hist(frame1filtered(currentcellidx2),uniqueExclZeros);
     
-    % Get the most likely one
-    [maxpixcount, temp_idx] = max(pixcounts);
-    mostlikelyparentidx1 = possibleParentsList(temp_idx);
+        % Get the most likely one
+        [maxpixcount, temp_idx] = max(pixcounts);
+        mostlikelyparentidx1 = possibleParentsList(temp_idx);
+    else
+        mostlikelyparentidx1 = uniqueExclZeros;
+        if isempty(mostlikelyparentidx1)
+            mostlikelyparentidx1 = 0;
+        end
+    end
     
     %disp(['Found link ' num2str(cellidxsin2) ' to ' num2str(mostlikelyparentidx1) '.']);
     linklist = [linklist; mostlikelyparentidx1,cellidxsin2]; % [parent, daughter; ..]
@@ -148,11 +192,11 @@ if debugmode
 
     figure, PN_imshowlabel(p,frame1recentered,[],[],[]);
     figure, PN_imshowlabel(p,frame2,[],[],[]);
+    
+    disp('Section done');
 end
     
 %% Make an origin picture    
-close all;
-
 parentlist=linklist(:,1);
 daughterlist=linklist(:,2);
 frame2parents = changem(frame2, parentlist, daughterlist );
@@ -162,42 +206,6 @@ if debugmode
     figure, PN_imshowlabel(p,frame2parents,[],[],[],'CustomColors',myColors);
 end
 
-
-%% Convert to schnitzcells format 
-    
-linklistschnitz = [linklist(:,1), zeros(size(linklist,1),2), linklist(:,2)];
-[parentcount,indices] = hist(linklistschnitz(:,1),unique(linklistschnitz(:,1)));
-
-parentlist = indices(find(parentcount>1))';
-cellListFrame1 = linklist(:,1);
-dividesInLinkList = find(changem(cellListFrame1,parentcount,indices)>1);
-
-if debugmode
-    dividingrowsbefore = linklistschnitz(dividesInLinkList,:)
-end
-
-movecount = ones(1,max(indices))+1;
-for idx=dividesInLinkList'
-    oldline = linklistschnitz(idx,:);
-    newline = [0, 0, 0, linklistschnitz(idx,4)];
-    parentNumber = linklistschnitz(idx,1);
-    if movecount(parentNumber)<4
-        newline(movecount(parentNumber))=parentNumber;
-        movecount(parentNumber)=movecount(parentNumber)+1;
-        linklistschnitz(idx,:) = newline;
-    else
-        disp('ERROR: parent has more than 2 daughters! Leaving untouched!');
-    end
-end
-
-% sort
-linklistschnitz = sortrows(linklistschnitz,4);
-    
-if debugmode
-    dividingrowsafter = linklistschnitz(dividesInLinkList,:)    
-end
-    
-    
 %% Perform check(s)
 
 checksPassed = 1;
@@ -230,7 +238,49 @@ end
 
 if checksPassed 
     disp('All checks passed..')
+else
+    disp('WARNING: Checks not passed..')
+    pause(1);
 end
+
+%% Convert to schnitzcells format 
+    
+linklistschnitz = [linklist(:,1), zeros(size(linklist,1),2), linklist(:,2)];
+uniqueWithoutZeros=unique(linklistschnitz(:,1));
+uniqueWithoutZeros=uniqueWithoutZeros(find(uniqueWithoutZeros>0));
+[parentcount,indices] = hist(linklistschnitz(:,1),uniqueWithoutZeros);
+
+parentlist = indices(find(parentcount>1))';
+cellListFrame1 = linklist(:,1);
+dividesInLinkList = find(changem(cellListFrame1,parentcount,indices)>1);
+
+if debugmode
+    dividingrowsbefore = linklistschnitz(dividesInLinkList,:)
+end
+
+movecount = ones(1,max(indices))+1;
+for idx=dividesInLinkList'
+    oldline = linklistschnitz(idx,:);
+    newline = [0, 0, 0, linklistschnitz(idx,4)];
+    parentNumber = linklistschnitz(idx,1);
+    if movecount(parentNumber)<4
+        newline(movecount(parentNumber))=parentNumber;
+        movecount(parentNumber)=movecount(parentNumber)+1;
+        linklistschnitz(idx,:) = newline;
+    else
+        disp('ERROR: parent has more than 2 daughters! Leaving untouched!');
+    end
+end
+
+% sort
+linklistschnitz = sortrows(linklistschnitz,4);
+    
+if debugmode
+    dividingrowsafter = linklistschnitz(dividesInLinkList,:)    
+end
+    
+    
+
     
     
 %% Writing output
@@ -240,25 +290,29 @@ end
 
 trackOutputFile = [p.tracksDir,p.movieName,'-djk-output-',str3(frame1Number),'-to-',str3(frame2Number),'.txt'];
 
-% clean up any existing output
-if exist(trackOutputFile) == 2
-    disp('WARNING: deleted old trackingfile.');
-    delete(trackOutputFile)
+if (exist(trackOutputFile) == 2) && (p.overwrite == 0)
+    disp('ERROR: didn''t write output since file already exist (and p.overwrite == 0)');
+else
+
+    % clean up any existing output
+    if exist(trackOutputFile) == 2
+        disp('WARNING: deleted old trackingfile.');
+        delete(trackOutputFile)
+    end
+
+    % Open trackOutputFile
+    fid = fopen(trackOutputFile,'wt');
+
+    % loop over results and print to file
+    for i = 1:length(linklistschnitz(:,1))
+        fprintf(fid, '%u %u %u %u\n', linklistschnitz(i,1), linklistschnitz(i,2), linklistschnitz(i,3), linklistschnitz(i,4)); 
+    end
+
+    % Close trackOutputFile
+    fclose(fid);
 end
-
-% Open trackOutputFile
-fid = fopen(trackOutputFile,'wt');
-
-% loop over results and print to file
-for i = 1:length(linklistschnitz(:,1))
-    fprintf(fid, '%u %u %u %u\n', linklistschnitz(i,1), linklistschnitz(i,2), linklistschnitz(i,3), linklistschnitz(i,4)); 
-end
-
-% Close trackOutputFile
-fclose(fid);
-
     
     
-    
+disp('Finished');    
     
 

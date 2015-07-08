@@ -19,7 +19,7 @@ function outim = PN_imshowlabel(p,L,rect,Lp,rectp,varargin)
 % 'p'                   general movie info var
 % 'L'                   seg image
 %
-% When the following vars are not set to 0, the suspicious cell detection
+% When the following vars are not set to [], the suspicious cell detection
 % algorithm will be activated. 
 % 'rect'                [MW: I'm suspecting this is the recteangle defining
 %                       the location of the selected area from the ph image]
@@ -39,6 +39,7 @@ function outim = PN_imshowlabel(p,L,rect,Lp,rectp,varargin)
 % TODO: 'recalcCellNumbers' array for which region properties have to be
 %                     recalculated because cell was updated. default: all
 %                     cells. taking fewer cells will speed up process
+% showNr              if set, prints cell idxs for this frame on cells.
 %
 %
 %
@@ -291,6 +292,17 @@ else
     end
     
     %stop4b=toc
+end
+
+if isfield(p,'showNr')
+    FONTSIZE=8;
+    halfFontSize=round(FONTSIZE/2);
+    
+    propL = regionprops(L,'Centroid');
+    
+    for i = 1:numel(propL)
+        text(propL(i).Centroid(1)-halfFontSize,propL(i).Centroid(2)-halfFontSize,sprintf('%03d', i),'FontSize',FONTSIZE,'Color',[1,1,1],'FontWeight','bold')
+    end
 end
 
 %elapsed time: 0.45

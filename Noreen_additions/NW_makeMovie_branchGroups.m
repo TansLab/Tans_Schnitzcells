@@ -432,7 +432,7 @@ for fr = p.manualRange
           legendImText=text2im(['branchgr ', num2str(i) '. schnitz ' , num2str(branchGroups(i).parent_cell)]); %get image of text
           legendImText=imresize(legendImText,0.7,'nearest');
           legendImText=legendImText*legend_background+(1-legendImText)*color_legendtext; % adjust values to get right color
-          im_color=DJK_imageplace(im_color,legendImText,backXcent+10,backYmin+10+(i-1)*30);
+          im_color=DJK_imagePlace(im_color,legendImText,backXcent+10,backYmin+10+(i-1)*30);
       end
       %draw colored squares according to cell colors
       for i=1:length(branchGroups)
@@ -448,7 +448,7 @@ for fr = p.manualRange
           outOfRangeImText=text2im('frame not in branchgroup time');
           outOfRangeImText=imresize(outOfRangeImText,0.7,'nearest');
           outOfRangeImText=outOfRangeImText*color_background+(1-outOfRangeImText)*color_text; % adjust values to get right color
-          im_color=DJK_imageplace(im_color,outOfRangeImText,250,50);
+          im_color=DJK_imagePlace(im_color,outOfRangeImText,250,50);
       end
       
       % save image

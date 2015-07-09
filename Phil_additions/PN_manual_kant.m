@@ -220,24 +220,26 @@ while ~done
                 figure(ourfig);
                 pps=1;
             end
-        elseif cc=='b' %does not work.
-            if bb delete(bb);delete(bbp);end;bb=0;
-            if bbs
-                bbs=0;
-            else
-                cutx=round(pos(1,2));
-                cuty=round(pos(1,1));
-                if Lout(cutx,cuty)
-                    [fx,fy] = find(Lout==Lout(cutx,cuty));
-                    figure(phfig);
-                    bb=plot(fy*res,fx*res,'w.');
-                    set(bb,'markersize',2);
-                    bbp=plot(cuty*res,cutx*res,'r.');
-                    set(bbp,'markersize',24);
-                    figure(ourfig);
-                    bbs=1;
-                end
-            end
+     % *** deactivated (anyways never worked) (NW2015-07, 'b' is used for a different action now) 
+     %   elseif cc=='b' %does not work.
+     %       if bb delete(bb);delete(bbp);end;bb=0;
+     %       if bbs
+     %           bbs=0;
+     %       else
+     %           cutx=round(pos(1,2));
+     %           cuty=round(pos(1,1));
+     %           if Lout(cutx,cuty)
+     %              [fx,fy] = find(Lout==Lout(cutx,cuty));
+     %               figure(phfig);
+     %               bb=plot(fy*res,fx*res,'w.');
+     %               set(bb,'markersize',2);
+     %               bbp=plot(cuty*res,cutx*res,'r.');
+     %               set(bbp,'markersize',24);
+     %               figure(ourfig);
+     %               bbs=1;
+     %           end
+     %       end
+     % *** 
         elseif cc=='a'
             
             zoomrect=[max([1,pos(1,2)-50]),min([size(Lout,1),pos(1,2)+49]),...
@@ -495,8 +497,33 @@ while ~done
              end
         elseif cc=='u'   % undo one step (NW 2014-01)
             Lout=Lout_undo;
-    
-            
+                     
+       elseif cc=='b'   % restrict segmentation to overlaps with previous segmentation image (useful for non-growing cells)
+                        % NW2015-07
+            if ~isempty(L_prec) % previous image exists (can only be loaded in asisted correction mode)
+                Lout_undo=Lout;   %for undo step NW 2014-01
+                % old and new seg need to be located properly:
+                Lout_full=zeros(p.fullsize);
+                Lout_full(rect(1):rect(3),rect(2):rect(4))=Lout;
+                L_prec_full=zeros(p.fullsize);
+                L_prec_full(rect_prec(1):rect_prec(3),rect_prec(2):rect_prec(4))=L_prec;
+                
+                L_prec_mask=L_prec_full;             
+                %L_prec_mask=imdilate(L_prec_full,strel('disk',3)); % enlargen prev. image overlap mask if needed
+                L_prec_mask=L_prec_mask>0;  % binary mask from previous image
+
+                cellsall=unique(Lout);  % same numbers as Lout_full
+                cellsoverlap=unique(Lout_full.*L_prec_mask); %cells overlapping with previous seg. image
+                cellstodelete=setdiff(cellsall,cellsoverlap);
+                for i=cellstodelete(:)'
+                    Lout(Lout==i)=0;
+                end
+            else
+                disp('Previous segmentation image not loaded or not existent.')
+            end
+            done=0; 
+                        
+                        
             %%%%%%%%%%%%%%%%%%% START DJK 090105 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
         elseif cc=='9'  % still part of keyboard clicks
             if DJK_settings.fill_cut

@@ -1,5 +1,8 @@
 function problemCells = DJK_analyzeTracking(p, varargin);
 % DJK_analyzeTracking analyses the complete tracking file. 
+% **** if getting weird errors: 1) introduce if ~isempty tests (see also
+%                                  NW2015-05 below)
+%                               2) Try DJK_analyzeTracking_old
 %
 % Reports on :
 % # cells tracked in complete lineage 
@@ -415,24 +418,27 @@ end
 % Display moving whose length change after division (possibly wrong tracking)
 dispAndWrite(fid, ['     |  ']);
 dispAndWrite(fid, ['     |--- ' str3(length(framesWithCellsChangingAfterDivision)) ' frames have cells with length change <> 20 pixels after division']);
-for fr = framesWithCellsChangingAfterDivision
-  % get next frame nr
-  idxmyfr=find(framesunique==fr);
-  if idxmyfr<length(framesunique) % get next frame
-      idxmyfr=idxmyfr+1;
-  end
-  frnext=framesunique(idxmyfr);
-  % output
-  dispAndWrite(fid, ['     |  |--- in frame ' str3(fr) ' -> ' str3(frnext)]); 
-  for cell = 1:length(schnitzcells)
-    if schnitzcells(cell).inTracking & schnitzcells(cell).offspringToBig & fr==schnitzcells(cell).frames(end)-1
-      D = schnitzcells(cell).D;
-      E = schnitzcells(cell).E;
-      lengthIncrease = schnitzcells(D).len(1) +  schnitzcells(E).len(1) - schnitzcells(cell).len(end);
-      dispAndWrite(fid, ['        |  |--- parent schnitz ' str3(cell) ' : ' num2str( round(lengthIncrease) ) ' pixels']);
+if ~isempty(framesWithCellsChangingAfterDivision) %NW2015-05 (new matlab version -> empty matrix became size(0,1)?!
+        % apply if condition also above if running into errors
+    for fr = framesWithCellsChangingAfterDivision
+      % get next frame nr
+      idxmyfr=find(framesunique==fr);
+      if idxmyfr<length(framesunique) % get next frame
+          idxmyfr=idxmyfr+1;
+      end
+      frnext=framesunique(idxmyfr);
+      % output
+      dispAndWrite(fid, ['     |  |--- in frame ' str3(fr) ' -> ' str3(frnext)]); 
+      for cell = 1:length(schnitzcells)
+        if schnitzcells(cell).inTracking & schnitzcells(cell).offspringToBig & fr==schnitzcells(cell).frames(end)-1
+          D = schnitzcells(cell).D;
+          E = schnitzcells(cell).E;
+          lengthIncrease = schnitzcells(D).len(1) +  schnitzcells(E).len(1) - schnitzcells(cell).len(end);
+          dispAndWrite(fid, ['        |  |--- parent schnitz ' str3(cell) ' : ' num2str( round(lengthIncrease) ) ' pixels']);
+        end
+      end
+      dispAndWrite(fid, ['        |' ]);
     end
-  end
-  dispAndWrite(fid, ['        |' ]);
 end
 %--------------------------------------------------------------------------
 

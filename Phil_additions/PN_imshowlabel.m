@@ -102,8 +102,11 @@ characSize = median([propL.Area]);
 idsmall = find([propL.Area] < characSize/2); %label of cells which may be too small
 %create a logical of suspicious cells
 Lsuspicious = zeros(size(L));
-for ii = union(ideul,idsmall)
-    Lsuspicious(L==ii)=1;
+combinedcellidx = union(ideul,idsmall); % do below loop only when non-empty (NW2015-05. bug appeared with new matlab version?)
+if ~isempty(combinedcellidx)
+    for ii=combinedcellidx
+        Lsuspicious(L==ii)=1;
+    end
 end
 
 % MW: make them stand out some more using checkerboard

@@ -134,8 +134,11 @@ numpos= findstr(D(1).name, '.mat')-3;
 
 % If problemCells mode, numbers are only written for cells/frames in provided problemCells
 if ~existfield(p,'problemCells')
-  p.problemCells = false;
+    problemCellsOnly = 0;
+else
+    problemCellsOnly = 1;
 end
+
 
 % If explicit manualRange is not given, take all segmentation files
 % Note that the paramter manualRange is used and edited throughout this 
@@ -148,7 +151,7 @@ if ~existfield(p,'manualRange')
 end
 
 % Determine range which cells are analyzed - edit MW 2014/06/24
-if p.problemCells % problemcells, select frames with problem cells, also before & after
+if problemCellsOnly % problemcells, select frames with problem cells, also before & after
     errorFramesRange = [];
     errorFrames = unique(p.problemCells(:,2))';
     for fr = errorFrames
@@ -232,7 +235,7 @@ end
 if (p.stabilize)
   filnameBase = [filnameBase 'Stabile'];
 end
-if (p.problemCells)
+if problemCellsOnly
   filnameBase = [filnameBase 'Problem'];
 end
 
@@ -582,7 +585,7 @@ for fr = p.manualRange
       ref_fr = find(temp_schnitz_frames==fr); % MW 2014/06/11 removal N+1 bug
 
       % if we are in problem mode check whether correct frame/cell, else continue 
-      if p.problemCells
+      if problemCellsOnly
         errorFramesForThisSchnitz = p.problemCells(find(p.problemCells(:,1)==temp_schnitz),2);
         if length(intersect( fr, errorFramesForThisSchnitz)) | ~case_writeSchnitz % if cellno, write all of them
         else

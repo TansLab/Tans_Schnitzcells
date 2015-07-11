@@ -140,6 +140,8 @@ The growth rate is calculated by the function DJK_addToSchnitzes_mu. Note that t
 Fluor corrections
 ================================================================================
 
+<Note that the word "flatfield" is sometimes used were actually "background" is the correct term. "Flatfield" is, in literature, used as synonym for "shading", but here only the term shading is used to designate shading.>
+
 1. The function DJK_correctFluorImage_anycolor corrects for artefacts that arise when taking fluorescence images with the microscope. It substracts the camera noise, by substracting an image taken w/o lighting (we refer to this as flatfield, but this termonology is a bit undefined). 
 2. Uneven illumination is compensated for by dividing by an image of only a fluorescent dye (normalized). 
 3. The image is deconvolved to 'computate out' scattering effects.

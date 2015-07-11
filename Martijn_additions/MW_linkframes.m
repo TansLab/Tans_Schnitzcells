@@ -1,4 +1,4 @@
-function linklistschnitz = MW_linkframes(p, frame1Number, frame2Number)
+function [linklistschnitz, segFile1Path, segFile2Path] = MW_linkframes(p, frame1Number, frame2Number)
 % function linklistschnitz = MW_linkframes(p, frameNumber)
 %
 % Performs tracking for frames frame1Number and frame2Number.
@@ -13,9 +13,9 @@ function linklistschnitz = MW_linkframes(p, frame1Number, frame2Number)
 DISKSIZE=15;
 MARGIN=10;
 
-if ~exist('frame1Number')
-    frame1Number=202;
-    frame2Number=203;
+if ~exist('frame1Number','var')
+    frame1Number=213;
+    frame2Number=214;
 end
 
 if isfield(p,'debugmode')
@@ -24,17 +24,50 @@ else
     debugmode=0;
 end
 
-%% Load data
-myFileStringStart = [p.dateDir p.movieName '\segmentation\' p.movieName 'seg'];
+if ~isfield(p,'overwrite')
+    p.overwrite=0;
+end
+if isfield(p,'override') % backwards compatibility
+    p.overwrite=p.override;
+end
 
-data=load([myFileStringStart  sprintf('%03d', frame1Number) '.mat'],'Lc');
+% Data file names
+myFileStringStart = [p.dateDir p.movieName '\segmentation\' p.movieName 'seg'];
+% Filename 1
+segFile1Path = [myFileStringStart  sprintf('%03d', frame1Number) '.mat'];
+% Filename 2
+segFile2Path = [myFileStringStart sprintf('%03d', frame2Number) '.mat'];
+% Output file
+trackOutputFile = [p.tracksDir,p.movieName,'-djk-output-',str3(frame1Number),'-to-',str3(frame2Number),'.txt'];
+
+%% Quit analysis if tracking file is newer than segfile
+% (Code stolen from NW_tracker_centroid_vs_area.)
+if exist(trackOutputFile,'file')==2 & ~p.overwrite
+
+    % if trackOutputFile is younger than segmentation files, means that segmentation has been updated, and we want to track again
+    info_yesterdaySegFile = dir(segFile1Path);
+    info_todaySegFile = dir(segFile2Path);
+    info_trackOutputFile = dir(trackOutputFile);
+    datenumber_yesterdaySegFile = datenum(info_yesterdaySegFile.date);
+    datenumber_todaySegFile = datenum(info_todaySegFile.date);
+    datenumber_trackOutputFile = datenum(info_trackOutputFile.date);
+    if ~(datenumber_yesterdaySegFile>datenumber_trackOutputFile | datenumber_todaySegFile>datenumber_trackOutputFile)
+        fprintf(1,' -> Skipping, cause seg older than previous tracking (use p.overwrite=1 to redo)\n');
+        linklistschnitz = 0;
+        return
+    end
+end
+
+%% Loading files
+% Load file 1
+data=load(segFile1Path,'Lc');
 frame1=data.Lc;
 if debugmode
     figure(1)
     PN_imshowlabel(p,frame1,[],[],[]);
 end
-
-data=load([myFileStringStart sprintf('%03d', frame2Number) '.mat'],'Lc');
+% Load file 2
+data=load(segFile2Path,'Lc');
 frame2=data.Lc;
 if debugmode
     figure(2), PN_imshowlabel(p,frame2,[],[],[]);
@@ -222,8 +255,8 @@ end
 if debugmode
     linklist
 
-    figure, PN_imshowlabel(p,frame1recentered,[],[],[]);
-    figure, PN_imshowlabel(p,frame2,[],[],[]);
+    %figure, PN_imshowlabel(p,frame1recentered,[],[],[]);
+    %figure, PN_imshowlabel(p,frame2,[],[],[]);
     
     disp('Section done');
 end
@@ -249,7 +282,11 @@ if ~isempty(orphans)
     checksPassed = 0;
 end
 
-barren = find(linklist(:,2)==0);
+%barren = find(linklist(:,2)==0);
+uniqueExclZerosFr1 = unique(frame1);
+uniqueExclZerosFr1 = uniqueExclZerosFr1(find(uniqueExclZerosFr1>0));
+Frame1LinkedOnes = ismember(uniqueExclZerosFr1, linklist(:,1));
+barren = find(Frame1LinkedOnes==0);
 if ~isempty(barren)
     disp('ERROR: barren cells found. At lines:');
     barren
@@ -272,7 +309,7 @@ if checksPassed
     disp('All checks passed..')
 else
     disp('WARNING: Checks not passed..')
-    pause(1);
+    pause(3);
 end
 
 %% Convert to schnitzcells format 
@@ -300,7 +337,7 @@ for idx=dividesInLinkList'
         movecount(parentNumber)=movecount(parentNumber)+1;
         linklistschnitz(idx,:) = newline;
     else
-        disp('ERROR: parent has more than 2 daughters! Leaving untouched!');
+        disp('ERROR: parent has more than 2 daughters! Leaving >2 untouched!');
     end
 end
 
@@ -319,8 +356,6 @@ end
 
 % Code re. trackOutputFile stolen from: NW_tracker_centroid_vs_area
 % ===
-
-trackOutputFile = [p.tracksDir,p.movieName,'-djk-output-',str3(frame1Number),'-to-',str3(frame2Number),'.txt'];
 
 if (exist(trackOutputFile) == 2) && (p.overwrite == 0)
     disp('ERROR: didn''t write output since file already exist (and p.overwrite == 0)');
@@ -347,4 +382,14 @@ end
     
 disp('Finished');    
     
+
+
+
+
+
+
+
+
+
+
 

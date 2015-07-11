@@ -85,21 +85,82 @@ end
 disp(['Tracking ' num2str(length(p.manualRange)) ' frames ', num2str(p.manualRange(1)), ' to ', num2str(p.manualRange(end))]);
 %--------------------------------------------------------------------------
 
-%% Martijn's tracking
 
+%% Martijn's tracking
+count = 2;  % because core schnitz functions ignore frame labels, 
+            % and always start counting at 1.
 for frameIdx = p.manualRange(2:numel(p.manualRange))
+   
+    % Actual tracking MW --------------------------------------------------
     disp(['Starting pair ' num2str(frameIdx-1) ', ' num2str(frameIdx) '.']);
-    linklistschnitz = MW_linkframes(p, frameIdx-1, frameIdx);
+    [linklistschnitz, segFile1Path, segFile2Path] = MW_linkframes(p, frameIdx-1, frameIdx);
+    % End actual tracking MW ----------------------------------------------
+    
+    % Skip this pair if tracking file is newer than segfile
+    % (This is decided in MW_linkframes, with linklistschnitz==0 as flag.)
+    if linklistschnitz==0, continue, end;
+    
+    % Some stats required for checking the tracking later:
+    % First frame only
+    if count==2
+        [Lc_fullsize_centered, Lc_fullsize, Lc] = MW_loadLcData(segFile1Path); % TODO redundancy with my fn above!
+        rp  = regionprops(Lc_fullsize,'Centroid','Orientation','MajorAxisLength','Area');
+        rp2 = regionprops(Lc_fullsize_centered,'Centroid');
+        num_pts = size(rp,1);
+        for j=1:num_pts
+            Points(j).cenx      = rp(j).Centroid(1);
+            Points(j).ceny      = rp(j).Centroid(2);
+            Points(j).cenx_cent = rp2(j).Centroid(1); % DJK 090410
+            Points(j).ceny_cent = rp2(j).Centroid(2); % DJK 090410
+            Points(j).ang       = rp(j).Orientation;
+            Points(j).len       = rp(j).MajorAxisLength;
+            Points(j).areapx    = rp(j).Area;  %NW 2013-12
+            Points(j).cellno    = j;
+        end
+        opts{1}=Points(1:num_pts);
+    end    
+
+    % Other frames
+    % (Code from NW_tracker_centroid_vs_area)    
+    [Lc_fullsize_centered, Lc_fullsize, Lc] = MW_loadLcData(segFile2Path); % TODO redundancy with my fn above!
+    rp  = regionprops(Lc_fullsize,'Centroid','Orientation','MajorAxisLength','Area');
+    rp2 = regionprops(Lc_fullsize_centered,'Centroid');
+    num_pts = size(rp,1);
+    for j=1:num_pts
+        Points(j).cenx      = rp(j).Centroid(1);
+        Points(j).ceny      = rp(j).Centroid(2);
+        Points(j).cenx_cent = rp2(j).Centroid(1); % DJK 090410
+        Points(j).ceny_cent = rp2(j).Centroid(2); % DJK 090410
+        Points(j).ang       = rp(j).Orientation;
+        Points(j).len       = rp(j).MajorAxisLength;
+        Points(j).areapx       = rp(j).Area;  %NW 2013-12
+        Points(j).cellno    = j;
+    end
+    opts{count}=Points(1:num_pts);   
+    
+    count = count+1;
     
 end
 
 %% Save to schnitz format (in .mat)
 % No idea what the following code does, but let's see
 % Stolen from NW_tracker_centroid_vs_area
-[P D E G] = DJK_data_treat(p);
 
-[schnitzcells cellid] = recalc_schnitz(P,D,E,G,p.manualRange,'',opts); %
-schnitzcells = renumberschnitzes(p,schnitzcells);
+if count>2 % if frames tracked at all
+    disp('Reculculating whole lineage file from tracking files..');
 
-disp(['saving schnitzcells lineage structure to ' p.lineageName]);
-save(p.lineageName,'schnitzcells');
+    [P D E G] = DJK_data_treat(p);
+
+    [schnitzcells cellid] = recalc_schnitz(P,D,E,G,p.manualRange,'',opts); %
+    schnitzcells = renumberschnitzes(p,schnitzcells); % MW TODO, is this necessary step?
+
+    disp(['saving schnitzcells lineage structure to ' p.lineageName]);
+    save(p.lineageName,'schnitzcells');
+else
+    disp('WARNING: Didn''t track anything! Correct segfiles, set p.overwrite=1 to track frames if desired.');
+end
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+

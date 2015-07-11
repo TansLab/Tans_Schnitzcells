@@ -45,6 +45,10 @@ function p = PN_manualcheckseg (p, varargin);
 %   maxImage      if 1, image will be resized to fill screen. default=1
 %   showAll       default =0; if showAll=1 will show all frames to user.
 %                 (not sure of its behavior, testing still -MW 2015/06)
+%   problemCells  if 'problemCells' (or p.problemCells) is set, then cells
+%                 that are given by this array, which should consist of 
+%                 [schnitz, framenr, cellnr; etc..] problem cells will be
+%                 highlighted too.
 %
 %-------------------------------------------------------------------------------
 %
@@ -89,17 +93,17 @@ p.mywatermark=imread('watermark.png');
 % to the schnitzcells parameter structure
 numExtraArgs = nargin - numRequiredArgs;
 if numExtraArgs > 0
-    for i=1:2:(numExtraArgs-1)
-        if (~isstr(varargin{i}))
+    for frameIdx=1:2:(numExtraArgs-1)
+        if (~isstr(varargin{frameIdx}))
             errorMessage = sprintf ('%s\n%s%s%s\n%s\n',...
                 'Error using ==> manualcheckseg:',...
-                '    Invalid property ', num2str(varargin{i}), ...
+                '    Invalid property ', num2str(varargin{frameIdx}), ...
                 ' is not (needs to be) a string.',...
                 '    Try "help manualcheckseg".');
             error(errorMessage);
         end
-        fieldName = DJK_schnitzfield(varargin{i}); % DJK 090210
-        p.(fieldName) = varargin{i+1};
+        fieldName = DJK_schnitzfield(varargin{frameIdx}); % DJK 090210
+        p.(fieldName) = varargin{frameIdx+1};
     end
 end
 
@@ -239,13 +243,13 @@ backwards = 0;
 gotoframenum=0;
 loopindex = 1;
 while loopindex <= length(p.manualRange);
-   i = p.manualRange(loopindex);
+   frameIdx = p.manualRange(loopindex);
    
    %former image data if available (L_prec for L preceeding)
     L_prec=[];
     rect_prec=[];
-    if i > 1 %if possible loads the preceeding segmented image, this is used only for assisted correction
-        filename = [p.segmentationDir,p.movieName,'seg',str3(i-1),'.mat'];
+    if frameIdx > p.manualRange(1) %if possible loads the preceeding segmented image, this is used only for assisted correction
+        filename = [p.segmentationDir,p.movieName,'seg',str3(frameIdx-1),'.mat'];
         if p.assistedCorrection && exist(filename)
             load(filename);
             if exist('Lc','var')
@@ -258,7 +262,7 @@ while loopindex <= length(p.manualRange);
     
     %new image data
     clear Lc creg yreg savelist rect newrect oldrect;
-    name= [p.segmentationDir,p.movieName,'seg',str3(i)];
+    name= [p.segmentationDir,p.movieName,'seg',str3(frameIdx)];
     tempsegcorrect=0;
     load(name);
     
@@ -285,9 +289,12 @@ while loopindex <= length(p.manualRange);
         p.CurrentFrameApprovedFlag = 0; % Addition MW 2014/12
     end    
     
+    % Parse current frame index
+    p.currentFrame = frameIdx;
+    
     % nitzan's changes June24th
     if p.showAll || ... % MW 2015/06
-        ((exist('Lc')~=1 || backwards || p.overwrite==1 || (exist('Lc')==1 && tempsegcorrect==1)) && ~mod(i-1,p.Dskip))
+        ((exist('Lc')~=1 || backwards || p.overwrite==1 || (exist('Lc')==1 && tempsegcorrect==1)) && ~mod(frameIdx-1,p.Dskip))
         
         %----------------------------------------------------------------------
         % Show Phase Image
@@ -322,7 +329,7 @@ while loopindex <= length(p.manualRange);
        close(phfig)
        phfig=figure('Visible','off');
        imshow(g_resized, 'InitialMagnification',myInitialMagn);
-        set(phfig,'name',['Frame ',str3(i),' phase']);
+        set(phfig,'name',['Frame ',str3(frameIdx),' phase']);
         set(0,'CurrentFigure',ourfig)
         
         % center on screen
@@ -421,7 +428,7 @@ while loopindex <= length(p.manualRange);
                 pos11=get(phfig,'position');
                 %set(phfig, 'position', [p.leftend-pos11(3)-8,p.upend-pos11(4), pos11(3), pos11(4)]);% DJK 071207
                 set(phfig, 'position', [640-pos11(3)/2, 512-pos11(4)/2, pos11(3), pos11(4)]); % DJK 071207
-                set(phfig,'name',['Frame ',str3(i),' phase']);
+                set(phfig,'name',['Frame ',str3(frameIdx),' phase']);
                 
             end
             if savetemp
@@ -449,7 +456,7 @@ while loopindex <= length(p.manualRange);
             if exist('badseglist')~=1
                 badseglist=[];
             end
-            badseglist=[badseglist,i];
+            badseglist=[badseglist,frameIdx];
             save(badseglistname,'badseglist');
             disp(['Added frame ',name(outl:end),' to bad segmentation list.']);
         else

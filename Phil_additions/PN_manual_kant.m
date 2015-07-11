@@ -98,13 +98,20 @@ while ~done
             % If assisted correction desired call PN_imshowlabel with 
             % suspicious cell detection functionality
             
+            p.res=res;
+            PN_imshowlabel(p, Lout,rect,L_prec,rect_prec,'phaseImage',phsub); %slow step 0.45sec! (NW 2012-05-10)
+            
+            %{
+            % MW REMOVED 2015/07
+            
             Lshow = PN_imshowlabel(p, Lout,rect,L_prec,rect_prec,'phaseImage',phsub); %slow step 0.45sec! (NW 2012-05-10)
             %PN_imshow.. is slow step (0.45 sec)
             
             % resize and show
             Lshow = imresize_old(Lshow,res);                        
             imshow(Lshow,'InitialMagnification','fit');
-
+            %}
+            
         else
             
             % If correction assistence not desired, call PN_imshowlabel
@@ -227,6 +234,24 @@ while ~done
             OKorNot=0;
             quit_now=1;
             done=1;
+        elseif cc=='s' % MW 2015/07 addition
+            % enable/disable (schnitzcells) numbering
+            % showNr options:
+            % 0) Don't show numbers
+            % 1) Show label numbers (numbering from segmentation)
+            % 2) Show schnitz numbers            
+            if ~isfield(p,'showNr')
+                % showNr wasn't active yet, will activate to show nrs in general
+                p.showNr = 1;
+            else
+                % change the options
+                p.showNr = p.showNr+1; % 
+            end
+            if p.showNr > 2, p.showNr = 0; end
+            if (p.showNr == 2) && ~isfield(p,'slookup')
+                disp('No lookup table available to find schnitznrs (use MW_slookup.m to create p.slookup).');
+                p.showNr = 0;
+            end            
         elseif cc=='p'
             if pp(1) delete(pp(1));delete(pp(2));delete(pp(3));delete(pp(4));end;pp=0;
             if pps

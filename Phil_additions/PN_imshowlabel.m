@@ -40,6 +40,10 @@ function outim = PN_imshowlabel(p,L,rect,Lp,rectp,varargin)
 %                     recalculated because cell was updated. default: all
 %                     cells. taking fewer cells will speed up process
 % showNr              if set, prints cell idxs for this frame on cells.
+% problemCells        (requires p.currentFrame to be set to current frame
+%                     index) If p.problemCells is given, cells from that
+%                     array will be highlighted (too). 
+%                     problemcells = [schnitznr, framenr, labelnr; ..]
 %
 %
 %
@@ -60,6 +64,12 @@ fractionbelowwhite = 0.2; % cells which are a fraction of <fractionbelowwhite>
 numRequiredArgs = 5; functionName = 'PN_imshowlabel'; p_internal = struct;
 
 DISPLAY_REGION_ALPHA = 0.5; % alpha value for overlaying regions over phase img
+
+if ~isempty(Lp)
+    assistedCorrection = 1;
+else
+    assistedCorrection = 0;
+end
 
 % Input processing
 if (nargin < numRequiredArgs) | (mod(nargin,2) ~= (mod(numRequiredArgs,2)))
@@ -110,7 +120,7 @@ end;
 %tic
 
 % If previous (preceeding) frame provided, perform suspicious cell. detection
-if ~isempty(Lp)
+if assistedCorrection
 
     %Detect cells that have certainly been divided in the preceeding image
     [rw clm] = find(Lp);
@@ -136,16 +146,41 @@ if ~isempty(Lp)
     characSize = median([propL.Area]);
     idsmall = find([propL.Area] < characSize*fractionbelowwhite); %label of cells which may be too small 
                     % ^ fractionbelowwhite is the fraction of the avg under which the cell is colored white
+    
+    % Labels of suspicious cells
+    allSuspiciousLabels = union(ideul,idsmall);
+
+end % more "if assistedCorrection" statements below
+
+% also highlight problemcells, if desired.
+if isfield(p,'problemCells');
+    problemCellHighlighting = 1;
+    
+    if ~exist('allSuspiciousLabels','var')
+        allSuspiciousLabels = [];
+    end
+    
+    % If problemcells are known, we can label them in this image
+    schnitzNrsProblemCells = find(p.problemCells(:,2)==p.currentFrame);
+    allSuspiciousLabels = [ allSuspiciousLabels ...
+                p.problemCells(schnitzNrsProblemCells,3)'];    
+else 
+    problemCellHighlighting = 0;
+end
+
+% if either suspicious cell detection || problemcell highlighting,
+% start highlighting cells.
+if assistedCorrection || (problemCellHighlighting && (~isempty(allSuspiciousLabels)))        
     %create a logical of suspicious cells
     Lsuspicious = zeros(size(L));
+        
     % If there are suspicous cells, mark them on the Lsuspicious image.
-    allSuspiciousLabels = union(ideul,idsmall);
     if ~isempty(allSuspiciousLabels)
         for ii = allSuspiciousLabels
             Lsuspicious(L==ii)=1;
         end
-    end
-
+    end    
+    
     % MW: make them stand out some more using checkerboard
     sqsize = 4; %square size
     mycheckerboard = (checkerboard(sqsize,ceil(size(Lsuspicious,1)/sqsize),ceil(size(Lsuspicious,2)/sqsize)) > 0.5);
@@ -189,13 +224,16 @@ else
     mymap = [mymap ; 1 1 1]; %add white
 end
 
-% 2nd part of suspicious cell detection
-if ~isempty(Lp)
+% 2nd part of suspicious cell detection || problemcellhighlighting
+if assistedCorrection || (problemCellHighlighting && ~isempty(allSuspiciousLabels))
     % elapsed time: 0.34
     %stop2=toc
     L2(logical(Lsuspicious)) = M+1;
-    L2(logical(imdilate(imcentroids,strel('square',2)))) = 0; % costs 0.017 sec    
+    if assistedCorrection % only for susp. detection.
+        L2(logical(imdilate(imcentroids,strel('square',2)))) = 0; % costs 0.017 sec    
+    end
 end
+
 
 Lrgb = ind2rgb(L2,mymap); % costs 0.04 sec
 
@@ -294,16 +332,40 @@ else
     %stop4b=toc
 end
 
+% For assisted correction, outim is resized
+if assistedCorrection
+    outim = imresize_old(outim,p.res);
+    imshow(outim,'InitialMagnification','fit');    
+end
+
 if isfield(p,'showNr')
+if p.showNr~=0
     FONTSIZE=8;
     halfFontSize=round(FONTSIZE/2);
     
     propL = regionprops(L,'Centroid');
     
-    for i = 1:numel(propL)
-        text(propL(i).Centroid(1)-halfFontSize,propL(i).Centroid(2)-halfFontSize,sprintf('%03d', i),'FontSize',FONTSIZE,'Color',[1,1,1],'FontWeight','bold')
+    if isfield(p,'slookup') && (p.showNr==2)
+        % print schnitznrs if lookup table available and option chosen
+        for i = 1:numel(propL)        
+            schnitzNr = p.slookup(p.currentFrame,i);
+            textx=propL(i).Centroid(1)-halfFontSize;
+            texty=propL(i).Centroid(2)-halfFontSize;
+            if assistedCorrection, textx=textx*p.res; texty=texty*p.res; end
+            text(textx,texty,sprintf('%03d', schnitzNr),'FontSize',FONTSIZE,'Color',[1,1,1],'FontWeight','bold')
+        end
+    else
+        % otherwise just print label
+        for i = 1:numel(propL)
+            textx=propL(i).Centroid(1)-halfFontSize;
+            texty=propL(i).Centroid(2)-halfFontSize;
+            if assistedCorrection, textx=textx*p.res; texty=texty*p.res; end
+            text(textx,texty,sprintf('%03d', i),'FontSize',FONTSIZE,'Color',[1,1,1],'FontWeight','bold')            
+        end
     end
 end
+end
+
 
 %elapsed time: 0.45
 %stop5=toc

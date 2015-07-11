@@ -10,8 +10,10 @@
 %                     daughter information is taken into account
 %                     (divided/multiplied by 2 or not)
 %                     default: 'intensive'
+% 'lengthField'       sets which field of schnitzcells to use for length
+%                     determination, usually 'length_fitNew'
 %
-function [schnitzcells] = PN_smooth_field(schnitzcells,field,varType)
+function [schnitzcells] = PN_smooth_field(schnitzcells,field,varType,lengthField)
 
 % check input (very basic)
 if strcmp(upper(varType),'INTENSIVE')==1

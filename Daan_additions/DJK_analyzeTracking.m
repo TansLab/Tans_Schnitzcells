@@ -36,9 +36,10 @@ function problemCells = DJK_analyzeTracking(p, varargin);
 %
 %
 % OUTPUT:
-% problemcells; a matrix that contains: [schnitzes, frames] which appear
+% problemcells; a matrix that contains: [schnitzes, frames, cellno] which appear
 %               problematic. 
 %               EDIT MW 2014/06/11: the problem occured for (frame) -> (frame+1)
+%               Addition MW 2015/07: added cellno to this array
 %
 
 %--------------------------------------------------------------------------
@@ -85,12 +86,12 @@ load(p.lineageName);
 % If explicit manualRange is not given, take all frames that are in schnitzcells
 if ~existfield(p,'manualRange')
   fr_maximum = -1; fr_minimum = 1000;
-  for cell = 1:length(schnitzcells)
-    if (max(schnitzcells(cell).frame_nrs) > fr_maximum) 
-      fr_maximum = max(schnitzcells(cell).frame_nrs);
+  for schnitzIdx = 1:length(schnitzcells)
+    if (max(schnitzcells(schnitzIdx).frame_nrs) > fr_maximum) 
+      fr_maximum = max(schnitzcells(schnitzIdx).frame_nrs);
     end
-    if (min(schnitzcells(cell).frame_nrs) < fr_minimum) 
-      fr_minimum = min(schnitzcells(cell).frame_nrs);
+    if (min(schnitzcells(schnitzIdx).frame_nrs) < fr_minimum) 
+      fr_minimum = min(schnitzcells(schnitzIdx).frame_nrs);
     end
   end
   p.manualRange = [fr_minimum-1:fr_maximum-1]; % in schnitzcells frames are +1
@@ -149,10 +150,10 @@ lastFrame = max(p.manualRange);
 % indicated by inTracking (schnitzcells(1).inTracking=true)
 range = p.manualRange; % (MW 2014/06/11) N+1 fix
 nrCellsInTracking = 0;
-for cell = 1:length(schnitzcells)
-  schnitzcells(cell).inTracking = false;
-  if (intersect(range, schnitzcells(cell).frame_nrs))
-    schnitzcells(cell).inTracking = true;
+for schnitzIdx = 1:length(schnitzcells)
+  schnitzcells(schnitzIdx).inTracking = false;
+  if (intersect(range, schnitzcells(schnitzIdx).frame_nrs))
+    schnitzcells(schnitzIdx).inTracking = true;
     nrCellsInTracking = nrCellsInTracking+1;
   end
 end
@@ -191,12 +192,12 @@ end
 
 % Find orphans
 nrOrphansInManualRange = 0;
-for cell = 1:length(schnitzcells)
-  schnitzcells(cell).orphan = true;
-  if schnitzcells(cell).P > 0;
-    schnitzcells(cell).orphan = false;
+for schnitzIdx = 1:length(schnitzcells)
+  schnitzcells(schnitzIdx).orphan = true;
+  if schnitzcells(schnitzIdx).P > 0;
+    schnitzcells(schnitzIdx).orphan = false;
   else
-    if schnitzcells(cell).inTracking & schnitzcells(cell).frame_nrs(1) > firstFrame % cells in first frame do not count % MW 2014/06/11 removal N+1 bug
+    if schnitzcells(schnitzIdx).inTracking & schnitzcells(schnitzIdx).frame_nrs(1) > firstFrame % cells in first frame do not count % MW 2014/06/11 removal N+1 bug
       nrOrphansInManualRange = nrOrphansInManualRange + 1;
     end
   end
@@ -208,13 +209,13 @@ problemCells = [];
 % Find barren cells
 framesWithBarrenCells = [];
 %nrBarrenInManualRange = 0;
-for cell = 1:length(schnitzcells)
-  schnitzcells(cell).barren = false;
-  if schnitzcells(cell).E==0 | schnitzcells(cell).D==0;
-    schnitzcells(cell).barren = true;
-    if schnitzcells(cell).inTracking & schnitzcells(cell).frame_nrs(end) < lastFrame % cells in last frame do not count % MW 2014/06/11 removal N+1 bug
-      framesWithBarrenCells = [framesWithBarrenCells schnitzcells(cell).frame_nrs(end)]; % MW 2014/06/11 removal N+1 bug
-      problemCells = [problemCells ; cell schnitzcells(cell).frame_nrs(end)]; % MW 2014/06/11 removal N+1 bug
+for schnitzIdx = 1:length(schnitzcells)
+  schnitzcells(schnitzIdx).barren = false;
+  if schnitzcells(schnitzIdx).E==0 | schnitzcells(schnitzIdx).D==0;
+    schnitzcells(schnitzIdx).barren = true;
+    if schnitzcells(schnitzIdx).inTracking & schnitzcells(schnitzIdx).frame_nrs(end) < lastFrame % cells in last frame do not count % MW 2014/06/11 removal N+1 bug
+      framesWithBarrenCells = [framesWithBarrenCells schnitzcells(schnitzIdx).frame_nrs(end)]; % MW 2014/06/11 removal N+1 bug
+      problemCells = [problemCells ; schnitzIdx schnitzcells(schnitzIdx).frame_nrs(end)]; % MW 2014/06/11 removal N+1 bug
       % nrBarrenInManualRange = nrBarrenInManualRange + 1;
     end
   end
@@ -223,18 +224,18 @@ framesWithBarrenCells = unique(framesWithBarrenCells);
 
 % Find cells moving > p.pixelsMoveDef pixels
 framesWithCellsMoving = [];
-for cell = 1:length(schnitzcells)
-  schnitzcells(cell).moving = [];
-  cenx = schnitzcells(cell).cenx_cent(1); % DJK 090410 cenx(i);
-  ceny = schnitzcells(cell).ceny_cent(1); % DJK 090410 ceny(i);
-  for i = 2:length(schnitzcells(cell).frame_nrs);
-    if schnitzcells(cell).inTracking % last frame should be taken in account (MW 2014/06/11)
-      cenx_new = schnitzcells(cell).cenx_cent(i); % DJK 090410 cenx(i);
-      ceny_new = schnitzcells(cell).ceny_cent(i); % DJK 090410 ceny(i);
+for schnitzIdx = 1:length(schnitzcells)
+  schnitzcells(schnitzIdx).moving = [];
+  cenx = schnitzcells(schnitzIdx).cenx_cent(1); % DJK 090410 cenx(i);
+  ceny = schnitzcells(schnitzIdx).ceny_cent(1); % DJK 090410 ceny(i);
+  for i = 2:length(schnitzcells(schnitzIdx).frame_nrs);
+    if schnitzcells(schnitzIdx).inTracking % last frame should be taken in account (MW 2014/06/11)
+      cenx_new = schnitzcells(schnitzIdx).cenx_cent(i); % DJK 090410 cenx(i);
+      ceny_new = schnitzcells(schnitzIdx).ceny_cent(i); % DJK 090410 ceny(i);
       if sqrt( (cenx_new-cenx)^2 + (ceny_new-ceny)^2 ) > p.pixelsMoveDef
-        schnitzcells(cell).moving = [schnitzcells(cell).moving schnitzcells(cell).frame_nrs(i-1)]; % MW 2014/06/11 here -1 needed
-        framesWithCellsMoving = [framesWithCellsMoving schnitzcells(cell).frame_nrs(i-1)];        
-        problemCells = [problemCells ; cell schnitzcells(cell).frame_nrs(i-1)];                   
+        schnitzcells(schnitzIdx).moving = [schnitzcells(schnitzIdx).moving schnitzcells(schnitzIdx).frame_nrs(i-1)]; % MW 2014/06/11 here -1 needed
+        framesWithCellsMoving = [framesWithCellsMoving schnitzcells(schnitzIdx).frame_nrs(i-1)];        
+        problemCells = [problemCells ; schnitzIdx schnitzcells(schnitzIdx).frame_nrs(i-1)];                   
 %         disp([str3(cell) ' moved ' num2str(sqrt( (cenx_new-cenx)^2 + (ceny_new-ceny)^2 )) ' pixels ']);
       end
       cenx = cenx_new; ceny = ceny_new;
@@ -246,21 +247,21 @@ framesWithCellsMoving = unique(framesWithCellsMoving);
 % Find cells growing < > p.pixelsLenDef pixels
 framesWithCellsGrowingTooLittle = [];
 framesWithCellsGrowingTooMuch = [];
-for cell = 1:length(schnitzcells)
-  schnitzcells(cell).growingTooLittle = [];
-  schnitzcells(cell).growingTooMuch = [];
-  len = schnitzcells(cell).len(1);
-  for i = 2:length(schnitzcells(cell).frame_nrs);
-    if schnitzcells(cell).inTracking % last frame should be taken in account (MW 2014/06/11)
-      len_new = schnitzcells(cell).len(i);
+for schnitzIdx = 1:length(schnitzcells)
+  schnitzcells(schnitzIdx).growingTooLittle = [];
+  schnitzcells(schnitzIdx).growingTooMuch = [];
+  len = schnitzcells(schnitzIdx).len(1);
+  for i = 2:length(schnitzcells(schnitzIdx).frame_nrs);
+    if schnitzcells(schnitzIdx).inTracking % last frame should be taken in account (MW 2014/06/11)
+      len_new = schnitzcells(schnitzIdx).len(i);
       if (len_new-len) < p.pixelsLenDef(1)
-        schnitzcells(cell).growingTooLittle = [schnitzcells(cell).growingTooLittle schnitzcells(cell).frame_nrs(i-1)]; % here -1 also required, MW 2014/06/11
-        framesWithCellsGrowingTooLittle = [framesWithCellsGrowingTooLittle schnitzcells(cell).frame_nrs(i-1)];
-        problemCells = [problemCells ; cell schnitzcells(cell).frame_nrs(i-1)];
+        schnitzcells(schnitzIdx).growingTooLittle = [schnitzcells(schnitzIdx).growingTooLittle schnitzcells(schnitzIdx).frame_nrs(i-1)]; % here -1 also required, MW 2014/06/11
+        framesWithCellsGrowingTooLittle = [framesWithCellsGrowingTooLittle schnitzcells(schnitzIdx).frame_nrs(i-1)];
+        problemCells = [problemCells ; schnitzIdx schnitzcells(schnitzIdx).frame_nrs(i-1)];
       elseif (len_new-len) > p.pixelsLenDef(2) 
-        schnitzcells(cell).growingTooMuch = [schnitzcells(cell).growingTooMuch schnitzcells(cell).frame_nrs(i-1)];
-        framesWithCellsGrowingTooMuch = [framesWithCellsGrowingTooMuch schnitzcells(cell).frame_nrs(i-1)];
-        problemCells = [problemCells ; cell schnitzcells(cell).frame_nrs(i-1)];
+        schnitzcells(schnitzIdx).growingTooMuch = [schnitzcells(schnitzIdx).growingTooMuch schnitzcells(schnitzIdx).frame_nrs(i-1)];
+        framesWithCellsGrowingTooMuch = [framesWithCellsGrowingTooMuch schnitzcells(schnitzIdx).frame_nrs(i-1)];
+        problemCells = [problemCells ; schnitzIdx schnitzcells(schnitzIdx).frame_nrs(i-1)];
       end
       len = len_new;
     end
@@ -273,26 +274,26 @@ framesWithCellsGrowingWeird = unique([framesWithCellsGrowingTooLittle framesWith
 % Find cells that change length more/less than 20 pixels after division and
 % have area change larger than p.pixelsAreaDiv
 framesWithCellsChangingAfterDivision = [];
-for cell = 1:length(schnitzcells)
-  schnitzcells(cell).offspringToBig = false;
-  D = schnitzcells(cell).D;
-  E = schnitzcells(cell).E;
-  if schnitzcells(cell).inTracking & E>0 & D>0
+for schnitzIdx = 1:length(schnitzcells)
+  schnitzcells(schnitzIdx).offspringToBig = false;
+  D = schnitzcells(schnitzIdx).D;
+  E = schnitzcells(schnitzIdx).E;
+  if schnitzcells(schnitzIdx).inTracking & E>0 & D>0
     combined_length = schnitzcells(D).len(1) + schnitzcells(E).len(1);
     %length change
-    if (schnitzcells(cell).len(end) >  20 + schnitzcells(D).len(1) + schnitzcells(E).len(1)) | ...
-       (schnitzcells(cell).len(end) < -20 + schnitzcells(D).len(1) + schnitzcells(E).len(1))
+    if (schnitzcells(schnitzIdx).len(end) >  20 + schnitzcells(D).len(1) + schnitzcells(E).len(1)) | ...
+       (schnitzcells(schnitzIdx).len(end) < -20 + schnitzcells(D).len(1) + schnitzcells(E).len(1))
         %area change (check only if schnitz contains this field -> not true for schnitz files older than 2013-12)
         if ~existfield(schnitzcells,'areapx')
-            schnitzcells(cell).offspringToBig = true;
-            framesWithCellsChangingAfterDivision = [framesWithCellsChangingAfterDivision schnitzcells(cell).frame_nrs(end)]; % MW 2014/06/11 removal N+1 bug
-            problemCells = [problemCells ; cell schnitzcells(cell).frame_nrs(end)]; % MW 2014/06/11 removal N+1 bug
+            schnitzcells(schnitzIdx).offspringToBig = true;
+            framesWithCellsChangingAfterDivision = [framesWithCellsChangingAfterDivision schnitzcells(schnitzIdx).frame_nrs(end)]; % MW 2014/06/11 removal N+1 bug
+            problemCells = [problemCells ; schnitzIdx schnitzcells(schnitzIdx).frame_nrs(end)]; % MW 2014/06/11 removal N+1 bug
         else
-            AreaChange=abs(schnitzcells(cell).areapx(end) -  ( schnitzcells(D).areapx(1) + schnitzcells(E).areapx(1)));
+            AreaChange=abs(schnitzcells(schnitzIdx).areapx(end) -  ( schnitzcells(D).areapx(1) + schnitzcells(E).areapx(1)));
             if AreaChange>p.pixelsAreaDiv;
-                schnitzcells(cell).offspringToBig = true;
-                framesWithCellsChangingAfterDivision = [framesWithCellsChangingAfterDivision schnitzcells(cell).frame_nrs(end)]; % MW 2014/06/11 removal N+1 bug
-                problemCells = [problemCells ; cell schnitzcells(cell).frame_nrs(end)]; % MW 2014/06/11 removal N+1 bug
+                schnitzcells(schnitzIdx).offspringToBig = true;
+                framesWithCellsChangingAfterDivision = [framesWithCellsChangingAfterDivision schnitzcells(schnitzIdx).frame_nrs(end)]; % MW 2014/06/11 removal N+1 bug
+                problemCells = [problemCells ; schnitzIdx schnitzcells(schnitzIdx).frame_nrs(end)]; % MW 2014/06/11 removal N+1 bug
                 %disp(['Parent schnitz: ' num2str(cell) ' Frame '   num2str(schnitzcells(cell).frame_nrs(end)-1)])
             end
         end
@@ -301,10 +302,21 @@ for cell = 1:length(schnitzcells)
 end
 framesWithCellsChangingAfterDivision = unique(framesWithCellsChangingAfterDivision);
 
-% output of problem cells
-problemCells = unique(problemCells, 'rows');
 %--------------------------------------------------------------------------
+% output of problem cells
 
+problemCells = unique(problemCells, 'rows');
+
+% MW addition, add a third column to the problemCells array, namely their
+% cellnumbers, such that highlighting them becomes easier.
+problemCells = padarray(problemCells,[0,1],'post');
+for i = 1:numel(problemCells(:,1))
+    schnitzIdx = problemCells(i,1);
+    IdxInSchnitz = find(schnitzcells(schnitzIdx).frame_nrs == problemCells(i,2)); % label MW001
+    problemCells(i,3) = schnitzcells(schnitzIdx).cellno(IdxInSchnitz);
+end
+
+%--------------------------------------------------------------------------
 
 %--------------------------------------------------------------------------
 % CHECKING OF TRACKING
@@ -320,6 +332,7 @@ framesunique=unique([schnitzcells.frame_nrs]);
 
 % Display nr of cells in lineage file______________________________________
 dispAndWrite(fid, ['-------------------------------------------------']);
+dispAndWrite(fid, ['Frames with issues: ' mat2str(sort(unique(problemCells(:,2))))]);
 dispAndWrite(fid, ['Results:']);
 dispAndWrite(fid, ['--- ' str3(length(schnitzcells)) ' cells in tracking file']);
 dispAndWrite(fid, ['  | ']);
@@ -331,9 +344,10 @@ dispAndWrite(fid, ['     |--- ' str3(sum(segAndTrackDoNotMatch)) ' frames lack c
 for frameNum = p.manualRange
   if segAndTrackDoNotMatch(frameNum)
     dispAndWrite(fid, ['     |  |--- frame ' str3(frameNum) ' has ' str3(NrCellsInTrackingPerFrame(frameNum)) ' / ' str3(NrCellsPerFrame(frameNum)) ' cells in tracking / segmentation']);
-    for cellnum = [1:NrCellsPerFrame(frameNum)]
-      if ( findSchnitz(schnitzcells, frameNum, cellnum) == 0) % 2014/06/11 MW +1 fix // == 0: edit other numbering issue
-        dispAndWrite(fid, ['     |     |--- cellno ' str3(cellnum) ' is missing in tracking']);
+    for schnitzIdx = [1:NrCellsPerFrame(frameNum)]
+      if ( findSchnitz(schnitzcells, frameNum, schnitzIdx) == 0) % 2014/06/11 MW +1 fix // == 0: edit other numbering issue          
+          cellLabelNr = schnitzcells(schnitzIdx).cellno(find(schnitzcells(schnitzIdx).frame_nrs == frameNum)); % see label MW001 above
+          dispAndWrite(fid, ['     |     |--- cellno ' str3(schnitzIdx) ' is missing in tracking (label=' num2str(cellLabelNr) ')' ]);
       end
     end
   end
@@ -342,9 +356,10 @@ end
 % Display orphans (first frame always has orphans)_________________________
 dispAndWrite(fid, ['     |  ']);
 dispAndWrite(fid, ['     |--- ' str3(nrOrphansInManualRange) ' of cells are orphans']);
-for cell = 1:length(schnitzcells)
-  if schnitzcells(cell).inTracking & schnitzcells(cell).orphan & schnitzcells(cell).frame_nrs(1) > firstFrame % cells in first frame do not count % MW 2014/06/11 removal N+1 bug
-    dispAndWrite(fid, ['     |  |--- schnitz ' str3(cell) ' is an orphan and appears in frame ' str3(schnitzcells(cell).frame_nrs(1))]); % MW 2014/06/11 removal N+1 bug
+for schnitzIdx = 1:length(schnitzcells)
+  if schnitzcells(schnitzIdx).inTracking & schnitzcells(schnitzIdx).orphan & schnitzcells(schnitzIdx).frame_nrs(1) > firstFrame % cells in first frame do not count % MW 2014/06/11 removal N+1 bug
+      cellLabelNr = schnitzcells(schnitzIdx).cellno(1); % see label MW001 above
+        dispAndWrite(fid, ['     |  |--- schnitz ' str3(schnitzIdx) ' is an orphan and appears in frame ' str3(schnitzcells(schnitzIdx).frame_nrs(1)) '(label=' num2str(cellLabelNr) ')']); % MW 2014/06/11 removal N+1 bug
   end
 end
 
@@ -355,12 +370,18 @@ dispAndWrite(fid, ['     |--- ' str3(length(framesWithBarrenCells)) ' frames hav
 if ~isempty(framesWithBarrenCells)
     for fr = framesWithBarrenCells
       out = ['     |  |--- in frame ' str3(fr) ' schnitz '];
-      for cell = 1:length(schnitzcells)
-        if schnitzcells(cell).inTracking & schnitzcells(cell).barren & intersect(fr, schnitzcells(cell).frame_nrs(end)) % MW 2014/06/11 removal N+1 bug
-          out = [out str3(cell) ' '];
+      for schnitzIdx = 1:length(schnitzcells)
+        if schnitzcells(schnitzIdx).inTracking & schnitzcells(schnitzIdx).barren & intersect(fr, schnitzcells(schnitzIdx).frame_nrs(end)) % MW 2014/06/11 removal N+1 bug
+            
+            % find label nr of cell (MW)
+            cellLabelNr = schnitzcells(schnitzIdx).cellno(find(schnitzcells(schnitzIdx).frame_nrs == fr)); % see label MW001 above
+            
+          out = [out str3(schnitzIdx) ' (lbl=' num2str(cellLabelNr) ') '];
           %dispAndWrite(fid, ['     |  |--- schnitz ' str3(cell) ' is barren and disappears in frame ' str3(schnitzcells(cell).frame_nrs(end)-1)]);
         end
       end
+      
+      
       out = [out 'are barren'];
       dispAndWrite(fid, out);
     end
@@ -380,7 +401,7 @@ if ~isempty(framesWithCellsMoving)
       
       % output
       dispAndWrite(fid, ['     |  |--- in frame ' str3(fr) ' -> ' str3(fr+1)]); %NW2013-12 change display (fr)->(next fr)
-      for cell = 1:length(schnitzcells)
+      for schnitzIdx = 1:length(schnitzcells)
           
           % Get the index that corresponds to the schnitz with the frame of
           % interest, and then also find the next schnitz 
@@ -389,24 +410,27 @@ if ~isempty(framesWithCellsMoving)
           %current_fr_idx = next_fr_idx - 1;      
           % TODO (2014/6/3): not entirely clear to me why we want next frame as a
           % reference, and not like this:
-          current_fr_idx = find(schnitzcells(cell).frame_nrs==(fr)); % MW 2014/06/11 let's do like this for now (TODO remove these comments.)
+          current_fr_idx = find(schnitzcells(schnitzIdx).frame_nrs==(fr)); % MW 2014/06/11 let's do like this for now (TODO remove these comments.)
           next_fr_idx = current_fr_idx + 1;           
           
-          if schnitzcells(cell).inTracking & intersect(fr, schnitzcells(cell).moving)                                   
+          if schnitzcells(schnitzIdx).inTracking & intersect(fr, schnitzcells(schnitzIdx).moving)                                   
 
               % get x,y locations of centers of schnitzes
-              cenx = schnitzcells(cell).cenx_cent(current_fr_idx); % MW 2014/6/3 renaming
-              ceny = schnitzcells(cell).ceny_cent(current_fr_idx);
-              cenx_new = schnitzcells(cell).cenx_cent(next_fr_idx);
-              ceny_new = schnitzcells(cell).ceny_cent(next_fr_idx);
+              cenx = schnitzcells(schnitzIdx).cenx_cent(current_fr_idx); % MW 2014/6/3 renaming
+              ceny = schnitzcells(schnitzIdx).ceny_cent(current_fr_idx);
+              cenx_new = schnitzcells(schnitzIdx).cenx_cent(next_fr_idx);
+              ceny_new = schnitzcells(schnitzIdx).ceny_cent(next_fr_idx);
 
+              % find label nr of cell (MW)
+              cellLabelNr = schnitzcells(schnitzIdx).cellno(current_fr_idx); % see label MW001 above
+              
               % Pythagoras
               distanceMoved = sqrt( (cenx_new-cenx)^2 + (ceny_new-ceny)^2 );
-              dispAndWrite(fid, ['     |  |  |--- schnitz ' str3(cell) ' : ' num2str( round(distanceMoved) ) ' pixels']);
+              dispAndWrite(fid, ['     |  |  |--- schnitz ' str3(schnitzIdx) ' : ' num2str( round(distanceMoved) ) ' pixels (label=' num2str(cellLabelNr) ')']);
 
               % MW 2014/6/3 || bugfix 2014/06/24
               % missing frames might introduce extra movement, could tell user that
-              if ((find(schnitzcells(cell).frame_nrs==next_fr_idx) - find(schnitzcells(cell).frame_nrs==current_fr_idx)) ~= 1)
+              if ((find(schnitzcells(schnitzIdx).frame_nrs==next_fr_idx) - find(schnitzcells(schnitzIdx).frame_nrs==current_fr_idx)) ~= 1)
                   dispAndWrite(fid, ['     |  |--- (but missing frame detected, this might be the cause.)' ]);    
               end
               
@@ -426,7 +450,7 @@ if ~isempty(framesWithCellsGrowingWeird)
       
       % output
       dispAndWrite(fid, ['     |  |--- in frame ' str3(fr) ' -> ' str3(fr+1)]);
-      for cell = 1:length(schnitzcells)
+      for schnitzIdx = 1:length(schnitzcells)
           
           % Get the index that corresponds to the schnitz with the frame of
           % interest, and then also find the next schnitz 
@@ -435,19 +459,23 @@ if ~isempty(framesWithCellsGrowingWeird)
           %current_fr_idx = next_fr_idx - 1;      
           % TODO: not entirely clear to me why we want next frame as a
           % reference, and not like this:
-          current_fr_idx = find(schnitzcells(cell).frame_nrs==(fr)); % MW 2014/06/11
+          current_fr_idx = find(schnitzcells(schnitzIdx).frame_nrs==(fr)); % MW 2014/06/11
           next_fr_idx = current_fr_idx + 1;  % MW 2014/06/11
 
           % get indices schnitzes that grow too fast/too little
-          idx = [find(schnitzcells(cell).growingTooLittle==(fr))  find(schnitzcells(cell).growingTooMuch==(fr))];
+          idx = [find(schnitzcells(schnitzIdx).growingTooLittle==(fr))  find(schnitzcells(schnitzIdx).growingTooMuch==(fr))];
         
-          if schnitzcells(cell).inTracking & ~isempty(idx) % MW TODO 2014/6, probably this should be & ~isempty(idx)??
-            lengthIncrease = schnitzcells(cell).len(next_fr_idx) - schnitzcells(cell).len(current_fr_idx);
-            dispAndWrite(fid, ['     |  |  |--- schnitz ' str3(cell) ' : ' num2str( round(lengthIncrease) ) ' pixels']);
+          if schnitzcells(schnitzIdx).inTracking & ~isempty(idx) % MW TODO 2014/6, probably this should be & ~isempty(idx)??
+              
+            % find label nr of cell (MW)
+            cellLabelNr = schnitzcells(schnitzIdx).cellno(find(schnitzcells(schnitzIdx).frame_nrs == fr)); % see label MW001 above
+              
+            lengthIncrease = schnitzcells(schnitzIdx).len(next_fr_idx) - schnitzcells(schnitzIdx).len(current_fr_idx);
+            dispAndWrite(fid, ['     |  |  |--- schnitz ' str3(schnitzIdx) ' : ' num2str( round(lengthIncrease) ) ' pixels (label=' num2str(cellLabelNr) ')']);
 
             % MW 2014/6/3 || bugfix 2014/06/24
             % missing frames might introduce extra movement, could tell user that
-            if (find(schnitzcells(cell).frame_nrs==next_fr_idx)-find(schnitzcells(cell).frame_nrs==current_fr_idx) ~= 1)
+            if (find(schnitzcells(schnitzIdx).frame_nrs==next_fr_idx)-find(schnitzcells(schnitzIdx).frame_nrs==current_fr_idx) ~= 1)
                 dispAndWrite(fid, ['     |  |--- (but missing frame detected, this might be the cause.)' ]);    
             end          
             
@@ -466,30 +494,42 @@ dispAndWrite(fid, ['     |--- ' str3(length(framesWithCellsChangingAfterDivision
 if ~isempty(framesWithCellsChangingAfterDivision)
     for fr = framesWithCellsChangingAfterDivision
       
-      % get next frame nr and current frame nr (edit MW 2014/6/3)
-      next_fr_idx = find(framesunique==fr+1);
-      current_fr_idx = next_fr_idx-1;
+      % get next frame nr and current frame nr (MW 2015/07 fix)
+      current_fr_idx = fr;
+      tableIdx = find(framesunique==fr)+1;
+      if tableIdx>numel(framesunique)
+            warning(['The strangest thing happened, skipping remark about ' num2str(current_fr_idx) ' since it''s last frame']); 
+            continue
+      end;
+      next_fr_idx = framesunique(tableIdx);
      
       % output
       dispAndWrite(fid, ['     |  |--- in frame ' str3(current_fr_idx) ' -> ' str3(next_fr_idx)]); 
-      for cell = 1:length(schnitzcells)
+      for schnitzIdx = 1:length(schnitzcells)
           
         % determine whether this schnitz is suspicious
-        if schnitzcells(cell).inTracking & schnitzcells(cell).offspringToBig & fr==schnitzcells(cell).frame_nrs(end) % MW 2014/06/11 removal N+1 bug
+        if schnitzcells(schnitzIdx).inTracking & schnitzcells(schnitzIdx).offspringToBig & fr==schnitzcells(schnitzIdx).frame_nrs(end) % MW 2014/06/11 removal N+1 bug
 
           % Obtain children
-          D = schnitzcells(cell).D;
-          E = schnitzcells(cell).E;
+          D = schnitzcells(schnitzIdx).D;
+          E = schnitzcells(schnitzIdx).E;
 
           % Calculate length increase
-          lengthIncrease = schnitzcells(D).len(1) +  schnitzcells(E).len(1) - schnitzcells(cell).len(end);
-          dispAndWrite(fid, ['        |  |--- parent schnitz ' str3(cell) ' : ' num2str( round(lengthIncrease) ) ' pixels']);
+          lengthIncrease = schnitzcells(D).len(1) +  schnitzcells(E).len(1) - schnitzcells(schnitzIdx).len(end);          
           
+          % find label nr of cell (MW)
+          cellLabelNr = schnitzcells(schnitzIdx).cellno(find(schnitzcells(schnitzIdx).frame_nrs == current_fr_idx)); % see label MW001 above
+          
+          % Output
+          dispAndWrite(fid, ['        |  |--- parent schnitz ' str3(schnitzIdx) ' : ' num2str( round(lengthIncrease) ) ' pixels (label=' num2str(cellLabelNr) ')']);
+          
+          %{
           % MW 2014/6/3 || bugfix 2014/6/24
           % missing frames might introduce extra movement, could tell user that
           if (find(schnitzcells(cell).frame_nrs==next_fr_idx)-find(schnitzcells(cell).frame_nrs==current_fr_idx) ~= 1)
               dispAndWrite(fid, ['     |  |--- (but missing frame detected, this might be the cause.)' ]);    
           end          
+          %}
           
         end        
         
@@ -498,6 +538,8 @@ if ~isempty(framesWithCellsChangingAfterDivision)
       dispAndWrite(fid, ['        |' ]);
     end
 end
+
+
 %--------------------------------------------------------------------------
 
 
@@ -507,6 +549,7 @@ end
 dispAndWrite(fid, ['-------------------------------------------------']);
 fclose(fid);
 %--------------------------------------------------------------------------
+
 
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%

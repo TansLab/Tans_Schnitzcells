@@ -35,13 +35,14 @@ if(iscell(P))
 
     %% now for each parameter in P 
     for i=1:size(P,2)
-        for k=1:max(size(P{i}))
 
+        for k=1:numel(P{i})
 
             if( i > size(cellid,2) | k > max(size(cellid{i})) )
                 warning(sprintf('input array index {%d}(%d) exceeds cellid array size, skipped',i,k))
-            else
-                id=cellid{i}(k);
+            else                
+                id=cellid{i}(k);                                
+
                 if(id>size(schnitz,2))
 
                     schnitz(id).(f)=P{i}(k);

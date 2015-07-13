@@ -95,11 +95,7 @@ for frameIdx = p.manualRange(2:numel(p.manualRange))
     disp(['Starting pair ' num2str(frameIdx-1) ', ' num2str(frameIdx) '.']);
     [linklistschnitz, segFile1Path, segFile2Path] = MW_linkframes(p, frameIdx-1, frameIdx);
     % End actual tracking MW ----------------------------------------------
-    
-    % Skip this pair if tracking file is newer than segfile
-    % (This is decided in MW_linkframes, with linklistschnitz==0 as flag.)
-    if linklistschnitz==0, continue, end;
-    
+            
     % Some stats required for checking the tracking later:
     % First frame only
     if count==2
@@ -116,6 +112,7 @@ for frameIdx = p.manualRange(2:numel(p.manualRange))
             Points(j).len       = rp(j).MajorAxisLength;
             Points(j).areapx    = rp(j).Area;  %NW 2013-12
             Points(j).cellno    = j;
+            Points(j).frextra   = frameIdx-1; % MW DEBUG REMOVE
         end
         opts{1}=Points(1:num_pts);
     end    
@@ -133,18 +130,27 @@ for frameIdx = p.manualRange(2:numel(p.manualRange))
         Points(j).ceny_cent = rp2(j).Centroid(2); % DJK 090410
         Points(j).ang       = rp(j).Orientation;
         Points(j).len       = rp(j).MajorAxisLength;
-        Points(j).areapx       = rp(j).Area;  %NW 2013-12
+        Points(j).areapx    = rp(j).Area;  %NW 2013-12
         Points(j).cellno    = j;
+        Points(j).frextra   = frameIdx; % MW DEBUG REMOVE
     end
     opts{count}=Points(1:num_pts);   
     
     count = count+1;
+       
+    % Skip this pair if tracking file is newer than segfile
+    % (This is decided in MW_linkframes, with linklistschnitz==0 as flag.)
+    %{
+    % (opts do need to be recalculated, so shouldn't do skipping.)
+    if linklistschnitz==0, continue, end;
+    %}
     
 end
 
 %% Save to schnitz format (in .mat)
 % No idea what the following code does, but let's see
 % Stolen from NW_tracker_centroid_vs_area
+% -MW
 
 if count>2 % if frames tracked at all
     disp('Reculculating whole lineage file from tracking files..');

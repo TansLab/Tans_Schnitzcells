@@ -278,19 +278,22 @@ checksPassed = 1;
 orphans = find(linklist(:,1)==0);
 if ~isempty(orphans)
     disp('ERROR: orphan cells found. At lines:');
-    orphans
+    orphansinlinklistindex=orphans
     checksPassed = 0;
 end
 
 %barren = find(linklist(:,2)==0);
-uniqueExclZerosFr1 = unique(frame1);
-uniqueExclZerosFr1 = uniqueExclZerosFr1(find(uniqueExclZerosFr1>0));
-Frame1LinkedOnes = ismember(uniqueExclZerosFr1, linklist(:,1));
-barren = find(Frame1LinkedOnes==0);
+uniqueExclZerosFr1 = unique(frame1); % get list w. cellno's in this frame
+uniqueExclZerosFr1 = uniqueExclZerosFr1(find(uniqueExclZerosFr1>0)); % but idx=0 isn't a cell, filter out 
+Frame1LinkedOnes = ismember(uniqueExclZerosFr1, linklist(:,1)); % check whether the cellno's from 1 are all accounted for in list
+barren = find(Frame1LinkedOnes==0); % if not, they're barren
 if ~isempty(barren)
-    disp('ERROR: barren cells found. At lines:');
+    disp('ERROR: barren cells found. cellno''s:');
     barren
     checksPassed = 0;
+    error('This leads to serious issue, since leads to discrepancy between numel(schnitzcells(i).frame_nrs) and numel(schnitzcells(i).cellno)!');
+    %warning('Adding them as connected to schnitz #1..');
+    %linklist = [linklist; padarray(barren, [0,1],1,'post')];
 end
 
 % Daughters of wich ancestry is contended (should be impossible)

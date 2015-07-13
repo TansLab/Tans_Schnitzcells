@@ -252,24 +252,24 @@ for i = 1:length(trackRange)
         schnitzcells(s).fitNew_x_rot_left(age)   = x_rot_line_left(i);
         left_set = 1;
         if i==1
-          disp(['error: left: in fr' str3(currFrameNum) ' cellno ' str3(cellnum) ' schnitz ' str3(s) ]);
+          warning(['error: left: in fr' str3(currFrameNum) ' cellno ' str3(cellnum) ' schnitz ' str3(s) ]);
         end
       end
       if total_dist_25_points_right(i) < 1.1 & ~right_set
         schnitzcells(s).fitNew_x_rot_right(age)   = x_rot_line_right(length(x_rot_line_left)+1-i);
         right_set = 1;
         if i==1
-          disp(['error: right: in fr' str3(currFrameNum) ' cellno ' str3(cellnum) ' schnitz ' str3(s) ]);
+          warning(['error: right: in fr' str3(currFrameNum) ' cellno ' str3(cellnum) ' schnitz ' str3(s) ]);
         end
       end
     end
     
     if ~left_set
-      disp(['error: total_dist_25_points_left did not set left: in fr' str3(currFrameNum) ' cellno ' str3(cellnum) ' schnitz ' str3(s) ]);
+      warning(['error: total_dist_25_points_left did not set left: in fr' str3(currFrameNum) ' cellno ' str3(cellnum) ' schnitz ' str3(s) ]);
       schnitzcells(s).fitNew_x_rot_left(age) = x_rot_line_left(end);
     end
     if ~right_set
-      disp(['error: total_dist_25_points_left did not set right: in fr' str3(currFrameNum) ' cellno ' str3(cellnum) ' schnitz ' str3(s) ]);
+      warning(['error: total_dist_25_points_left did not set right: in fr' str3(currFrameNum) ' cellno ' str3(cellnum) ' schnitz ' str3(s) ]);
       schnitzcells(s).fitNew_x_rot_right(age) = x_rot_line_right(1);
     end
     schnitzcells(s).length_fitNew(age) = quad(func_length, schnitzcells(s).fitNew_x_rot_left(age),schnitzcells(s).fitNew_x_rot_right(age)) * p.micronsPerPixel;

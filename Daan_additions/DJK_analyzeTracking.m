@@ -1,5 +1,8 @@
 function problemCells = DJK_analyzeTracking(p, varargin);
 % DJK_analyzeTracking analyses the complete tracking file. 
+% **** if getting weird errors: 1) introduce if ~isempty tests (see also
+%                                  NW2015-05 below)
+%                               2) Try DJK_analyzeTracking_old
 %
 % Reports on :
 % # cells tracked in complete lineage 
@@ -490,6 +493,7 @@ end
 % Display moving whose length change after division (possibly wrong tracking)
 dispAndWrite(fid, ['     |  ']);
 dispAndWrite(fid, ['     |--- ' str3(length(framesWithCellsChangingAfterDivision)) ' frames have cells with length change <> 20 pixels after division']);
+
 % loop over frames when there are frames that contain suspicious cells
 if ~isempty(framesWithCellsChangingAfterDivision)
     for fr = framesWithCellsChangingAfterDivision
@@ -534,7 +538,6 @@ if ~isempty(framesWithCellsChangingAfterDivision)
         end        
         
       end      
-      
       dispAndWrite(fid, ['        |' ]);
     end
 end

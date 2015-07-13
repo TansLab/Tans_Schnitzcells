@@ -123,7 +123,7 @@ disp('              press ''v'' to define region of interest and restrict to thi
 disp('              press ''c'' to morphologically close each cell area (imclose)')
 disp('              press ''r'' to renumber the cell you are pointing to.')
 disp('              press ''p'' to show a square around the position, on phase image.')
-disp('              press ''b'' to mark the cell you are pointing to, on phase image.  Do not use...')
+% inactivated. new 'b' function below (NW2015-07) disp('              press ''b'' to mark the cell you are pointing to, on phase image.  Do not use...')
 disp('              press ''o'' to obliterate all but the cell you''re pointing to.')
 disp('              press ''.'' to skip frame (without saving).')
 disp('              press '','' to go back a frame (without saving).')
@@ -141,6 +141,8 @@ disp('              press ''d'' to remove all ''cells'' which look like dirt (la
 disp('              press ''u'' to go back one step (possible once).')
 disp('              press ''m'' to switch between phase contrast and segmentation image.')
 disp('              press ''l'' to show perimeters of cell areas.')
+disp('              press ''b'' to restrict segmentation to overlaps with previous segmentation image')
+disp('                             (requires assistedCorrection mode, protential trouble after backstep '','')')
 
 disp(' ')
 

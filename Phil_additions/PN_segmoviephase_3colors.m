@@ -50,6 +50,7 @@ function p = PN_segmoviephase_3colors(p,varargin)
 %            Default: 0. brightfield. NOT UPDATED.
 % overwrite :   default:1, if set to 0, segmentation of frames for which
 %               a segfile already exists are skipped. 
+% onScreen :    show result of each seg to user by plotting
 
 %-------------------------------------------------------------------------------
 % Parse the input arguments, input error checking. Use inputParser in
@@ -164,7 +165,10 @@ end
 if ~existfield(p,'overwrite') % don't seg for already segged frames
     p.overwrite = 1;
 end
-
+% show plot or not
+if ~existfield(p, 'onScreen')
+    p.onScreen = 0;
+end
 
 
 %--------------------------------------------------------------------------
@@ -466,6 +470,10 @@ for i= p.segRange
    % here the fluorescence data was added in former versions
    % ******************************************************
     
+   % Show result onscreen if desired
+   if p.onScreen
+       figure, PN_imshowlabel(p, LNsub, [], [], []);
+   end
     
     % Save segmentation file
     eval(['save(''',p.segmentationDir,Lname,''',',savelist,');']);

@@ -14,8 +14,8 @@ DISKSIZE=15;
 MARGIN=10;
 
 if ~exist('frame1Number','var')
-    frame1Number=213;
-    frame2Number=214;
+    frame1Number=500;
+    frame2Number=501;
 end
 
 if isfield(p,'debugmode')
@@ -51,7 +51,7 @@ if exist(trackOutputFile,'file')==2 & ~p.overwrite
     datenumber_yesterdaySegFile = datenum(info_yesterdaySegFile.date);
     datenumber_todaySegFile = datenum(info_todaySegFile.date);
     datenumber_trackOutputFile = datenum(info_trackOutputFile.date);
-    if ~(datenumber_yesterdaySegFile>datenumber_trackOutputFile | datenumber_todaySegFile>datenumber_trackOutputFile)
+    if ~((datenumber_yesterdaySegFile>datenumber_trackOutputFile) || (datenumber_todaySegFile>datenumber_trackOutputFile))
         fprintf(1,' -> Skipping, cause seg older than previous tracking (use p.overwrite=1 to redo)\n');
         linklistschnitz = 0;
         return
@@ -111,7 +111,11 @@ STATS1 = regionprops(frame1BWarea, 'Area');
 STATS2 = regionprops(frame2BWarea, 'Area');
     
 if (numel(STATS1) > 1) || (numel(STATS2) > 1)
-    error('Failed to detect single colony area.');
+    warning('Failed to detect single colony area, attempting to fix by summing areas.');
+    sum1 = sum(STATS1.Area);
+    sum2 = sum(STATS2.Area);
+    clear STATS1; STATS1.Area = sum1;
+    clear STATS2; STATS2.Area = sum2;
 end
 
 resizeratio = sqrt(STATS2.Area/STATS1.Area);
@@ -135,7 +139,13 @@ frame1resizedBWarea=imerode(frame1resizedBWarea,se);
 STATS1 = regionprops(frame1resizedBWarea, 'Centroid');
 STATS2 = regionprops(frame2BWarea, 'Centroid');
 if (numel(STATS1) > 1) || (numel(STATS2) > 1)
-    error('Failed to detect single colony area.');
+    warning('Failed to detect single colony area. Attempting to fix by averaging centroids.');
+    meanx1 = mean(arrayfun(@(k) STATS1(k).Centroid(1), 1:numel(STATS1)));
+    meany1 = mean(arrayfun(@(k) STATS1(k).Centroid(2), 1:numel(STATS1)));
+    meanx2 = mean(arrayfun(@(k) STATS2(k).Centroid(1), 1:numel(STATS2)));
+    meany2 = mean(arrayfun(@(k) STATS2(k).Centroid(2), 1:numel(STATS2)));   
+    clear STATS1; STATS1.Centroid = [meanx1, meany1];
+    clear STATS2; STATS2.Centroid = [meanx2, meany2];
 end
 
 % Create frame that has equal size to frame 2, but contains info from
@@ -196,6 +206,7 @@ if debugmode
     
     overlaycentered = frame1recentered+frame2;
     figure, PN_imshowlabel(p,overlaycentered,[],[],[]);
+    
     
     % plotting areas
     m1=(frameBWarea>0)*1;

@@ -134,22 +134,26 @@ if assistedCorrection
     centroids = round(centroids + ones(size(propLp))*([rectp(2)-1 rectp(1)-1] + pad_motion));
     imcentroids = zeros(max(rect(3),rectp(3)),max(rect(4),rectp(4)));
     linearInd = sub2ind(size(imcentroids), centroids(:,2), centroids(:,1));
-    imcentroids(linearInd) = 1;
-    imcentroids = imcentroids(rect(1):rect(3),rect(2):rect(4));
-    %find domains which have 2 or more former centroids
-    Ltemp = L;
-    Ltemp(logical(imcentroids)) = 0;
-    propLtemp = regionprops(Ltemp,'EulerNumber');
-    ideul = find([propLtemp.EulerNumber]<0); %label of cells which may have been re-merged
-    %detect too small cells
-    propL = regionprops(L,'Area');
-    characSize = median([propL.Area]);
-    idsmall = find([propL.Area] < characSize*fractionbelowwhite); %label of cells which may be too small 
-                    % ^ fractionbelowwhite is the fraction of the avg under which the cell is colored white
+    if ~isnan(linearInd)
+        imcentroids(linearInd) = 1;
     
-    % Labels of suspicious cells
-    allSuspiciousLabels = union(ideul,idsmall);
-
+        imcentroids = imcentroids(rect(1):rect(3),rect(2):rect(4));
+        %find domains which have 2 or more former centroids
+        Ltemp = L;
+        Ltemp(logical(imcentroids)) = 0;
+        propLtemp = regionprops(Ltemp,'EulerNumber');
+        ideul = find([propLtemp.EulerNumber]<0); %label of cells which may have been re-merged
+        %detect too small cells
+        propL = regionprops(L,'Area');
+        characSize = median([propL.Area]);
+        idsmall = find([propL.Area] < characSize*fractionbelowwhite); %label of cells which may be too small 
+                        % ^ fractionbelowwhite is the fraction of the avg under which the cell is colored white
+    
+        % Labels of suspicious cells
+        allSuspiciousLabels = union(ideul,idsmall);
+    else
+        allSuspiciousLabels = [];
+    end
 end % more "if assistedCorrection" statements below
 
 % also highlight problemcells, if desired.
@@ -345,14 +349,23 @@ if p.showNr~=0
     
     propL = regionprops(L,'Centroid');
     
+    % print schnitznrs if lookup table available and option chosen
     if isfield(p,'slookup') && (p.showNr==2)
-        % print schnitznrs if lookup table available and option chosen
-        for i = 1:numel(propL)        
-            schnitzNr = p.slookup(p.currentFrame,i);
-            textx=propL(i).Centroid(1)-halfFontSize;
-            texty=propL(i).Centroid(2)-halfFontSize;
-            if assistedCorrection, textx=textx*p.res; texty=texty*p.res; end
-            text(textx,texty,sprintf('%03d', schnitzNr),'FontSize',FONTSIZE,'Color',[1,1,1],'FontWeight','bold')
+                
+        for i = 1:numel(propL)
+            % if lookup is available (might not be the case if manual 
+            % correction to seg made)
+            if ((size(p.slookup,2))>=i) % MW TODO
+                % lookup nrs and print 
+                schnitzNr = p.slookup(p.currentFrame,i);
+                textx=propL(i).Centroid(1)-halfFontSize;
+                texty=propL(i).Centroid(2)-halfFontSize;
+                if assistedCorrection, textx=textx*p.res; texty=texty*p.res; end
+                text(textx,texty,sprintf('%03d', schnitzNr),'FontSize',FONTSIZE,'Color',[1,1,1],'FontWeight','bold')
+            else
+                % Tell users that other numbers might be incorrect too..
+                warning(['Lookup of schnitznrs might be wrong, probably bc you corrected seg (attempted f= ' num2str(p.currentFrame) ' i=' num2str(i) ')..']);
+            end
         end
     else
         % otherwise just print label

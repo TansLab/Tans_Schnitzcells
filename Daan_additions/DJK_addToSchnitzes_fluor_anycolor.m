@@ -39,7 +39,8 @@
 % In principle, pixels are selected from the fluor image using the 
 % segmentation file, which contains the regions of the detected cells
 % encoded as indices in a matrix. 
-% There are however different corrections performed on the fluor images,
+% There are however different normalizations (e.g. illuimation time)
+% and corrections performed on the fluor images,
 % and one can determine either the sum or the average of the fluor
 % intensity within a cell. Furthermore, an additional method is introduced
 % here to take only the fluor values from a subset of the detected cell

@@ -25,7 +25,7 @@ function NW_saveSchnitzcells(p,myschnitzcells,varargin)
 %--------------------------------------------------------------------------
 % Input error checking and parsing
 %--------------------------------------------------------------------------
-% Settings
+%% Settings
 numRequiredArgs = 2; functionName = 'DJK_addToSchnitzes_length';
 
 if (nargin < numRequiredArgs) | (mod(nargin,2) ~= (mod(numRequiredArgs,2)) | ~isSchnitzParamStruct(p))
@@ -52,7 +52,7 @@ end
 
 
 %--------------------------------------------------------------------------
-% Overwrite any schnitzcells parameters/defaults given optional fields/values
+%% Overwrite any schnitzcells parameters/defaults given optional fields/values
 %--------------------------------------------------------------------------
 % Set default parameter values if they don't exist yet
 % Save directory
@@ -79,12 +79,15 @@ p.schnitzName = [p.NW_saveDir p.matFileName];
 
 
 %--------------------------------------------------------------------------
-% Save schnitzcells - Todo: Include check, whether saving will overwrite a
+%% Save schnitzcells - Todo: Include check, whether saving will overwrite a
 % former version of schnitzcells
 %--------------------------------------------------------------------------
 % rename variable
-eval([p.schnitzcellsName '=myschnitzcells;']); %e.g. schnitzcells=myschnitzcells
-eval(['save(p.schnitzName, ''' p.schnitzcellsName ''');']); % e.g. save(p.schnitzName, 'schnitzcells')
+command=[p.schnitzcellsName '=myschnitzcells;'];
+eval(command); %e.g. schnitzcells=myschnitzcells
+command = ['save(p.schnitzName, ''' p.schnitzcellsName ''');'];
+eval(command); % e.g. save(p.schnitzName, 'schnitzcells')
+
 disp(['Save in ''' p.schnitzName ''' completed...']);
 %--------------------------------------------------------------------------
 

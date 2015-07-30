@@ -635,7 +635,7 @@ for fr = p.manualRange
         im_color(find(im_colorbar>0)) = im_colorbar(find(im_colorbar>0));
       end
       imwrite(ind2rgb(im_color,mymap),[filnameBase str3(fr) '.png'],'png');
-      disp(['Writing image : ', [filnameBase str3(fr) '.png']]);
+      disp(['Writing image ' str3(fr) ': ', [filnameBase str3(fr) '.png']]);
     end
 
   else % phase image
@@ -656,7 +656,7 @@ for fr = p.manualRange
       % enlarge to original size
       phim = DJK_enlargeImage(phim, phaseFullSize, rect, p.stabilize);
       imwrite(phim,[filnameBase str3(fr) '.png'],'png');
-      disp(['Writing image : ', [filnameBase str3(fr) '.png']]);
+      disp(['Writing image ' str3(fr) ': ', [filnameBase str3(fr) '.png']]);
     end
   end
 end

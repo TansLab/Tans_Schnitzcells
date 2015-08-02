@@ -28,7 +28,7 @@ function  [p,Lout,OKorNot,quit_now,dontsave,addtolist,crop_pop,newrect,savetemp,
 
 iptsetpref('imshowborder','tight');
 backwards = 0;
-global pos Limage ourfig res pp phfig
+global pos Limage ourfig res pp phfig currentFrameStr
 
 %set(phfig,'Visible', 'on') % ugly way to force phase image away from foreground during computation time NW2012-10-05
 
@@ -64,6 +64,10 @@ figureToFocusOn = ourfig;
 
 while ~done
     clear j*  %j1=0;j2=0;
+    
+    % Convert current framenumber to string
+    if isfield(p,'currentFrame'), currentFrameStr = num2str(p.currentFrame);
+    else currentFrameStr = '??'; warning('p.currentFrame not set'); end % MW TODO: num2str(p.currentFrame) can just be used directly below
     
     % ** NW 2012-05-10 **
     
@@ -143,29 +147,29 @@ while ~done
         set(ourfig, 'position', pos11); % DJK 090117
                 
         % Title of figure 
-        set(ourfig,'name',['Pos: ',num2str(pos(1,2)),' , ',num2str(pos(1,1)),...
+        set(ourfig,'name',['Frame ' currentFrameStr ', Pos: ',num2str(pos(1,2)),' , ',num2str(pos(1,1)),...
                 '  Val: ',num2str(curr_val1)]);
             
         % Set focus on desired figure (segmented img per default)
         set(0,'CurrentFigure',figureToFocusOn);
 
-    end               
+    end                    
     
-    % Define function to retrieve mouseclick position.       
-    set(ourfig,'WindowButtonMotionFcn',['global pos Limage ourfig res pp phfig;pos=max(1,round((1/res)*get(gca,''CurrentPoint'')));',...
+    % Define function to retrieve mouseclick position.
+    set(ourfig,'WindowButtonMotionFcn',['global pos currentFrameStr Limage ourfig res pp phfig;pos=max(1,round((1/res)*get(gca,''CurrentPoint'')));',...
         'if (pos(1,2)>0 & pos(1,2)<size(Limage,1) & pos(1,1)>0 & pos(1,1)<size(Limage,2));',...
         'curr_val=num2str(double(Limage(pos(1,2),pos(1,1))));else;curr_val=''-1'';end;',...
-        'set(ourfig,''name'',[''Pos: '',num2str(pos(1,2)),'' , '',num2str(pos(1,1)),',...
+        'set(ourfig,''name'',[''Frame '' currentFrameStr '', Pos: '',num2str(pos(1,2)),'' , '',num2str(pos(1,1)),',...
         '''  Val: '',curr_val]);']);
     %   '''  Val: '',curr_val]);pp=showbox(phfig,pos,pp,size(Limage),res);figure(ourfig);']);
     
     % MW 2015/01 also enable for phase fig (strictly not necessary)
-    set(phfig,'WindowButtonMotionFcn',['global pos Limage ourfig res pp phfig;pos=max(1,round((1/res)*get(gca,''CurrentPoint'')));',...
+    set(phfig,'WindowButtonMotionFcn',['global pos currentFrameStr Limage ourfig res pp phfig;pos=max(1,round((1/res)*get(gca,''CurrentPoint'')));',...
         'if (pos(1,2)>0 & pos(1,2)<size(Limage,1) & pos(1,1)>0 & pos(1,1)<size(Limage,2));',...
         'curr_val=num2str(double(Limage(pos(1,2),pos(1,1))));else;curr_val=''-1'';end;',...
-        'set(ourfig,''name'',[''Pos: '',num2str(pos(1,2)),'' , '',num2str(pos(1,1)),',...
-        '''  Val: '',curr_val]);']); 
-    
+        'set(phfig,''name'',[''Frame '' currentFrameStr '', Pos: '',num2str(pos(1,2)),'' , '',num2str(pos(1,1)),',...
+        '''  Val: '',curr_val]);']);
+        
     % blubb
     % here the regionprops of the next and previous image could already be
     % calculated to quicken update of image when frame changes

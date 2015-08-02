@@ -203,11 +203,22 @@ end % note suspicious cell detection algorithm has a 2nd part below
 % elapsed time: 0.33
 %stop1=toc
 
+%{
+Doesn't work for higher frame numbers, and takes too much time
+% If schnitznrs known, might as well map framelbls to schnitznrs
+if isfield(p,'showNr')
+if (isfield(p,'slookup') && (p.showNr==2))
+    conversionTable = p.slookup(p.currentFrame, :);
+    L = changem(L, conversionTable, 1:numel(conversionTable));
+end
+end
+%}
+
 %creation of a rgb colormap
 % Use custom colormap if it is set
 if isfield(p_internal,'customColors')
     mymap = p_internal.customColors;
-    L2=uint8(L);
+    L2=uint8(L);  
 else
     % L2 has every non-background blob in range [2,256] and 
     % sets background to one, corresp. to first entry in mymap

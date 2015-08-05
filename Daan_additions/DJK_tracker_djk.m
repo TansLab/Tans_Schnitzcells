@@ -114,6 +114,7 @@ numpos= findstr(D(1).name, '.mat')-3;
 if ~existfield(p,'manualRange')
   segNameStrings = char(S);
   p.manualRange = str2num(segNameStrings(:,numpos:numpos+2))';
+  disp('Set manual range to all available data.');
 end
 
 % Keep only the frames in the range that contain a corrected segmentation (unless we're tracking un-checked frames)
@@ -514,15 +515,56 @@ center_cells_y = round( mean(fy) ); % before: round( (max(fy)+min(fy))/2 );
 offset_x = round( size(Lc_fullsize,2)/2 - center_cells_x);
 offset_y = round( size(Lc_fullsize,1)/2 - center_cells_y);
 
-% center Lc_fullsize into Lc_centered
-Lc_fullsize_centered( min(fy)+offset_y:max(fy)+offset_y, min(fx)+offset_x:max(fx)+offset_x ) = Lc_fullsize( min(fy):max(fy), min(fx):max(fx) );
-
-% remark NW (2012-08): If errormessage here: possible that colony is so
+% center Lc_fullsize into Lc_centered % MW edit 2015/08
+% Admininstration I
+minfy = min(fy);
+maxfy = max(fy);
+minfx = min(fx);
+maxfx = max(fx);
+% Admininstration II
+starty  = minfy+offset_y;
+endy    = maxfy+offset_y;
+startx  = minfx+offset_x;
+endx    = maxfx+offset_x;
+% Now it could fall outside the image, in that case, just crop it
+% This is a bit of a boilerplate solution.. - MW
+if starty<1
+    warning('starty<1; Centered image falls outside boundaries, cropping image..');
+    howmuchoutofplace=1-starty
+    starty=1
+    minfy = minfy+howmuchoutofplace
+end
+if startx<1
+    warning('startx<1; Centered image falls outside boundaries, cropping image..');
+    howmuchoutofplace=1-startx
+    startx=1
+    minfx = minfx+howmuchoutofplace
+end
+if endy>phaseFullSize(1)
+    warning('endy>phaseFullSize(1); Centered image falls outside boundaries, cropping image..');
+    howmuchoutofplace=phaseFullSize(1)-endy
+    endy=phaseFullSize(1)
+    maxfy = maxfy+howmuchoutofplace
+end
+if endx>phaseFullSize(2)
+    warning('endx>phaseFullSize(1); Centered image falls outside boundaries, cropping image..');
+    howmuchoutofplace=phaseFullSize(2)-endx
+    endx=phaseFullSize(2)
+    maxfx = maxfx+howmuchoutofplace
+end
+% remark NW (2012-08)/Edited MW 2015/08: 
+% If warningmessage here: possible that colony is so
 % large that after centering the outer coordinates of cells exceed the
-% image range (e.g. become negative). One solution: pretend that the
+% image range (e.g. become negative). Another solution than current one: 
+% pretend that the
 % original image is the centered image (e.g. if the image was not cropped
 % during segmentation):
 %Lc_fullsize_centered=Lc_fullsize;
+
+% Do the centering
+Lc_fullsize_centered( starty:endy, startx:endx ) = Lc_fullsize( minfy:maxfy, minfx:maxfx );
+
+
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 

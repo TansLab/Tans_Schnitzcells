@@ -116,6 +116,8 @@ if islogical(L),
     L = double(L);
 end;
 
+sizeL = size(L);
+
 %start time (calculate cost)
 %tic
 
@@ -300,7 +302,9 @@ if existfield(p, 'showPerim') && p.showPerim % show cell outlines
     outim = MW_stampit(outim,p);
     
     if nargout == 0 && isempty(Lp)
-        imshow(outim);
+        imshow(outim);        
+        % hard print frame nr
+        if isfield(p,'currentFrame'), text(40, 17, ['fr #' num2str(p.currentFrame)], 'FontSize', 12, 'Color', 'g'); end
     end
     
 elseif addPhaseImage % costs 0.045 sec
@@ -329,10 +333,12 @@ elseif addPhaseImage % costs 0.045 sec
     %stop4a=toc
     
     % Edit MW - adds green marker if frame is approved
-    outim = MW_stampit(outim,p); % TODO CHECK MW
+    outim = MW_stampit(outim,p); % TODO CHECK MW    
     
     if nargout == 0 && isempty(Lp)
         imshow(outim);
+        % hard print frame nr
+        if isfield(p,'currentFrame'), text(40, 17, ['fr #' num2str(p.currentFrame)], 'FontSize', 12, 'Color', 'g'); end
     end
     
 else
@@ -342,6 +348,8 @@ else
 
     if nargout == 0 && isempty(Lp)
         imshow(outim);
+        % hard print frame nr
+        if isfield(p,'currentFrame'), text(40, 17, ['fr #' num2str(p.currentFrame)], 'FontSize', 12, 'Color', 'g'); end
     end
     
     %stop4b=toc
@@ -351,6 +359,8 @@ end
 if assistedCorrection
     outim = imresize_old(outim,p.res);
     imshow(outim,'InitialMagnification','fit');    
+    % hard print frame nr
+    if isfield(p,'currentFrame'), text(40*p.res, 17, ['fr #' num2str(p.currentFrame)], 'FontSize', 12, 'Color', 'g'); end
 end
 
 if isfield(p,'showNr')

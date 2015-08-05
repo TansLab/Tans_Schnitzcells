@@ -1,4 +1,5 @@
 function theimg = MW_stampit(theimg,p)
+% function theimg = MW_stampit(theimg,p)
 %
 %
 % Function to show user which frames have already been approved. It will

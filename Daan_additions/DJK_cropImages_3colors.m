@@ -252,7 +252,7 @@ for fr = cropRange, % go over each frame
         % write image data
         im_crop_filename = [cropDirImageDir regexprep(DphaseRange(i).name, p.movieName, p.cropName)];
         imwrite(im_crop, im_crop_filename, 'tif', 'Compression', 'none', 'Description', im_description);
-        disp(['Written: ' im_crop_filename]);
+        disp(['Written frame ' num2str(fr) ' : ' im_crop_filename]);
         %disp([ num2str(leftTop(2)) ':' num2str(rightBottom(2)) '-' num2str(leftTop(1)) ':' num2str(rightBottom(1))]);
     end
         
@@ -283,7 +283,7 @@ for fr = cropRange, % go over each frame
         % write image data
         im_crop_filename = [cropDirImageDir regexprep(Dfluor1Range(i).name, p.movieName, p.cropName)];
         imwrite(im_crop, im_crop_filename, 'tif', 'Compression', 'none', 'Description', im_description);
-        disp(['Written: ' im_crop_filename]);
+        disp(['Written frame ' num2str(fr) ' : ' im_crop_filename]);
         %disp([ num2str(leftTop(2)/2) ':' num2str(rightBottom(2)/2) '-' num2str(leftTop(1)/2) ':' num2str(rightBottom(1)/2)]);
     end
     
@@ -312,7 +312,7 @@ for fr = cropRange, % go over each frame
         % write image data
         im_crop_filename = [cropDirImageDir regexprep(Dfluor2Range(i).name, p.movieName, p.cropName)];
         imwrite(im_crop, im_crop_filename, 'tif', 'Compression', 'none', 'Description', im_description);
-        disp(['Written: ' im_crop_filename]);
+        disp(['Written frame ' num2str(fr) ' : ' im_crop_filename]);
         %disp([ num2str(leftTop(2)/2) ':' num2str(rightBottom(2)/2) '-' num2str(leftTop(1)/2) ':' num2str(rightBottom(1)/2)]);
     end
     
@@ -341,7 +341,7 @@ for fr = cropRange, % go over each frame
         % write image data
         im_crop_filename = [cropDirImageDir regexprep(Dfluor3Range(i).name, p.movieName, p.cropName)];
         imwrite(im_crop, im_crop_filename, 'tif', 'Compression', 'none', 'Description', im_description);
-        disp(['Written: ' im_crop_filename]);
+        disp(['Written frame ' num2str(fr) ' : ' im_crop_filename]);
         %disp([ num2str(leftTop(2)/2) ':' num2str(rightBottom(2)/2) '-' num2str(leftTop(1)/2) ':' num2str(rightBottom(1)/2)]);
     end
     

@@ -10,7 +10,17 @@ function [leftTop, rightBottom] = MW_determinecroparea(p, range)
     DlastPhase = dir(fileNameSearchString);
     if numel(DlastPhase)==0
         disp(['Looking for ' fileNameSearchString]);
-        error(['No images found w. index ' num2str(lastIndex)]);
+        warning(['No images found w. index ' num2str(lastIndex)]);
+
+        % Same code as above, but for other lastIndex
+        warning(['Since margin failed, just using last img from range.']);
+        lastIndex = range(end); 
+        fileNameSearchString = [p.imageDir, [p.movieName,'-p-*' num2str(lastIndex) '.tif'] ];
+        DlastPhase = dir(fileNameSearchString);
+        
+        if numel(DlastPhase)==0
+            error('Also this failed.. Wrong path?');
+        end
     end
     imToLoad = DlastPhase(round(numel(DlastPhase)/2));
     myImg = imread([p.imageDir imToLoad.name]);

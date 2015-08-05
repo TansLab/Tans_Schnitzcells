@@ -529,29 +529,32 @@ endx    = maxfx+offset_x;
 % Now it could fall outside the image, in that case, just crop it
 % This is a bit of a boilerplate solution.. - MW
 if starty<1
-    warning('starty<1; Centered image falls outside boundaries, cropping image..');
+    warning('starty<1; MIGHT LEAD TO ERROR W. FLUOR LATER.. Centered image falls outside boundaries, cropping image..');
     howmuchoutofplace=1-starty
     starty=1
     minfy = minfy+howmuchoutofplace
 end
 if startx<1
-    warning('startx<1; Centered image falls outside boundaries, cropping image..');
+    warning('startx<1; MIGHT LEAD TO ERROR W. FLUOR LATER.. Centered image falls outside boundaries, cropping image..');
     howmuchoutofplace=1-startx
     startx=1
     minfx = minfx+howmuchoutofplace
 end
 if endy>phaseFullSize(1)
-    warning('endy>phaseFullSize(1); Centered image falls outside boundaries, cropping image..');
+    warning('endy>phaseFullSize(1); MIGHT LEAD TO ERROR W. FLUOR LATER.. Centered image falls outside boundaries, cropping image..');
     howmuchoutofplace=phaseFullSize(1)-endy
     endy=phaseFullSize(1)
     maxfy = maxfy+howmuchoutofplace
 end
 if endx>phaseFullSize(2)
-    warning('endx>phaseFullSize(1); Centered image falls outside boundaries, cropping image..');
+    warning('endx>phaseFullSize(1); MIGHT LEAD TO ERROR W. FLUOR LATER.. Centered image falls outside boundaries, cropping image..');
     howmuchoutofplace=phaseFullSize(2)-endx
     endx=phaseFullSize(2)
     maxfx = maxfx+howmuchoutofplace
 end
+% Remark MW 2015/08
+% Thought this would fix things, but dataset where this bugfix was used
+% for, later showed errors in fluor handling. TODO!
 % remark NW (2012-08)/Edited MW 2015/08: 
 % If warningmessage here: possible that colony is so
 % large that after centering the outer coordinates of cells exceed the

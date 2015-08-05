@@ -89,11 +89,14 @@ disp(['Tracking ' num2str(length(p.manualRange)) ' frames ', num2str(p.manualRan
 %% Martijn's tracking
 count = 2;  % because core schnitz functions ignore frame labels, 
             % and always start counting at 1.
-for frameIdx = p.manualRange(2:numel(p.manualRange))
+for i = 2:numel(p.manualRange)
+    
+    % frame index
+    frameIdx = p.manualRange(i);
    
     % Actual tracking MW --------------------------------------------------
-    disp(['Starting pair ' num2str(frameIdx-1) ', ' num2str(frameIdx) '.']);
-    [linklistschnitz, segFile1Path, segFile2Path] = MW_linkframes(p, frameIdx-1, frameIdx);
+    disp(['Starting pair ' num2str(p.manualRange(i-1)) ', ' num2str(p.manualRange(i)) '.']);
+    [linklistschnitz, segFile1Path, segFile2Path] = MW_linkframes(p, p.manualRange(i-1), p.manualRange(i));
     % End actual tracking MW ----------------------------------------------
             
     % Some stats required for checking the tracking later:
@@ -112,7 +115,7 @@ for frameIdx = p.manualRange(2:numel(p.manualRange))
             Points(j).len       = rp(j).MajorAxisLength;
             Points(j).areapx    = rp(j).Area;  %NW 2013-12
             Points(j).cellno    = j;
-            Points(j).frextra   = frameIdx-1; % MW DEBUG REMOVE
+            Points(j).frextra   = p.manualRange(i-1); % MW DEBUG REMOVE
         end
         opts{1}=Points(1:num_pts);
     end    
@@ -132,7 +135,7 @@ for frameIdx = p.manualRange(2:numel(p.manualRange))
         Points(j).len       = rp(j).MajorAxisLength;
         Points(j).areapx    = rp(j).Area;  %NW 2013-12
         Points(j).cellno    = j;
-        Points(j).frextra   = frameIdx; % MW DEBUG REMOVE
+        Points(j).frextra   = p.manualRange(i); % MW DEBUG REMOVE
     end
     opts{count}=Points(1:num_pts);   
     

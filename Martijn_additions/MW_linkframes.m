@@ -3,7 +3,7 @@ function [linklistschnitz, segFile1Path, segFile2Path] = MW_linkframes(p, frame1
 %
 % Performs tracking for frames frame1Number and frame2Number.
 %
-% if p.debug is valid field, then also figures are plotted.
+% if p.debugmode is valid field, then also figures are plotted.
 %
 % Note term parent and daughter are here also used to link the same
 % individual over two frames!
@@ -370,28 +370,32 @@ end
 
 % Code re. trackOutputFile stolen from: NW_tracker_centroid_vs_area
 % ===
-
+%{
 if (exist(trackOutputFile) == 2) && (p.overwrite == 0)
     disp('ERROR: didn''t write output since file already exist (and p.overwrite == 0)');
 else
+%}
 
-    % clean up any existing output
-    if exist(trackOutputFile) == 2
-        disp('WARNING: deleted old trackingfile.');
-        delete(trackOutputFile)
-    end
-
-    % Open trackOutputFile
-    fid = fopen(trackOutputFile,'wt');
-
-    % loop over results and print to file
-    for i = 1:length(linklistschnitz(:,1))
-        fprintf(fid, '%u %u %u %u\n', linklistschnitz(i,1), linklistschnitz(i,2), linklistschnitz(i,3), linklistschnitz(i,4)); 
-    end
-
-    % Close trackOutputFile
-    fclose(fid);
+% clean up any existing output
+if exist(trackOutputFile) == 2
+    disp('WARNING: deleted old trackingfile.');
+    delete(trackOutputFile)
 end
+
+% Open trackOutputFile
+fid = fopen(trackOutputFile,'wt');
+
+% loop over results and print to file
+for i = 1:length(linklistschnitz(:,1))
+    fprintf(fid, '%u %u %u %u\n', linklistschnitz(i,1), linklistschnitz(i,2), linklistschnitz(i,3), linklistschnitz(i,4)); 
+end
+
+% Close trackOutputFile
+fclose(fid);
+    
+%{    
+end
+%}
     
     
 disp('Finished');    

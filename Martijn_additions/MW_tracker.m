@@ -1,7 +1,8 @@
 
 
 function MW_tracker(p, varargin)
-
+% function MW_tracker(p, varargin)
+% if p.debugmode is valid field, then also figures are plotted.
 
 % Code from NW_tracker_centroid_vs_area
 % ***************************************************************************

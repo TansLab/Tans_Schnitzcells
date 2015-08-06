@@ -278,15 +278,20 @@ disp(['---------------------------------------------------------------']);
 %branches=branches(2:end); % blubb NW2012-05 (manually delete branches that collide with fitTime (errormessage in loop below)
 % loop over branches
 for branchNr = 1:length(branches)
+  
   min_idx = find(branches(branchNr).(timeField)>=timeFrame(1));
   max_idx = find(branches(branchNr).(timeField)<=timeFrame(2));
+  
   if length(min_idx)==0 | length(max_idx)==0 
       disp('error with min_idx or max_idx'); 
   end
   %branchNr %debug
   
+  startTimeWindowIdx=min_idx(1);
+  endTimeWindowIdx=max_idx(end);  
+  
   % alter branches
-  branches(branchNr).schnitzNrs = branches(branchNr).schnitzNrs(min_idx(1):max_idx(end));
+  branches(branchNr).schnitzNrs = branches(branchNr).schnitzNrs(startTimeWindowIdx:endTimeWindowIdx);
   % This can lead to e.g. wrong time fields if a timefield with more
   % entries (e.g. R_time) is cut to a time field with less entries (e.g.
   % dR5_time)
@@ -298,15 +303,31 @@ for branchNr = 1:length(branches)
   % entry short compared to concentrations. lower fitTime(2) a bit. (NW
   % 2012-06-15)
   for i = 1:length(p.dataFields)
-    field = char(p.dataFields(i));
-%     keyboard;
-%     disp(['branchNr = ' num2str(branchNr)]); 
-%     disp(['field = ' field]); 
-%     disp(['min_idx(1) = ' num2str(min_idx(1))]); 
-%     disp(['max_idx(end) = ' num2str(max_idx(end))]); 
-%     disp(['length(branches(branchNr).(field)) = ' num2str(length(branches(branchNr).(field)))]); 
-%     disp(['----------------------------------------------------------']); 
-    branches(branchNr).(field) = branches(branchNr).(field)(min_idx(1):max_idx(end));
+    field = p.dataFields{i};
+    
+      % debug
+      if endTimeWindowIdx>numel(branches(branchNr).(field))
+          warning('Issue detected! Only proceed with caution! Check whether this is correct!');
+          
+         % Debugging:     
+         disp(['branchNr = ' num2str(branchNr)]); 
+         disp(['field = ' field]); 
+         disp(['min_idx(1) = ' num2str(min_idx(1))]); 
+         disp(['max_idx(end) = ' num2str(max_idx(end))]); 
+         disp(['length(branches(branchNr).(field)) = ' num2str(length(branches(branchNr).(field)))]); 
+         disp(['----------------------------------------------------------']);      
+         
+         disp('Setting endTimeWindowIdx to numel(branches(branchNr).(field))..');
+         pause(4);
+         
+         % This type of behavior (see also comment NW above) happens when
+         % fields have incosistent sizes).. 
+         % If this is the case for a load of branches, your data will get
+         % screwed..
+         endTimeWindowIdx = numel(branches(branchNr).(field));
+      end
+          
+    branches(branchNr).(field) = branches(branchNr).(field)(startTimeWindowIdx:endTimeWindowIdx);
   end
 end
 

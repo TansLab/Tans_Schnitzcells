@@ -318,7 +318,7 @@ for branchNr = 1:length(branches)
          disp(['----------------------------------------------------------']);      
          
          disp('Setting endTimeWindowIdx to numel(branches(branchNr).(field))..');
-         pause(4);
+         %pause(4);
          
          % This type of behavior (see also comment NW above) happens when
          % fields have incosistent sizes).. 

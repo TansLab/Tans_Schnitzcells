@@ -143,6 +143,7 @@ disp('              press ''m'' to switch between phase contrast and segmentatio
 disp('              press ''l'' to show perimeters of cell areas.')
 disp('              press ''b'' to restrict segmentation to overlaps with previous segmentation image')
 disp('                             (requires assistedCorrection mode, protential trouble after backstep '','')')
+disp('              press ''n'' to toggle fullscreen mode (go to next frame after toggling it off).')
 
 disp(' ')
 
@@ -332,15 +333,19 @@ while loopindex <= length(p.manualRange);
        phfig=figure('Visible','off');
        imshow(g_resized, 'InitialMagnification',myInitialMagn);
         set(phfig,'name',['Frame ',str3(frameIdx),' phase']);
-        set(0,'CurrentFigure',ourfig)
+        set(0,'CurrentFigure',ourfig)                
         
+        % Set position of figure
+
         % center on screen
         pos11                 = get(phfig,'position'); % current position
         width                 = pos11(3); % size(g_resized,1);
         height                = pos11(4); % size(g_resized,2);
         x_left_bottom_screen  = 10 + (p.min_size(2)-width)/2 ;
         y_left_bottom_screen  = 35 + (p.min_size(1)-height)/2 ;
-        set(phfig, 'position', [x_left_bottom_screen y_left_bottom_screen width height]); % DJK 090117        
+
+        set(phfig, 'position', [x_left_bottom_screen y_left_bottom_screen width height]); % DJK 090117          
+
         %----------------------------------------------------------------------
       
         % ******************************************************
@@ -427,10 +432,12 @@ while loopindex <= length(p.manualRange);
                 
                 imshow(imresize_old(g,res));
                 colormap((1:100)'*[0 1 0]/100)
+                
                 pos11=get(phfig,'position');
                 %set(phfig, 'position', [p.leftend-pos11(3)-8,p.upend-pos11(4), pos11(3), pos11(4)]);% DJK 071207
                 set(phfig, 'position', [640-pos11(3)/2, 512-pos11(4)/2, pos11(3), pos11(4)]); % DJK 071207
                 set(phfig,'name',['Frame ',str3(frameIdx),' phase']);
+                
                 
             end
             if savetemp

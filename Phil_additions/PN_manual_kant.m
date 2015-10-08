@@ -141,11 +141,17 @@ while ~done
         else
              curr_val1=-1;
         end
-                
+        
         % Set phase and segmented image to same position
-        pos11 = get(phfig,'position'); % current position
-        set(ourfig, 'position', pos11); % DJK 090117
-                
+        pos11 = get(phfig,'position');         
+        set(ourfig, 'position', pos11); 
+        
+        % Set to fullscreen if desired
+        if isfield(p, 'fullscreenResolution')
+            set(ourfig, 'position', p.fullscreenResolution); 
+            set(phfig, 'position', p.fullscreenResolution);             
+        end
+        
         % Title of figure 
         set(ourfig,'name',['Frame ' currentFrameStr ', Pos: ',num2str(pos(1,2)),' , ',num2str(pos(1,1)),...
                 '  Val: ',num2str(curr_val1)]);
@@ -416,6 +422,25 @@ while ~done
         elseif cc == 's'
             savetemp=1;
             done=1;
+        elseif cc == 'n' 
+            
+            % Addition MW to go fullscreen
+            % Note that you need to go to next frame after toggling this
+            % option off.
+            
+            % obtain monitor resolution
+            set(0,'units','pixels');            
+            Pix_SS = get(0,'screensize');
+            % Set flag to go fullscreen
+            if ~isfield(p,'fullscreenResolution')
+                p.fullscreenResolution = Pix_SS;
+            else
+                p = rmfield(p,'fullscreenResolution');
+            end
+            
+            % (Setting the size here doesn't work since it's edited later.)
+            %set(ourfig, 'units','pixels','position',Pix_SS);  % handles are also stored in phfig or ourfig
+            %set(ourfig, 'units','normalized','position',[0 0 1 1]);  % handles are also stored in phfig or ourfig
         elseif cc == 'e'
             disp('"expand image" currently not in use.');
             %         expand_segimage(p,imnum,expandvalue);

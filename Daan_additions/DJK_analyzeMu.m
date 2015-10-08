@@ -111,12 +111,14 @@ if exist(p.DJK_saveDir)~=7
   end
 end
 
-if ~existfield(p,'xlim')
-  p.xlim = [0 900];
-end
-if ~existfield(p,'ylim')
-  p.ylim = [2 2000];
-end
+% Default values xlim, ylim (MW disabled 2015/09)
+%if ~existfield(p,'xlim')
+%  p.xlim = [0 900];
+%end
+%if ~existfield(p,'ylim')
+%  p.ylim = [2 2000];
+%end
+
 if ~existfield(p,'dumpPlot')
   p.dumpPlot = 0;
 end

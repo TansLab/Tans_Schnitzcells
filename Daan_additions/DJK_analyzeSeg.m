@@ -191,6 +191,10 @@ NrCells_fitted = A0*power(2,muNrCells/60*TimeOfFrameFitting);
 semilogy(TimeOfFrameFitting, NrCells_fitted, '-','LineWidth',3);
 text(0.05,0.9,['mu is ', num2str(muNrCells)],'sc');
 
+% MW addition larger font size
+set(findall(gcf,'type','text'),'FontSize',15,'fontWeight','normal')
+set(gca,'FontSize',15)
+
 % Ask to save the figure
 if p.onScreen
   saveFigInput = questdlg('Save Figure?','Save Figure?','Yes','Yes and Close','No','Yes');

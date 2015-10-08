@@ -1,6 +1,6 @@
 function settings = MW_readsettingsfromexcelfile(configfilepath)
     % read in excel file
-    [ndata, text, alldata] = xlsread(configfilepath,'Configuration','A14:B45');
+    [ndata, text, alldata] = xlsread(configfilepath,'Configuration','A14:B100');
 
     % Create the variables that are listed in the configuration file
     % ===

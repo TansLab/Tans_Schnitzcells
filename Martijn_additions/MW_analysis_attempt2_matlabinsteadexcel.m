@@ -6,7 +6,7 @@
 % section.
 
 %% It is very important to supply the path to the correct dataset here!
-CONFIGFILEPATH = 'F:\A_Tans2_step1_incoming_not_backed_up\2015-09-16\Schnitzcells_config_fullAnalysis_2015_09_16.xlsx';
+CONFIGFILEPATH = 'F:\A_Tans2_step1_incoming_not_backed_up\2015-09-16\Schnitzcells_config_fullAnalysis_2015_09_16_pos1.xlsx';
 
 %% Read configuration settings from excel file.
 
@@ -174,8 +174,8 @@ for colorIdx = 1:3
     
     % Select current string w. color identifier (fluor1, ..)
     currentFluor = fluorColors{colorIdx};
-    if strcmp(p.(currentFluor),'None')
-        disp([currentFluor ' not set, skipping']);
+    if strcmp(p.(currentFluor),'none') || strcmp(p.(currentFluor),'None')
+        disp([currentFluor ' not set, assuming you don''t have more fluor colors.']);
         break
     end
     
@@ -187,25 +187,151 @@ for colorIdx = 1:3
     load(settings.fluorCorrectionImagePaths{colorIdx}, 'flatfield', 'shading', 'replace');
     
     % Finding shifts.
+    disp('Looking for shifts');
     optimalShift = DJK_getFluorShift_anycolor(p,'manualRange', settings.frameRangeFull,'fluorcolor',currentFluor,'maxShift',MAXSHIFT);
+    disp('Correcting');
     % Correct images (shading, background).
     DJK_correctFluorImage_anycolor(p, flatfield, shading, replace,'manualRange', settings.frameRangeFull,  'fluorShift', optimalShift, 'deconv_func', @(im) deconvlucy(im, PSF),'fluorcolor',currentFluor,'minimalMode',0);
-
-end
     
+end
+
+% Add fluor information to schnitz struct (schnitzcells struct is saved).
+disp('Adding fluor info to schnitzcells structure.')
+DJK_compileSchnitzImproved_3colors(p,'quickMode',0);
+
 % Let user hear we're done
 mysound=load('gong'); sound(mysound.y);
 
+%% Now calculate lengths and add them to schnitzcells struct
+% Some of the fluorescence analysis also needs the fields generated here
 
-%%
+% ADVANCED PARAMETERS
+%p.schnitzNum='all';
+%p.onscreen=1;
 
+DJK_addToSchnitzes_length(p);
 
+%8 Add correct mu
+DJK_addToSchnitzes_mu(p, 'frameSizes', settings.muWindow);
+%DJK_addToSchnitzes_mu(p, 'onScreen', 1, 'frameSizes', [5, 9]);
 
+mysound=load('gong'); sound(mysound.y);
 
+%% Continue with fluor again now
 
+% Again loop over colors
+fluorColors = {'fluor1','fluor2','fluor3'}; % ugly but compatible w. legacy - MW
+for colorIdx = 1:3
+    
+    % Adminstration
+    % Select current string w. color identifier (fluor1, ..)    
+    currentFluor = fluorColors{colorIdx};
+    if strcmp(p.(currentFluor),'none') || strcmp(p.(currentFluor),'None')
+        disp([currentFluor ' not set, assuming you don''t have more fluor colors.']);
+        break
+    end
+    
+    % Actual code that needs to be executed
+    % ===
+    % Add fluor values to schnitcells struct
+    DJK_addToSchnitzes_fluor_anycolor(p, 'onScreen', 0,'colorNormalize',[0 300], 'fluorcolor',currentFluor,'minimalMode',0);
 
+    % Add old style rate vector (not used any more)
+    schnitzcells = DJK_addToSchnitzes_fluorRate_phase(p,p.(currentFluor),'5');
+    
+    % Add new style rate vectors.
+    schnitzcells = MW_fluorRate_anycolor(schnitzcells,p.(currentFluor),'length_fitNew');    
+    
+    % Note PN_smooth_field also adds new field (so you always get
+    % smoothing? TODO?! MW)
+    myFieldName = ['d' upper(p.(currentFluor)) '5_sum_dt'];
+    schnitzcells = PN_smooth_field(schnitzcells,myFieldName,'extensive','length_fitNew');
+    NW_saveSchnitzcells(p,schnitzcells); % could be integrated to PN_smooth_field
+        
+    % only necessary 1 time
+    if strcmp(currentFluor, fluorColors{1}) 
+        schnitzcells = DJK_addToSchnitzes_predictedValues(schnitzcells, 'phase', 'length_fitNew', 'phase2', [0 1]);
+        NW_saveSchnitzcells(p,schnitzcells); % could be integrated to DJK_addToSchnitzes_predictedValues
+    end
+       
+    % Add some more fields
+    % Char coding for current color
+    X = upper(p.(currentFluor));  
+    schnitzcells = MW_addToSchnitzes_atXandDX(schnitzcells, 'phase2',X);
+    schnitzcells = MW_addToSchnitzes_atXandDX(schnitzcells, 'time',X);
+    schnitzcells = PN_addToSchnitzes_Phase_at_TimeField(schnitzcells,...
+        ['phase2'],...
+        ['d' X '5_time']); % dX5_time
+    schnitzcells = DJK_addToSchnitzes_cycleCor(schnitzcells,...
+        ['d' X '5'],... % dX5
+        ['phase2_at_d' X '5_time']);
+    schnitzcells = DJK_addToSchnitzes_cycleCor(schnitzcells,...
+        [X '6_mean'],... % X6mean
+        ['phase2_at' X '']); % etc..
+    
+    for muWindowSize = settings.muWindow
+        currentMuWindowSizeStr = num2str(muWindowSize);
+        schnitzcells = DJK_addToSchnitzes_cycleCor(schnitzcells,...
+            ['muP' currentMuWindowSizeStr '_fitNew'],...
+            ['phase2_at' X '']);
+    end
+    
+    schnitzcells = DJK_addToSchnitzes_cycleCor(schnitzcells,...
+        ['d' X '5_sum_dt_s'],...
+        ['phase2_atd' X '']);
+    schnitzcells = DJK_addToSchnitzes_cycleCor(schnitzcells,...
+        ['d' X '5_sum_dt'],...
+        ['phase2_atd' X '']);
+    schnitzcells = DJK_addToSchnitzes_cycleCor(schnitzcells,...
+        [X '5_mean'],...
+        ['phase2_at' X '']);
 
+    % Cropping vectors
+    for muWindowSize = settings.muWindow
+        
+        currentMuWindowSizeStr = num2str(muWindowSize);
+        
+        schnitzcells=PN_addToSchnitzes_Phase_at_TimeField_Mu(schnitzcells,...
+            ['muP' currentMuWindowSizeStr '_fitNew_all'],...
+            ['d' X '5_time'],...
+            ['muP' currentMuWindowSizeStr '_fitNew_atd' X '5']);
+        schnitzcells = DJK_addToSchnitzes_cycleCor( schnitzcells,...
+            ['muP' currentMuWindowSizeStr '_fitNew_atd' X '5'],...
+            ['phase2_at_d' X '5_time']);
+        schnitzcells=PN_addToSchnitzes_Phase_at_TimeField_Mu(schnitzcells,...
+            ['muP' currentMuWindowSizeStr '_fitNew_all'],...
+            ['time_atd' X ''],...
+            ['muP' currentMuWindowSizeStr '_fitNew_atd' X '5sumdt']);
+        schnitzcells = DJK_addToSchnitzes_cycleCor( schnitzcells,...
+            ['muP' currentMuWindowSizeStr '_fitNew_atd' X '5sumdt'],...
+            ['phase2_atd' X '']);
 
+    end
+    
+    % Save updated schnitzcells structure
+    NW_saveSchnitzcells(p,schnitzcells); 
+end
+
+disp('Done with fluor part II.');
+
+%% DONE
+
+% We are done with settings up schnitzcells structure! All data is saved.
+% You can proceed with analyzing the data..
+
+% Load this dataset using
+% =========================================================================
+p = DJK_initschnitz([settings.positionName settings.cropSuffix], settings.movieDate,'e.coli.AMOLF','rootDir',...
+ settings.rootDir, 'cropLeftTop', settings.cropLeftTop, 'cropRightBottom', settings.cropRightBottom,...
+     'fluor1',settings.fluor1,...
+     'fluor2',settings.fluor2,...
+     'fluor3',settings.fluor3,...
+     'setup',settings.setup,...
+     'softwarePackage',settings.softwarePackage,...
+     'camera',settings.camera);
+     
+[p,schnitzcells] = DJK_compileSchnitzImproved_3colors(p,'quickMode',1);
+% =========================================================================
 
 
 

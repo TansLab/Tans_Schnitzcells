@@ -327,7 +327,7 @@ end
 if ~existfield(p,'softwarePackage') 
     if strcmp(p.setup,'setup1')
         p.softwarePackage='metamorph'; % default software for setup1
-    elseif strcomp(p.setup,'setup2') 
+    elseif strcmp(p.setup,'setup2') 
         p.softwarePackage='micromanager'; % default software for setup2
     else
         p.softwarePackage='metamorph'; % default software in general
@@ -339,7 +339,7 @@ end
 % if camera is not set manually, set it now to hamamatsu (the setup1 new one from 2014/11)
 if ~existfield(p,'camera')
     if strcmp(p.setup,'setup1')
-        p.camera='coolsnap'; % default camera for setup1 % MW 2014/12 backwards compatib.
+        p.camera='coolsnap'; % default camera for setup1 % MW 2014/12 backwards compatib. (= old camera not used any more)
     elseif strcmp(p.setup,'setup2')
         p.camera='hamamatsu2'; % default camera for setup2
     else

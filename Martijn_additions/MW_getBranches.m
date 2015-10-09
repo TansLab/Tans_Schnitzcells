@@ -1,7 +1,8 @@
 % function branches = MW_getBranches(p, s, varargin)
 %
 % MW_getBranches is a modified version of DJK_getBranches, the section how
-% a timewindow is selected is updated.
+% a timewindow is selected is updated. (I did this because I encountered
+% some issues with the previous version when fitTime(1)>0.)
 %
 % DJK_getBranches takes schnitzcells and returns branch data of
 % particular branches & defined data. 

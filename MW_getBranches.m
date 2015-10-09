@@ -1,4 +1,7 @@
-% function branches = DJK_getBranches(p, s, varargin)
+% function branches = MW_getBranches(p, s, varargin)
+%
+% MW_getBranches is a modified version of DJK_getBranches, the section how
+% a timewindow is selected is updated.
 %
 % DJK_getBranches takes schnitzcells and returns branch data of
 % particular branches & defined data. 
@@ -59,7 +62,7 @@
 %                     (default: all timepoints)
 %
 
-function branches = DJK_getBranches(p, s, varargin)
+function branches = MW_getBranches(p, s, varargin)
 
 %--------------------------------------------------------------------------
 % Input error checking
@@ -240,124 +243,35 @@ for schnitzNr = length(s):-1:1
 end
 %--------------------------------------------------------------------------
 
-
 %--------------------------------------------------------------------------
 % LOOP OVER BRANCHES AND REMOVE DATA OUTSIDE TIME FRAME
 %--------------------------------------------------------------------------
-% remove branches which don't overlap at all with fitTime. Can affect
-% weighing! NW2012-09-12
-removeBranchNrs=[];
-for br=1:length(branches)
-    if max(branches(br).(timeField))<p.fitTime(1);
-        removeBranchNrs=[removeBranchNrs, br];
-        disp('')
-        disp(['Will delete short branch ' num2str(br) '. Can affect weighing.']);
-    end
-end
-branches(removeBranchNrs)=[];
-% end NW
-
-
-% DETERMINE TIME FRAME FOR ALL BRANCHES
-% Throw all recored times on a pile
-all_time_data = sort([branches.(timeField)]);
-% Find which is closest to the given boundary
-idx = find(all_time_data >= p.fitTime(1));
-% Store that one
-timeFrame(1) = all_time_data(idx(1));
-% Idem for other boundary
-idx = find(all_time_data <= p.fitTime(2));
-timeFrame(2) = all_time_data(idx(end));
-
-disp(['---------------------------------------------------------------']);
-disp(['fitTime            : ' num2str(round(p.fitTime(1))) ' mins till ' num2str(round(p.fitTime(2))) ' mins']);
-disp(['useForPlot time    : ' num2str(round(min(all_time_data))) ' mins till ' num2str(round(max(all_time_data))) ' mins']);
-disp(['timeFrame          : ' num2str(round(timeFrame(1))) ' mins till ' num2str(round(timeFrame(2))) ' mins']);
-disp(['---------------------------------------------------------------']);
-
-%branches=branches(2:end); % blubb NW2012-05 (manually delete branches that collide with fitTime (errormessage in loop below)
-% loop over branches
+% Which fields to process, see below
+uniqueFieldsToProcess = unique(p.dataFields); % see below
+uniqueFieldsToProcess{end+1} = 'schnitzNrs';
+% Loop over branches
 for branchNr = 1:length(branches)
-  
-  min_idx = find(branches(branchNr).(timeField)>=timeFrame(1));
-  max_idx = find(branches(branchNr).(timeField)<=timeFrame(2));
-  
-  if length(min_idx)==0 | length(max_idx)==0 
-      disp('error with min_idx or max_idx'); 
-  end
-  %branchNr %debug
-  
-  startTimeWindowIdx=min_idx(1);
-  endTimeWindowIdx=max_idx(end);  
-  
-  % alter branches
-  branches(branchNr).schnitzNrs = branches(branchNr).schnitzNrs(startTimeWindowIdx:endTimeWindowIdx);
-  % This can lead to e.g. wrong time fields if a timefield with more
-  % entries (e.g. R_time) is cut to a time field with less entries (e.g.
-  % dR5_time)
-  % ***
-  % and: if errormessage: 2 options (dependeing on error):
-  % - if one branch is too short, delete it out of the "branches"right
-  % before this loop
-  % - if fitTime(2) is too high (larger than framerange), rates will be one
-  % entry short compared to concentrations. lower fitTime(2) a bit. (NW
-  % 2012-06-15)
-  for i = 1:length(p.dataFields)
-    field = p.dataFields{i};
     
-      % debug
-      if endTimeWindowIdx>numel(branches(branchNr).(field))
-          warning('Issue detected! Only proceed with caution! Check whether this is correct!');
-          
-         % Debugging:     
-         disp(['branchNr = ' num2str(branchNr)]); 
-         disp(['field = ' field]); 
-         disp(['min_idx(1) = ' num2str(min_idx(1))]); 
-         disp(['max_idx(end) = ' num2str(max_idx(end))]); 
-         disp(['length(branches(branchNr).(field)) = ' num2str(length(branches(branchNr).(field)))]); 
-         disp(['----------------------------------------------------------']);      
-         
-         disp('Setting endTimeWindowIdx to numel(branches(branchNr).(field))..');
-         %pause(4);
-         
-         % This type of behavior (see also comment NW above) happens when
-         % fields have incosistent sizes).. 
-         % If this is the case for a load of branches, your data will get
-         % screwed..
-         endTimeWindowIdx = numel(branches(branchNr).(field));
-      end
-          
-    branches(branchNr).(field) = branches(branchNr).(field)(startTimeWindowIdx:endTimeWindowIdx);
-  end
+    % Find appropriate time indices
+    timeIndices = (branches(branchNr).(p.dataFields{1})>=p.fitTime(1)) & (branches(branchNr).(p.dataFields{1})<=p.fitTime(2));
+    
+    % Now apply them to all fields given (but not twice, hence "unique")
+    % Apply
+    for currentFieldIdx = 1:numel(uniqueFieldsToProcess)
+        branches(branchNr).(uniqueFieldsToProcess{currentFieldIdx}) = ...
+            branches(branchNr).(uniqueFieldsToProcess{currentFieldIdx})(timeIndices);
+    end
+        
 end
 
-% SHOW SOME OUTPUT
-min_branch_length = realmax('double');
-max_branch_length = 0;
-min_begin_time = realmax('double');
-max_begin_time = 0;
-min_end_time = realmax('double');
-max_end_time = 0;
-for branchNr = 1:length(branches)
-  min_branch_length  = min(min_branch_length, length(branches(branchNr).(timeField)) );
-  max_branch_length  = max(max_branch_length, length(branches(branchNr).(timeField)) );
-  min_begin_time  = min(min_begin_time, branches(branchNr).(timeField)(1) );
-  max_begin_time  = max(max_begin_time, branches(branchNr).(timeField)(1) );
-  min_end_time    = min(min_end_time, branches(branchNr).(timeField)(end) );
-  max_end_time    = max(max_end_time, branches(branchNr).(timeField)(end) );
-end
-disp(['sameLength = 0']);
-disp(['Number of Branches : ' num2str(length(branches))]);
-disp(['Branch time points : from ' num2str(round(min_branch_length)) ' till ' num2str(round(max_branch_length))]);
-disp(['Begin time         : from ' num2str(round(min_begin_time)) ' mins till ' num2str(round(max_begin_time)) ' mins']);
-disp(['End time           : from ' num2str(round(min_end_time)) ' mins till ' num2str(round(max_end_time)) ' mins']);
-disp(['---------------------------------------------------------------']);
+
 %--------------------------------------------------------------------------
 
 
 %--------------------------------------------------------------------------
 % IN CASE SAMELENGTH, REMOVE BRANCHES WITH SHORTER LENGTH
 %--------------------------------------------------------------------------
+
 % Check data in case we want sameLength data (remove branches that are
 % shorter than timeFrame)
 min_begin_time = min ( [branches.(timeField)] );

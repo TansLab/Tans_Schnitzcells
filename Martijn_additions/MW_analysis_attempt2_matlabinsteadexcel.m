@@ -1,27 +1,43 @@
 
+
 %% INSTRUCTIONS
 
 % Set the filepath of the configuration file (by setting CONFIGFILEPATH 
 % below), and then run this script by pressing "run and advance" for each 
 % section.
 
+%% TODOs
+
+% (1)
+% Note sure whether preliminary analysis should save as much to the
+% schnitzcells .mat file as it does now. Maybe it is smarter to separate
+% the info that analyis saves to a separate file. (This might have been
+% implemented better in the excell files with command lists that were
+% previously used..)
+
 %% It is very important to supply the path to the correct dataset here!
-CONFIGFILEPATH = 'F:\A_Tans2_step1_incoming_not_backed_up\2015-09-16\Schnitzcells_config_fullAnalysis_2015_09_16_pos1.xlsx';
+CONFIGFILEPATH = 'F:\A_Tans1_step1_incoming_not_backed_up\2015-10-20\Schnitzcells_Analysis_Config_2015_10_20_pos1.xlsx';
+ANALYSISTYPE = 1; % 1 = preliminary, 2 = full
+
+%% Parameters you SHOULD NOT change
+EXCELREADSTART = 14; % line where list of parameters starts in Excel file.
 
 %% Read configuration settings from excel file.
 
 % One can execute this section again to reload settings 
 % Note that these are then not immediate parsed to the "p" struct.
-settings = MW_readsettingsfromexcelfile(CONFIGFILEPATH)
+[settings, alldata] = MW_readsettingsfromexcelfile(CONFIGFILEPATH)
 
 %% Double check whether to continue
 % This step is mainly to prevent accidentally running whole script 
-myAnswer = questdlg(['Loaded ' CONFIGFILEPATH ', do you want to continue?'],'Confirmation required.','Yes','No','No');
+analysisTypes = {'preliminary','full'}
+
+myAnswer = questdlg(['Loaded ' CONFIGFILEPATH ', for ' analysisTypes{ANALYSISTYPE} ' analysis do you want to continue?'],'Confirmation required.','Yes','No','No');
 if strcmp(myAnswer, 'No') || strcmp(myAnswer, 'Cancel')
     error('Analysis aborted.');
 end
 
-%% Now make a vector with parameter values that schnitzcells scripts can handle.
+%% Now make a vector with parameter values that schnitzcells scripts can handle. (and some misc. other admin)
 
 disp('Now creating ''p'' struct from settings struct.');
 
@@ -43,6 +59,15 @@ p = DJK_initschnitz(settings.positionName,settings.movieDate,'e.coli.amolf','roo
 % (This is done to accomodate cropping.)
 p.imageDir = [settings.rootDir settings.movieDate '\' settings.positionName '\']
 
+% Set framerange according to analysis type
+if ANALYSISTYPE == 1 % fast analysis
+    currentFrameRange = settings.frameRangePreliminary;
+elseif ANALYSISTYPE == 2 % full analysis
+    currentFrameRange = settings.frameRangeFull;
+else
+    error('No analysis type speficied');
+end
+
 %% Crop images
 
 % Crop images 
@@ -50,8 +75,31 @@ p.imageDir = [settings.rootDir settings.movieDate '\' settings.positionName '\']
 
 % Crop images
 % Puts cropped images in new directory, which gets the suffix 
-DJK_cropImages_3colors(p, settings.frameRangeFull, settings.cropLeftTop, ...
-    settings.cropRightBottom, 'cropName', [settings.positionName settings.cropSuffix]);
+if ANALYSISTYPE == 1
+    % Determine crop area
+    [settings.cropLeftTop, settings.cropRightBottom] = MW_determinecroparea(p, settings.frameRangePreliminary);
+    
+    % save crop area to excel file
+    myAnswer = questdlg(['Save croparea to Excel file (close it first)?'],'Confirmation required.','Yes','No','No');
+    if strcmp(myAnswer, 'Yes')
+        ExcelcropLeftTopIndex = find(strcmp({alldata{:,1}},'cropLeftTop'))+EXCELREADSTART-1; % find line w. cropLeftTop field.
+        xlswrite(CONFIGFILEPATH,{mat2str(settings.cropLeftTop)},['B' num2str(ExcelcropLeftTopIndex) ':B' num2str(ExcelcropLeftTopIndex) '']); % write value to it
+        ExcelcropRightBottomIndex = find(strcmp({alldata{:,1}},'cropRightBottom'))+EXCELREADSTART-1; % find line w. cropRightBottom field.    
+        xlswrite(CONFIGFILEPATH,{mat2str(settings.cropRightBottom)},['B' num2str(ExcelcropRightBottomIndex) ':B' num2str(ExcelcropRightBottomIndex) '']); % write value to it
+    end
+        
+    % Close figure from crop popup
+    close(gcf);
+    
+    % Crop images
+    DJK_cropImages_3colors(p, settings.frameRangePreliminary, settings.cropLeftTop, ...
+        settings.cropRightBottom, 'cropName', [settings.positionName settings.cropSuffix]);    
+elseif ANALYSISTYPE == 2    
+    DJK_cropImages_3colors(p, settings.frameRangeFull, settings.cropLeftTop, ...
+        settings.cropRightBottom, 'cropName', [settings.positionName settings.cropSuffix]);
+else
+    error('Anslysistype not specified');
+end
 
 % Update p accordingly.
 % =========================================================================
@@ -72,12 +120,12 @@ disp('Done cropping');
 % p.useFullImage=1; % forces to use full image for segmentation
 % p.overwrite=0; % overwrite existing files
 
-PN_segmoviephase_3colors(p,'segRange', settings.frameRangeFull,'slices', settings.slices,...
+PN_segmoviephase_3colors(p,'segRange', currentFrameRange,'slices', settings.slices,...
     'rangeFiltSize', settings.rangeFiltSize,'maskMargin', settings.maskMargin,'LoG_Smoothing',...
     settings.LoG_Smoothing,'minCellArea', settings.minCellArea,...
     'GaussianFilter', settings.GaussianFilter,'minDepth', settings.minDepth,'neckDepth', settings.neckDepth);
 
-PN_copySegFiles(p,'segRange', settings.frameRangeFull,'slices', settings.slices,...
+PN_copySegFiles(p,'segRange', currentFrameRange,'slices', settings.slices,...
     'rangeFiltSize', settings.rangeFiltSize,'maskMargin', settings.maskMargin,'LoG_Smoothing',...
     settings.LoG_Smoothing,'minCellArea', settings.minCellArea,...
     'GaussianFilter', settings.GaussianFilter,'minDepth', settings.minDepth,'neckDepth', settings.neckDepth);
@@ -88,82 +136,103 @@ p.showAll = 1; % show all segmented frames to user
 % Let user now section is done by sound
 mysound=load('gong'); sound(mysound.y);
 
-% Start the manual checking by user
-PN_manualcheckseg(p,'manualRange',settings.frameRangeFull,'override',0,'assistedCorrection',1); % ADVANCED PARAMETERS in fn arguments
+%% Start the manual checking by user
+if ANALYSISTYPE==1
+    assistedYesNo=0;
+elseif ANALYSISTYPE==2
+    assistedYesNo=1;
+end
+
+PN_manualcheckseg(p,'manualRange',currentFrameRange,'override',0,'assistedCorrection',assistedYesNo); % ADVANCED PARAMETERS in fn arguments
 
 
 %% Perform quick analysis of segmentation
-DJK_analyzeSeg(p,'manualRange',settings.frameRangeFull,'onscreen',1);
+DJK_analyzeSeg(p,'manualRange',currentFrameRange,'onscreen',1);
+%close(gcf);
 
 %% Perform tracking, check tracking, make problem movie and correct
 % Iterate this section until no problems are listed any more in:
 % \analysis\tracking\manualRangeX_Y\posZcrop-tracking.txt
 % iterate these commands (also partially redundant w. above) to correct segmentation
-p.overwrite=0; % ADVANCED SETTING
-p.showAll = 1; % show all segmented frames to user
 
-% Alternative trackers one can try:
-% slow but more robust
-%NW_tracker_centroid_vs_area(p,'manualRange', [1:244]); 
-% fast but fails often
-%MW_tracker(p,'manualRange', [1:244]); 
-% Default one
-DJK_tracker_djk(p,'manualRange', settings.frameRangeFull); % default tracker
+if ANALYSISTYPE == 1 % fast
+    DJK_trackcomplete(p,'trackRange',currentFrameRange,'trackMethod','singleCell');
+elseif ANALYSISTYPE == 2 % full
+    p.overwrite=0; % ADVANCED SETTING
+    p.showAll = 1; % show all segmented frames to user
 
-% Find problem cells
-problems = DJK_analyzeTracking(p,'manualRange', settings.frameRangeFull, 'pixelsMoveDef', 15, 'pixelsLenDef', [-4 13]);
-p.problemCells = problems;
+    % Alternative trackers one can try:
+    % slow but more robust
+    %NW_tracker_centroid_vs_area(p,'manualRange', [1:244]); 
+    % fast but fails often
+    %MW_tracker(p,'manualRange', [1:244]); 
+    % Default one
+    DJK_tracker_djk(p,'manualRange', currentFrameRange); % default tracker
 
-% Create lookup table for frame label <-> schnitz label
-p.slookup=MW_makeslookup(p);
+    % Find problem cells
+    problems = DJK_analyzeTracking(p,'manualRange', currentFrameRange, 'pixelsMoveDef', 15, 'pixelsLenDef', [-4 13]);
+    p.problemCells = problems;
 
-% Let user know we're done
-mysound=load('gong'); sound(mysound.y);
+    % Create lookup table for frame label <-> schnitz label
+    p.slookup=MW_makeslookup(p);
 
-% Manual check again 
-% Since "p" now contains the lookup table, and problemcells is defined, it
-% will highlight the problemcells.
-% Note that when one performs manual corrections to a frame, the mapping is
-% not correct any more.
-PN_manualcheckseg(p,'manualRange',settings.frameRangeFull,'override',p.overwrite,'assistedCorrection',0); % assisted correction of because problem cells highlighted
+    % Let user know we're done
+    mysound=load('gong'); sound(mysound.y);
+
+    % Manual check again 
+    % Since "p" now contains the lookup table, and problemcells is defined, it
+    % will highlight the problemcells.
+    % Note that when one performs manual corrections to a frame, the mapping is
+    % not correct any more.
+    PN_manualcheckseg(p,'manualRange',currentFrameRange,'override',p.overwrite,'assistedCorrection',0); % assisted correction of because problem cells highlighted
+else
+    error('ANALYSISTYPE not speficied');
+end
 
 %% Once above section has been iterated to satisfaction make sure to remove problemCells field from p
 % (Because movies later also work with this.)
-p =rmfield(p,'problemCells');
+if ANALYSISTYPE == 2
+    p =rmfield(p,'problemCells');
+end
 
 %% Make movie that allows you to double check the segmentation & tracking
 
-% User info
-if isfield(p, 'problemCells')
-    disp('p.problemCells field exists, will make movie of those frames only.');
+if ANALYSISTYPE == 2
+
+    % User info
+    if isfield(p, 'problemCells')
+        disp('p.problemCells field exists, will make movie of those frames only.');
+    end
+
+    % Make movie
+    DJK_makeMovie (p, 'tree', 'schAll', 'stabilize', 1,'manualRange',currentFrameRange);
+
+    % User info
+    disp(['Result written to ' p.analysisDir 'movies\']);
+
+    %{
+    % Other movie making options
+    DJK_makeMovie(p, 'tree', 'schAll', 'stabilize', 1,'problemCells',problems);
+    DJK_makeMovie (p, 'tree', 'cellno', 'stabilize', 1,'problemCells',problems);
+    p=rmfield(p,'problemCells')
+    DJK_makeMovie (p, 'tree', 'cellno', 'stabilize', 1);
+    %DJK_makeMovie (p, 'tree', 'schAll', 'stabilize', 1);
+    %}
+
+    mysound=load('gong'); sound(mysound.y);
 end
-    
-% Make movie
-DJK_makeMovie (p, 'tree', 'schAll', 'stabilize', 1,'manualRange',settings.frameRangeFull);
-
-% User info
-disp(['Result written to ' p.analysisDir 'movies\']);
-
-%{
-% Other movie making options
-DJK_makeMovie(p, 'tree', 'schAll', 'stabilize', 1,'problemCells',problems);
-DJK_makeMovie (p, 'tree', 'cellno', 'stabilize', 1,'problemCells',problems);
-p=rmfield(p,'problemCells')
-DJK_makeMovie (p, 'tree', 'cellno', 'stabilize', 1);
-%DJK_makeMovie (p, 'tree', 'schAll', 'stabilize', 1);
-%}
-
-mysound=load('gong'); sound(mysound.y);
 
 %% Create backup of segtrack
-NW_Backup_SegTrack(p);
+if ANALYSISTYPE == 2
+    NW_Backup_SegTrack(p);
+end
 
 %% Start of correcting fluor
 MAXSHIFT = 10;
 
 % Initialization, applies to all colors
 % ===
-NW_initializeFluorData(p,'manualRange', settings.frameRangeFull);
+NW_initializeFluorData(p,'manualRange', currentFrameRange);
 % Load PSF (color-independent)
 load(settings.fluorPointSpreadFunctionPath, 'PSF');
     
@@ -188,10 +257,10 @@ for colorIdx = 1:3
     
     % Finding shifts.
     disp('Looking for shifts');
-    optimalShift = DJK_getFluorShift_anycolor(p,'manualRange', settings.frameRangeFull,'fluorcolor',currentFluor,'maxShift',MAXSHIFT);
+    optimalShift = DJK_getFluorShift_anycolor(p,'manualRange', currentFrameRange,'fluorcolor',currentFluor,'maxShift',MAXSHIFT);
     disp('Correcting');
     % Correct images (shading, background).
-    DJK_correctFluorImage_anycolor(p, flatfield, shading, replace,'manualRange', settings.frameRangeFull,  'fluorShift', optimalShift, 'deconv_func', @(im) deconvlucy(im, PSF),'fluorcolor',currentFluor,'minimalMode',0);
+    DJK_correctFluorImage_anycolor(p, flatfield, shading, replace,'manualRange', currentFrameRange,  'fluorShift', optimalShift, 'deconv_func', @(im) deconvlucy(im, PSF),'fluorcolor',currentFluor,'minimalMode',0);
     
 end
 
@@ -201,6 +270,8 @@ DJK_compileSchnitzImproved_3colors(p,'quickMode',0);
 
 % Let user hear we're done
 mysound=load('gong'); sound(mysound.y);
+
+disp('Done correcting fluor part I.');
 
 %% Now calculate lengths and add them to schnitzcells struct
 % Some of the fluorescence analysis also needs the fields generated here
@@ -215,7 +286,9 @@ DJK_addToSchnitzes_length(p);
 DJK_addToSchnitzes_mu(p, 'frameSizes', settings.muWindow);
 %DJK_addToSchnitzes_mu(p, 'onScreen', 1, 'frameSizes', [5, 9]);
 
+% Let user know we're done
 mysound=load('gong'); sound(mysound.y);
+disp('Done calculating lengths.');
 
 %% Continue with fluor again now
 
@@ -312,26 +385,104 @@ for colorIdx = 1:3
     NW_saveSchnitzcells(p,schnitzcells); 
 end
 
+% Let user know we're done
+mysound=load('gong'); sound(mysound.y);
 disp('Done with fluor part II.');
+
+%% For preliminary analysis, create some data output
+%  ===
+
+if ANALYSISTYPE==1 % fast
+
+    % Output directory
+    myOutputDir = [p.dateDir 'outputSummary\'];
+
+    % Obtain schnitzcells
+    [p,schnitzcells] = DJK_compileSchnitzImproved_3colors(p,'quickMode',1);
+
+    % Fit mu
+    [fitTime, fitMu] = DJK_analyzeMu(p, schnitzcells, 'onScreen', 1,'fitTime',[0 10000],'DJK_saveDir',myOutputDir);
+    close(gcf);
+    %[fitTime, fitMu] = DJK_analyzeMu(p, schnitzcells, 'xlim', [0 900], 'onScreen', 1,'fitTime',[0 10000]);
+
+    % Again loop over colors, plot signal for each
+    fluorColors = {'fluor1','fluor2','fluor3'}; % ugly but compatible w. legacy - MW
+    fitFluorMean = nan(1,3); fitFluorVariance = nan(1,3);
+    for colorIdx = 1:3
+
+        % Adminstration
+        % Select current string w. color identifier (fluor1, ..)    
+        currentFluor = fluorColors{colorIdx};
+        if strcmp(p.(currentFluor),'none') || strcmp(p.(currentFluor),'None')
+            disp([currentFluor ' not set, assuming you don''t have more fluor colors.']);
+            break
+        end
+
+        % plot fluor behavior
+        fluorFieldName = [upper(p.(currentFluor)(1)) '5_mean_all'];
+        [fitFluorMean(colorIdx), fitFluorVariance(colorIdx)] = DJK_plot_avColonyOverTime(p, schnitzcells, fluorFieldName, 'fitTime', fitTime, 'onScreen', 1,'DJK_saveDir',myOutputDir);
+        close(gcf);
+        %DJK_plot_avColonyOverTime(p, schnitzcells, 'C5_mean_all', 'xlim', [0 900], 'ylim', [0 150], 'fitTime', fitTime, 'onScreen',1);
+    end
+
+    numberofSchnitzesInLast = MW_countcellsinlastframe(schnitzcells);
+
+    % Write to summary file
+    summaryParametersNames = {'#Schnitzes in last frame', 'fitMu', 'fitTime(1)', 'fitTime(2)', 'fitFluorMean1', 'fitFluorVariance1','fitFluorMean2', 'fitFluorVariance2','fitFluorMean3', 'fitFluorVariance3'}
+    summaryParameters = [numberofSchnitzesInLast, fitMu, fitTime, fitFluorMean, fitFluorVariance]
+
+    % obtain the number of this position (e.g. pos1 => 1)
+    posNumber = str2num(p.movieName(regexp(p.movieName,'[*\d]')))
+    
+    lineToWriteTo = num2str(posNumber+1);
+    
+    % Output to excel sheet
+    xlswrite([myOutputDir 'summaryParametersPreliminary.xls'],{'Identifier'},['A1:A1'])
+    xlswrite([myOutputDir 'summaryParametersPreliminary.xls'],{[p.movieDate '_' p.movieName]},['A' lineToWriteTo ':' 'A' lineToWriteTo])
+    
+    for i = 1:numel(summaryParameters)
+        letterToWriteTo = ['' i+64+1]; % +1 since start at B
+        %disp(['writing ' [letterToWriteTo lineToWriteTo]]);
+        xlswrite([myOutputDir 'summaryParametersPreliminary.xls'],{summaryParametersNames{i}},[letterToWriteTo '1:' letterToWriteTo '1'])
+        xlswrite([myOutputDir 'summaryParametersPreliminary.xls'],summaryParameters(i),[letterToWriteTo lineToWriteTo ':' letterToWriteTo lineToWriteTo])
+    end
+
+    % Save output to .mat file (update the matfile)
+    if exist([myOutputDir 'summaryParametersPreliminary.mat'],'file') == 2
+        load([myOutputDir 'summaryParametersPreliminary.mat'],'thedata');
+    end
+    thedata(posNumber).summaryParameters = summaryParameters;
+    thedata(posNumber).settings = settings;
+    thedata(posNumber).p = p; % "settings" and "p" are a bit redundant for historic reasons.
+    save([myOutputDir 'summaryParametersPreliminary.mat'],'thedata','summaryParametersNames');
+    
+disp('Done making summary preliminary analysis.');    
+    
+end
+
 
 %% DONE
 
 % We are done with settings up schnitzcells structure! All data is saved.
 % You can proceed with analyzing the data..
 
-% Load this dataset using
-% =========================================================================
-p = DJK_initschnitz([settings.positionName settings.cropSuffix], settings.movieDate,'e.coli.AMOLF','rootDir',...
- settings.rootDir, 'cropLeftTop', settings.cropLeftTop, 'cropRightBottom', settings.cropRightBottom,...
-     'fluor1',settings.fluor1,...
-     'fluor2',settings.fluor2,...
-     'fluor3',settings.fluor3,...
-     'setup',settings.setup,...
-     'softwarePackage',settings.softwarePackage,...
-     'camera',settings.camera);
-     
-[p,schnitzcells] = DJK_compileSchnitzImproved_3colors(p,'quickMode',1);
-% =========================================================================
+if exist('LOADDATASETATEND','var'), if LOADDATASETATEND
+
+    % Load this dataset using
+    % =========================================================================
+    p = DJK_initschnitz([settings.positionName settings.cropSuffix], settings.movieDate,'e.coli.AMOLF','rootDir',...
+     settings.rootDir, 'cropLeftTop', settings.cropLeftTop, 'cropRightBottom', settings.cropRightBottom,...
+         'fluor1',settings.fluor1,...
+         'fluor2',settings.fluor2,...
+         'fluor3',settings.fluor3,...
+         'setup',settings.setup,...
+         'softwarePackage',settings.softwarePackage,...
+         'camera',settings.camera);
+
+    [p,schnitzcells] = DJK_compileSchnitzImproved_3colors(p,'quickMode',1);
+    % =========================================================================
+    
+end, end
 
 
 

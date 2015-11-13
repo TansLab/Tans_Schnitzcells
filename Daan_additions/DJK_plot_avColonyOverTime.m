@@ -283,7 +283,7 @@ fit_variance_frame_corrected = sum( (fit_x - fit_mean_frame_corrected).^2 .* fit
 %--------------------------------------------------------------------------
 % Make Figure Name
 figureName = ['av_' field ' ___time']; % DJK 090319 was field ' ___ ' field
-figureFileName = ['av_' field '___time' ]; % DJK 090319 was field ' ___ ' field
+figureFileName = [p.movieName '_av_' field '___time' ]; % DJK 090319 was field ' ___ ' field
 figureTitle = [p.movieDate ' ' p.movieName ' for ' num2str(length([data.x])) ' schnitzes in folder: schnitzcells\\' p.selectionName];
 figureXlabel = ['time (mins)'];
 figureYlabel = ['average ' field];

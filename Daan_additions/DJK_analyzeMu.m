@@ -221,7 +221,7 @@ end
 %--------------------------------------------------------------------------
 % Make Figure Name
 figureName = ['mu_' p.muField]; 
-figureFileName = ['mu_' p.muField]; 
+figureFileName = [p.movieName '_mu_' p.muField]; 
 
 % determine which data will be used for fitting
 if ~isempty(p.fitTime) % Edit MW 2014-3-13; bugfix

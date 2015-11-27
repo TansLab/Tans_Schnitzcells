@@ -65,7 +65,7 @@ if ~isfield(p,'segRange')
     error('Field segRange empty : please specify the images number to copy.')
 end
 if ~existfield(p,'overwrite')                         %minimum neck width to cut a too long cell
-    p.overwrite = 1;
+    p.overwrite = 0;
 end
 
 

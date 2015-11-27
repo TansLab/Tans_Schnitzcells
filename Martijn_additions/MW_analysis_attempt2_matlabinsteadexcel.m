@@ -16,8 +16,8 @@
 % previously used..)
 
 %% It is very important to supply the path to the correct dataset here!
-CONFIGFILEPATH = 'F:\A_Tans1_step1_incoming_not_backed_up\2015-10-20\Schnitzcells_Analysis_Config_2015_10_20_pos1.xlsx';
-ANALYSISTYPE = 1; % 1 = preliminary, 2 = full
+CONFIGFILEPATH = 'F:\A_Tans1_step1_incoming_not_backed_up\2015-10-20\Schnitzcells_Analysis_Config_2015_10_20_pos2.xlsx';
+ANALYSISTYPE = 2; % 1 = preliminary, 2 = full
 
 %% Parameters you SHOULD NOT change
 EXCELREADSTART = 14; % line where list of parameters starts in Excel file.
@@ -27,6 +27,11 @@ EXCELREADSTART = 14; % line where list of parameters starts in Excel file.
 % One can execute this section again to reload settings 
 % Note that these are then not immediate parsed to the "p" struct.
 [settings, alldata] = MW_readsettingsfromexcelfile(CONFIGFILEPATH)
+
+%% Some hard coded parameters
+
+% Output directory for figures etc.
+MYOUTPUTDIR = [p.dateDir 'outputSummary\'];
 
 %% Double check whether to continue
 % This step is mainly to prevent accidentally running whole script 
@@ -98,7 +103,7 @@ elseif ANALYSISTYPE == 2
     DJK_cropImages_3colors(p, settings.frameRangeFull, settings.cropLeftTop, ...
         settings.cropRightBottom, 'cropName', [settings.positionName settings.cropSuffix]);
 else
-    error('Anslysistype not specified');
+    error('Analysis type not specified');
 end
 
 % Update p accordingly.
@@ -136,6 +141,29 @@ p.showAll = 1; % show all segmented frames to user
 % Let user now section is done by sound
 mysound=load('gong'); sound(mysound.y);
 
+% To manually redo 1 frame, execute this code manually:
+if 0    
+    p.overwrite=1;
+    TOREDOFRAME = 174;
+    theOriginalFrameRange = currentFrameRange; currentFrameRange = TOREDOFRAME;
+    
+    SLICESTEMPORARY = [1 2 3]; % instead of settings.slices
+    LOGSMOOTHINGTEMPORARY = 3; % instead of settings.LoG_Smoothing
+    
+    PN_segmoviephase_3colors(p,'segRange', currentFrameRange,'slices', SLICESTEMPORARY,...
+        'rangeFiltSize', settings.rangeFiltSize,'maskMargin', settings.maskMargin,'LoG_Smoothing',...
+        LOGSMOOTHINGTEMPORARY,'minCellArea', settings.minCellArea,...
+        'GaussianFilter', settings.GaussianFilter,'minDepth', settings.minDepth,'neckDepth', settings.neckDepth);
+
+    PN_copySegFiles(p,'segRange', currentFrameRange,'slices', SLICESTEMPORARY,...
+        'rangeFiltSize', settings.rangeFiltSize,'maskMargin', settings.maskMargin,'LoG_Smoothing',...
+        LOGSMOOTHINGTEMPORARY,'minCellArea', settings.minCellArea,...
+        'GaussianFilter', settings.GaussianFilter,'minDepth', settings.minDepth,'neckDepth', settings.neckDepth);    
+   
+    currentFrameRange = theOriginalFrameRange;
+    p.overwrite=0;
+end
+
 %% Start the manual checking by user
 if ANALYSISTYPE==1
     assistedYesNo=0;
@@ -147,7 +175,7 @@ PN_manualcheckseg(p,'manualRange',currentFrameRange,'override',0,'assistedCorrec
 
 
 %% Perform quick analysis of segmentation
-DJK_analyzeSeg(p,'manualRange',currentFrameRange,'onscreen',1);
+DJK_analyzeSeg(p,'manualRange',currentFrameRange,'onscreen',1,'DJK_saveDir',MYOUTPUTDIR);
 %close(gcf);
 
 %% Perform tracking, check tracking, make problem movie and correct
@@ -394,14 +422,11 @@ disp('Done with fluor part II.');
 
 if ANALYSISTYPE==1 % fast
 
-    % Output directory
-    myOutputDir = [p.dateDir 'outputSummary\'];
-
     % Obtain schnitzcells
     [p,schnitzcells] = DJK_compileSchnitzImproved_3colors(p,'quickMode',1);
 
     % Fit mu
-    [fitTime, fitMu] = DJK_analyzeMu(p, schnitzcells, 'onScreen', 1,'fitTime',[0 10000],'DJK_saveDir',myOutputDir);
+    [fitTime, fitMu] = DJK_analyzeMu(p, schnitzcells, 'onScreen', 1,'fitTime',[0 10000],'DJK_saveDir',MYOUTPUTDIR);
     close(gcf);
     %[fitTime, fitMu] = DJK_analyzeMu(p, schnitzcells, 'xlim', [0 900], 'onScreen', 1,'fitTime',[0 10000]);
 
@@ -420,7 +445,7 @@ if ANALYSISTYPE==1 % fast
 
         % plot fluor behavior
         fluorFieldName = [upper(p.(currentFluor)(1)) '5_mean_all'];
-        [fitFluorMean(colorIdx), fitFluorVariance(colorIdx)] = DJK_plot_avColonyOverTime(p, schnitzcells, fluorFieldName, 'fitTime', fitTime, 'onScreen', 1,'DJK_saveDir',myOutputDir);
+        [fitFluorMean(colorIdx), fitFluorVariance(colorIdx)] = DJK_plot_avColonyOverTime(p, schnitzcells, fluorFieldName, 'fitTime', fitTime, 'onScreen', 1,'DJK_saveDir',MYOUTPUTDIR);
         close(gcf);
         %DJK_plot_avColonyOverTime(p, schnitzcells, 'C5_mean_all', 'xlim', [0 900], 'ylim', [0 150], 'fitTime', fitTime, 'onScreen',1);
     end
@@ -437,24 +462,24 @@ if ANALYSISTYPE==1 % fast
     lineToWriteTo = num2str(posNumber+1);
     
     % Output to excel sheet
-    xlswrite([myOutputDir 'summaryParametersPreliminary.xls'],{'Identifier'},['A1:A1'])
-    xlswrite([myOutputDir 'summaryParametersPreliminary.xls'],{[p.movieDate '_' p.movieName]},['A' lineToWriteTo ':' 'A' lineToWriteTo])
+    xlswrite([MYOUTPUTDIR 'summaryParametersPreliminary.xls'],{'Identifier'},['A1:A1'])
+    xlswrite([MYOUTPUTDIR 'summaryParametersPreliminary.xls'],{[p.movieDate '_' p.movieName]},['A' lineToWriteTo ':' 'A' lineToWriteTo])
     
     for i = 1:numel(summaryParameters)
         letterToWriteTo = ['' i+64+1]; % +1 since start at B
         %disp(['writing ' [letterToWriteTo lineToWriteTo]]);
-        xlswrite([myOutputDir 'summaryParametersPreliminary.xls'],{summaryParametersNames{i}},[letterToWriteTo '1:' letterToWriteTo '1'])
-        xlswrite([myOutputDir 'summaryParametersPreliminary.xls'],summaryParameters(i),[letterToWriteTo lineToWriteTo ':' letterToWriteTo lineToWriteTo])
+        xlswrite([MYOUTPUTDIR 'summaryParametersPreliminary.xls'],{summaryParametersNames{i}},[letterToWriteTo '1:' letterToWriteTo '1'])
+        xlswrite([MYOUTPUTDIR 'summaryParametersPreliminary.xls'],summaryParameters(i),[letterToWriteTo lineToWriteTo ':' letterToWriteTo lineToWriteTo])
     end
 
     % Save output to .mat file (update the matfile)
-    if exist([myOutputDir 'summaryParametersPreliminary.mat'],'file') == 2
-        load([myOutputDir 'summaryParametersPreliminary.mat'],'thedata');
+    if exist([MYOUTPUTDIR 'summaryParametersPreliminary.mat'],'file') == 2
+        load([MYOUTPUTDIR 'summaryParametersPreliminary.mat'],'thedata');
     end
     thedata(posNumber).summaryParameters = summaryParameters;
     thedata(posNumber).settings = settings;
     thedata(posNumber).p = p; % "settings" and "p" are a bit redundant for historic reasons.
-    save([myOutputDir 'summaryParametersPreliminary.mat'],'thedata','summaryParametersNames');
+    save([MYOUTPUTDIR 'summaryParametersPreliminary.mat'],'thedata','summaryParametersNames');
     
 disp('Done making summary preliminary analysis.');    
     

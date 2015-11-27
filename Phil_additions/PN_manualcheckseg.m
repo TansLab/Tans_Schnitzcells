@@ -115,7 +115,6 @@ disp('              Shift + left mouse button (or key ''7'') erases current cell
 disp('              When you''re done, press <space> to go to the next frame.')
 disp('              press <escape> to redo this frame from the original autoseg file.')
 disp('              to save progress during work on a frame, press:')
-disp('                    ''s'' to save work to memory without writing to the file.')
 disp('                    ''w'' to write a temporary partial correction to the file.')
 disp('              press ''x'' to black out an area.')
 disp('              press ''t'' to mark terraced area.')
@@ -144,6 +143,7 @@ disp('              press ''l'' to show perimeters of cell areas.')
 disp('              press ''b'' to restrict segmentation to overlaps with previous segmentation image')
 disp('                             (requires assistedCorrection mode, protential trouble after backstep '','')')
 disp('              press ''n'' to toggle fullscreen mode (go to next frame after toggling it off).')
+disp('                    ''s'' to toggle no numbers, cell numbers, schnitz numbers.')
 
 disp(' ')
 

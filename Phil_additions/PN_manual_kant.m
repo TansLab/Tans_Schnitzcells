@@ -419,9 +419,9 @@ while ~done
         %    ymin= max(min(fy) - extra, 1);
         %    ymax= min(max(fy) + extra, size(LNfull,2));
         %    newrect= [xmin ymin xmax ymax];
-        elseif cc == 's'
-            savetemp=1;
-            done=1;
+        %elseif cc == 's' % MW option was double used?
+        %    savetemp=1;
+        %    done=1;
         elseif cc == 'n' 
             
             % Addition MW to go fullscreen

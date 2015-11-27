@@ -200,118 +200,127 @@ name_rm_branch = [name_rm '_' num2str(fitTime(1)) '_' num2str(fitTime(2)) '_Conc
 
 
 %% Plot branches
-HIGHLIGHTSUSPICOUS = 1;
-YFIELDBRANCHPLOT = 3; % 3 = growth, 2 = fluor
+HIGHLIGHTSUSPICOUS = 0;
+%yfieldbranchtoplot = 3; % 3 = growth, 2 = fluor
 
-% Just some plot colors
-distinguishableColors = distinguishable_colors(numel(branchData)+1,[1 1 1]); 
+for yfieldbranchtoplot=[2,3]
 
-% Plot all branches
-figure(1); clf; hold on;
-numelBranches = numel(branchData);
-for branchIdx = 1:numelBranches
-    l = plot(branchData(branchIdx).(associatedFieldNames{1}), branchData(branchIdx).(associatedFieldNames{YFIELDBRANCHPLOT}),'-o','Color',distinguishableColors(branchIdx,:))
-    set(l, 'LineWidth', (numelBranches-branchIdx+1)/numelBranches*10);
-end
+    % Just some plot colors
+    distinguishableColors = distinguishable_colors(numel(branchData)+1,[1 1 1]); 
 
-% Brute force average branches
-branchMatrixFieldX = []; branchMatrixFieldY = [];
-for branchIdx = 1:numelBranches
-    currentXvector = branchData(branchIdx).(associatedFieldNames{1});
-    branchMatrixFieldX = [branchMatrixFieldX; currentXvector];
-    
-    currentYvector = branchData(branchIdx).(associatedFieldNames{YFIELDBRANCHPLOT});
-    branchMatrixFieldY = [branchMatrixFieldY; currentYvector];
-end
-meanXvector = mean(branchMatrixFieldX);
-meanYvector = mean(branchMatrixFieldY);
-
-% xlabel
-xlabel(associatedFieldNames{1},'Interpreter', 'None'), ylabel(associatedFieldNames{YFIELDBRANCHPLOT},'Interpreter', 'None')
-
-myXlimFig1 = max(branchData(branchIdx).(associatedFieldNames{1}));
-xlim([0, myXlimFig1]);
-myYlimFig1 = [min([0, [branchData.(associatedFieldNames{YFIELDBRANCHPLOT})]]),...
-              max([branchData.(associatedFieldNames{YFIELDBRANCHPLOT})])];
-ylim([myYlimFig1(1), myYlimFig1(2)*1.5]);
-
-
-%Set all fontsizes
-MW_makeplotlookbetter(20);
-
-
-% Plot histogram
-figure(2), clf, hold on
-allYdata = [branchData.(associatedFieldNames{YFIELDBRANCHPLOT})];
-[nelements, centers] = hist(allYdata,200)
-deltaY = centers(2)-centers(1);
-totalCount = numel(allYdata);
-%nelements=nelements./deltaY;
-%plot(centers,nelements,'or','LineWidth',2)
-bar(centers,nelements,'FaceColor','r','EdgeColor','r')
-% Fit distribution
-pd=fitdist(allYdata', 'Normal')
-fittedDistrX = [min(allYdata):(max(allYdata)-min(allYdata))/100:max(allYdata)]
-fittedDistrYnorm = normpdf(fittedDistrX,pd.mu,pd.sigma)
-fittedDistrY = fittedDistrYnorm.*totalCount.*deltaY;
-plot(fittedDistrX,fittedDistrY,'k', 'LineWidth', 3);
-%probplot(allYdata)
-MW_makeplotlookbetter(20);
-
-title(['PDF for ' associatedFieldNames{YFIELDBRANCHPLOT}],'Interpreter','None');
-xlabel(associatedFieldNames{YFIELDBRANCHPLOT},'Interpreter','None');
-ylabel('PDF(s) * N * \Deltas (counts)');
-
-% Define some axes limits
-myYlim = max(nelements)*1.1;
-ylim([0,myYlim]);
-xlim([myYlimFig1(1), myYlimFig1(2)*1.5]);
-
-% TODO make 99% confidence and plot in previous figure.
-%confidence = paramci(pd,'Alpha',.01);
-sigma2 = pd.mu + 4.*[-pd.sigma, pd.sigma];
-plot([sigma2(1),sigma2(1)],[0,myYlim],'--','Color',[.5 .5 .5],'LineWidth', 2)
-plot([sigma2(2),sigma2(2)],[0,myYlim],'--','Color',[.5 .5 .5],'LineWidth', 2)
-sigma5 = pd.mu + 5.*[-pd.sigma, pd.sigma];
-plot([sigma5(1),sigma5(1)],[0,myYlim],':','Color',[.5 .5 .5],'LineWidth', 2)
-plot([sigma5(2),sigma5(2)],[0,myYlim],':','Color',[.5 .5 .5],'LineWidth', 2)
-
-% Now also plot confidence intervals in previous figure
-figure(1), hold on;
-l1=plot([0,myXlimFig1],[sigma2(1),sigma2(1)],'--','Color',[.5 .5 .5],'LineWidth', 2)
-plot([0,myXlimFig1],[sigma2(2),sigma2(2)],'--','Color',[.5 .5 .5],'LineWidth', 2)
-l2=plot([0,myXlimFig1],[sigma5(1),sigma5(1)],':','Color',[.5 .5 .5],'LineWidth', 2)
-plot([0,myXlimFig1],[sigma5(2),sigma5(2)],':','Color',[.5 .5 .5],'LineWidth', 2)
-
-legend([l1,l2],{'2\sigma confidence','5\sigma confidence'},'location','Best');
-
-% Now list schnitzes that have suspiciously high signal:
-mySigma = sigma2;
-suspiciousBranches = []; suspiciousSchnitzes = [];
-for branchIdx = 1:numel(branchData)
-    if (     any(branchData(branchIdx).(associatedFieldNames{YFIELDBRANCHPLOT}) > mySigma(2)) ) || ...
-       (     any(branchData(branchIdx).(associatedFieldNames{YFIELDBRANCHPLOT}) < mySigma(1)) )
-        suspiciousBranches(end+1) = branchIdx;
-        if HIGHLIGHTSUSPICOUS % plot if desired
-            plot(branchData(branchIdx).(associatedFieldNames{1}), branchData(branchIdx).(associatedFieldNames{YFIELDBRANCHPLOT}),'-or','LineWidth',3)
-        end
-        %plot(branchData(branchIdx).(associatedFieldNames{1}),
-        %branchData(branchIdx).(associatedFieldNames{YFIELDBRANCHPLOT}),'-o','LineWidth',3,'Color',mycolors(c)) % MW debug
-        
-        % Find out which schnitzes are suspiciously high or low
-        locationsInThisBranch = unique(...
-            [ find(branchData(branchIdx).(associatedFieldNames{YFIELDBRANCHPLOT}) > mySigma(2)),...
-              find(branchData(branchIdx).(associatedFieldNames{YFIELDBRANCHPLOT}) < mySigma(1)) ] ...
-            );
-        suspiciousSchnitzes = [suspiciousSchnitzes branchData(branchIdx).schnitzNrs(locationsInThisBranch)];
+    % Plot all branches
+    figure(1); clf; hold on;
+    numelBranches = numel(branchData);
+    for branchIdx = 1:numelBranches
+        l = plot(branchData(branchIdx).(associatedFieldNames{1}), branchData(branchIdx).(associatedFieldNames{yfieldbranchtoplot}),'-o','Color',distinguishableColors(branchIdx,:))
+        set(l, 'LineWidth', (numelBranches-branchIdx+1)/numelBranches*10);
     end
-end
-suspiciousSchnitzes = unique(suspiciousSchnitzes)
-suspiciousBranches
 
-% Plot mean behavior
-figure(1), hold on;
-plot(meanXvector, meanYvector,'-','Color','k','LineWidth',3)
+    % Brute force average branches
+    branchMatrixFieldX = []; branchMatrixFieldY = [];
+    for branchIdx = 1:numelBranches
+        currentXvector = branchData(branchIdx).(associatedFieldNames{1});
+        branchMatrixFieldX = [branchMatrixFieldX; currentXvector];
+
+        currentYvector = branchData(branchIdx).(associatedFieldNames{yfieldbranchtoplot});
+        branchMatrixFieldY = [branchMatrixFieldY; currentYvector];
+    end
+    meanXvector = mean(branchMatrixFieldX);
+    meanYvector = mean(branchMatrixFieldY);
+
+    % xlabel
+    xlabel(associatedFieldNames{1},'Interpreter', 'None'), ylabel(associatedFieldNames{yfieldbranchtoplot},'Interpreter', 'None')
+
+    myXlimFig1 = max(branchData(branchIdx).(associatedFieldNames{1}));
+    xlim([0, myXlimFig1]);
+    myYlimFig1 = [min([0, [branchData.(associatedFieldNames{yfieldbranchtoplot})]]),...
+                  max([branchData.(associatedFieldNames{yfieldbranchtoplot})])];
+    ylim([myYlimFig1(1), myYlimFig1(2)*1.5]);
+
+
+    %Set all fontsizes
+    MW_makeplotlookbetter(20);
+    
+    % Plot histogram
+    figure(2), clf, hold on
+    allYdata = [branchData.(associatedFieldNames{yfieldbranchtoplot})];
+    [nelements, centers] = hist(allYdata,200)
+    deltaY = centers(2)-centers(1);
+    totalCount = numel(allYdata);
+    %nelements=nelements./deltaY;
+    %plot(centers,nelements,'or','LineWidth',2)
+    bar(centers,nelements,'FaceColor','r','EdgeColor','r')
+    % Fit distribution
+    pd=fitdist(allYdata', 'Normal')
+    fittedDistrX = [min(allYdata):(max(allYdata)-min(allYdata))/100:max(allYdata)]
+    fittedDistrYnorm = normpdf(fittedDistrX,pd.mu,pd.sigma)
+    fittedDistrY = fittedDistrYnorm.*totalCount.*deltaY;
+    plot(fittedDistrX,fittedDistrY,'k', 'LineWidth', 3);
+    %probplot(allYdata)
+    MW_makeplotlookbetter(20);
+
+    title(['PDF for ' associatedFieldNames{yfieldbranchtoplot}],'Interpreter','None');
+    xlabel(associatedFieldNames{yfieldbranchtoplot},'Interpreter','None');
+    ylabel('PDF(s) * N * \Deltas (counts)');
+
+    % Define some axes limits
+    myYlim = max(nelements)*1.1;
+    ylim([0,myYlim]);
+    xlim([myYlimFig1(1), myYlimFig1(2)*1.5]);
+
+    % TODO make 99% confidence and plot in previous figure.
+    %confidence = paramci(pd,'Alpha',.01);
+    sigma2 = pd.mu + 4.*[-pd.sigma, pd.sigma];
+    plot([sigma2(1),sigma2(1)],[0,myYlim],'--','Color',[.5 .5 .5],'LineWidth', 2)
+    plot([sigma2(2),sigma2(2)],[0,myYlim],'--','Color',[.5 .5 .5],'LineWidth', 2)
+    sigma5 = pd.mu + 5.*[-pd.sigma, pd.sigma];
+    plot([sigma5(1),sigma5(1)],[0,myYlim],':','Color',[.5 .5 .5],'LineWidth', 2)
+    plot([sigma5(2),sigma5(2)],[0,myYlim],':','Color',[.5 .5 .5],'LineWidth', 2)
+
+    % Now also plot confidence intervals in previous figure
+    figure(1), hold on;
+    l1=plot([0,myXlimFig1],[sigma2(1),sigma2(1)],'--','Color',[.5 .5 .5],'LineWidth', 2)
+    plot([0,myXlimFig1],[sigma2(2),sigma2(2)],'--','Color',[.5 .5 .5],'LineWidth', 2)
+    l2=plot([0,myXlimFig1],[sigma5(1),sigma5(1)],':','Color',[.5 .5 .5],'LineWidth', 2)
+    plot([0,myXlimFig1],[sigma5(2),sigma5(2)],':','Color',[.5 .5 .5],'LineWidth', 2)
+
+    legend([l1,l2],{'2\sigma confidence','5\sigma confidence'},'location','Best');
+
+    % Now list schnitzes that have suspiciously high signal:
+    mySigma = sigma2;
+    suspiciousBranches = []; suspiciousSchnitzes = [];
+    for branchIdx = 1:numel(branchData)
+        if (     any(branchData(branchIdx).(associatedFieldNames{yfieldbranchtoplot}) > mySigma(2)) ) || ...
+           (     any(branchData(branchIdx).(associatedFieldNames{yfieldbranchtoplot}) < mySigma(1)) )
+            suspiciousBranches(end+1) = branchIdx;
+            if HIGHLIGHTSUSPICOUS % plot if desired
+                plot(branchData(branchIdx).(associatedFieldNames{1}), branchData(branchIdx).(associatedFieldNames{yfieldbranchtoplot}),'-or','LineWidth',3)
+            end
+            %plot(branchData(branchIdx).(associatedFieldNames{1}),
+            %branchData(branchIdx).(associatedFieldNames{YFIELDBRANCHPLOT}),'-o','LineWidth',3,'Color',mycolors(c)) % MW debug
+
+            % Find out which schnitzes are suspiciously high or low
+            locationsInThisBranch = unique(...
+                [ find(branchData(branchIdx).(associatedFieldNames{yfieldbranchtoplot}) > mySigma(2)),...
+                  find(branchData(branchIdx).(associatedFieldNames{yfieldbranchtoplot}) < mySigma(1)) ] ...
+                );
+            suspiciousSchnitzes = [suspiciousSchnitzes branchData(branchIdx).schnitzNrs(locationsInThisBranch)];
+        end
+    end
+    suspiciousSchnitzes = unique(suspiciousSchnitzes)
+    suspiciousBranches        
+
+    % Plot mean behavior
+    figure(1), hold on;
+    plot(meanXvector, meanYvector,'-','Color','k','LineWidth',3)
+    
+    saveas(1,[myOutputFolder 'TIF_branches_' associatedFieldNames{1,yfieldbranchtoplot} '.tif']);
+    saveas(1,[myOutputFolder 'EPS_branches_' associatedFieldNames{1,yfieldbranchtoplot} '.eps'],'epsc');
+
+    saveas(2,[myOutputFolder 'TIF_PDF_' associatedFieldNames{1,yfieldbranchtoplot} '.tif']);
+    saveas(2,[myOutputFolder 'EPS_PDF_' associatedFieldNames{1,yfieldbranchtoplot} '.eps'],'epsc');
+    
+end
 
 %% Get the actual cross-corrs
 
@@ -336,6 +345,21 @@ p.extraNorm=0;
 % To calculate cross correlations, additional normalization is usually
 % performed, namely to filter out colony average behavior.
 [CorrData,composite_corr] = DJK_plot_crosscorrelation_standard_error_store(p, branch_groups, ['noise_' associatedFieldNames{1,2}],['noise_' associatedFieldNames{1,3}] ,'selectionName',name_rm_branch,'timeField',associatedFieldNames{1},'onScreen',ONSCREEN); 
+
+% For negative control, combine growth rates and fluor signal traces randomly
+branch_groupsControl = branch_groups;
+for groupIdx=1:numel(branch_groupsControl)
+    data = {branch_groupsControl(groupIdx).branches(:).(associatedFieldNames{1,3})};
+    randomizeddata = {data{randperm(numel(data))}};
+    noisedata = {branch_groupsControl(groupIdx).branches(:).(['noise_' associatedFieldNames{1,3}])};
+    noiserandomizeddata = {noisedata{randperm(numel(noisedata))}};
+    for i=1:numel(branch_groupsControl(groupIdx).branches)
+        branch_groupsControl(groupIdx).branches(i).(associatedFieldNames{1,3}) = randomizeddata{i};
+        branch_groupsControl(groupIdx).branches(i).(['noise_' associatedFieldNames{1,3}]) = randomizeddata{i};
+    end
+end
+
+[CorrDataControl, composite_corrControl] = DJK_plot_crosscorrelation_standard_error_store(p, branch_groupsControl, ['noise_' associatedFieldNames{1,2}],['noise_' associatedFieldNames{1,3}] ,'selectionName',name_rm_branch,'timeField',associatedFieldNames{1},'onScreen',ONSCREEN); 
 
 % Do we want to filter out colony average behavior for the "delayed
 % scatter" plots also? Maybe do this with noise fields?
@@ -370,15 +394,15 @@ if NOTMEANSUBTRACTED
     % Loop over different values of tau (= delays)
     myTimeTrace = [];
     numelRangeiTausCalculated = numel(rangeiTausCalculated);
-    for i = 1:numelRangeiTausCalculated
+    for groupIdx = 1:numelRangeiTausCalculated
         % Create array with the points.
-        myTimeTrace = [myTimeTrace; mean(dataPairsPerTau{rangeiTausCalculated(i)}(:,1)) , mean(dataPairsPerTau{rangeiTausCalculated(i)}(:,2))];
+        myTimeTrace = [myTimeTrace; mean(dataPairsPerTau{rangeiTausCalculated(groupIdx)}(:,1)) , mean(dataPairsPerTau{rangeiTausCalculated(groupIdx)}(:,2))];
         
         % Plot separately, color coded for amount of delay        
-        l = plot(myTimeTrace(i,1), myTimeTrace(i,2),'o');
+        l = plot(myTimeTrace(groupIdx,1), myTimeTrace(groupIdx,2),'o');
         % Color of plot
-        timeColor = [0 0 1-i/numelRangeiTausCalculated]  + ... % Starting with blue
-                    [i/numelRangeiTausCalculated 0 0];       % turning red, over time        
+        timeColor = [0 0 1-groupIdx/numelRangeiTausCalculated]  + ... % Starting with blue
+                    [groupIdx/numelRangeiTausCalculated 0 0];       % turning red, over time        
         set(l, 'Color', timeColor, 'MarkerFaceColor', timeColor);
             
     end
@@ -410,8 +434,12 @@ l=plot(iTausCalculated,correlationsPerTau,'o-r','LineWidth',2)
 myfig=figure(5),clf,hold on;
 
 % Plot DJK cross correlation function
-errorbar(CorrData(:,1),CorrData(:,2),CorrData(:,3),'x-','Color', [.5,.5,.5], 'LineWidth',2)
-l1=plot(CorrData(:,1),CorrData(:,2),'x-k','LineWidth',2)
+errorbar(CorrData(:,1),CorrData(:,2),CorrData(:,3),'s-','Color', [.5,.5,.5], 'LineWidth',2)
+l1=plot(CorrData(:,1),CorrData(:,2),'s-k','LineWidth',2)
+
+% Plot control DJK cross correlation function
+%errorbar(CorrDataControl(:,1),CorrDataControl(:,2),CorrDataControl(:,3),'x-','Color', [.5,.5,.5], 'LineWidth',2)
+l3=plot(CorrDataControl(:,1),CorrDataControl(:,2),'x-b','LineWidth',2)
 
 % Calculate appropriate x-axis assuming assuming same delta(x) as CorrData,
 % and dx is same everywhere.
@@ -428,10 +456,11 @@ l2=plot(MWxAxis,correlationsPerTau,'o-r','LineWidth',2)
 
 myxlimvalues=[min(CorrData(:,1)), max(CorrData(:,1))];
 xlim(myxlimvalues);
-ylim([-1,1]);
+ylim([-1.1,1.1]);
 plot(myxlimvalues,[0,0],'k-');
 
-legend([l1,l2],{'DJK','MW'})
+%legend([l1,l2,l3],{'DJK','MW','Control'})
+legend([l1,l2,l3],{'Lineages','Scatters','Control'})
 
 title(['DJK vs. MW R -- ' myID '_' p. movieDate  '_' p.movieName], 'Interpreter', 'none');
 xlabel('\tau (hrs)');
@@ -442,7 +471,8 @@ set(gca,'FontSize',15);
 
 plot([0,0],[-1,1],'-k');
 
-saveas(myfig,[myOutputFolder 'crosscorrs_' associatedFieldNames{1,2} '.tiff']);
+saveas(myfig,[myOutputFolder 'TIF_crosscorrs_' associatedFieldNames{1,2} '_' associatedFieldNames{1,3} '.tif']);
+saveas(myfig,[myOutputFolder 'EPS_crosscorrs_' associatedFieldNames{1,2} '_' associatedFieldNames{1,3} '.eps'],'epsc');
 
 
 
@@ -525,7 +555,8 @@ for delayIdx = rangeiTausCalculated
     xlim([  min(dataPairsPerTau{indexMidpoint}(:,1)), max(dataPairsPerTau{indexMidpoint}(:,1))  ])
     ylim([  min(dataPairsPerTau{indexMidpoint}(:,2)), max(dataPairsPerTau{indexMidpoint}(:,2))  ])
 
-    saveas(3,[myOutputFolder 'graphTauIdx_' associatedFieldNames{1,2} '_' sprintf('%05d',delayIdx) '.tiff']);
+    saveas(3,[myOutputFolder 'TIF_z_graphTauIdx_' associatedFieldNames{1,2} '_' sprintf('%05d',delayIdx) '.tif']);
+    saveas(3,[myOutputFolder 'EPS_z_graphTauIdx_' associatedFieldNames{1,2} '_' sprintf('%05d',delayIdx) '.eps'],'epsc');   
 
     % Let user know progress
     count=count+1;

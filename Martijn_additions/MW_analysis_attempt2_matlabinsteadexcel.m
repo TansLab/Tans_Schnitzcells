@@ -16,7 +16,8 @@
 % previously used..)
 
 %% It is very important to supply the path to the correct dataset here!
-CONFIGFILEPATH = 'F:\A_Tans1_step1_incoming_not_backed_up\2015-10-20\Schnitzcells_Analysis_Config_2015_10_20_pos2.xlsx';
+DATAPATH = 'F:\A_Tans1_step1_incoming_not_backed_up\2015-10-20\';
+CONFIGFILENAME = 'Schnitzcells_Analysis_Config_2015_10_20_pos2.xlsx';
 ANALYSISTYPE = 2; % 1 = preliminary, 2 = full
 
 %% Parameters you SHOULD NOT change
@@ -26,18 +27,14 @@ EXCELREADSTART = 14; % line where list of parameters starts in Excel file.
 
 % One can execute this section again to reload settings 
 % Note that these are then not immediate parsed to the "p" struct.
-[settings, alldata] = MW_readsettingsfromexcelfile(CONFIGFILEPATH)
+[settings, alldata] = MW_readsettingsfromexcelfile([DATAPATH CONFIGFILENAME])
 
-%% Some hard coded parameters
-
-% Output directory for figures etc.
-MYOUTPUTDIR = [p.dateDir 'outputSummary\'];
 
 %% Double check whether to continue
 % This step is mainly to prevent accidentally running whole script 
 analysisTypes = {'preliminary','full'}
 
-myAnswer = questdlg(['Loaded ' CONFIGFILEPATH ', for ' analysisTypes{ANALYSISTYPE} ' analysis do you want to continue?'],'Confirmation required.','Yes','No','No');
+myAnswer = questdlg(['Loaded ' [DATAPATH CONFIGFILENAME] ', for ' analysisTypes{ANALYSISTYPE} ' analysis do you want to continue?'],'Confirmation required.','Yes','No','No');
 if strcmp(myAnswer, 'No') || strcmp(myAnswer, 'Cancel')
     error('Analysis aborted.');
 end
@@ -73,6 +70,11 @@ else
     error('No analysis type speficied');
 end
 
+%% Some more hard coded parameters
+
+% Output directory for figures etc.
+MYOUTPUTDIR = [p.dateDir 'outputSummary\'];
+
 %% Crop images
 
 % Crop images 
@@ -88,9 +90,9 @@ if ANALYSISTYPE == 1
     myAnswer = questdlg(['Save croparea to Excel file (close it first)?'],'Confirmation required.','Yes','No','No');
     if strcmp(myAnswer, 'Yes')
         ExcelcropLeftTopIndex = find(strcmp({alldata{:,1}},'cropLeftTop'))+EXCELREADSTART-1; % find line w. cropLeftTop field.
-        xlswrite(CONFIGFILEPATH,{mat2str(settings.cropLeftTop)},['B' num2str(ExcelcropLeftTopIndex) ':B' num2str(ExcelcropLeftTopIndex) '']); % write value to it
+        xlswrite([DATAPATH CONFIGFILENAME],{mat2str(settings.cropLeftTop)},['B' num2str(ExcelcropLeftTopIndex) ':B' num2str(ExcelcropLeftTopIndex) '']); % write value to it
         ExcelcropRightBottomIndex = find(strcmp({alldata{:,1}},'cropRightBottom'))+EXCELREADSTART-1; % find line w. cropRightBottom field.    
-        xlswrite(CONFIGFILEPATH,{mat2str(settings.cropRightBottom)},['B' num2str(ExcelcropRightBottomIndex) ':B' num2str(ExcelcropRightBottomIndex) '']); % write value to it
+        xlswrite([DATAPATH CONFIGFILENAME],{mat2str(settings.cropRightBottom)},['B' num2str(ExcelcropRightBottomIndex) ':B' num2str(ExcelcropRightBottomIndex) '']); % write value to it
     end
         
     % Close figure from crop popup
@@ -189,7 +191,12 @@ elseif ANALYSISTYPE == 2 % full
     p.overwrite=0; % ADVANCED SETTING
     p.showAll = 1; % show all segmented frames to user
 
-    % Alternative trackers one can try:
+    % Alternative trackers one can try
+    % This is quite useful if errors occur. manualrange can be edited to
+    % two frames only. Set p.overwrite to 1. Then re-run this whole 
+    % section to update general tracking file. (p.overwrite is reset
+    % automatically above).
+    % ===
     % slow but more robust
     %NW_tracker_centroid_vs_area(p,'manualRange', [1:244]); 
     % fast but fails often
@@ -255,7 +262,7 @@ if ANALYSISTYPE == 2
     NW_Backup_SegTrack(p);
 end
 
-%% Start of correcting fluor
+%% Fluor part I: Start of correcting fluor
 MAXSHIFT = 10;
 
 % Initialization, applies to all colors
@@ -301,7 +308,7 @@ mysound=load('gong'); sound(mysound.y);
 
 disp('Done correcting fluor part I.');
 
-%% Now calculate lengths and add them to schnitzcells struct
+%% Lengths: Now calculate lengths and add them to schnitzcells struct
 % Some of the fluorescence analysis also needs the fields generated here
 
 % ADVANCED PARAMETERS
@@ -318,7 +325,7 @@ DJK_addToSchnitzes_mu(p, 'frameSizes', settings.muWindow);
 mysound=load('gong'); sound(mysound.y);
 disp('Done calculating lengths.');
 
-%% Continue with fluor again now
+%% Fluor part II: Continue with fluor again now
 
 % Again loop over colors
 fluorColors = {'fluor1','fluor2','fluor3'}; % ugly but compatible w. legacy - MW
@@ -491,6 +498,7 @@ end
 % We are done with settings up schnitzcells structure! All data is saved.
 % You can proceed with analyzing the data..
 
+% To load after full analysis is done:
 if exist('LOADDATASETATEND','var'), if LOADDATASETATEND
 
     % Load this dataset using
@@ -508,6 +516,79 @@ if exist('LOADDATASETATEND','var'), if LOADDATASETATEND
     % =========================================================================
     
 end, end
+
+%% Extra analysis for full analysis
+
+if ANALYSISTYPE==2 % full
+    
+    myOutputFolder = [DATAPATH  '\' p. movieDate  '_' p.movieName '_' settings.myID  '\'];
+    
+    p.NW_saveDir = [myOutputFolder 'misc\'];  % To send additional output to
+    p.DJK_saveDir = [myOutputFolder 'misc\']; % To send additional output to
+    
+    % Location of .mat file containing schnitzcells struct
+    myDataFile = [DATAPATH '\' p.movieName  '\data\' p.movieName '-Schnitz.mat'];
+    load(myDataFile);
+
+    % Some plots of cell growth
+    % ===
+    % parsing some settings
+    myFile = myDataFile; EXPORTFOLDER = myOutputFolder; FITTIME = settings.fitTimeMu;
+    % execute script
+    MW_growthplots
+    
+    % create correlation functions R(concentration, growth)
+    % ===
+    
+    % Set up appropriate field names
+    associatedFieldNames = {settings.timeFieldName, settings.fluorFieldName, settings.muFieldName};
+    % parse some settings from Excel file
+    badSchnitzes = settings.badSchnitzes; alreadyRemovedInMatFile = settings.alreadyRemovedInMatFile;
+    myID = settings.myID; myGroupID = settings.myGroupID;
+    myFitTime = settings.fitTimeCrosscorr;
+    % Execute delayed scatter script
+    MW_delayedScatter
+    
+    % create correlation functions R(rate, growth)
+    % ===
+    
+    % Set up appropriate field names
+    associatedFieldNames = {settings.timeFieldNameDerivative, settings.fluorDerivativeFieldName, settings.muFieldNameDerivative};
+    % parse some settings from Excel file
+    badSchnitzes = settings.badSchnitzes; alreadyRemovedInMatFile = settings.alreadyRemovedInMatFile;
+    myID = settings.myID; myGroupID = settings.myGroupID;
+    myFitTime = settings.fitTimeCrosscorr;
+    % Execute delayed scatter script
+    MW_delayedScatter
+    
+    % create autocorrelation functions R(Y, Y)
+    % ===
+    
+    % Set up appropriate field names
+    
+    % growth
+    associatedFieldNames = {settings.timeFieldName, settings.muFieldName, settings.muFieldName};
+    MW_delayedScatter
+    MW_autoCorr_corrtime_and_fitExponential
+    % concentration
+    associatedFieldNames = {settings.timeFieldName, settings.fluorFieldName, settings.fluorFieldName};
+    MW_delayedScatter
+    MW_autoCorr_corrtime_and_fitExponential
+    % rate
+    associatedFieldNames = {settings.timeFieldNameDerivative, settings.fluorDerivativeFieldName, settings.fluorDerivativeFieldName};
+    MW_delayedScatter
+    MW_autoCorr_corrtime_and_fitExponential        
+    
+end    
+
+
+
+
+
+
+
+
+
 
 
 

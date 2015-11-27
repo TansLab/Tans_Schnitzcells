@@ -1,8 +1,11 @@
 function [settings, alldata] = MW_readsettingsfromexcelfile(configfilepath)
-    % read in excel file (note that we start reading at line 14)
+
+    % configfilepath = CONFIGFILEPATH
+
+    %% read in excel file (note that we start reading at line 14)
     [ndata, text, alldata] = xlsread(configfilepath,'Configuration','A14:B100');
 
-    % Create the variables that are listed in the configuration file
+    %% Create the variables that are listed in the configuration file
     % ===
     % alldata{i, 1} contains the desired names of the parameters, alldata{i, 2}
     % contains the values of the parameter.
@@ -11,7 +14,7 @@ function [settings, alldata] = MW_readsettingsfromexcelfile(configfilepath)
             % Tell user
             disp(['Processing ' alldata{i, 1}]);
 
-            % create a parameter with the name contained by alldata{i, 1} 
+            %% create a parameter with the name contained by alldata{i, 1} 
             % (= left column of excel sheet), with value parameterValue.                
             % ===
             parameterValue = alldata{i, 2}; % put value in a var
@@ -23,16 +26,17 @@ function [settings, alldata] = MW_readsettingsfromexcelfile(configfilepath)
             elseif (~isempty(regexpi(alldata{i, 2}, '^[0123456789.]*$')))
                 % If it is a string with a number, leave unchanged
                 disp('Number');
-            elseif alldata{i, 2}(1) == '['
-                % If it is a string with a vector, leave unchanged
-                disp('Vector');           
+            elseif alldata{i, 2}(1) == '[' || alldata{i, 2}(1) == '{'
+                % If it is a string with a vector or cell, leave unchanged
+                disp('Vector or cell');           
             else
                 % If it is a string, add escape quotes such that it remains a
                 % string
                 disp('String');
                 parameterValue = ['''' parameterValue ''''];
             end
-            % Use the eval command to produce a parameter with the current value
+            
+            %% Use the eval command to produce a parameter with the current value
             command = ['settings.' alldata{i, 1} '=' parameterValue];
             eval (command); 
         end

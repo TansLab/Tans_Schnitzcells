@@ -14,8 +14,8 @@ DISKSIZE=15;
 MARGIN=10;
 
 if ~exist('frame1Number','var')
-    frame1Number=500;
-    frame2Number=501;
+    frame1Number=151;
+    frame2Number=152;
 end
 
 if isfield(p,'debugmode')
@@ -327,42 +327,8 @@ else
 end
 
 %% Convert to schnitzcells format 
-    
-linklistschnitz = [linklist(:,1), zeros(size(linklist,1),2), linklist(:,2)];
-uniqueWithoutZeros=unique(linklistschnitz(:,1));
-uniqueWithoutZeros=uniqueWithoutZeros(find(uniqueWithoutZeros>0));
-[parentcount,indices] = hist(linklistschnitz(:,1),uniqueWithoutZeros);
-
-parentlist = indices(find(parentcount>1))';
-cellListFrame1 = linklist(:,1);
-dividesInLinkList = find(changem(cellListFrame1,parentcount,indices)>1);
-
-if debugmode
-    dividingrowsbefore = linklistschnitz(dividesInLinkList,:)
-end
-
-movecount = ones(1,max(indices))+1;
-for idx=dividesInLinkList'
-    oldline = linklistschnitz(idx,:);
-    newline = [0, 0, 0, linklistschnitz(idx,4)];
-    parentNumber = linklistschnitz(idx,1);
-    if movecount(parentNumber)<4
-        newline(movecount(parentNumber))=parentNumber;
-        movecount(parentNumber)=movecount(parentNumber)+1;
-        linklistschnitz(idx,:) = newline;
-    else
-        disp('ERROR: parent has more than 2 daughters! Leaving >2 untouched!');
-    end
-end
-
-% sort
-linklistschnitz = sortrows(linklistschnitz,4);
-    
-if debugmode
-    dividingrowsafter = linklistschnitz(dividesInLinkList,:)    
-end
-    
-    
+   
+linklistschnitz=MW_convertsimplelinklisttoschnitzlist(linklist,debugmode); 
 
     
     

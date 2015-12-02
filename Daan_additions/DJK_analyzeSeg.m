@@ -284,7 +284,7 @@ end
 if (upper(saveFigInput(1))=='Y')
     saveas(fig2,[p.DJK_saveDir p.movieName '-CellSize-vs-time.fig']);
     saveSameSize(fig2,'file',[p.DJK_saveDir p.movieName '-CellSize-vs-time.eps'], 'format', 'epsc');
-    saveas(fig2,'file',[p.DJK_saveDir p.movieName '-CellSize-vs-time.tif'], 'tif');
+    saveas(fig2,[p.DJK_saveDir p.movieName '-CellSize-vs-time.tif'], 'tif');
     if (strcmp(saveFigInput,'Yes and Close'))
         close(fig2);
         pause(0.2);

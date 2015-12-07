@@ -116,8 +116,8 @@ ylabel('Summed length all bacteria ({\mu}m)');
 
 set(findall(gcf,'type','text'),'FontSize',15,'fontWeight','normal')
 
-saveas(h, [EXPORTFOLDER 'EPS_bacteriaSize_RAW-' myID '.eps'],'epsc')
-saveas(h, [EXPORTFOLDER 'TIF_bacteriaSize_RAW-' myID '.tif'])
+saveas(h, [EXPORTFOLDER 'EPS_bacteriaSize_RAW-' p.myID '.eps'],'epsc')
+saveas(h, [EXPORTFOLDER 'TIF_bacteriaSize_RAW-' p.myID '.tif'])
 
 %% Fancy plot for suppl. mat. article
 % Plotting setup
@@ -139,14 +139,14 @@ set(gca,'YTickLabel',[]);
 set(findall(gcf,'type','text'),'FontSize',FONTSIZE,'fontWeight','normal')
 set(gca,'FontSize',FONTSIZE)
 
-saveas(h, [EXPORTFOLDER 'EPS_bacteriaSize-' myID '.eps'],'epsc')
-saveas(h, [EXPORTFOLDER 'TIF_bacteriaSize-' myID '.tif'])
+saveas(h, [EXPORTFOLDER 'EPS_bacteriaSize-' p.myID '.eps'],'epsc')
+saveas(h, [EXPORTFOLDER 'TIF_bacteriaSize-' p.myID '.tif'])
 
 % Plotting of fitted line:
 semilogy(myTimes,A0*2.^(fitMu*myTimes/60),'--k','LineWidth',5)
 
-saveas(h, [EXPORTFOLDER 'EPS_bacteriaSize_withFit-' myID '.eps'],'epsc')
-saveas(h, [EXPORTFOLDER 'TIF_bacteriaSize_withFit-' myID '.tif'])
+saveas(h, [EXPORTFOLDER 'EPS_bacteriaSize_withFit-' p.myID '.eps'],'epsc')
+saveas(h, [EXPORTFOLDER 'TIF_bacteriaSize_withFit-' p.myID '.tif'])
 
 disp('Done.');
 

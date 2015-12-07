@@ -17,8 +17,9 @@
 
 %% It is very important to supply the path to the correct dataset here!
 DATAPATH = 'F:\A_Tans1_step1_incoming_not_backed_up\2015-10-20\';
-CONFIGFILENAME = 'Schnitzcells_Analysis_Config_2015_10_20_pos2.xlsx';
+CONFIGFILENAME = 'Schnitzcells_Analysis_Config_2015_10_20_pos6.xlsx';
 ANALYSISTYPE = 2; % 1 = preliminary, 2 = full
+LOADDATASETATEND = 1;
 
 %% Parameters you SHOULD NOT change
 EXCELREADSTART = 14; % line where list of parameters starts in Excel file.
@@ -108,9 +109,11 @@ else
     error('Analysis type not specified');
 end
 
-% Update p accordingly.
+disp('Done cropping');
+
+%% Update p accordingly.
 % =========================================================================
-% Load this setting to continue an analysis from here
+% Load this setting later if you want to skip cropping
 % =========================================================================
 % (After loading settings from excel file.)
 p = DJK_initschnitz([settings.positionName settings.cropSuffix],settings.movieDate,'e.coli.amolf','rootDir',...
@@ -119,7 +122,7 @@ p = DJK_initschnitz([settings.positionName settings.cropSuffix],settings.movieDa
     'setup',settings.setup,'softwarePackage',settings.softwarePackage,'camera',settings.camera)
 % =========================================================================
 
-disp('Done cropping');
+disp('p file loaded');
 
 %% Segmenation
 % =========================================================================
@@ -146,7 +149,7 @@ mysound=load('gong'); sound(mysound.y);
 % To manually redo 1 frame, execute this code manually:
 if 0    
     p.overwrite=1;
-    TOREDOFRAME = 174;
+    TOREDOFRAME = 119;
     theOriginalFrameRange = currentFrameRange; currentFrameRange = TOREDOFRAME;
     
     SLICESTEMPORARY = [1 2 3]; % instead of settings.slices
@@ -197,11 +200,13 @@ elseif ANALYSISTYPE == 2 % full
     % section to update general tracking file. (p.overwrite is reset
     % automatically above).
     % ===
-    % slow but more robust
+    % slow but more robust:
     %NW_tracker_centroid_vs_area(p,'manualRange', [1:244]); 
-    % fast but fails often
+    % fast but fails often:
     %MW_tracker(p,'manualRange', [1:244]); 
-    % Default one
+    % If all else fails:
+    % edit MW_helperforlinkingframes
+    % Default one:
     DJK_tracker_djk(p,'manualRange', currentFrameRange); % default tracker
 
     % Find problem cells
@@ -517,42 +522,59 @@ if exist('LOADDATASETATEND','var'), if LOADDATASETATEND
     
 end, end
 
-%% Extra analysis for full analysis
+%% More analyses for full analysis
+PLOTSCATTER=0; % activate to plot all scatter plots
 
 if ANALYSISTYPE==2 % full
     
-    myOutputFolder = [DATAPATH  '\' p. movieDate  '_' p.movieName '_' settings.myID  '\'];
+    % Settings up some parameters
+    p.myID = settings.myID    
+    myOutputFolder = [DATAPATH  '\' p. movieDate  '_' p.movieName '_' p.myID  '\'];
     
     p.NW_saveDir = [myOutputFolder 'misc\'];  % To send additional output to
     p.DJK_saveDir = [myOutputFolder 'misc\']; % To send additional output to
     
     % Location of .mat file containing schnitzcells struct
     myDataFile = [DATAPATH '\' p.movieName  '\data\' p.movieName '-Schnitz.mat'];
+   
+    % Load datafile
     load(myDataFile);
 
+    % Some more parameter renaming
+    myFile = myDataFile; EXPORTFOLDER = myOutputFolder; FITTIME = settings.fitTimeMu;    
+    
+    % Set up export directory
+    if ~exist(EXPORTFOLDER,'dir'), mkdir(EXPORTFOLDER); end
+    
     % Some plots of cell growth
     % ===
-    % parsing some settings
-    myFile = myDataFile; EXPORTFOLDER = myOutputFolder; FITTIME = settings.fitTimeMu;
     % execute script
     MW_growthplots
     
     % create correlation functions R(concentration, growth)
     % ===
     
-    % Set up appropriate field names
+    % Set up appropriate field names for R(concentration,mu)
     associatedFieldNames = {settings.timeFieldName, settings.fluorFieldName, settings.muFieldName};
-    % parse some settings from Excel file
+    % obtain some settings from Excel file
     badSchnitzes = settings.badSchnitzes; alreadyRemovedInMatFile = settings.alreadyRemovedInMatFile;
     myID = settings.myID; myGroupID = settings.myGroupID;
     myFitTime = settings.fitTimeCrosscorr;
     % Execute delayed scatter script
     MW_delayedScatter
     
+    % Renaming for later use
+    concentrationCorrData = CorrData;
+    concentrationassociatedFieldNames = associatedFieldNames;
+    concentrationbadSchnitzes = badSchnitzes; 
+    if exist('contourPlotData','var')
+        concentrationContourPlotData = contourPlotData;
+    end   
+    
     % create correlation functions R(rate, growth)
     % ===
     
-    % Set up appropriate field names
+    % Set up appropriate field names for R(rate, mu)
     associatedFieldNames = {settings.timeFieldNameDerivative, settings.fluorDerivativeFieldName, settings.muFieldNameDerivative};
     % parse some settings from Excel file
     badSchnitzes = settings.badSchnitzes; alreadyRemovedInMatFile = settings.alreadyRemovedInMatFile;
@@ -560,6 +582,14 @@ if ANALYSISTYPE==2 % full
     myFitTime = settings.fitTimeCrosscorr;
     % Execute delayed scatter script
     MW_delayedScatter
+    
+    % Renaming for later use
+    rateCorrData = CorrData;
+    rateassociatedFieldNames = associatedFieldNames;
+    ratebadSchnitzes = badSchnitzes; 
+    if exist('contourPlotData','var')
+        rateContourPlotData = contourPlotData;
+    end  
     
     % create autocorrelation functions R(Y, Y)
     % ===
@@ -570,20 +600,36 @@ if ANALYSISTYPE==2 % full
     associatedFieldNames = {settings.timeFieldName, settings.muFieldName, settings.muFieldName};
     MW_delayedScatter
     MW_autoCorr_corrtime_and_fitExponential
+    % rename for later use
+    growthautoCorrData = CorrData; growthautoFieldNames = associatedFieldNames; growthautoBadSchnitzes = badSchnitzes; 
+    
     % concentration
     associatedFieldNames = {settings.timeFieldName, settings.fluorFieldName, settings.fluorFieldName};
     MW_delayedScatter
     MW_autoCorr_corrtime_and_fitExponential
+    % rename for later use
+    concentrationautoCorrData = CorrData; concentrationautoFieldNames = associatedFieldNames; concentrationautoBadSchnitzes = badSchnitzes; 
+    
     % rate
     associatedFieldNames = {settings.timeFieldNameDerivative, settings.fluorDerivativeFieldName, settings.fluorDerivativeFieldName};
     MW_delayedScatter
     MW_autoCorr_corrtime_and_fitExponential        
+    % rename for later use
+    rateautoCorrData = CorrData; rateautoFieldNames = associatedFieldNames; rateautoBadSchnitzes = badSchnitzes; 
     
 end    
 
+%% If desired, save to appropriate database
 
+% config(..).m
+% savingFluorDynamicsData
 
+% For scripts directory see:
+% - D:\Local_Software\Martijn_fluorDynamicsScripts
 
+% For datasets see e.g. 
+% - U:\ZZ_EXPERIMENTAL_DATA\A_Step5_Data_per_project\CRPcAMP
+% - \\storage01\data\AMOLF\groups\tans-group\Biophysics\2014-2017_Cellular-experiments\Fluor-validation\data
 
 
 

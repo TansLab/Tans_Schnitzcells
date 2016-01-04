@@ -294,7 +294,7 @@ else
      
       % still need to resize fluorimage
       eval(['fluorimage = imresize_old(fluorimage,' binning ',''nearest'');']);
-          
+      disp(['NOTE: Resizing fluor image by factor ' num2str(eval(binning)) '- MW']);    
        
       %------------------------------------------------------------------------
       % perform manual rescale Correction (maybe unnecessary in this

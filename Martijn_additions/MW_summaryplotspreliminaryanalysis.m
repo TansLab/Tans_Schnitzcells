@@ -7,7 +7,7 @@
 % Load the .mat file from the appropriate analysis.
 % (summaryParametersPreliminary.mat should contain "thedata" struct with all
 % "p" and "settings" parameters created during your analyses.)
-MYDIR = 'F:\A_Tans1_step1_incoming_not_backed_up\2015-10-20\outputSummary\';
+MYDIR = 'F:\A_Tans1_step1_incoming_not_backed_up\2015-12-02\outputSummary\';
 load([MYDIR 'summaryParametersPreliminary.mat'])
 
 fluorsIdxToPlot = [1]; % use capital letter abbreviations

@@ -43,7 +43,7 @@ function p = PN_manualcheckseg (p, varargin);
 %                    Works sometimes only if every frame is used (or stepsize not too big)! otherwise error
 %                    when backing up. exact conditions...no idea (comment NW2012-05-10)
 %   maxImage      if 1, image will be resized to fill screen. default=1
-%   showAll       default =0; if showAll=1 will show all frames to user.
+%   showAll       default =1; if showAll=1 will show all frames to user.
 %                 (not sure of its behavior, testing still -MW 2015/06)
 %   problemCells  if 'problemCells' (or p.problemCells) is set, then cells
 %                 that are given by this array, which should consist of 
@@ -78,7 +78,7 @@ if (nargin < 1) | ...
 end
 
 if ~existfield(p,'showAll')  
-    p.showAll=0;  
+    p.showAll=1;  
 end
 
 % Load the watermark (MW edit 2014/12)
@@ -245,6 +245,8 @@ maxValidImageSize=myScreenSize(3:4)-[150,150]; % empirical
 backwards = 0;
 gotoframenum=0;
 loopindex = 1;
+
+%% main loop
 while loopindex <= length(p.manualRange);
    frameIdx = p.manualRange(loopindex);
    
@@ -486,4 +488,10 @@ while loopindex <= length(p.manualRange);
     end
     
 end;
-close(phfig); close(ourfig); end
+
+%%
+
+disp('bye');
+close(phfig); close(ourfig); 
+
+end

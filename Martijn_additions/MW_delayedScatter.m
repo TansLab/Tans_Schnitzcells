@@ -37,10 +37,10 @@ ASCnumber = 852; % Not necessary this script, for later analysis scripts
 filterset='engfp'; % Not necessary this script, for later analysis scripts
 fluoName = 'GFP'; % Not necessary this script, for later analysis scripts
 
-myOutputFolder = ['F:\A_Tans1_step1_incoming_not_backed_up\'  p. movieDate   '\' p. movieDate  '_' p.movieName '_' myID  '\'];
+settings.myOutputFolder = ['F:\A_Tans1_step1_incoming_not_backed_up\'  p. movieDate   '\' p. movieDate  '_' p.movieName '_' myID  '\'];
 
-p.NW_saveDir = [myOutputFolder 'misc\'];  % To send additional output to
-p.DJK_saveDir = [myOutputFolder 'misc\']; % To send additional output to
+p.NW_saveDir = [settings.myOutputFolder 'misc\'];  % To send additional output to
+p.DJK_saveDir = [settings.myOutputFolder 'misc\']; % To send additional output to
 
 % Location of .mat file containing schnitzcells struct
 myDataFile = ['F:\A_Tans1_step1_incoming_not_backed_up\' p.movieDate '\' p.movieName  '\data\' p.movieName '-Schnitz.mat'];
@@ -355,7 +355,7 @@ for groupIdx=1:numel(branch_groupsControl)
     noiserandomizeddata = {noisedata{randperm(numel(noisedata))}};
     for i=1:numel(branch_groupsControl(groupIdx).branches)
         branch_groupsControl(groupIdx).branches(i).(associatedFieldNames{1,3}) = randomizeddata{i};
-        branch_groupsControl(groupIdx).branches(i).(['noise_' associatedFieldNames{1,3}]) = randomizeddata{i};
+        branch_groupsControl(groupIdx).branches(i).(['noise_' associatedFieldNames{1,3}]) = noiserandomizeddata{i};
     end
 end
 

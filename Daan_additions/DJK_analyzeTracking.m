@@ -1,4 +1,4 @@
-function problemCells = DJK_analyzeTracking(p, varargin);
+function [problemCells, theOutputFilePath] = DJK_analyzeTracking(p, varargin);
 % DJK_analyzeTracking analyses the complete tracking file. 
 % **** if getting weird errors: 1) introduce if ~isempty tests (see also
 %                                  NW2015-05 below)
@@ -134,7 +134,8 @@ end
 %--------------------------------------------------------------------------
 % Open file to write results to
 %--------------------------------------------------------------------------
-fid = fopen([p.DJK_saveDir p.movieName '-tracking.txt'],'wt');
+theOutputFilePath = [p.DJK_saveDir p.movieName '-tracking.txt'];
+fid = fopen(theOutputFilePath,'wt');
 %--------------------------------------------------------------------------
 
 

@@ -216,7 +216,7 @@ for yfieldbranchtoplot=[2,3]
         set(l, 'LineWidth', (numelBranches-branchIdx+1)/numelBranches*10);
     end
 
-    % Brute force average branches
+    % Brute force average branches (note weighing is irrelevant for average)
     branchMatrixFieldX = []; branchMatrixFieldY = [];
     for branchIdx = 1:numelBranches
         currentXvector = branchData(branchIdx).(associatedFieldNames{1});
@@ -319,6 +319,10 @@ for yfieldbranchtoplot=[2,3]
 
     saveas(2,[myOutputFolder 'TIF_PDF_' associatedFieldNames{1,yfieldbranchtoplot} '.tif']);
     saveas(2,[myOutputFolder 'EPS_PDF_' associatedFieldNames{1,yfieldbranchtoplot} '.eps'],'epsc');
+    
+    % For later output
+    output.branchavg.([associatedFieldNames{yfieldbranchtoplot} '_xfield']) = meanXvector; % usually time
+    output.branchavg.(associatedFieldNames{yfieldbranchtoplot}) = meanYvector;
     
 end
 

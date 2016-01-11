@@ -665,7 +665,10 @@ PLOTSCATTER=0; % activate to plot all scatter plots
 
 if any(strcmp(runsections,{'allfull', 'makeoutputfull'})) % full
     
-    % Settings up some parameters
+    % Seting up main output parameter
+    output = struct;
+    
+    % Settings up some more parameters
     p.myID = settings.myID    
     settings.myOutputFolder = [settings.mypathname  '\' p. movieDate  '_' p.movieName '_' p.myID  '\'];
     
@@ -703,12 +706,14 @@ if any(strcmp(runsections,{'allfull', 'makeoutputfull'})) % full
     MW_delayedScatter
     
     % Renaming for later use
-    concentrationCorrData = CorrData;
-    concentrationassociatedFieldNames = associatedFieldNames;
-    concentrationbadSchnitzes = badSchnitzes; 
+    output.concentrationBranch_groups = branch_groups; output.concentrationBranch_groupsControl = branch_groupsControl;    
+    % output.branchavg{fieldname} contains average data for branches
+    output.concentrationCorrData = CorrData;
+    output.concentrationassociatedFieldNames = associatedFieldNames;
+    output.concentrationbadSchnitzes = badSchnitzes; 
     if exist('contourPlotData','var')
-        concentrationContourPlotData = contourPlotData;
-    end   
+        output.concentrationContourPlotData = contourPlotData;
+    end       
     
     % create correlation functions R(rate, growth)
     % ===
@@ -723,11 +728,11 @@ if any(strcmp(runsections,{'allfull', 'makeoutputfull'})) % full
     MW_delayedScatter
     
     % Renaming for later use
-    rateCorrData = CorrData;
-    rateassociatedFieldNames = associatedFieldNames;
-    ratebadSchnitzes = badSchnitzes; 
+    output.rateCorrData = CorrData;
+    output.rateassociatedFieldNames = associatedFieldNames;
+    output.ratebadSchnitzes = badSchnitzes; 
     if exist('contourPlotData','var')
-        rateContourPlotData = contourPlotData;
+        output.rateContourPlotData = contourPlotData;
     end  
     
     % create autocorrelation functions R(Y, Y)
@@ -737,24 +742,27 @@ if any(strcmp(runsections,{'allfull', 'makeoutputfull'})) % full
     
     % growth
     associatedFieldNames = {settings.timeFieldName, settings.muFieldName, settings.muFieldName};
+    % execute analysis scripts
     MW_delayedScatter
     MW_autoCorr_corrtime_and_fitExponential
     % rename for later use
-    growthautoCorrData = CorrData; growthautoFieldNames = associatedFieldNames; growthautoBadSchnitzes = badSchnitzes; 
+    output.growthautoCorrData = CorrData; output.growthautoFieldNames = associatedFieldNames; output.growthautoBadSchnitzes = badSchnitzes;     
     
     % concentration
     associatedFieldNames = {settings.timeFieldName, settings.fluorFieldName, settings.fluorFieldName};
+    % execute analysis scripts
     MW_delayedScatter
     MW_autoCorr_corrtime_and_fitExponential
     % rename for later use
-    concentrationautoCorrData = CorrData; concentrationautoFieldNames = associatedFieldNames; concentrationautoBadSchnitzes = badSchnitzes; 
+    output.concentrationautoCorrData = CorrData; output.concentrationautoFieldNames = associatedFieldNames; output.concentrationautoBadSchnitzes = badSchnitzes; 
     
     % rate
     associatedFieldNames = {settings.timeFieldNameDerivative, settings.fluorDerivativeFieldName, settings.fluorDerivativeFieldName};
+    % execute analysis scripts
     MW_delayedScatter
     MW_autoCorr_corrtime_and_fitExponential        
     % rename for later use
-    rateautoCorrData = CorrData; rateautoFieldNames = associatedFieldNames; rateautoBadSchnitzes = badSchnitzes; 
+    output.rateautoCorrData = CorrData; output.rateautoFieldNames = associatedFieldNames; output.rateautoBadSchnitzes = badSchnitzes; 
     
     % Let user know done, open output folder.
     disp('Done making analysis. Opening output folder.')
@@ -764,9 +772,9 @@ end
 
 %% Save p and settings struct to file in output dir if desired
 if any(strcmp(runsections,{'allfull', 'makeoutputfull'})) % full
-   save([settings.myOutputFolder 'paramsandsettings.mat'], 'p', 'settings');
+   save([p.dateDir 'outputandsettings_' p.movieName '.mat'], 'p', 'settings', 'schnitzcells', 'output');
    
-   disp('p and settings structs were saved.');
+   disp('p (parameter), output, schnitzcells and settings structs were saved.');
 end
 
 

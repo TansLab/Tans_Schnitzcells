@@ -395,7 +395,7 @@ MW_analysis_attempt2_matlabinsteadexcel_plusGUI
 assignin ('base','settings',settings)
 assignin ('base','p',p)
 assignin ('base','schnitzcells',schnitzcells)
-    % should also add the output vars
+assignin ('base','output',output)
 
 
 % --- Executes on button press in pushbutton32.

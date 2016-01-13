@@ -676,13 +676,13 @@ if any(strcmp(runsections,{'allfull', 'makeoutputfull'})) % full
     p.DJK_saveDir = [settings.myOutputFolder 'misc\']; % To send additional output to
     
     % Location of .mat file containing schnitzcells struct
-    myDataFile = [settings.mypathname '\' p.movieName  '\data\' p.movieName '-Schnitz.mat'];
+    settings.myDataFile = [settings.mypathname '\' p.movieName  '\data\' p.movieName '-Schnitz.mat'];
    
     % Load datafile
-    load(myDataFile);
+    load(settings.myDataFile);
 
     % Some more parameter renaming
-    myFile = myDataFile; EXPORTFOLDER = settings.myOutputFolder; FITTIME = settings.fitTimeMu;    
+    myFile = settings.myDataFile; EXPORTFOLDER = settings.myOutputFolder; FITTIME = settings.fitTimeMu;    
     
     % Set up export directory
     if ~exist(EXPORTFOLDER,'dir'), mkdir(EXPORTFOLDER); end
@@ -704,16 +704,17 @@ if any(strcmp(runsections,{'allfull', 'makeoutputfull'})) % full
     myOutputFolder = settings.myOutputFolder;
     % Execute delayed scatter script
     MW_delayedScatter
+       
     
     % Renaming for later use
-    output.concentrationBranch_groups = branch_groups; output.concentrationBranch_groupsControl = branch_groupsControl;    
     % output.branchavg{fieldname} contains average data for branches
-    output.concentrationCorrData = CorrData;
+    output.concentrationBranch_groups = branch_groups; output.concentrationBranch_groupsControl = branch_groupsControl;
+    output.concentrationCorrData = CorrData; output.concentrationCorrDataControl = CorrDataControl;
     output.concentrationassociatedFieldNames = associatedFieldNames;
     output.concentrationbadSchnitzes = badSchnitzes; 
     if exist('contourPlotData','var')
         output.concentrationContourPlotData = contourPlotData;
-    end       
+    end    
     
     % create correlation functions R(rate, growth)
     % ===
@@ -728,9 +729,9 @@ if any(strcmp(runsections,{'allfull', 'makeoutputfull'})) % full
     MW_delayedScatter
     
     % Renaming for later use
-    output.rateCorrData = CorrData;
+    output.rateCorrData = CorrData; output.rateCorrDataControl = CorrDataControl;
     output.rateassociatedFieldNames = associatedFieldNames;
-    output.ratebadSchnitzes = badSchnitzes; 
+    output.ratebadSchnitzes = badSchnitzes;     
     if exist('contourPlotData','var')
         output.rateContourPlotData = contourPlotData;
     end  
@@ -747,6 +748,7 @@ if any(strcmp(runsections,{'allfull', 'makeoutputfull'})) % full
     MW_autoCorr_corrtime_and_fitExponential
     % rename for later use
     output.growthautoCorrData = CorrData; output.growthautoFieldNames = associatedFieldNames; output.growthautoBadSchnitzes = badSchnitzes;     
+    output.growthNoise = theNoise; output.growthMean = theMean; output.growthStd = theStd;
     
     % concentration
     associatedFieldNames = {settings.timeFieldName, settings.fluorFieldName, settings.fluorFieldName};
@@ -755,6 +757,7 @@ if any(strcmp(runsections,{'allfull', 'makeoutputfull'})) % full
     MW_autoCorr_corrtime_and_fitExponential
     % rename for later use
     output.concentrationautoCorrData = CorrData; output.concentrationautoFieldNames = associatedFieldNames; output.concentrationautoBadSchnitzes = badSchnitzes; 
+    output.concentrationNoise = theNoise; output.concentrationMean = theMean; output.concentrationStd = theStd;
     
     % rate
     associatedFieldNames = {settings.timeFieldNameDerivative, settings.fluorDerivativeFieldName, settings.fluorDerivativeFieldName};
@@ -763,6 +766,7 @@ if any(strcmp(runsections,{'allfull', 'makeoutputfull'})) % full
     MW_autoCorr_corrtime_and_fitExponential        
     % rename for later use
     output.rateautoCorrData = CorrData; output.rateautoFieldNames = associatedFieldNames; output.rateautoBadSchnitzes = badSchnitzes; 
+    output.rateNoise = theNoise; output.rateMean = theMean; output.rateStd = theStd;
     
     % Let user know done, open output folder.
     disp('Done making analysis. Opening output folder.')
@@ -786,7 +790,7 @@ end
 % Additional options for full analysis
 % ===
 
-% config(..).m
+% CONFIGFILE =  'config(..).m'
 % savingFluorDynamicsData
 
 % For scripts directory see:

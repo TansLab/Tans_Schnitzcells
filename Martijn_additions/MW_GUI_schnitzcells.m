@@ -395,6 +395,7 @@ MW_analysis_attempt2_matlabinsteadexcel_plusGUI
 assignin ('base','settings',settings)
 assignin ('base','p',p)
 assignin ('base','schnitzcells',schnitzcells)
+assignin ('base','s_rm',s_rm)
 assignin ('base','output',output)
 
 

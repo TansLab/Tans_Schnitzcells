@@ -651,6 +651,27 @@ ylabel('Correlation')
 title(['xcorr(',associatedFieldNames{2},',..',10,associatedFieldNames{3},')'],'Interpreter','None')
 MW_makeplotlookbetter(20);
 
+%% Calculate noise when an autocorrelation function is made
+% check if fields 2 and 3 are identical, i.e. autocorr has been made
+if strcmp(associatedFieldNames{2},associatedFieldNames{3})
+    
+    % then calculate noise for this field
+    rawData = [branchData(:).(associatedFieldNames{2})];
+    
+    % Calculate noise (std / mean)
+        % noise the prefix noise is used elsewhere, but this refers to
+        % mean-subtracted data.
+    theStd = std(rawData);
+    theMean = mean(rawData);
+    theNoise = theStd/theMean;
+    
+    disp(['Noise calculated for ' associatedFieldNames{2}]);
+    
+end
+
+%% Some summary parameters
+
+output.numelSchnitzcells = numel(s_rm);
 
 %% Some random checks
 

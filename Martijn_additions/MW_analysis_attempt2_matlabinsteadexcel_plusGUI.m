@@ -339,12 +339,43 @@ if any(strcmp(runsections,{'customtrackersoncustomrange'}))
    
     % call desired tracker
     if ~isfield(settings, 'specialtracker') 
-        %DJK_tracker_djk(p,'manualRange', customFrameRange); % default tracker
+        DJK_tracker_djk(p,'manualRange', customFrameRange); % default tracker
     elseif strcmp(settings.specialtracker, 'MW')
         MW_tracker(p,'manualRange', customFrameRange); 
     elseif strcmp(settings.specialtracker, 'NW')
         NW_tracker_centroid_vs_area(p,'manualRange', customFrameRange);
     end
+    
+end
+
+%% (Optional) Check again after alternative tracker
+
+if any(strcmp(runsections,{'checkaftercustom'}))
+    
+    disp('Option not working yet.. Use (re)track (..) instead.');
+    
+    %{
+    % ADVANCED SETTINGS
+    p.overwrite=0; 
+    p.showAll = 1; % show all segmented frames to user
+    
+    % Find problem cells
+    [problems, theOutputFilePath] = DJK_analyzeTracking(p,'manualRange', settings.currentFrameRange, 'pixelsMoveDef', 15, 'pixelsLenDef', [-4 13]);
+    % open output file in external editor (not necessary, but convenient)
+    eval(['!' settings.MYTEXTEDITOR ' ' theOutputFilePath ' &']);
+    
+    p.problemCells = problems;
+
+    % Create lookup table for frame label <-> schnitz label
+    p.slookup=MW_makeslookup(p);
+
+    % Manual check again 
+    % Since "p" now contains the lookup table, and problemcells is defined, it
+    % will highlight the problemcells.
+    % Note that when one performs manual corrections to a frame, the mapping is
+    % not correct any more.
+    PN_manualcheckseg(p,'manualRange',settings.currentFrameRange,'override',p.overwrite,'assistedCorrection',0); % assisted correction of because problem cells highlighted
+    %}
     
 end
 
@@ -696,6 +727,7 @@ if any(strcmp(runsections,{'allfull', 'makeoutputfull'})) % full
     % ===
     
     % Set up appropriate field names for R(concentration,mu)
+    % TODO MW: todo: make this X_time etc, and do a strrep for X to applicable color
     associatedFieldNames = {settings.timeFieldName, settings.fluorFieldName, settings.muFieldName};
     % obtain some settings from Excel file
     badSchnitzes = settings.badSchnitzes; alreadyRemovedInMatFile = settings.alreadyRemovedInMatFile;

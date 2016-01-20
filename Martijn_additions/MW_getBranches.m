@@ -273,45 +273,37 @@ end
 % IN CASE SAMELENGTH, REMOVE BRANCHES WITH SHORTER LENGTH
 %--------------------------------------------------------------------------
 
-% Check data in case we want sameLength data (remove branches that are
-% shorter than timeFrame)
-min_begin_time = min ( [branches.(timeField)] );
-max_end_time = max ( [branches.(timeField)] );
-
-branchesSameLength = branches(1);
-count = 0;
-% loop over branches
-for branchNr = 1:length(branches)
-  if branches(branchNr).(timeField)(1) == min_begin_time & branches(branchNr).(timeField)(end) == max_end_time
-    count = count + 1;
-    branchesSameLength(count) = branches(branchNr);
-  end
-end
-
-% SHOW SOME OUTPUT
-min_branch_length = realmax('double');
-max_branch_length = 0;
-min_begin_time = realmax('double');
-max_begin_time = 0;
-min_end_time = realmax('double');
-max_end_time = 0;
-for branchNr = 1:length(branchesSameLength)
-  min_branch_length  = min(min_branch_length, length(branchesSameLength(branchNr).(timeField)) );
-  max_branch_length  = max(max_branch_length, length(branchesSameLength(branchNr).(timeField)) );
-  min_begin_time  = min(min_begin_time, branchesSameLength(branchNr).(timeField)(1) );
-  max_begin_time  = max(max_begin_time, branchesSameLength(branchNr).(timeField)(1) );
-  min_end_time    = min(min_end_time, branchesSameLength(branchNr).(timeField)(end) );
-  max_end_time    = max(max_end_time, branchesSameLength(branchNr).(timeField)(end) );
-end
-disp(['sameLength = 1']);
-disp(['Number of Branches : ' num2str(length(branchesSameLength))]);
-disp(['Branch time points : from ' num2str(round(min_branch_length)) ' till ' num2str(round(max_branch_length))]);
-disp(['Begin time         : from ' num2str(round(min_begin_time)) ' mins till ' num2str(round(max_begin_time)) ' mins']);
-disp(['End time           : from ' num2str(round(min_end_time)) ' mins till ' num2str(round(max_end_time)) ' mins']);
-disp(['---------------------------------------------------------------']);
-
-if p.sameLength
-  branches = branchesSameLength;
+if p.sameLength   
+    
+    originalSize = numel(branches);
+    
+    % get all lengths, begin times, and end times
+    branchlengths = arrayfun(@(x) length(x.(timeField)),branches);
+    startTimes    = arrayfun(@(x) x.(timeField)(1),branches);
+    endTimes      = arrayfun(@(x) x.(timeField)(end),branches);
+    % determine min/max values
+    longestLength        = max(branchlengths);
+    desiredStartTime     = min(startTimes);
+    desiredEndTime       = max(endTimes);
+        
+    % determine which ones are OK
+    % length of branch should equal longest 
+    condition1 = [branchlengths == longestLength];
+    % startime should be desired one (lowest of all)
+    condition2 = [startTimes == desiredStartTime];
+    % endtime should be desired one (highest of all)
+    condition3 = [endTimes == desiredEndTime];
+    % and branches to be selected are the ones that satisfy all conditions.
+    branchIdxWeWant = condition1 & condition2 & condition3;
+    
+    % perform the selection
+    branches = branches(branchIdxWeWant);
+    
+    % give user some info
+    disp([num2str(numel(branches)) ' branches were selected of total ' num2str(originalSize)]);
+    disp(['Selected timewindow is ' num2str(desiredStartTime) ' to ' ...
+          num2str(desiredEndTime) ', all with lengths of ' num2str(longestLength)]);
+    
   disp(['Returned sameLength = 1']);
 else
   disp(['Returned sameLength = 0']);

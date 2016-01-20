@@ -27,7 +27,7 @@ function varargout = MW_GUI_schnitzcells(varargin)
 
 % Edit the above text to modify the response to help MW_GUI_schnitzcells
 
-% Last Modified by GUIDE v2.5 08-Jan-2016 18:46:02
+% Last Modified by GUIDE v2.5 14-Jan-2016 15:02:42
 
 % Begin initialization code - DO NOT EDIT
 gui_Singleton = 1;
@@ -549,3 +549,34 @@ MW_analysis_attempt2_matlabinsteadexcel_plusGUI
 % update workspace
 assignin ('base','settings',settings);
 assignin ('base','p',p);
+
+
+% --- Executes on button press in pushbutton37.
+function pushbutton37_Callback(hObject, eventdata, handles)
+% hObject    handle to pushbutton37 (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+
+global runsections 
+
+% call script, runsections defines which sectino of sript to run
+runsections = 'checkaftercustom'
+MW_analysis_attempt2_matlabinsteadexcel_plusGUI 
+
+% update workspace
+assignin ('base','settings',settings)
+assignin ('base','p',p)
+
+
+% --- Executes on button press in pushbutton38.
+function pushbutton38_Callback(hObject, eventdata, handles)
+% hObject    handle to pushbutton38 (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+
+
+% retrieve settings var from base
+settings = evalin('base', 'settings');
+
+% open config file
+winopen(settings.configfilepath);

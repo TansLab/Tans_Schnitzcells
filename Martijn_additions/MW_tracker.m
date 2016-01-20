@@ -36,13 +36,11 @@ if ~existfield(p,'lineageName')
   p.lineageName = [p.tracksDir,p.movieName,'_lin.mat'];
 end
 
-%{
 % by default we track only checked frames, but by setting this flag 
 % you can track the uncorrected segmentation 
 if ~existfield(p,'trackUnCheckedFrames')
     p.trackUnCheckedFrames = 0;
 end
-%}
 
 if ~existfield(p,'overwrite')
   p.overwrite = 0;
@@ -70,7 +68,7 @@ manualRangeChecked = [];
 for frameNum = p.manualRange
   clear Lc 
   load([p.segmentationDir,p.movieName,'seg',str3(frameNum)]);
-  if exist('Lc')==1 | p.trackUnCheckedFrames 
+  if exist('Lc','var')==1 | p.trackUnCheckedFrames 
     manualRangeChecked = [manualRangeChecked frameNum];
   else
     disp(['Skipping frame ' str3(frameNum) ' (segmentation not corrected). Use p.trackUnCheckedFrames=1 to track unchecked frames.']);

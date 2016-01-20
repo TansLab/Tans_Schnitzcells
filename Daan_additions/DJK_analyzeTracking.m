@@ -337,6 +337,7 @@ framesunique=unique([schnitzcells.frame_nrs]);
 % Display nr of cells in lineage file______________________________________
 dispAndWrite(fid, ['-------------------------------------------------']);
 dispAndWrite(fid, ['Frames with issues: ' mat2str(sort(unique(problemCells(:,2))))]);
+dispAndWrite(fid, ['Schnitzes with issues: ' mat2str(sort(unique(problemCells(:,1))))]);
 dispAndWrite(fid, ['Results:']);
 dispAndWrite(fid, ['--- ' str3(length(schnitzcells)) ' cells in tracking file']);
 dispAndWrite(fid, ['  | ']);

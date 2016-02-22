@@ -2,8 +2,8 @@
 %% Loading and resettings parameters
 % Note that you standard 
 
-% Which frame (n) are you interested in? 
-FRAMEN=151;
+% Which frame (n) are you interested in? (Will track n and n+1.)
+FRAMEN=92;
 
 % Load appropriate files for both n and n+1 (p is needed for this)
 filename1 = [p.segmentationDir,p.movieName,'seg',str3(FRAMEN),'.mat'];
@@ -28,6 +28,7 @@ showlabels=1;
 while (any(LcFrame1(:)>0))
 
     disp('Note that matlab has variable editor in case you make mistake.');
+    disp('Frame n is blue (first click), frame n+1 is red.');
     disp('Press ''l'' to link two cells or parent to daughter #2');
     disp('Press ''d'' to link parent to daughter #1');    
     disp('Press ''t'' to toggle labels off/on.');    

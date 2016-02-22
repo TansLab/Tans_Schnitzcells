@@ -18,15 +18,21 @@ function MW_showtwoframeslabeled(LcFrame1, LcFrame2,h,showlabels)
     % Was necessary when using axis (old)
     % set(gca,'YDir','Reverse')
 
-    % pad frame 1
-    padLcFrame1 = padarray(LcFrame1,size(LcFrame2)-size(LcFrame1),'post');
+    if all(size(LcFrame2)>size(LcFrame1)) % usually, frame1 smaller then frame 2
+        % pad frame 1    
+        padLcFrame1 = padarray(LcFrame1,size(LcFrame2)-size(LcFrame1),'post');
+        padLcFrame2 = LcFrame2;
+    else % but if not, pad frame2
+        padLcFrame1 = LcFrame1;
+        padLcFrame2 = padarray(LcFrame2,size(LcFrame1)-size(LcFrame2),'post');
+    end % the case x and y are not both larger/smaller is not accounted for
 
     % modify matrices for display
     frame1Pic = (1-(padLcFrame1>0).*.3);
-    frame2Pic = (1-(LcFrame2>0).*.5);
+    frame2Pic = (1-(padLcFrame2>0).*.5);
     % colored version
     frame1Pic = (1-(padLcFrame1>0)*.5);
-    frame2Pic = (1-(LcFrame2>0)*.5);
+    frame2Pic = (1-(padLcFrame2>0)*.5);
     frame1PicColored = ones([size(frame1Pic),3]);
     frame1PicColored(:,:,1) = frame1Pic; % color blue channel
     frame1PicColored(:,:,2) = frame1Pic; % color blue channel

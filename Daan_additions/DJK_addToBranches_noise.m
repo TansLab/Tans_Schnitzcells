@@ -19,10 +19,13 @@ function branches = DJK_addToBranches_noise(p, branches, varargin)
 % for how this value can be interpreted. 
 % norm: norm produces a mean-substracted observable time series in the
 % classical sense, i.e. X_{norm,j}(t)=X_j(t)-<X(t)_j>_t.
+% Also there is the field relative_X, which is 
+% X_{relative,j}(t)=(X_j(t)/<X(t)_j>_t)-1
 % See also README.txt.
 %
 % OUTPUT
-% 'branches'        cell structure with branches, with noise/norm added
+% 'branches'        cell structure with branches, with noise_X, norm_X and
+%                   relative_X added.
 %
 % REQUIRED ARGUMENTS:
 % 'branches'        cell structure with branches
@@ -34,6 +37,7 @@ function branches = DJK_addToBranches_noise(p, branches, varargin)
 %                     First field should be the timefield, of this field
 %                     the noise will not be calculated
 %                     default: {'Y_time' 'Y6_mean' 'mu_fitNew'}
+%
 %
 
 
@@ -108,16 +112,23 @@ datafield_mean = datafield_sum ./ datafield_count; %[comment NW: I think this is
 for i = 2:length(p.dataFields) 
   field = char(p.dataFields(i));
   noisefield = ['noise_' field];
-  normfield  = ['norm_' field];
-
+  normfield  = ['norm_' field]; 
+  relativefield = ['relative_' field];
+      
   % loop over branches
   for branchNr = 1:length(branches)
     % loop over data
     for age = 1:length(branches(branchNr).(field))
       idx  = find(unique_timeField  == branches(branchNr).(timeField)(age));
+      % X_noise
       branches(branchNr).(noisefield)(age) = branches(branchNr).(field)(age) - datafield_mean(i,idx);
+      % X_norm
       branches(branchNr).(normfield)(age) = branches(branchNr).(field)(age) - mean(datafield_mean(i,:));
+      % X_relative
+      branches(branchNr).(relativefield)(age) = (branches(branchNr).(field)(age) / mean(datafield_mean(i,:))) - 1;
     end
   end
+
+  
 end
 %--------------------------------------------------------------------------

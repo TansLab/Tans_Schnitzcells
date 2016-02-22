@@ -175,12 +175,12 @@ end
 
 % Check whether cropLeftTop & cropRightBottom are set
 if ~existfield(p,'cropLeftTop')
-  cropLeftTop = [1,1];
-  disp(['Warning: p.cropLeftTop was not set. Now [1,1]']);
+  p.cropLeftTop = [];
+  disp(['Warning: p.cropLeftTop was not set. Now []']);
 end
 if ~existfield(p,'cropRightBottom')
-  cropRightBottom = [1392,1040];
-  disp(['Warning: p.cropRightBottom was not set. Now [1392,1040]']);
+  p.cropRightBottom = []; %[1392,1040];
+  disp(['Warning: p.cropRightBottom was not set. Now []']);
 end
 
 % If extra rescale Correction for Fluor Image does not exist, set to =1
@@ -220,13 +220,20 @@ disp(['-------------------------------------------------']);
 % Prepare flatfield & shading & replace
 %--------------------------------------------------------------------------
 % rectCrop are coordinates of crop within phaseFullSize
-rectCrop = [p.cropLeftTop(2), p.cropLeftTop(1), p.cropRightBottom(2), p.cropRightBottom(1)]; % [top, left, bottom, right]
+if ~isempty(p.cropLeftTop) & ~isempty(p.cropRightBottom)
+    rectCrop = [p.cropLeftTop(2), p.cropLeftTop(1), p.cropRightBottom(2), p.cropRightBottom(1)]; % [top, left, bottom, right]
 
-% Get correct subset of flatfield & shading
-flatfield_crop  = double( flatfield( rectCrop(1):rectCrop(3), rectCrop(2):rectCrop(4) ) );
-shading_crop    = double(   shading( rectCrop(1):rectCrop(3), rectCrop(2):rectCrop(4) ) );
-replace_crop    = double(   replace( rectCrop(1):rectCrop(3), rectCrop(2):rectCrop(4) ) );
-
+    % Get correct subset of flatfield & shading
+    flatfield_crop  = double( flatfield( rectCrop(1):rectCrop(3), rectCrop(2):rectCrop(4) ) );
+    shading_crop    = double(   shading( rectCrop(1):rectCrop(3), rectCrop(2):rectCrop(4) ) );
+    replace_crop    = double(   replace( rectCrop(1):rectCrop(3), rectCrop(2):rectCrop(4) ) );
+else
+    % Do not crop
+    rectCrop = [];
+    flatfield_crop  = double( flatfield );
+    shading_crop    = double(   shading );
+    replace_crop    = double(   replace );
+end
 shading_mean    = mean2(shading);
 %--------------------------------------------------------------------------
 

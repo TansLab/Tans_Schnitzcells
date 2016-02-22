@@ -27,7 +27,7 @@ function varargout = MW_GUI_schnitzcells(varargin)
 
 % Edit the above text to modify the response to help MW_GUI_schnitzcells
 
-% Last Modified by GUIDE v2.5 14-Jan-2016 15:02:42
+% Last Modified by GUIDE v2.5 18-Feb-2016 18:55:56
 
 % Begin initialization code - DO NOT EDIT
 gui_Singleton = 1;
@@ -92,6 +92,7 @@ MW_analysis_attempt2_matlabinsteadexcel_plusGUI
 
 % update workspace
 assignin ('base','settings',settings)
+assignin ('base','alldata',alldata)
 
 % --- Executes on button press in pushbutton3.
 function pushbutton3_Callback(hObject, eventdata, handles)
@@ -107,6 +108,7 @@ MW_analysis_attempt2_matlabinsteadexcel_plusGUI
 
 % update workspace
 assignin ('base','settings',settings)
+assignin ('base','alldata',alldata)
 
 % --- Executes on button press in pushbutton2.
 function pushbutton2_Callback(hObject, eventdata, handles)
@@ -116,7 +118,7 @@ function pushbutton2_Callback(hObject, eventdata, handles)
 global runsections 
 
 % call script, runsections defines which sectino of sript to run
-runsections = 'createpfull'
+runsections = 'createp'
 MW_analysis_attempt2_matlabinsteadexcel_plusGUI 
 
 % update workspace
@@ -131,14 +133,16 @@ function pushbutton4_Callback(hObject, eventdata, handles)
 
 global runsections 
 
+% retrieve alldata var from base
+alldata = evalin('base', 'alldata');
+
 % call script, runsections defines which sectino of sript to run
-runsections = 'cropimagesfull'
+runsections = 'cropimages'
 MW_analysis_attempt2_matlabinsteadexcel_plusGUI 
 
 % update workspace
 assignin ('base','settings',settings)
 assignin ('base','p',p)
-
 
 % --- Executes on button press in pushbutton5.
 function pushbutton5_Callback(hObject, eventdata, handles)
@@ -146,7 +150,14 @@ function pushbutton5_Callback(hObject, eventdata, handles)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    structure with handles and user data (see GUIDATA)
 
-global runsections 
+% clean up workspace from crop step
+evalin('base', 'clear alldata' );
+
+% continue as usual
+global runsections p
+
+% Pass on whether we want to use full image for segmentation (default = 0)
+p.useFullImage = get(handles.checkbox4,'Value');
 
 % call script, runsections defines which sectino of sript to run
 runsections = 'segmentation'
@@ -162,8 +173,10 @@ function pushbutton6_Callback(hObject, eventdata, handles)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    structure with handles and user data (see GUIDATA)
 
-global runsections 
-
+global runsections settings
+% obtain settings
+settings = evalin('base', 'settings');
+    
 % call script, runsections defines which sectino of sript to run
 runsections = 'manualchecksegfull'
 MW_analysis_attempt2_matlabinsteadexcel_plusGUI 
@@ -178,7 +191,7 @@ function pushbutton7_Callback(hObject, eventdata, handles)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    structure with handles and user data (see GUIDATA)
 
-global runsections 
+global runsections settings
 
 % call script, runsections defines which sectino of sript to run
 runsections = 'quickanalysis'
@@ -233,8 +246,12 @@ function pushbutton15_Callback(hObject, eventdata, handles)
 global runsections 
 
 % call script, runsections defines which sectino of sript to run
+runsections = 'analysispreliminary'
+MW_analysis_attempt2_matlabinsteadexcel_plusGUI 
 
 % update workspace
+assignin ('base','settings',settings)
+assignin ('base','p',p)
 
 % --- Executes on button press in pushbutton14.
 function pushbutton14_Callback(hObject, eventdata, handles)
@@ -254,7 +271,18 @@ function pushbutton13_Callback(hObject, eventdata, handles)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    structure with handles and user data (see GUIDATA)
 
+
 global runsections 
+
+% call script, runsections defines which sectino of sript to run
+runsections = 'trackpreliminary'
+MW_analysis_attempt2_matlabinsteadexcel_plusGUI 
+
+% update workspace
+assignin ('base','settings',settings)
+assignin ('base','p',p)
+
+
 
 % call script, runsections defines which sectino of sript to run
 
@@ -291,6 +319,15 @@ function pushbutton10_Callback(hObject, eventdata, handles)
 % handles    structure with handles and user data (see GUIDATA)
 
 global runsections 
+
+% run appropriate section
+runsections = 'cropimagespreliminary'
+MW_analysis_attempt2_matlabinsteadexcel_plusGUI 
+
+% update workspace
+assignin ('base','settings',settings)
+assignin ('base','p',p)
+
 
 % call script, runsections defines which sectino of sript to run
 
@@ -376,7 +413,6 @@ MW_analysis_attempt2_matlabinsteadexcel_plusGUI
 % update workspace
 assignin ('base','settings',settings)
 assignin ('base','p',p)
-
 
 % --- Executes on button press in pushbutton29.
 function pushbutton29_Callback(hObject, eventdata, handles)
@@ -526,6 +562,8 @@ global runsections customFrameRange p settings
 % retrieve settings var
 settings = evalin('base', 'settings');
 p.overwrite=1;
+% Pass on whether we want to use full image for segmentation (default = 0)
+p.useFullImage = get(handles.checkbox4,'Value');
 
 % Get custom parameters
 % Formulate questions
@@ -574,9 +612,166 @@ function pushbutton38_Callback(hObject, eventdata, handles)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    structure with handles and user data (see GUIDATA)
 
-
 % retrieve settings var from base
 settings = evalin('base', 'settings');
 
 % open config file
 winopen(settings.configfilepath);
+
+% --- Executes on button press in pushbutton41.
+function pushbutton41_Callback(hObject, eventdata, handles)
+% hObject    handle to pushbutton41 (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+
+global settings
+
+% retrieve settings
+settings = evalin('base', 'settings');
+
+% set flag
+settings.analysisType = 'preliminary';
+
+% export flag
+assignin ('base','settings',settings);
+disp('Preliminary flag set.');
+
+% --- Executes on button press in pushbutton42.
+function pushbutton42_Callback(hObject, eventdata, handles)
+% hObject    handle to pushbutton42 (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+
+global settings
+
+% retrieve settings
+settings = evalin('base', 'settings');
+
+% set flag
+settings.analysisType = 'full';
+
+% export flag
+assignin ('base','settings',settings)
+
+
+% --- Executes on button press in checkbox4.
+function checkbox4_Callback(hObject, eventdata, handles)
+% hObject    handle to checkbox4 (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+
+% Hint: get(hObject,'Value') returns toggle state of checkbox4
+
+
+% --- Executes on button press in pushbutton43.
+function pushbutton43_Callback(hObject, eventdata, handles)
+% hObject    handle to pushbutton43 (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+
+myAnswer = questdlg(['Clear all parameters?'],'Confirmation required.','Yes','No','No');
+
+if strcmp(myAnswer,'Yes');
+   evalin('base', 'clear all;');
+   disp('Workspace cleared.');
+else
+    disp('Wiping aborted.');
+end
+
+
+
+function slicenr_Callback(hObject, eventdata, handles)
+% hObject    handle to slicenr (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+
+% Hints: get(hObject,'String') returns contents of slicenr as text
+%        str2double(get(hObject,'String')) returns contents of slicenr as a double
+
+
+% --- Executes during object creation, after setting all properties.
+function slicenr_CreateFcn(hObject, eventdata, handles)
+% hObject    handle to slicenr (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    empty - handles not created until after all CreateFcns called
+
+% Hint: edit controls usually have a white background on Windows.
+%       See ISPC and COMPUTER.
+if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColor'))
+    set(hObject,'BackgroundColor','white');
+end
+
+
+
+function framenr_Callback(hObject, eventdata, handles)
+% hObject    handle to framenr (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+
+% Hints: get(hObject,'String') returns contents of framenr as text
+%        str2double(get(hObject,'String')) returns contents of framenr as a double
+
+
+% --- Executes during object creation, after setting all properties.
+function framenr_CreateFcn(hObject, eventdata, handles)
+% hObject    handle to framenr (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    empty - handles not created until after all CreateFcns called
+
+% Hint: edit controls usually have a white background on Windows.
+%       See ISPC and COMPUTER.
+if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColor'))
+    set(hObject,'BackgroundColor','white');
+end
+
+
+% --- Executes on button press in pushbutton44.
+function pushbutton44_Callback(hObject, eventdata, handles)
+% hObject    handle to pushbutton44 (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+
+% retrieve settings
+settings = evalin('base', 'settings');
+p = evalin('base', 'p');
+
+% input from user
+framenr = get(handles.framenr,'String');
+slicenr = get(handles.slicenr,'String');
+
+myimg = imread([p.imageDir p.movieName '-p-' slicenr '-' framenr '.tif']);
+figure(1); imshow(myimg, []);
+
+figure(2); 
+for i=1:3
+    subplot(3,1,i); hold on;
+    myimg = imread([p.imageDir p.movieName '-p-' num2str(i) '-' framenr '.tif']);
+    imshow(myimg, []);
+end
+
+
+% --- Executes on button press in pushbutton46.
+function pushbutton46_Callback(hObject, eventdata, handles)
+% hObject    handle to pushbutton46 (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+
+
+% retrieve settings
+settings = evalin('base', 'settings');
+p = evalin('base', 'p');
+
+% input from user
+framenr = get(handles.framenr,'String');
+%slicenr = get(handles.slicenr,'String');
+
+% crete fig and make (almost) full screen
+f=figure(1); 
+set(f, 'units','normalized', 'Position', [0.05,0.05,.9,.8]); % left bottom width height
+
+% plot all slices
+for i=1:3
+    subplottight(1,3,i); hold on;
+    myimg = imread([p.imageDir p.movieName '-p-' num2str(i) '-' framenr '.tif']);
+    imshow(myimg, []);
+end

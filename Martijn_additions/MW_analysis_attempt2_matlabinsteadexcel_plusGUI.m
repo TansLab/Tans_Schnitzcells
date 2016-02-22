@@ -36,14 +36,19 @@ global p settings
 if ~exist('runsections', 'var')
             
     % Parameters to set
-    ANALYSISTYPE = 2; % 1 = preliminary, 2 = full
+    % ==
+    
+    % Full or prelinary analysis
+    settings.analysisType = 'preliminary'; % preliminary or full
+    %settings.analysisType = 'full';
+    
     LOADDATASETATEND = 1;
 
     % Parameters not to be altered
-    if ANALYSISTYPE == 1
+    if strcmp(settings.analysisType, 'preliminary')
         runsections = 'allpreliminary'; % all is default
-    elseif ANALYSISTYPE == 2
-        runsections = 'allfull';
+    elseif strcmp(settings.analysisType, 'full')
+        runsections = 'allfull';        
     end
     
     ranFromGUI = 0;
@@ -62,10 +67,7 @@ if any(strcmp(runsections,{'allpreliminary', 'allfull' 'loadfile'}))
     [settings.myconfigfilename, settings.mypathname] = uigetfile('*.xls;*.xlsx','Select a Schnitzcells configuration file');
     % full path to file
     settings.configfilepath = [settings.mypathname settings.myconfigfilename];
-    
-    if ranFromGUI
-        set(handles.thefilename,'String',[settings.mypathname settings.myconfigfilename]);
-    end
+        
     %old way
     %settings.mypathname = 'F:\A_Tans1_step1_incoming_not_backed_up\2015-12-02\';
     %myfilename = 'Schnitzcells_Analysis_Config_2015_12_02_pos2col1.xlsx';
@@ -81,6 +83,11 @@ if any(strcmp(runsections,{'allpreliminary', 'allfull', 'loadfile','reloadfile'}
     % load settings from excel file
     % settings.configfilepath gives the path to MW_readsettingsfromexcelfile
     [settings, alldata] = MW_readsettingsfromexcelfile(settings)
+    
+    % Update field in GUI w. name of config file
+    if ranFromGUI
+        set(handles.thefilename,'String',[settings.mypathname settings.myconfigfilename]);
+    end
 end
 
 %% Double check whether to continue
@@ -89,7 +96,7 @@ if any(strcmp(runsections,{'allpreliminary', 'allfull'}))
         
     analysisTypes = {'PRELIMINARY','FULL'}
 
-    myAnswer = questdlg(['Loaded ' [settings.mypathname settings.myconfigfilename] ', for ' analysisTypes{ANALYSISTYPE} ' analysis do you want to continue?'],'Confirmation required.','Yes','No','No');
+    myAnswer = questdlg(['Loaded ' [settings.mypathname settings.myconfigfilename] ', for ' settings.analysisType ' analysis do you want to continue?'],'Confirmation required.','Yes','No','No');
     if strcmp(myAnswer, 'No') || strcmp(myAnswer, 'Cancel')
         error('Analysis aborted.');
     end
@@ -97,7 +104,7 @@ if any(strcmp(runsections,{'allpreliminary', 'allfull'}))
 end
 
 %% Now make a vector with parameter values that schnitzcells scripts can handle. (and some misc. other admin)
-if any(strcmp(runsections,{'allpreliminary', 'allfull','createpfull'}))
+if any(strcmp(runsections,{'allpreliminary', 'allfull','createp'}))
     
     disp('Now creating ''p'' struct from settings struct.');
 
@@ -113,22 +120,18 @@ if any(strcmp(runsections,{'allpreliminary', 'allfull','createpfull'}))
     p = DJK_initschnitz(settings.positionName,settings.movieDate,'e.coli.amolf','rootDir',...
         settings.rootDir, 'cropLeftTop',settings.cropLeftTop, 'cropRightBottom',settings.cropRightBottom,...
         'fluor1',settings.fluor1,'fluor2',settings.fluor2,'fluor3',settings.fluor3,...
-        'setup',settings.setup,'softwarePackage',settings.softwarePackage,'camera',settings.camera)
-
-    % Manually make sure image dir is correct
-    % (This is done to accomodate cropping.)
-    p.imageDir = [settings.rootDir settings.movieDate '\' settings.positionName '\']
+        'setup',settings.setup,'softwarePackage',settings.softwarePackage,'camera',settings.camera)    
 
     % Set framerange according to analysis type
-    if any(strcmp(runsections,{'allpreliminary'})) % fast analysis
+    if any(strcmp(settings.analysisType,'preliminary')) % fast analysis
         settings.currentFrameRange = settings.frameRangePreliminary;
-    elseif any(strcmp(runsections,{'allfull','createpfull'})) % full analysis
+    elseif any(strcmp(settings.analysisType,'full')) % full analysis
         settings.currentFrameRange = settings.frameRangeFull;
     end
     
 end
 %% Some more hard coded parameters
-if any(strcmp(runsections,{'allpreliminary', 'allfull','createpfull'}))
+if any(strcmp(runsections,{'allpreliminary', 'allfull','createp'}))
 
     % Output directory for figures etc.
     settings.MYOUTPUTDIR = [p.dateDir 'outputSummary\'];
@@ -142,47 +145,60 @@ end
 
 % Crop images
 % Puts cropped images in new directory, which gets the suffix 
-if any(strcmp(runsections,{'allpreliminary','cropimagespreliminary'}))
+if any(strcmp(runsections,{'allpreliminary','cropimages'}))
     
-    % Determine crop area
-     [selectedLeftTop,selectedRightBottom] = MW_determinecroparea(p, settings.frameRangePreliminary);
+    if strcmp(settings.analysisType, 'preliminary')
 
-    % Close figure from crop popup
-    close(gcf);
-     
-    % set new croparea and save crop area to excel file
-    myAnswer = questdlg(['Start cropping? And save selection to Excel file (close it first)?'],'Confirmation required.','Save,use,crop','Crop using old','Abort!','Save,use,crop');
-    if strcmp(myAnswer, 'Save,use,crop')
-        settings.cropLeftTop = selectedLeftTop;
-        settings.cropRightBottom = selectedRightBottom;
+        % Manually make sure image dir is correct
+        % (This is done to accomodate cropping.)
+        p.imageDir = [settings.rootDir settings.movieDate '\' settings.positionName '\']
+
+        % Determine crop area
+        [selectedLeftTop,selectedRightBottom] = MW_determinecroparea(p, settings.frameRangePreliminary);
+
+        % Close figure from crop popup
+        close(gcf);
+
+        % set new croparea and save crop area to excel file
+        myAnswer = questdlg(['Start cropping? And save selection to Excel file (close it first)?'],'Confirmation required.','Save,use,crop','Crop using old','Abort!','Save,use,crop');
+        if strcmp(myAnswer, 'Save,use,crop')
+            settings.cropLeftTop = selectedLeftTop;
+            settings.cropRightBottom = selectedRightBottom;
+
+            ExcelcropLeftTopIndex = find(strcmp({alldata{:,1}},'cropLeftTop'))+settings.EXCELREADSTART-1; % find line w. cropLeftTop field.
+            xlswrite([settings.mypathname settings.myconfigfilename],{mat2str(settings.cropLeftTop)},['B' num2str(ExcelcropLeftTopIndex) ':B' num2str(ExcelcropLeftTopIndex) '']); % write value to it
+            ExcelcropRightBottomIndex = find(strcmp({alldata{:,1}},'cropRightBottom'))+settings.EXCELREADSTART-1; % find line w. cropRightBottom field.    
+            xlswrite([settings.mypathname settings.myconfigfilename],{mat2str(settings.cropRightBottom)},['B' num2str(ExcelcropRightBottomIndex) ':B' num2str(ExcelcropRightBottomIndex) '']); % write value to it
+        end
+
+        % cropping itself
+        if strcmp(myAnswer, 'Save,use,crop') | strcmp(myAnswer, 'Crop using old')
+            % Crop images
+            DJK_cropImages_3colors(p, settings.frameRangePreliminary, settings.cropLeftTop, ...
+                settings.cropRightBottom, 'cropName', [settings.positionName settings.cropSuffix]);    
+        end
+
+        disp('Done cropping');
+    
+    elseif strcmp(settings.analysisType, 'full')
+    
+        % Manually make sure image dir is correct
+        % (This is done to accomodate cropping.)
+        p.imageDir = [settings.rootDir settings.movieDate '\' settings.positionName '\']
+
+        DJK_cropImages_3colors(p, settings.frameRangeFull, settings.cropLeftTop, ...
+            settings.cropRightBottom, 'cropName', [settings.positionName settings.cropSuffix]);
+
+        disp('Done cropping');
         
-        ExcelcropLeftTopIndex = find(strcmp({alldata{:,1}},'cropLeftTop'))+settings.EXCELREADSTART-1; % find line w. cropLeftTop field.
-        xlswrite([settings.mypathname settings.myconfigfilename],{mat2str(settings.cropLeftTop)},['B' num2str(ExcelcropLeftTopIndex) ':B' num2str(ExcelcropLeftTopIndex) '']); % write value to it
-        ExcelcropRightBottomIndex = find(strcmp({alldata{:,1}},'cropRightBottom'))+settings.EXCELREADSTART-1; % find line w. cropRightBottom field.    
-        xlswrite([settings.mypathname settings.myconfigfilename],{mat2str(settings.cropRightBottom)},['B' num2str(ExcelcropRightBottomIndex) ':B' num2str(ExcelcropRightBottomIndex) '']); % write value to it
     end
     
-    % cropping itself
-    if strcmp(myAnswer, 'Save,use,crop') | strcmp(myAnswer, 'Crop using old')
-        % Crop images
-        DJK_cropImages_3colors(p, settings.frameRangePreliminary, settings.cropLeftTop, ...
-            settings.cropRightBottom, 'cropName', [settings.positionName settings.cropSuffix]);    
-    end
-    
-    disp('Done cropping');
-    
-elseif any(strcmp(runsections,{'allfull','cropimagesfull'}))
-    DJK_cropImages_3colors(p, settings.frameRangeFull, settings.cropLeftTop, ...
-        settings.cropRightBottom, 'cropName', [settings.positionName settings.cropSuffix]);
-    
-    disp('Done cropping');
 end
-
 
 
 %% Update p accordingly.
 
-if any(strcmp(runsections,{'allpreliminary', 'allfull','cropimagespreliminary','cropimagesfull','loadpforcropped'}))
+if any(strcmp(runsections,{'allpreliminary', 'allfull','cropimages','loadpforcropped'}))
 
     % =========================================================================
     % Load this setting later if you want to skip cropping
@@ -263,12 +279,12 @@ end
 
 
 %% Start the manual checking by user
-if any(strcmp(runsections,{'allpreliminary', 'allfull','manualchecksegfull'}))
+if any(strcmp(runsections,{'allpreliminary', 'allfull','manualchecksegfull','manualchecksegfull'}))
 
     % choose option based type analysis
-    if any(strcmp(runsections,{'allpreliminary'}))
+    if strcmp(settings.analysisType, 'preliminary')
         settings.assistedYesNo=0;
-    elseif any(strcmp(runsections,{'allfull','manualchecksegfull'}))
+    elseif strcmp(settings.analysisType, 'full')
         settings.assistedYesNo=1;
     end
 
@@ -282,6 +298,8 @@ if any(strcmp(runsections,{'allpreliminary', 'allfull','quickanalysis'}))
     DJK_analyzeSeg(p,'manualRange',settings.currentFrameRange,'onscreen',1,'DJK_saveDir',settings.MYOUTPUTDIR);
     %close(gcf);
     
+    disp('Quick analysis done.');
+    
 end
 
 %% Perform tracking, check tracking, make problem movie and correct
@@ -289,7 +307,7 @@ end
 % \analysis\tracking\manualRangeX_Y\posZcrop-tracking.txt
 % iterate these commands (also partially redundant w. above) to correct segmentation
 
-if any(strcmp(runsections,{'allpreliminary'})) % fast
+if any(strcmp(runsections,{'allpreliminary','trackpreliminary'})) % fast
     DJK_trackcomplete(p,'trackRange',settings.currentFrameRange,'trackMethod','singleCell');
 elseif any(strcmp(runsections,{'allfull','trackandmanualcorrections'}))% full
     p.overwrite=0; % ADVANCED SETTING
@@ -597,7 +615,7 @@ end
 %% For preliminary analysis, create some data output
 %  ===
 
-if any(strcmp(runsections,{'allpreliminary'})) 
+if any(strcmp(runsections,{'allpreliminary','analysispreliminary'})) 
 
     % Obtain schnitzcells
     [p,schnitzcells] = DJK_compileSchnitzImproved_3colors(p,'quickMode',1);

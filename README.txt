@@ -41,7 +41,7 @@ Which can be edited easily with the command:
 >> guide MW_GUI_schnitzcells 
 The files linked to this script are MW_GUI_schnitzcells.m and MW_GUI_schnitzcells.fig.
 
-In principle, a load of what is explained down here has now become legacy (there is no Excel file anymore). However, the functions that are used are still the same, and a load of text below explains how these functions work. In the future, most of this text should be found in abovementioned script files. For now it remains here for reference.
+In principle, a load of what is explained down here has now become legacy (Excel is not used to execute commands any more, only as a parameter file). However, the functions that are used are still the same, and a load of text below explains how these functions work. In the future, most of this text should be found in abovementioned script files. For now it remains here for reference.
 
 Convenient scripts for further analysis are savingFluorDynamicsData.m and plottingGeneralDynamicData.m. These scripts can be found in the https://Leeuwenhoek@bitbucket.org/microscopeguerrillas/plotting_fluo_dyn_data.git repository, spefically the branch martijn_develop.
 

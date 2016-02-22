@@ -20,7 +20,7 @@
 %               variance = sum( (x - mean)^2 )  / #
 %
 % OUTPUT
-% 'fit_mean'        mean of data during fitTime 2DO.........................
+% 'fit_mean'        mean of data during fitTime TODO.......................
 % 'fit_variance'    variance of data during fitTime
 %
 % REQUIRED ARGUMENTS:
@@ -225,9 +225,11 @@ end
 for i = 1:nr_frames
   if length(data(i).x > 0)
     data(i).mean = sum(data(i).x .* data(i).weight) / sum(data(i).weight);
+    data(i).median = median(data(i).x); %MW
     data(i).variance = sum( (data(i).x - data(i).mean).^2 .* data(i).weight) / sum(data(i).weight);
   else
     data(i).mean = NaN;
+    data(i).median = NaN; % MW
     data(i).variance = NaN;
   end
 end
@@ -241,12 +243,14 @@ end
 data_frames         = [];
 data_time           = [];
 data_field_mean     = [];
+data_field_median   = []; % MW
 data_field_variance = [];
 for i = 1:nr_frames
   if ~isnan(data(i).mean) & length(data(i).x)>0
     data_frames         = [data_frames data(i).frame];
     data_time           = [data_time data(i).time];
     data_field_mean     = [data_field_mean data(i).mean];
+    data_field_median   = [data_field_median data(i).median]; % MW
     data_field_variance = [data_field_variance data(i).variance];
   end
 end
@@ -310,14 +314,21 @@ std_data_time = [data_time data_time(end:-1:1)]; % DJK 090319 was data_frames
 std_data_std = [data_field_mean-sqrt(data_field_variance) data_field_mean(end:-1:1)+sqrt(data_field_variance(end:-1:1))];
 fill(std_data_time,std_data_std,'r','EdgeColor',[0.8 0.8 0.8],'FaceColor',[0.8 0.8 0.8]);
 
-% plot line
+% plot colony-median as function frames (i.e. time) - MW
+line( 'Xdata',data_time, ... % DJK 090319 was data_frames
+      'Ydata',data_field_median,... 
+      'LineStyle','none', ...
+      'Color','b', ...
+      'Marker','o' );
+
+% plot colony-mean as function frames (i.e. time)
 line( 'Xdata',data_time, ... % DJK 090319 was data_frames
       'Ydata',data_field_mean,... 
       'LineStyle','none', ...
       'Color','k', ...
-      'Marker','.' );
+      'Marker','s' );
 
-% Plot mean line
+% Plot overall mean line
 if fit_x
  hold on;
   %line( 'Xdata',p.fitTime, ...
@@ -333,6 +344,7 @@ if fit_x
   line2a= [' (cells equally contributing)'];
   line3a= [' (frames equally contributing)'];
   figureTitle = [figureTitle,10,line1,10,line2,line2a,10,line3,line3a];
+    
 end
 
 % label axes

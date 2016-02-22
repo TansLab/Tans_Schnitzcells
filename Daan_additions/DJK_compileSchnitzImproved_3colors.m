@@ -67,8 +67,15 @@ if ~existfield(p,'micronsPerPixel')
   disp('WARNING: p.micronsPerPixel was not set. Assuming CoolSnap camera, setup 1.');
 end
 if ~existfield(p,'cropLeftTop')
+  % if not set
   disp('Warning! p.cropLeftTop not set');
-  p.cropLeftTop = [1,1];
+  cropLeftTop = [1,1];
+elseif isempty(p.cropLeftTop)
+  % if empty (which also means no cropping was applied)
+  cropLeftTop = [1,1];
+else
+  % if value was given
+  cropLeftTop = p.cropLeftTop;
 end
 %--------------------------------------------------------------------------
   
@@ -223,8 +230,8 @@ for i = 1:length(trackRange)
     schnitzcells(s).rp_width(age)     = p.micronsPerPixel * rp(cellnum).MinorAxisLength;
     schnitzcells(s).rp_cenX_crop(age) = p.micronsPerPixel * (rp(cellnum).Centroid(1) + rect(2) - 1); % -1 omdat als helemaal links, dan rect(2) = 1
     schnitzcells(s).rp_cenY_crop(age) = p.micronsPerPixel * (rp(cellnum).Centroid(2) + rect(1) - 1); % -1 omdat als helemaal top, dan rect(1) = 1   
-    schnitzcells(s).rp_cenX_full(age) = p.micronsPerPixel * (rp(cellnum).Centroid(1) + rect(2) + p.cropLeftTop(2) - 1); % -1 omdat als helemaal links, dan rect(2) = 1
-    schnitzcells(s).rp_cenY_full(age) = p.micronsPerPixel * (rp(cellnum).Centroid(1) + rect(1) + p.cropLeftTop(1) - 1); % -1 omdat als helemaal top, dan rect(1) = 1   
+    schnitzcells(s).rp_cenX_full(age) = p.micronsPerPixel * (rp(cellnum).Centroid(1) + rect(2) + cropLeftTop(2) - 2); % -2 since twice crop area
+    schnitzcells(s).rp_cenY_full(age) = p.micronsPerPixel * (rp(cellnum).Centroid(1) + rect(1) + cropLeftTop(1) - 2); % -2 since twice crop area
     schnitzcells(s).rp_angle(age)     = rp(cellnum).Orientation;
     schnitzcells(s).rp_solidity(age)  = rp(cellnum).Solidity;
                                     r = 0.5 * schnitzcells(s).rp_width(age); % cigar shape estimation of volume of cell in micron^3

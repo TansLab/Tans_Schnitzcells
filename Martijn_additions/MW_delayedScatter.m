@@ -332,6 +332,8 @@ end
 REDUNDANCYALLOWED = 2^2;
 ONSCREEN=1;
 NRBRANCHGROUPS=4;
+FIELDPREFIX = 'noise_';
+%FIELDPREFIX = 'relative_';
 
 % Some additional editing of the branches:
 branchData = DJK_addToBranches_noise(p, branchData,'dataFields',{associatedFieldNames{1},associatedFieldNames{2},associatedFieldNames{3}});
@@ -348,22 +350,22 @@ p.extraNorm=0;
 % THIS MIGHT FAIL BECAUSE TIME IS NOT SET CORRECTLY (SHOULD BE time_at_..)
 % To calculate cross correlations, additional normalization is usually
 % performed, namely to filter out colony average behavior.
-[CorrData,composite_corr] = DJK_plot_crosscorrelation_standard_error_store(p, branch_groups, ['noise_' associatedFieldNames{1,2}],['noise_' associatedFieldNames{1,3}] ,'selectionName',name_rm_branch,'timeField',associatedFieldNames{1},'onScreen',ONSCREEN); 
+[CorrData,composite_corr] = DJK_plot_crosscorrelation_standard_error_store(p, branch_groups, [FIELDPREFIX associatedFieldNames{1,2}],[FIELDPREFIX associatedFieldNames{1,3}] ,'selectionName',name_rm_branch,'timeField',associatedFieldNames{1},'onScreen',ONSCREEN); 
 
 % For negative control, combine growth rates and fluor signal traces randomly
 branch_groupsControl = branch_groups;
 for groupIdx=1:numel(branch_groupsControl)
     data = {branch_groupsControl(groupIdx).branches(:).(associatedFieldNames{1,3})};
     randomizeddata = {data{randperm(numel(data))}};
-    noisedata = {branch_groupsControl(groupIdx).branches(:).(['noise_' associatedFieldNames{1,3}])};
+    noisedata = {branch_groupsControl(groupIdx).branches(:).([FIELDPREFIX associatedFieldNames{1,3}])};
     noiserandomizeddata = {noisedata{randperm(numel(noisedata))}};
     for i=1:numel(branch_groupsControl(groupIdx).branches)
         branch_groupsControl(groupIdx).branches(i).(associatedFieldNames{1,3}) = randomizeddata{i};
-        branch_groupsControl(groupIdx).branches(i).(['noise_' associatedFieldNames{1,3}]) = noiserandomizeddata{i};
+        branch_groupsControl(groupIdx).branches(i).([FIELDPREFIX associatedFieldNames{1,3}]) = noiserandomizeddata{i};
     end
 end
 
-[CorrDataControl, composite_corrControl] = DJK_plot_crosscorrelation_standard_error_store(p, branch_groupsControl, ['noise_' associatedFieldNames{1,2}],['noise_' associatedFieldNames{1,3}] ,'selectionName',name_rm_branch,'timeField',associatedFieldNames{1},'onScreen',ONSCREEN); 
+[CorrDataControl, composite_corrControl] = DJK_plot_crosscorrelation_standard_error_store(p, branch_groupsControl, [FIELDPREFIX associatedFieldNames{1,2}],[FIELDPREFIX associatedFieldNames{1,3}] ,'selectionName',name_rm_branch,'timeField',associatedFieldNames{1},'onScreen',ONSCREEN); 
 
 % Do we want to filter out colony average behavior for the "delayed
 % scatter" plots also? Maybe do this with noise fields?
@@ -372,7 +374,7 @@ p.timeField = associatedFieldNames{1,1};
 % p.tauIndices = [-7:7]; %p.tauIndices = [-29:4:-1,0,1:4:30];
 if isfield(p,'tauIndices'), p=rmfield(p,'tauIndices'); end
 [dataPairsPerTau, iTausCalculated, originColorPerTau, correlationsPerTau] = ...
-    MW_getdelayedscatter(p, branchData, ['noise_' associatedFieldNames{1,2}], ['noise_' associatedFieldNames{1,3}], REDUNDANCYALLOWED)
+    MW_getdelayedscatter(p, branchData, [FIELDPREFIX associatedFieldNames{1,2}], [FIELDPREFIX associatedFieldNames{1,3}], REDUNDANCYALLOWED)
 
 %% 
 if ~exist('NOTMEANSUBTRACTED','var')

@@ -1,15 +1,17 @@
 
+function linklistschnitz =  MW_helperforlinkingframes(p, frameNumber)
+
 %% Loading and resettings parameters
 % Note that you standard 
 
 % Which frame (n) are you interested in? (Will track n and n+1.)
-FRAMEN=92;
+%frameNumber=128;
 
 % Load appropriate files for both n and n+1 (p is needed for this)
-filename1 = [p.segmentationDir,p.movieName,'seg',str3(FRAMEN),'.mat'];
+filename1 = [p.segmentationDir,p.movieName,'seg',str3(frameNumber),'.mat'];
 load(filename1);
 LcFrame1 = Lc;
-filename2 = [p.segmentationDir,p.movieName,'seg',str3(FRAMEN+1),'.mat'];
+filename2 = [p.segmentationDir,p.movieName,'seg',str3(frameNumber+1),'.mat'];
 load(filename2);
 LcFrame2 = Lc;
 
@@ -67,7 +69,14 @@ close(h)
 
 %% Generate schnitz-compatible list
 
-linklistschnitz=MW_convertsimplelinklisttoschnitzlist(linklist,0)
+if ~isempty(linklist)
+    linklistschnitz=MW_convertsimplelinklisttoschnitzlist(linklist,0)
+    disp('Copy this list manually to corresponding file in data folder.')
+else
+    disp('Linklist was empty.');
+end
+
+disp('Bye.');
 
 
 

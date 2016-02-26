@@ -299,10 +299,10 @@ uniqueExclZerosFr1 = uniqueExclZerosFr1(find(uniqueExclZerosFr1>0)); % but idx=0
 Frame1LinkedOnes = ismember(uniqueExclZerosFr1, linklist(:,1)); % check whether the cellno's from 1 are all accounted for in list
 barren = find(Frame1LinkedOnes==0); % if not, they're barren
 if ~isempty(barren)
-    disp('ERROR: barren cells found. cellno''s:');
+    warning('WARNING: barren cells found. cellno''s:');
     barren
     checksPassed = 0;
-    error('This leads to serious issue, since leads to discrepancy between numel(schnitzcells(i).frame_nrs) and numel(schnitzcells(i).cellno)!');
+    warning('This leads to serious issue, since leads to discrepancy between numel(schnitzcells(i).frame_nrs) and numel(schnitzcells(i).cellno)!');
     %warning('Adding them as connected to schnitz #1..');
     %linklist = [linklist; padarray(barren, [0,1],1,'post')];
 end
@@ -323,7 +323,7 @@ if checksPassed
     disp('All checks passed..')
 else
     disp('WARNING: Checks not passed..')
-    pause(3);
+    pause(1);
 end
 
 %% Convert to schnitzcells format 

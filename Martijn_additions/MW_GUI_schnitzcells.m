@@ -27,7 +27,7 @@ function varargout = MW_GUI_schnitzcells(varargin)
 
 % Edit the above text to modify the response to help MW_GUI_schnitzcells
 
-% Last Modified by GUIDE v2.5 18-Feb-2016 18:55:56
+% Last Modified by GUIDE v2.5 24-Feb-2016 16:55:40
 
 % Begin initialization code - DO NOT EDIT
 gui_Singleton = 1;
@@ -775,3 +775,43 @@ for i=1:3
     myimg = imread([p.imageDir p.movieName '-p-' num2str(i) '-' framenr '.tif']);
     imshow(myimg, []);
 end
+
+
+
+function framenrtracking_Callback(hObject, eventdata, handles)
+% hObject    handle to framenrtracking (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+
+% Hints: get(hObject,'String') returns contents of framenrtracking as text
+%        str2double(get(hObject,'String')) returns contents of framenrtracking as a double
+
+
+% --- Executes during object creation, after setting all properties.
+function framenrtracking_CreateFcn(hObject, eventdata, handles)
+% hObject    handle to framenrtracking (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    empty - handles not created until after all CreateFcns called
+
+% Hint: edit controls usually have a white background on Windows.
+%       See ISPC and COMPUTER.
+if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColor'))
+    set(hObject,'BackgroundColor','white');
+end
+
+
+% --- Executes on button press in pushbutton48.
+function pushbutton48_Callback(hObject, eventdata, handles)
+% hObject    handle to pushbutton48 (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+
+% retrieve settings
+settings = evalin('base', 'settings');
+p = evalin('base', 'p');
+
+% input from user
+framenr = get(handles.framenrtracking,'String');
+%slicenr = get(handles.slicenr,'String');
+
+MW_helperforlinkingframes(p, str2num(framenr));

@@ -712,14 +712,14 @@ end
 %% More analyses for full analysis
 PLOTSCATTER=0; % activate to plot all scatter plots
 
-if any(strcmp(runsections,{'allfull', 'makeoutputfull'})) % full
+if any(strcmp(runsections,{'allfull', 'makeoutputfull', 'rerunfullanalysis'})) % full
     
     % Seting up main output parameter
     output = struct;
     
     % Settings up some more parameters
     p.myID = settings.myID    
-    settings.myOutputFolder = [settings.mypathname  '\' p. movieDate  '_' p.movieName '_' p.myID  '\'];
+    settings.myOutputFolder = [settings.mypathname  '\' p.movieDate  '_' p.movieName '_' p.myID  '\'];
     
     p.NW_saveDir = [settings.myOutputFolder 'misc\'];  % To send additional output to
     p.DJK_saveDir = [settings.myOutputFolder 'misc\']; % To send additional output to
@@ -798,6 +798,8 @@ if any(strcmp(runsections,{'allfull', 'makeoutputfull'})) % full
     MW_autoCorr_corrtime_and_fitExponential
     % rename for later use
     output.growthautoCorrData = CorrData; output.growthautoFieldNames = associatedFieldNames; output.growthautoBadSchnitzes = badSchnitzes;     
+    % note that noise parameters are based on all branch data lumped
+    % together, it would be better to take raw schnitzcells data as input.
     output.growthNoise = theNoise; output.growthMean = theMean; output.growthStd = theStd;
     
     % concentration
@@ -807,6 +809,8 @@ if any(strcmp(runsections,{'allfull', 'makeoutputfull'})) % full
     MW_autoCorr_corrtime_and_fitExponential
     % rename for later use
     output.concentrationautoCorrData = CorrData; output.concentrationautoFieldNames = associatedFieldNames; output.concentrationautoBadSchnitzes = badSchnitzes; 
+    % note that noise parameters are based on all branch data lumped
+    % together, it would be better to take raw schnitzcells data as input.
     output.concentrationNoise = theNoise; output.concentrationMean = theMean; output.concentrationStd = theStd;
     
     % rate
@@ -816,6 +820,8 @@ if any(strcmp(runsections,{'allfull', 'makeoutputfull'})) % full
     MW_autoCorr_corrtime_and_fitExponential        
     % rename for later use
     output.rateautoCorrData = CorrData; output.rateautoFieldNames = associatedFieldNames; output.rateautoBadSchnitzes = badSchnitzes; 
+    % note that noise parameters are based on all branch data lumped
+    % together, it would be better to take raw schnitzcells data as input.
     output.rateNoise = theNoise; output.rateMean = theMean; output.rateStd = theStd;
     
     % Let user know done, open output folder.
@@ -825,7 +831,7 @@ if any(strcmp(runsections,{'allfull', 'makeoutputfull'})) % full
 end    
 
 %% Save p and settings struct to file in output dir if desired
-if any(strcmp(runsections,{'allfull', 'makeoutputfull'})) % full
+if any(strcmp(runsections,{'allfull', 'makeoutputfull','rerunfullanalysis'})) % full
    save([p.dateDir 'outputandsettings_' p.movieName '.mat'], 'p', 'settings', 'schnitzcells', 'output');
    
    disp('p (parameter), output, schnitzcells and settings structs were saved.');

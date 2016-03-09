@@ -88,7 +88,7 @@ global runsections
 
 % call script, runsections defines which sectino of sript to run
 runsections = 'loadfile'
-MW_analysis_attempt2_matlabinsteadexcel_plusGUI 
+Schnitzcells_masterscript 
 
 % update workspace
 assignin ('base','settings',settings)
@@ -104,7 +104,7 @@ global runsections
 
 % call script, runsections defines which sectino of sript to run
 runsections = 'reloadfile'
-MW_analysis_attempt2_matlabinsteadexcel_plusGUI 
+Schnitzcells_masterscript 
 
 % update workspace
 assignin ('base','settings',settings)
@@ -119,7 +119,7 @@ global runsections
 
 % call script, runsections defines which sectino of sript to run
 runsections = 'createp'
-MW_analysis_attempt2_matlabinsteadexcel_plusGUI 
+Schnitzcells_masterscript 
 
 % update workspace
 assignin ('base','settings',settings)
@@ -138,7 +138,7 @@ alldata = evalin('base', 'alldata');
 
 % call script, runsections defines which sectino of sript to run
 runsections = 'cropimages'
-MW_analysis_attempt2_matlabinsteadexcel_plusGUI 
+Schnitzcells_masterscript 
 
 % update workspace
 assignin ('base','settings',settings)
@@ -161,7 +161,7 @@ p.useFullImage = get(handles.checkbox4,'Value');
 
 % call script, runsections defines which sectino of sript to run
 runsections = 'segmentation'
-MW_analysis_attempt2_matlabinsteadexcel_plusGUI 
+Schnitzcells_masterscript 
 
 % update workspace
 assignin ('base','settings',settings)
@@ -179,7 +179,7 @@ settings = evalin('base', 'settings');
     
 % call script, runsections defines which sectino of sript to run
 runsections = 'manualchecksegfull'
-MW_analysis_attempt2_matlabinsteadexcel_plusGUI 
+Schnitzcells_masterscript 
 
 % update workspace
 assignin ('base','settings',settings)
@@ -195,7 +195,7 @@ global runsections settings
 
 % call script, runsections defines which sectino of sript to run
 runsections = 'quickanalysis'
-MW_analysis_attempt2_matlabinsteadexcel_plusGUI 
+Schnitzcells_masterscript 
 
 % update workspace
 assignin ('base','settings',settings)
@@ -211,7 +211,7 @@ global runsections
 
 % call script, runsections defines which sectino of sript to run
 runsections = 'trackandmanualcorrections'
-MW_analysis_attempt2_matlabinsteadexcel_plusGUI 
+Schnitzcells_masterscript 
 
 % update workspace
 assignin ('base','settings',settings)
@@ -247,7 +247,7 @@ global runsections
 
 % call script, runsections defines which sectino of sript to run
 runsections = 'analysispreliminary'
-MW_analysis_attempt2_matlabinsteadexcel_plusGUI 
+Schnitzcells_masterscript 
 
 % update workspace
 assignin ('base','settings',settings)
@@ -276,7 +276,7 @@ global runsections
 
 % call script, runsections defines which sectino of sript to run
 runsections = 'trackpreliminary'
-MW_analysis_attempt2_matlabinsteadexcel_plusGUI 
+Schnitzcells_masterscript 
 
 % update workspace
 assignin ('base','settings',settings)
@@ -322,7 +322,7 @@ global runsections
 
 % run appropriate section
 runsections = 'cropimagespreliminary'
-MW_analysis_attempt2_matlabinsteadexcel_plusGUI 
+Schnitzcells_masterscript 
 
 % update workspace
 assignin ('base','settings',settings)
@@ -356,7 +356,7 @@ global runsections
 
 % call script, runsections defines which sectino of sript to run
 runsections = 'makemovie'
-MW_analysis_attempt2_matlabinsteadexcel_plusGUI 
+Schnitzcells_masterscript 
 
 % update workspace
 assignin ('base','settings',settings)
@@ -373,7 +373,7 @@ global runsections
 
 % call script, runsections defines which sectino of sript to run
 runsections = 'createbackup'
-MW_analysis_attempt2_matlabinsteadexcel_plusGUI 
+Schnitzcells_masterscript 
 
 % update workspace
 assignin ('base','settings',settings)
@@ -390,7 +390,7 @@ global runsections
 
 % call script, runsections defines which sectino of sript to run
 runsections = 'correctionsandanalysis'
-MW_analysis_attempt2_matlabinsteadexcel_plusGUI 
+Schnitzcells_masterscript 
 
 % update workspace
 assignin ('base','settings',settings)
@@ -408,7 +408,7 @@ global runsections
 
 % call script, runsections defines which sectino of sript to run
 runsections = 'loadpforcropped'
-MW_analysis_attempt2_matlabinsteadexcel_plusGUI 
+Schnitzcells_masterscript 
 
 % update workspace
 assignin ('base','settings',settings)
@@ -425,7 +425,7 @@ global runsections
 
 % call script, runsections defines which sectino of sript to run
 runsections = 'makeoutputfull'
-MW_analysis_attempt2_matlabinsteadexcel_plusGUI 
+Schnitzcells_masterscript 
 
 % update workspace
 assignin ('base','settings',settings)
@@ -478,7 +478,7 @@ customFrameRange = str2num(answer{1});
 % call script, runsections defines which sectino of sript to run
 runsections = 'customtrackersoncustomrange'
 settings.specialtracker = 'MW';
-MW_analysis_attempt2_matlabinsteadexcel_plusGUI 
+Schnitzcells_masterscript 
 % reset specialtracker
 settings = rmfield(settings,'specialtracker');
 
@@ -512,7 +512,7 @@ customFrameRange = str2num(answer{1});
 % call script, runsections defines which sectino of sript to run
 runsections = 'customtrackersoncustomrange'
 settings.specialtracker = 'NW';
-MW_analysis_attempt2_matlabinsteadexcel_plusGUI 
+Schnitzcells_masterscript 
 % reset specialtracker
 settings = rmfield(settings,'specialtracker');
 
@@ -542,7 +542,7 @@ customFrameRange = str2num(answer{1});
 % call script, runsections defines which sectino of sript to run
 runsections = 'customtrackersoncustomrange'
 % run w. default tracker
-MW_analysis_attempt2_matlabinsteadexcel_plusGUI 
+Schnitzcells_masterscript 
 
 % update workspace
 assignin ('base','settings',settings);
@@ -582,7 +582,7 @@ settings.MINCELLAREA            = str2num(answers{5});
 % call script, runsections defines which sectino of sript to run
 runsections = 'redosegforframe'
 % run w. default tracker
-MW_analysis_attempt2_matlabinsteadexcel_plusGUI 
+Schnitzcells_masterscript 
 
 % update workspace
 assignin ('base','settings',settings);
@@ -599,7 +599,7 @@ global runsections
 
 % call script, runsections defines which sectino of sript to run
 runsections = 'checkaftercustom'
-MW_analysis_attempt2_matlabinsteadexcel_plusGUI 
+Schnitzcells_masterscript 
 
 % update workspace
 assignin ('base','settings',settings)

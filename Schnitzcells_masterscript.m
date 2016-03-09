@@ -195,7 +195,7 @@ if any(strcmp(runsections,{'allpreliminary', 'allfull','createp'}))
     p = DJK_initschnitz(settings.positionName,settings.movieDate,'e.coli.amolf','rootDir',...
         settings.rootDir, 'cropLeftTop',settings.cropLeftTop, 'cropRightBottom',settings.cropRightBottom,...
         'fluor1',settings.fluor1,'fluor2',settings.fluor2,'fluor3',settings.fluor3,...
-        'setup',settings.setup,'softwarePackage',settings.softwarePackage,'camera',settings.camera)    
+        'setup',settings.setup,'softwarePackage',settings.softwarePackage,'camera',settings.camera);
 
     % Set framerange according to analysis type
     if any(strcmp(settings.analysisType,'preliminary')) % fast analysis
@@ -225,12 +225,13 @@ end
 % Crop images 
 % =========================================================================
 
-% Ask user whether cropping is desired.
-settings.performCropping = strcmp(questdlg('Do you want to perform cropping of images on your dataset?','Cropping','Yes','No','No'),'Yes');
-
 % Crop images
 % Puts cropped images in new directory, which gets the suffix 
 if any(strcmp(runsections,{'allpreliminary','cropimages'}))
+
+% Ask user whether cropping is desired.
+settings.performCropping = strcmp(questdlg('Do you want to perform cropping of images on your dataset?','Cropping','Yes','No','No'),'Yes');
+    
 if settings.performCropping
     
     if strcmp(settings.analysisType, 'preliminary')
@@ -288,8 +289,8 @@ end
 % If you have cropped the images the p struct needs to be updated with the
 % new location of the images. 
 
-if settings.performCropping
 if any(strcmp(runsections,{'allpreliminary', 'allfull','cropimages','loadpforcropped'}))
+if settings.performCropping
 
     % =========================================================================
     % Load this setting later if you want to skip cropping
@@ -344,7 +345,7 @@ end
 if any(strcmp(runsections,{'redosegforframe'}))   
     if ~ranFromGUI
         % EDIT PARAMETERS HERE IF MANUALLY REDOING
-        TOREDOFRAME = 43;
+        TOREDOFRAME = 10;
         SLICESTEMPORARY = [2]; % default [1 2 3] instead of settings.slices
         LOGSMOOTHINGTEMPORARY = 10; % default 2; instead of settings.LoG_Smoothing
         MINDEPTHTEMP = 5;% default 5;

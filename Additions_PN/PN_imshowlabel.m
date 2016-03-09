@@ -167,9 +167,11 @@ if isfield(p,'problemCells');
     end
     
     % If problemcells are known, we can label them in this image
-    schnitzNrsProblemCells = find(p.problemCells(:,2)==p.currentFrame);
-    allSuspiciousLabels = [ allSuspiciousLabels ...
-                p.problemCells(schnitzNrsProblemCells,3)'];    
+    if ~isempty(p.problemCells)
+        schnitzNrsProblemCells = find(p.problemCells(:,2)==p.currentFrame);
+        allSuspiciousLabels = [ allSuspiciousLabels ...
+                    p.problemCells(schnitzNrsProblemCells,3)'];    
+    end
 else 
     problemCellHighlighting = 0;
 end

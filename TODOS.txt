@@ -1,3 +1,0 @@
-- Why is PN_smooth_field necessary? 
-
-- It would be more efficient to perform the tracking while doing the correction; that way, the iterations with the movies would not be necessary.

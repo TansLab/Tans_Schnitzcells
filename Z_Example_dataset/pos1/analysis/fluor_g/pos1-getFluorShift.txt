@@ -1,0 +1,13 @@
+-------------------------------------------------
+Getting fluorShift from fluor images and seg files.
+maxShift is 10
+extra rescale Correction is 1
+Only the (used) bestShifts directly from Fluorimages use the extra rescale correction!
+-------------------------------------------------
+Analyzing 4 frames from 11 to 14
+ * 011 -> Cannot open : pos1-g-011.tif in D:\Local_Software\Martijn_merging\Z_Example_dataset\pos1\images\
+ * 012 -> Cannot open : pos1-g-012.tif in D:\Local_Software\Martijn_merging\Z_Example_dataset\pos1\images\
+ * 013 -> Cannot open : pos1-g-013.tif in D:\Local_Software\Martijn_merging\Z_Example_dataset\pos1\images\
+ * 014 -> loaded pos1seg014 in D:\Local_Software\Martijn_merging\Z_Example_dataset\pos1\segmentation\
+       -> best shift of fluor is [-2,-1] and [-2,-1]
+-------------------------------------------------

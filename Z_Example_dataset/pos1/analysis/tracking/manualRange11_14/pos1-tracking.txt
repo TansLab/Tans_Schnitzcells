@@ -1,0 +1,22 @@
+-------------------------------------------------
+Analyzing 4 frames from 11 to 14
+ * Saving results in : D:\Local_Software\Martijn_merging\Z_Example_dataset\pos1\analysis\tracking\manualRange11_14\
+ * Loaded tracking file from : D:\Local_Software\Martijn_merging\Z_Example_dataset\pos1\data\pos1_lin.mat
+-------------------------------------------------
+Results:
+--- 004 cells in tracking file
+  | 
+  |--- 004 of these are in manualRange
+     | 
+     |--- 000 frames lack cells in tracking, which are there in segmentation
+     |  
+     |--- 000 of cells are orphans
+     |  
+     |--- 000 frames have barren cells
+     |  
+     |--- 000 frames have cells moving > 15 pixels
+     |  
+     |--- 000 frames have cells growing < -4 or > 13 pixels
+     |  
+     |--- 000 frames have cells with length change <> 20 pixels after division
+-------------------------------------------------

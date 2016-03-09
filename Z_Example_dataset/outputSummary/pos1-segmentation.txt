@@ -1,0 +1,23 @@
+-------------------------------------------------
+Analyzing 4 frames from 11 to 14
+ * fitRange is 4 frames from 11 to 14
+ * Saving files in : D:\Local_Software\Martijn_merging\Z_Example_dataset\outputSummary\
+ * Loading segmentation files...
+ * Saved Number of cells in each frame in pos1-nrCells.txt
+ * Saved plot of number of cells vs time written in pos1-nrCells-vs-time.png
+ * Saved plot of cell size vs time written in pos1-nrCells-vs-time.png
+-------------------------------------------------
+All frames are approved
+-------------------------------------------------
+Checking for drops in cell number in subsequent approved frames:
+-------------------------------------------------
+Growth info :
+ * From frame 11 to 14 gave mu :
+   - 0.00 as determined by number of cells
+   - 0.57 as determined by length of cells
+   - 0.90 as determined by volume of cells
+ * From frame 11 to 14 were doublings :
+   - 0.00 as determined by number of cells
+   - 0.05 as determined by length of cells
+   - 0.09 as determined by volume of cells
+-------------------------------------------------

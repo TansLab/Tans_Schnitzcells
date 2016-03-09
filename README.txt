@@ -33,7 +33,7 @@ General information
 In end 2015, beginning of 2016, I made an effort to update the code in such a way that you can run your whole analysis from one script. Moreover, this script can also be controlled from a GUI (graphical user interface).
 
 The main file you currently need to perform an analysis is 
->> MW_analysis_attempt2_matlabinsteadexcel_plusGUI
+>> Schnitzcells_masterscript
 I've added quite some comments into this file. The final goal is to make this file self-explanatory. Also, the GUI should (in the future) contain enough comments & instructions such that it can be ran without needing external help files.
 The main files of the GUI are
 >> MW_GUI_schnitzcells 

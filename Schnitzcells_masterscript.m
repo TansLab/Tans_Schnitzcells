@@ -22,7 +22,7 @@
 if ~exist('runsections','var') || strcmp(runsections, 'none')
 
     runsections = 'none';
-    MW_GUI_schnitzcells
+    Schnitzcells_GUI
 
 end
 

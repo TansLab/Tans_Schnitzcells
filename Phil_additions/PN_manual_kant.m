@@ -509,7 +509,7 @@ while ~done
                 L_prec_full(rect_prec(1):rect_prec(3),rect_prec(2):rect_prec(4))=L_prec;
                 
                 L_prec_mask=L_prec_full;             
-                %L_prec_mask=imdilate(L_prec_full,strel('disk',3)); % enlargen prev. image overlap mask if needed
+                %L_prec_mask=imerode(L_prec_full,strel('disk',3)); % enlargen & make smaller prev. image overlap mask if needed
                 L_prec_mask=L_prec_mask>0;  % binary mask from previous image
 
                 cellsall=unique(Lout);  % same numbers as Lout_full

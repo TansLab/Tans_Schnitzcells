@@ -767,6 +767,7 @@ else
             try
               eval(['schnitzcells(i).([''fitted_'' fluor2Field ''_mean'']) = interp1( ' fluor_time ', ' temp_fluor_mean ',  schnitzcells(i).time);'])
             catch
+                warning('Could not interpolate fluor field.'); % -MW
                 eval(['schnitzcells(i).([''fitted_'' fluor2Field ''_mean'']) = NaN;'])
             end
         end

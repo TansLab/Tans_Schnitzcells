@@ -31,7 +31,8 @@ function p = PN_manualcheckseg (p, varargin);
 %   expandvalue   increases each segmentation image border by this amount
 %                 (in case the segmentation cut off some cells); defaults to 30
 %   frnum         check one frame only, also sets p.overwrite = 1
-%   Dskip         (what does this do? probably frame skipping?), defaults to 1
+%   Dskip         determines how many frames are skipped with e.g. 
+%                 '.' and ',' commands.
 %   upend         frame size / location; default is 680
 %   leftend       frame size / location; default is 516
 %   min_size      [height width] of figure; default [upend-60 leftend-10]
@@ -165,6 +166,11 @@ if ~existfield(p,'outprefix')
 end
 
 D = dir([p.segmentationDir, p.outprefix, '*.mat']);
+
+if isempty(D)
+   error('Could not find files, mayb be path not set correctly?'); 
+end
+
 [s,I] = sort({D.name}');
 D = D(I);
 numpos= findstr(D(1).name, '.mat')-3;
@@ -281,10 +287,12 @@ while loopindex <= length(p.manualRange);
         disp('setting size of images arbitrarily to [1024 , 1344].');
     end
     
+    %{
     if (gotoframenum && exist('Lc')==1 && p.overwrite==false)
         p.overwrite=true; % MW todo ?! 
         disp('WARNING: p.overwrite=true (MW todo; doesn''t seem correct behavior).');
     end %DJK 071207
+    %}
     
     % Set flag if file was already checked before.
     if exist('Lc')==1
@@ -371,16 +379,14 @@ while loopindex <= length(p.manualRange);
             % This executes the function that asks for keyboard input.
             [p,Lc,is_done,quit_now,dontsave,addtolist,crop_pop,newrect,savetemp,backwards,gotoframenum,DJK_settings] = ...
                 PN_manual_kant(p, LNsub, L_prec, g, rect,rect_prec,phsub, DJK_settings,p.assistedCorrection); % p added 2014/12 MW
-            
-            if backwards==1 && (loopindex>1),
-                % JCR: Note this is kind of ugly- later loopindex is *incremented*
-                % by Dskip, so we have to back up 2 Dskips now.
-                loopindex = loopindex-2*p.Dskip;
-                %           disp(['backing up to loopindex = ',num2str(loopindex)]);
-                % because of above ugliness, have to correct for 1 dskip offset here
-                properloopindex = loopindex + p.Dskip;
-                disp(['backing up to frame = ',str3(p.manualRange(properloopindex)),...
-                    '(loopindex = ', num2str(properloopindex), ')']);
+                        
+            if backwards && (loopindex>1),
+
+                loopindex = loopindex-p.Dskip;
+
+                disp(['backing up to frame = ',...
+                    str3(p.manualRange(loopindex)),...
+                    '(loopindex = ', num2str(loopindex), ')']);
                 % JCR: Note this code is still kinda bad because when loopindex = 1
                 % and user presses backwards, loopindex skips forward anyway.
                 % Probably should simplify and get rid of Dskip all together,
@@ -388,68 +394,25 @@ while loopindex <= length(p.manualRange);
             end;
             
             if quit_now
-                close(phfig);close(ourfig);
-                % if ishandle(flfig), close(flfig); end
+                
+                close(phfig); close(ourfig); 
                 clear global pos Limage ourfig res pp phfig;
                 return;
+                
             end;
-            if crop_pop %obsolete
-                LNfull=zeros(p.fullsize(1),p.fullsize(2));
-                LNfull(rect(1):rect(3), rect(2):rect(4))=LNsub;
-                oldrect=rect;
-                rect=newrect;
-                LNsub = LNfull(rect(1):rect(3), rect(2):rect(4));
-                LNfull=zeros(p.fullsize(1),p.fullsize(2));
-                LNfull(oldrect(1):oldrect(3), oldrect(2):oldrect(4))=phsub;
-                phsub = LNfull(rect(1):rect(3), rect(2):rect(4));
-                savelist=[savelist,',''phsub'',''LNsub'',''rect'''];
-                % if exist('rreg')==1
-                %     savelist=[savelist,',''rreg'''];
-                %     LNfull(oldrect(1):oldrect(3), oldrect(2):oldrect(4))=rreg;
-                %     rreg = LNfull(rect(1):rect(3), rect(2):rect(4));
-                % end
-                % if exist('yreg')==1
-                %     savelist=[savelist,',''yreg'''];
-                %     LNfull(oldrect(1):oldrect(3), oldrect(2):oldrect(4))=yreg;
-                %     yreg = LNfull(rect(1):rect(3), rect(2):rect(4));
-                % end
-                crop_pop=0;
-                
-                g = double(phsub);
-                g = (g-minmin(g)) / (maxmax(g)-minmin(g));
-                g = g+0.2;
-                gones = ones(size(g));
-                g(g>1)= gones(g>1);
-                g = uint8(g * 255);
-                
-                rescale=(p.min_size./size(LNsub));
-                res=min(rescale);
-                if res>2
-                    res=2;
-                end
-                res = 1; % DJK 071206
-                
-                figure(phfig);
-                clf reset; 
-                
-                imshow(imresize_old(g,res));
-                colormap((1:100)'*[0 1 0]/100)
-                
-                pos11=get(phfig,'position');
-                %set(phfig, 'position', [p.leftend-pos11(3)-8,p.upend-pos11(4), pos11(3), pos11(4)]);% DJK 071207
-                set(phfig, 'position', [640-pos11(3)/2, 512-pos11(4)/2, pos11(3), pos11(4)]); % DJK 071207
-                set(phfig,'name',['Frame ',str3(frameIdx),' phase']);
-                
-                
-            end
+            
+            
             if savetemp
+                
                 LNsub=Lc;
                 if savetemp==2
                     tempsegcorrect=1;
                     eval(['save(''',name,''',',savelist,',''tempsegcorrect'',''-append'');']);
                     disp(['Saved partial file ',name(outl:end),'   # of cells: ',num2str(max2(Lc))]);
                 end
+                
             end
+            
         end
         
         
@@ -457,10 +420,13 @@ while loopindex <= length(p.manualRange);
         p.finetuneimage = DJK_settings.finetuneimage; p.figs = DJK_settings.figs; p.fill_cut = DJK_settings.fill_cut;
         
         if ~dontsave,
+            
             tempsegcorrect=0;
             eval(['save(''',name,''',',savelist,',''tempsegcorrect'',''-append'');']);
             disp(['Updated file ',name(outl:end),'   # of cells: ',num2str(max2(Lc))]);
+            
         elseif addtolist
+            
             if exist(badseglistname)==2
                 load(badseglistname);
             end
@@ -470,24 +436,34 @@ while loopindex <= length(p.manualRange);
             badseglist=[badseglist,frameIdx];
             save(badseglistname,'badseglist');
             disp(['Added frame ',name(outl:end),' to bad segmentation list.']);
+            
         else
             disp(['Skipped file ',name(outl:end),' <--']);
         end;
+        
     end
-    if backwards~=2
+    
+    if ~backwards
         loopindex = loopindex + p.Dskip;                                     %here the loop index is incremented
     end
-    if gotoframenum
+    
+    if gotoframenum ~= 0
+        
         newloopindex = find(p.manualRange==gotoframenum);
+        
         if isempty(newloopindex)
             disp(['Could not goto frame ', num2str(gotoframenum), ...
                 ' because it is not in the manualRange.']);
         else
             loopindex = newloopindex;
         end
+        
     end
     
-end;
+    %disp(['Now set loopindex to ', num2str(loopindex)]);
+    
+    
+end
 
 %%
 

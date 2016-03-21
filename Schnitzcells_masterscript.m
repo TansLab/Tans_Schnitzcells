@@ -231,7 +231,11 @@ if any(strcmp(runsections,{'allpreliminary','cropimages'}))
 
 % Ask user whether cropping is desired.
 settings.performCropping = strcmp(questdlg('Do you want to perform cropping of images on your dataset?','Cropping','Yes','No','No'),'Yes');
-    
+warning('This is not correctly saved.'); % TODO mw
+% save preference to excel
+performCroppingIndex = find(strcmp({alldata{:,1}},'performCropping'))+settings.EXCELREADSTART-1; % find line w. cropRightBottom field.    
+xlswrite([settings.mypathname settings.myconfigfilename],num2str(settings.performCropping),['B' num2str(performCroppingIndex)]); % write value to it
+
 if settings.performCropping
     
     if strcmp(settings.analysisType, 'preliminary')

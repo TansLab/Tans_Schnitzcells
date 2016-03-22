@@ -16,6 +16,8 @@ function  [p,Lout,OKorNot,quit_now,dontsave,addtolist,crop_pop,newrect,savetemp,
 %
 %
 %
+% output:
+% crop_pop      obsolete and can be removed - MW
 
 % *******
 % TODO: include "updatedCellNumbers" in program (PN_imshowlabel) so that
@@ -156,26 +158,20 @@ while ~done
         set(ourfig,'name',['Frame ' currentFrameStr ', Pos: ',num2str(pos(1,2)),' , ',num2str(pos(1,1)),...
                 '  Val: ',num2str(curr_val1)]);
             
-        % Set focus on desired figure (segmented img per default)
-        set(0,'CurrentFigure',figureToFocusOn);
+        
 
     end                    
+          
+    % MW 2015/01 also enable for phase fig (strictly not necessary)
+    set(phfig,'WindowButtonMotionFcn',@MW_schnitzfigureinteraction);
     
     % Define function to retrieve mouseclick position.
-    set(ourfig,'WindowButtonMotionFcn',['global pos currentFrameStr Limage ourfig res pp phfig;pos=max(1,round((1/res)*get(gca,''CurrentPoint'')));',...
-        'if (pos(1,2)>0 & pos(1,2)<size(Limage,1) & pos(1,1)>0 & pos(1,1)<size(Limage,2));',...
-        'curr_val=num2str(double(Limage(pos(1,2),pos(1,1))));else;curr_val=''-1'';end;',...
-        'set(ourfig,''name'',[''Frame '' currentFrameStr '', Pos: '',num2str(pos(1,2)),'' , '',num2str(pos(1,1)),',...
-        '''  Val: '',curr_val]);']);
-    %   '''  Val: '',curr_val]);pp=showbox(phfig,pos,pp,size(Limage),res);figure(ourfig);']);
-    
-    % MW 2015/01 also enable for phase fig (strictly not necessary)
-    set(phfig,'WindowButtonMotionFcn',['global pos currentFrameStr Limage ourfig res pp phfig;pos=max(1,round((1/res)*get(gca,''CurrentPoint'')));',...
-        'if (pos(1,2)>0 & pos(1,2)<size(Limage,1) & pos(1,1)>0 & pos(1,1)<size(Limage,2));',...
-        'curr_val=num2str(double(Limage(pos(1,2),pos(1,1))));else;curr_val=''-1'';end;',...
-        'set(phfig,''name'',[''Frame '' currentFrameStr '', Pos: '',num2str(pos(1,2)),'' , '',num2str(pos(1,1)),',...
-        '''  Val: '',curr_val]);']);
+    set(ourfig,'WindowButtonMotionFcn',@MW_schnitzfigureinteraction);
         
+    % Set focus on desired figure (segmented img per default)
+    set(0,'CurrentFigure',figureToFocusOn);
+    uistack(figureToFocusOn, 'top'); % required in matlab 2014 to actually put figure on top - MW
+    
     % blubb
     % here the regionprops of the next and previous image could already be
     % calculated to quicken update of image when frame changes
@@ -191,7 +187,7 @@ while ~done
             validPress=0;
         else % ct==0: mouseclick
             validPress=1;
-        end;
+        end;                
         
     end;
     
@@ -459,11 +455,11 @@ while ~done
             % recalculated!!! NW 2012-05-10. updatedCellNumbers=ALL
         elseif cc == 'w'
             savetemp=2;
-            done=1;
+            done=1;            
         elseif cc == '.'
             OKorNot=1;
             done=1;
-            dontsave=1;
+            dontsave=1;            
         elseif cc == ','
             OKorNot=1;
             done=1;

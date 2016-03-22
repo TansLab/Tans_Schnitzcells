@@ -763,7 +763,13 @@ else
         % interpolate data
         eval(['existlength=length(' fluor_time ');']) % get length (=1)
         if existlength>1
-          eval(['schnitzcells(i).([''fitted_'' fluor2Field ''_mean'']) = interp1( ' fluor_time ', ' temp_fluor_mean ',  schnitzcells(i).time);'])
+            % sometimes interpolating causes an error (NW2015-09)
+            try
+              eval(['schnitzcells(i).([''fitted_'' fluor2Field ''_mean'']) = interp1( ' fluor_time ', ' temp_fluor_mean ',  schnitzcells(i).time);'])
+            catch
+                warning('Could not interpolate fluor field.'); % -MW
+                eval(['schnitzcells(i).([''fitted_'' fluor2Field ''_mean'']) = NaN;'])
+            end
         end
 
         % problem with out of range values: are still NaN 

@@ -487,6 +487,7 @@ disp(['saving schnitzcells lineage structure to ' p.lineageName]);
 save(p.lineageName,'schnitzcells');
 %--------------------------------------------------------------------------
   
+end
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % Returns Lc_fullsize_centered  = cell-centered Lc in fullsize image
@@ -567,7 +568,7 @@ end
 % Do the centering
 Lc_fullsize_centered( starty:endy, startx:endx ) = Lc_fullsize( minfy:maxfy, minfx:maxfx );
 
-
+end
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 
@@ -618,6 +619,8 @@ else
   disp('Thin to short?');
   centroids = [cellno round(mean(fx)) round(mean(fy)) round(mean(fx)) round(mean(fy)) round(mean(fx)) round(mean(fy))];
 end
+
+end
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 
@@ -645,6 +648,8 @@ for i = 1:size(centroids_in,1)
                           center_y + scaling_y * (centroids_in(i,5) - center_y) ...
                           center_x + scaling_x * (centroids_in(i,6) - center_x) ...
                           center_y + scaling_y * (centroids_in(i,7) - center_y) ];
+end
+
 end
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 

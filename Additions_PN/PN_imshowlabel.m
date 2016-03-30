@@ -245,8 +245,13 @@ end
    
 if useSchnitzColors
     % Create conversiontable conversionTable(framecellnr+1)=schnitznr
-    conversionTable = [0 p.slookup(p.currentFrame, :) highestCellFrameIndx+1]; % add 0 for entry 0
-        % adding extra index, which will correspond to color white later
+    lookupForThisFrame = p.slookup(p.currentFrame, :);
+    
+    % cells that are not mapped should become white
+    lookupForThisFrame(lookupForThisFrame==0) = highestCellFrameIndx+1; 
+    
+    conversionTable = [0 lookupForThisFrame highestCellFrameIndx+1]; % add 0 for entry 0
+        % adding extra index at end, which will correspond to color white later
     
     % Conversion table is applied later
     

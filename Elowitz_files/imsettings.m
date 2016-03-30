@@ -1,12 +1,14 @@
 
 function [exptimestr, gainstr,exptime,cube,datenumber] = imsettings(pname, color);
 
+%%
 exptimestr = 'empty';
 gainstr = 'empty';
 exptime = 'empty';
 cube = 'empty';
 datenumber = 'empty';
 
+%% 
 if isempty(findstr('.tif', pname)),
     imx = [pname,'.tif'];
 end;
@@ -15,6 +17,7 @@ if nargin > 1,
     pname(pos+1) = color;
 end;
 
+%%
 if exist(pname)==2,
     iminfo = imfinfo(pname);
     
@@ -59,7 +62,6 @@ if exist(pname)==2,
          minute=str2num(datetime(15:16));
          second=str2num(datetime(18:19));
          
-         
          datenumber = datenum(year,month,day,hour,minute,second);
          
          %DE 2014-04-11: exposure time is read from descrip too:
@@ -78,6 +80,11 @@ if exist(pname)==2,
          %         datenumber = datenum(year,month,day,hour,minute,second);
     else
         datetime = [];
+        disp(['Current ''descrip'' value:' descrip '.']);
+        warning('Could not find date (yet).');
+            % MW note: I think this function could be organized a bit
+            % better; date is determined either in these if-statements
+            % (micromanager) or later in code (metamorph).
     end;
     % ST end
 else
@@ -88,6 +95,7 @@ else
     return;
 end;
 
+%%
 if isempty(descrip),
     exptimestr = '';
     gainstr = '';
@@ -95,6 +103,7 @@ if isempty(descrip),
     cube=-1;
     return;
 end;
+
 if strmatch('Image-Pro',software)   % unused software in Amolf
     exptimepos = findstr('Exptime=',descrip) + length('Exptime=');
     exptime = sscanf(descrip(exptimepos:end),'%f');
@@ -150,36 +159,22 @@ elseif strmatch('MetaSeries',software)      % new Metamorph version 7.8. Used at
     minute = str2num(timestr(4:5));
     second = round(str2num(timestr(7:end)));    % round to full seconds (to adjust to older version)
 
-
-% below: useless? NW 2014-11
-%elseif strmatch('Exposure:',descrip)     %%%%%%%%%%%%%%%ADDED SJT not so nice..if can not add extra fields
-%    exptimepos = findstr('Exposure: ',descrip) + length('Exposure: ');
-%    exptime = sscanf(descrip(exptimepos:end),'%f');
-%    exptimestr = num2str(exptime);
-%    datetimepos = findstr('DateTime: ',descrip) + length('DateTime: ');
-%    datetimestr = descrip(datetimepos:end);
-%    %datetimestr = num2str(datetime);    
-%    datestr = datetimestr(1:10);
-%    timestr = datetimestr(12:19);
-
-%    year = str2num(datestr(1:4));
-%    month = str2num(datestr(6:7));
-%    day = str2num(datestr(9:10));
-
-%    hour = str2num(timestr(1:2));
-%    minute = str2num(timestr(4:5));
-%    second = str2num(timestr(7:8));
-%    keyboard;
+% elsif micromanager
+% note that when software is micromanager, timestamp data is parsed
+% earlier.
 end
 
-%end
+%%
+
 datenumber = datenum(year,month,day,hour,minute,second);
+
 % keyboard;
 % if exptime < 1,
 %     exptimestr = ['0',exptimestr];
 % end;
 exptimestr(exptimestr=='.')=[];
 
+%%
 
 % gainpos = findstr('Gain: Gain ',descrip) + length('Gain: Gain ');
 % ORIGINAL LINE - MW
@@ -210,3 +205,5 @@ else
     end;
 end;
 
+%%
+end

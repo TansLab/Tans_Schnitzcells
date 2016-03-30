@@ -231,6 +231,7 @@ if (strcmp(p.method,'phasecontrast')==1)
     DphaseAll = dir([p.imageDir, '*-p-*.tif']);
     if ~isfield(p,'numphaseslices')
         if isempty(DphaseAll)
+            disp('Error (see below).. Maybe you need to move images to the appropriate directory?');
             error(['Can''t find any images in directory ' p.imageDir]);
         else
             p.numphaseslices = int8(round(length(DphaseAll)/length(Dphase1))); % MW edit 2014/06/23 - if there's a missing file ceil makes it crash

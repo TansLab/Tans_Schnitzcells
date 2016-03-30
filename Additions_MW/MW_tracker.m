@@ -1,6 +1,6 @@
 
 
-function MW_tracker(p, varargin)
+function p = MW_tracker(p, varargin)
 % function MW_tracker(p, varargin)
 % if p.debugmode is valid field, then also figures are plotted.
 
@@ -150,15 +150,17 @@ for i = 2:numel(p.manualRange)
 end
 
 %% Save to schnitz format (in .mat)
-% No idea what the following code does, but let's see
-% Stolen from NW_tracker_centroid_vs_area
+% Reculculating whole lineage file from tracking files..
+% (No idea how following code works, 
+% stolen from NW_tracker_centroid_vs_area)
 % -MW
 
 if count>2 % if frames tracked at all
+    
     disp('Reculculating whole lineage file from tracking files..');
 
     [P D E G] = DJK_data_treat(p);
-
+    
     [schnitzcells cellid] = recalc_schnitz(P,D,E,G,p.manualRange,'',opts); %
     schnitzcells = renumberschnitzes(p,schnitzcells); % MW TODO, is this necessary step?
 

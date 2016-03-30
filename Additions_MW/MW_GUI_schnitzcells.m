@@ -27,7 +27,7 @@ function varargout = MW_GUI_schnitzcells(varargin)
 
 % Edit the above text to modify the response to help MW_GUI_schnitzcells
 
-% Last Modified by GUIDE v2.5 24-Feb-2016 16:55:40
+% Last Modified by GUIDE v2.5 30-Mar-2016 20:04:02
 
 % Begin initialization code - DO NOT EDIT
 gui_Singleton = 1;
@@ -466,7 +466,7 @@ global runsections customFrameRange p settings
 
 % retrieve settings var
 settings = evalin('base', 'settings');
-p.overwrite=1;
+p.overwrite = get(handles.checkbox5,'Value');
 
 % Get custom framerange
 prompt={'Enter frame range:'};
@@ -500,7 +500,7 @@ settings = evalin('base', 'settings');
 
 % Set custom tracker:
 settings.specialtracker = 'NW';
-p.overwrite=1;
+p.overwrite = get(handles.checkbox5,'Value');
 
 % Get custom framerange
 prompt={'Enter frame range:'};
@@ -530,7 +530,7 @@ global runsections customFrameRange p settings
 
 % retrieve settings var
 settings = evalin('base', 'settings');
-p.overwrite=1;
+p.overwrite = get(handles.checkbox5,'Value');
 
 % Get custom framerange
 prompt={'Enter frame range:'};
@@ -815,3 +815,12 @@ framenr = get(handles.framenrtracking,'String');
 %slicenr = get(handles.slicenr,'String');
 
 MW_helperforlinkingframes(p, str2num(framenr));
+
+
+% --- Executes on button press in checkbox5.
+function checkbox5_Callback(hObject, eventdata, handles)
+% hObject    handle to checkbox5 (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+
+% Hint: get(hObject,'Value') returns toggle state of checkbox5

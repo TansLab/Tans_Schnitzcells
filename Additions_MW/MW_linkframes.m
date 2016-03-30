@@ -322,8 +322,10 @@ end
 if checksPassed 
     disp('All checks passed..')
 else
-    disp('WARNING: Checks not passed..')
-    pause(1);
+    warning(['Checks not passed. Skipping frames ' num2str(frame1Number) '-' num2str(frame1Number) '. Re-track with other tracker.']);
+        % other trackers: DJK_tracker_djk or NW_tracker_centroid_vs_area
+    linklistschnitz = 0;
+    return
 end
 
 %% Convert to schnitzcells format 

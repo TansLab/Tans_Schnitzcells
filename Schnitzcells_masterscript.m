@@ -467,6 +467,7 @@ elseif any(strcmp(runsections,{'allfull','trackandmanualcorrections'}))% full
     %MW_tracker(p,'manualRange', [1:244]); 
     % If all else fails:
     % edit MW_helperforlinkingframes
+        
     DJK_tracker_djk(p,'manualRange', settings.currentFrameRange); % default tracker           
 
     % Find problem cells
@@ -504,6 +505,13 @@ end
 
 if any(strcmp(runsections,{'customtrackersoncustomrange'}))
    
+    if ~isfield(p, 'overwrite')
+        p.overwrite=0; % ADVANCED SETTING
+    end
+    if ~isfield(p, 'showAll');
+        p.showAll = 1; % show all segmented frames to user
+    end
+    
     % call desired tracker
     if ~isfield(settings, 'specialtracker') 
         DJK_tracker_djk(p,'manualRange', customFrameRange); % default tracker
@@ -524,14 +532,10 @@ end
 
 if any(strcmp(runsections,{'checkaftercustom'}))
     
-    disp('Option not working yet.. Use (re)track (..) instead.');
+    %disp('Option not working yet.. Use (re)track (..) instead.');
     
-    %{
-    % ADVANCED SETTINGS
-    p.overwrite=0; 
-    p.showAll = 1; % show all segmented frames to user
     
-    % Find problem cells
+    % Find problem cells    
     [problems, theOutputFilePath] = DJK_analyzeTracking(p,'manualRange', settings.currentFrameRange, 'pixelsMoveDef', 15, 'pixelsLenDef', [-4 13]);
     % open output file in external editor (not necessary, but convenient)
     eval(['!' settings.MYTEXTEDITOR ' ' theOutputFilePath ' &']);
@@ -539,7 +543,10 @@ if any(strcmp(runsections,{'checkaftercustom'}))
     p.problemCells = problems;
 
     % Create lookup table for frame label <-> schnitz label
-    p.slookup=MW_makeslookup(p);
+    p.slookup = MW_makeslookup(p);
+
+    % Let user know we're done
+    mysound=load('gong'); sound(mysound.y);
 
     % Manual check again 
     % Since "p" now contains the lookup table, and problemcells is defined, it
@@ -547,7 +554,8 @@ if any(strcmp(runsections,{'checkaftercustom'}))
     % Note that when one performs manual corrections to a frame, the mapping is
     % not correct any more.
     PN_manualcheckseg(p,'manualRange',settings.currentFrameRange,'override',p.overwrite,'assistedCorrection',0); % assisted correction of because problem cells highlighted
-    %}
+
+    
     
 end
 

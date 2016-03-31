@@ -276,6 +276,8 @@ end
 if useSchnitzColors
     
     % Debug code
+    %{
+    warning('Debug code activated.');
     sizeTable = size(conversionTable)
     maxL2 = max(L2(:)+1)
     Lindices = unique(L2(:))
@@ -284,6 +286,8 @@ if useSchnitzColors
     colorIdx = conversionTable(Lindices+1)
     colors = mymap(colorIdx+1,:)+1
     
+    % End debug code
+    %}
 
     schnitzSegmentationMatrix = conversionTable(L2+1)+1;
     

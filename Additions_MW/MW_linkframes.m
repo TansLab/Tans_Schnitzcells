@@ -1,5 +1,5 @@
 function [linklistschnitz, segFile1Path, segFile2Path] = MW_linkframes(p, frame1Number, frame2Number)
-% function linklistschnitz = MW_linkframes(p, frameNumber)
+% function [linklistschnitz, segFile1Path, segFile2Path] = MW_linkframes(p, frame1Number, frame2Number)
 %
 % Performs tracking for frames frame1Number and frame2Number.
 %
@@ -7,6 +7,18 @@ function [linklistschnitz, segFile1Path, segFile2Path] = MW_linkframes(p, frame1
 %
 % Note term parent and daughter are here also used to link the same
 % individual over two frames!
+%
+% Returns:
+% - segFile1Path, segFile2Path:
+%       Location of .mat segmentation files that were linked.
+% - linklistschnitz
+%       Simple list, where each row links segmentation nr of cell in frame
+%       n to segmentation nr of cell in frame n+1.
+%       EXCEPTIONS, returns:
+%       - linklistschnitz = 0 if frame pair was skipped because seg file
+%         older than track file.
+%       - linklistschnitz = -1 if checks were not passed.
+
 
 %% Parameters 
 
@@ -299,10 +311,10 @@ uniqueExclZerosFr1 = uniqueExclZerosFr1(find(uniqueExclZerosFr1>0)); % but idx=0
 Frame1LinkedOnes = ismember(uniqueExclZerosFr1, linklist(:,1)); % check whether the cellno's from 1 are all accounted for in list
 barren = find(Frame1LinkedOnes==0); % if not, they're barren
 if ~isempty(barren)
-    warning('WARNING: barren cells found. cellno''s:');
+    disp('WARNING: barren cells found. cellno''s:');
     barren
     checksPassed = 0;
-    warning('This leads to serious issue, since leads to discrepancy between numel(schnitzcells(i).frame_nrs) and numel(schnitzcells(i).cellno)!');
+    disp('This leads to serious issue, since leads to discrepancy between numel(schnitzcells(i).frame_nrs) and numel(schnitzcells(i).cellno)!');
     %warning('Adding them as connected to schnitz #1..');
     %linklist = [linklist; padarray(barren, [0,1],1,'post')];
 end
@@ -322,9 +334,9 @@ end
 if checksPassed 
     disp('All checks passed..')
 else
-    warning(['Checks not passed. Skipping frames ' num2str(frame1Number) '-' num2str(frame1Number) '. Re-track with other tracker.']);
+    disp(['WARNING: Checks not passed. Skipping frames ' num2str(frame1Number) '-' num2str(frame2Number) '. Re-track with other tracker.']);
         % other trackers: DJK_tracker_djk or NW_tracker_centroid_vs_area
-    linklistschnitz = 0;
+    linklistschnitz = -1;
     return
 end
 

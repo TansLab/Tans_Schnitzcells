@@ -192,7 +192,7 @@ for count = 2:length(p.manualRange);
   [Lc_today_fullsize_centered, Lc_today_fullsize, Lc_today]             = loadLcData(todaySegFile); % loadCenteredSegData2(todaySegFile);
   [Lc_yesterday_fullsize_centered, Lc_yesterday_fullsize, Lc_yesterday] = loadLcData(yesterdaySegFile); % loadCenteredSegData2(yesterdaySegFile);
   
-  % 2DO: it would better to save cenx & ceny, from thin
+  % TODO: it would better to save cenx & ceny, from thin
   
   % Need to save some properties of cells for recalc_schnitz lateron
   rp  = regionprops(Lc_today,'Centroid','Orientation','MajorAxisLength');
@@ -477,14 +477,7 @@ end
 %--------------------------------------------------------------------------
 % PUT THE TRACKED FRAME PAIRS TOGETHER IN SCHNITZCELLS FILE
 %--------------------------------------------------------------------------
-% Convert matching results to schnitzcells-format lineage
-[P D E G] = DJK_data_treat(p);
-
-[schnitzcells cellid] = recalc_schnitz(P,D,E,G,p.manualRange,'',opts); %
-schnitzcells = renumberschnitzes(p,schnitzcells);
-
-disp(['saving schnitzcells lineage structure to ' p.lineageName]);
-save(p.lineageName,'schnitzcells');
+MW_makeSchnitzFileFromTracking(p, opts);
 %--------------------------------------------------------------------------
   
 end

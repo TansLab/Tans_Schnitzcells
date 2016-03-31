@@ -1183,13 +1183,7 @@ end
 % PUT THE TRACKED FRAME PAIRS TOGETHER IN SCHNITZCELLS FILE
 %--------------------------------------------------------------------------
 % Convert matching results to schnitzcells-format lineage
-[P D E G] = DJK_data_treat(p);
-
-[schnitzcells cellid] = recalc_schnitz(P,D,E,G,p.manualRange,'',opts); %
-schnitzcells = renumberschnitzes(p,schnitzcells);
-
-disp(['saving schnitzcells lineage structure to ' p.lineageName]);
-save(p.lineageName,'schnitzcells');
+MW_makeSchnitzFileFromTracking(p, opts);
 %--------------------------------------------------------------------------
 
 

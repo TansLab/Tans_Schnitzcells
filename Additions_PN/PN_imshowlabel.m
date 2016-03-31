@@ -314,7 +314,12 @@ if existfield(p, 'showPerim') && p.showPerim % show cell outlines
     % Get perimeter image
     %perimImg = bwperim(L).*L; % make outline image; *.L colors the perims
     perimImg = bwperim(L);
-    %perimImg = imdilate(perimImg,strel('disk',3,4)); % imdilate use TODO can be optimized
+        % note that by definition touching stuff isn't recognized as
+        % boundary
+    % make lines thicker
+    perimImg = imdilate(perimImg,strel('disk',1,4)); % imdilate use TODO can be optimized    
+    % actually put in the lines by removing from original color-img areas
+    % that are no line
     perimImg = perimImg.*L;
     
     perimImg = ind2rgb(perimImg+1,mymap); % map indices to colours

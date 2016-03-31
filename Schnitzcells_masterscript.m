@@ -514,11 +514,19 @@ if any(strcmp(runsections,{'customtrackersoncustomrange'}))
     
     % call desired tracker
     if ~isfield(settings, 'specialtracker') 
-        DJK_tracker_djk(p,'manualRange', customFrameRange); % default tracker
+        DJK_tracker_djk(p,'manualRange', settings.retrackFrameRange); % default tracker
     elseif strcmp(settings.specialtracker, 'MW')
-        MW_tracker(p,'manualRange', customFrameRange); 
+        MW_tracker(p,'manualRange', settings.retrackFrameRange); 
     elseif strcmp(settings.specialtracker, 'NW')
-        NW_tracker_centroid_vs_area(p,'manualRange', customFrameRange);
+        NW_tracker_centroid_vs_area(p,'manualRange', settings.retrackFrameRange);
+    end
+    
+    % Now, if retracked range was not full range, the overall tracking
+    % should be redone. This function is already executed in the trackers,
+    % but should be re-executed here in this case.
+    if ~isequal(settings.retrackFrameRange, settings.currentFrameRange)
+        disp('CREATING SCHNITZCELLS FROM FULL DESIRED RANGE ***');
+        MW_calculateSchnitzPropertiesWithoutTracking(p,'manualRange', settings.currentFrameRange);
     end
     
 end

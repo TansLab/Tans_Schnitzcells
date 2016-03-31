@@ -220,6 +220,7 @@ end % note suspicious cell detection algorithm has a 2nd part below
 if useSchnitzColors
     mymap = p.customColors;
     L2=uint8(L);  
+    highestSchnitzIndx = size(p.slookup,1); % # colors
     highestCellFrameIndx = size(p.slookup,2); % = highest index in L
         % highestCellFrameIndx == size(p.customColors,1)-2
 else
@@ -250,7 +251,7 @@ if useSchnitzColors
     % cells that are not mapped should become white
     lookupForThisFrame(lookupForThisFrame==0) = highestCellFrameIndx+1; 
     
-    conversionTable = [0 lookupForThisFrame highestCellFrameIndx+1]; % add 0 for entry 0
+    conversionTable = [0 lookupForThisFrame highestSchnitzIndx+1]; % add 0 for entry 0
         % adding extra index at end, which will correspond to color white later
     
     % Conversion table is applied later
@@ -273,7 +274,7 @@ end
 
 
 if useSchnitzColors
-    %{
+    
     % Debug code
     sizeTable = size(conversionTable)
     maxL2 = max(L2(:)+1)
@@ -282,9 +283,11 @@ if useSchnitzColors
     disp('Colors I''ll use:');
     colorIdx = conversionTable(Lindices+1)
     colors = mymap(colorIdx+1,:)+1
-    %}
     
-    Lrgb = ind2rgb(conversionTable(L2+1)+1,mymap); 
+
+    schnitzSegmentationMatrix = conversionTable(L2+1)+1;
+    
+    Lrgb = ind2rgb(schnitzSegmentationMatrix,mymap); 
         % 2x +1 since L contains 0 for blackground, and accordingly all
         % both conversionTable and colormap are shifted by 1.
         % Note that there's also the color white reserved at the end of the

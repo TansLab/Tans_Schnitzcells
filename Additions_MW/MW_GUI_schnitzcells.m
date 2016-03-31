@@ -27,7 +27,7 @@ function varargout = MW_GUI_schnitzcells(varargin)
 
 % Edit the above text to modify the response to help MW_GUI_schnitzcells
 
-% Last Modified by GUIDE v2.5 30-Mar-2016 20:04:02
+% Last Modified by GUIDE v2.5 30-Mar-2016 20:26:39
 
 % Begin initialization code - DO NOT EDIT
 gui_Singleton = 1;
@@ -462,7 +462,7 @@ function pushbutton31_Callback(hObject, eventdata, handles)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    structure with handles and user data (see GUIDATA)
 
-global runsections customFrameRange p settings
+global runsections p settings
 
 % retrieve settings var
 settings = evalin('base', 'settings');
@@ -473,7 +473,7 @@ prompt={'Enter frame range:'};
 name = 'Range:';
 defaultans = {mat2str(settings.currentFrameRange)};
 answer = inputdlg(prompt,name,1,defaultans);
-customFrameRange = str2num(answer{1});
+settings.retrackFrameRange = str2num(answer{1});
 
 % call script, runsections defines which sectino of sript to run
 runsections = 'customtrackersoncustomrange'
@@ -507,7 +507,7 @@ prompt={'Enter frame range:'};
 name = 'Range:';
 defaultans = {mat2str(settings.currentFrameRange)};
 answer = inputdlg(prompt,name,1,defaultans);
-customFrameRange = str2num(answer{1});
+settings.retrackFrameRange = str2num(answer{1});
 
 % call script, runsections defines which sectino of sript to run
 runsections = 'customtrackersoncustomrange'
@@ -526,7 +526,7 @@ function pushbutton35_Callback(hObject, eventdata, handles)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    structure with handles and user data (see GUIDATA)
 
-global runsections customFrameRange p settings
+global runsections p settings
 
 % retrieve settings var
 settings = evalin('base', 'settings');
@@ -537,7 +537,7 @@ prompt={'Enter frame range:'};
 name = 'Range:';
 defaultans = {mat2str(settings.currentFrameRange)};
 answer = inputdlg(prompt,name,1,defaultans);
-customFrameRange = str2num(answer{1});
+settings.retrackFrameRange = str2num(answer{1});
 
 % call script, runsections defines which sectino of sript to run
 runsections = 'customtrackersoncustomrange'
@@ -557,7 +557,7 @@ function pushbutton36_Callback(hObject, eventdata, handles)
 
 % Re-run segmentation for certain frame
 
-global runsections customFrameRange p settings
+global runsections p settings
 
 % retrieve settings var
 settings = evalin('base', 'settings');
@@ -824,3 +824,10 @@ function checkbox5_Callback(hObject, eventdata, handles)
 % handles    structure with handles and user data (see GUIDATA)
 
 % Hint: get(hObject,'Value') returns toggle state of checkbox5
+
+
+% --- Executes during object creation, after setting all properties.
+function pushbutton35_CreateFcn(hObject, eventdata, handles)
+% hObject    handle to pushbutton35 (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    empty - handles not created until after all CreateFcns called

@@ -27,7 +27,7 @@ function varargout = MW_GUI_schnitzcells(varargin)
 
 % Edit the above text to modify the response to help MW_GUI_schnitzcells
 
-% Last Modified by GUIDE v2.5 30-Mar-2016 20:26:39
+% Last Modified by GUIDE v2.5 31-Mar-2016 22:04:05
 
 % Begin initialization code - DO NOT EDIT
 gui_Singleton = 1;
@@ -831,3 +831,75 @@ function pushbutton35_CreateFcn(hObject, eventdata, handles)
 % hObject    handle to pushbutton35 (see GCBO)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    empty - handles not created until after all CreateFcns called
+
+
+
+function framenr2_Callback(hObject, eventdata, handles)
+% hObject    handle to framenr2 (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+
+% Hints: get(hObject,'String') returns contents of framenr2 as text
+%        str2double(get(hObject,'String')) returns contents of framenr2 as a double
+
+
+% --- Executes during object creation, after setting all properties.
+function framenr2_CreateFcn(hObject, eventdata, handles)
+% hObject    handle to framenr2 (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    empty - handles not created until after all CreateFcns called
+
+% Hint: edit controls usually have a white background on Windows.
+%       See ISPC and COMPUTER.
+if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColor'))
+    set(hObject,'BackgroundColor','white');
+end
+
+
+
+function cellLabelMYNEEDLE_Callback(hObject, eventdata, handles)
+% hObject    handle to cellLabelMYNEEDLE (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+
+% Hints: get(hObject,'String') returns contents of cellLabelMYNEEDLE as text
+%        str2double(get(hObject,'String')) returns contents of cellLabelMYNEEDLE as a double
+
+
+% --- Executes during object creation, after setting all properties.
+function cellLabelMYNEEDLE_CreateFcn(hObject, eventdata, handles)
+% hObject    handle to cellLabelMYNEEDLE (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    empty - handles not created until after all CreateFcns called
+
+% Hint: edit controls usually have a white background on Windows.
+%       See ISPC and COMPUTER.
+if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColor'))
+    set(hObject,'BackgroundColor','white');
+end
+
+
+% --- Executes on button press in pushbutton49.
+function pushbutton49_Callback(hObject, eventdata, handles)
+% hObject    handle to pushbutton49 (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+
+
+% retrieve settings
+settings = evalin('base', 'settings');
+p = evalin('base', 'p');
+
+% input from user
+framenr = get(handles.framenr2,'String');
+cellLabelMYNEEDLE = str2num(get(handles.cellLabelMYNEEDLE,'String'));
+
+% load segfile
+load([p.segmentationDir 'pos4cropseg' num2str(framenr) '.mat']);
+
+% make figure with highlighted cell
+Lselect=Lc; Lselect(Lc>0)=1; Lselect(Lc==cellLabelMYNEEDLE)=2;
+figure; clf; imshow(Lselect,[]);
+
+
+

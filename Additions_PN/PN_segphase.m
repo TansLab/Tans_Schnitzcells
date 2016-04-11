@@ -1,8 +1,5 @@
-% function [A_cropPhImage, Z_segmentedImage, ROI_segmentation] = PN_segphase(imageToSegment,varargin)
+% function [A_cropPhImage, Z_segmentedImage, ROI_segmentation] = PN_segphase(p, imageToSegment,varargin)
 %
-% TODO MW 2015/01
-% Check whether hard-coded algorithm constants in this algorithm can be
-% made into parameters with default values that can be adjusted.
 %
 %by Philippe Nghe 16/01/2012
 %steps of the segmentation :
@@ -24,7 +21,15 @@
 %   useFullImage:   Default value 1; if set to 0 allows you to handle the
 %                   image uncropped. (Mother function 
 %                   PN_segmoviephase_3colors.m accepts p.useFullImage).
-function [A_cropPhImage, Z_segmentedImage, ROI_segmentation] = PN_segphase(imageToSegment,varargin)
+%
+% TODO MW 2015/01
+% Check whether hard-coded algorithm constants in this algorithm can be
+% made into parameters with default values that can be adjusted.
+%
+% NOTE MW
+% Also added "p" parameter as input; this is redundant with varargin/inputsOfSegmentation
+% 
+function [A_cropPhImage, Z_segmentedImage, ROI_segmentation] = PN_segphase(p,imageToSegment,varargin)
 
 
 %%%%%%%%%%%%%%%%%%%%%%  PARAMETERS INITIALIZATION  %%%%%%%%%%%%%%%%%%%%%%
@@ -78,8 +83,26 @@ A_maskImage = imdilate(A_maskImage,strel('disk',q.Results.maskMargin));         
 % ** NW2014-07: used to be 'imclose' instead of 'imdilate' but this didn't really enlarge the mask, only close it
 
 labelMaskImage = logical(A_maskImage);                                     %only keep the biggest connected part of the mask
-propsMaskImage = regionprops(labelMaskImage,'Area','BoundingBox','Image');
-[~,idx] = max([propsMaskImage.Area]);
+
+
+
+% determine region of interest
+if isfield(p,'customColonyCenter') % MW addition
+    
+    propsMaskImage = regionprops(labelMaskImage,'BoundingBox','Image','Centroid');
+    
+    mycenter = p.customColonyCenter;
+    
+    distancestocenter = cellfun(@(x) sqrt((x(1)-mycenter(1)).^2 + (x(2)-mycenter(2)).^2), ...
+        {propsMaskImage.Centroid});
+   
+    [~,idx] = min(distancestocenter);
+    
+else
+    propsMaskImage = regionprops(labelMaskImage,'Area','BoundingBox','Image','Centroid');
+    [~,idx] = max([propsMaskImage.Area]);
+end
+
 if q.Results.useFullImage~=1  % default: crop image to ROI
     A_cropMaskImage = propsMaskImage(idx).Image;                               %cropped mask
     bb = propsMaskImage(idx).BoundingBox;

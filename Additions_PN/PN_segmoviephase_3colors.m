@@ -444,9 +444,9 @@ for i= p.segRange
     %---------------------------------------------------------------------------
     % THE REAL AND TRUE SEGMENTATION IS HERE:
     if strcmp(p.medium,'normal')==1
-        [phsub,LNsub,rect]= PN_segphase(imageToSegment,inputsOfSegmentation{:});    
+        [phsub,LNsub,rect]= PN_segphase(p,imageToSegment,inputsOfSegmentation{:});    
     elseif strcmp(p.medium,'rich')==1
-        [phsub,LNsub,rect]= NW_segphase_richMed(imageToSegment,inputsOfSegmentation{:});    
+        [phsub,LNsub,rect]= NW_segphase_richMed(p,imageToSegment,inputsOfSegmentation{:});    
     else
         error('Don''t know how to segment...')
     end

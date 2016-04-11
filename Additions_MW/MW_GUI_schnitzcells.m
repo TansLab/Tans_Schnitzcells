@@ -27,7 +27,7 @@ function varargout = MW_GUI_schnitzcells(varargin)
 
 % Edit the above text to modify the response to help MW_GUI_schnitzcells
 
-% Last Modified by GUIDE v2.5 31-Mar-2016 22:04:05
+% Last Modified by GUIDE v2.5 08-Apr-2016 16:35:10
 
 % Begin initialization code - DO NOT EDIT
 gui_Singleton = 1;
@@ -902,4 +902,30 @@ Lselect=Lc; Lselect(Lc>0)=1; Lselect(Lc==cellLabelMYNEEDLE)=2;
 figure; clf; imshow(Lselect,[]);
 
 
+
+
+
+% --- Executes on button press in pushbutton50.
+function pushbutton50_Callback(hObject, eventdata, handles)
+% hObject    handle to pushbutton50 (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+
+global p
+
+% retrieve settings
+p = evalin('base', 'p');
+settings = evalin('base', 'settings');
+
+myimg = imread([p.imageDir p.movieName '-p-' '2' '-' sprintf('%03d',min(settings.currentFrameRange)) '.tif']);
+figure(1); clf; imshow(myimg, []);
+
+p.customColonyCenter = round(ginput(1))
+
+close(1);
+
+%cellno1 = (location(2),location(1));
+
+% update workspace
+assignin ('base','p',p)
 

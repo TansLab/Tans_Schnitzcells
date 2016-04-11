@@ -242,16 +242,20 @@ if settings.performCropping
         % Manually make sure image dir is correct
         % (This is done to accomodate cropping.)
         p.imageDir = [settings.rootDir settings.movieDate '\' settings.positionName '\']
-
-        % Determine crop area
-        [selectedLeftTop,selectedRightBottom] = MW_determinecroparea(p, settings.frameRangePreliminary);
-
-        % Close figure from crop popup
-        close(gcf);
-
+        
         % set new croparea and save crop area to excel file
-        myAnswer = questdlg(['Start cropping? And save selection to Excel file (close it first)?'],'Confirmation required.','Save,use,crop','Crop using old','Abort!','Save,use,crop');
-        if strcmp(myAnswer, 'Save,use,crop')
+        % ===
+        % Ask to crop, and ask 
+        myAnswer = questdlg(['Start cropping? And save selection to Excel file (close it first)?'],'Confirmation required.','Save,use,crop','Crop using old','Abort!','Save,use,crop');        
+        % Only select new if desired
+        if strcmp(myAnswer, 'Save,use,crop')            
+
+            % Determine crop area
+            [selectedLeftTop,selectedRightBottom] = MW_determinecroparea(p, settings.frameRangePreliminary);
+
+            % Close figure from crop popup
+            close(gcf);
+            
             settings.cropLeftTop = selectedLeftTop;
             settings.cropRightBottom = selectedRightBottom;
 
@@ -318,6 +322,7 @@ end
 % ADVANCED PARAMETER SETTINGS that can be useful:
 % p.useFullImage=1; % forces to use full image for segmentation
 % p.overwrite=1; % overwrite existing files (to redo segmentation)
+% p.customColonyCenter=[x,y]; % set center of colony to select ROI 
 % =========================================================================
 
 if any(strcmp(runsections,{'allpreliminary', 'allfull','segmentation'}))

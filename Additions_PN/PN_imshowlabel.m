@@ -88,6 +88,14 @@ if numExtraArgs > 0
         p_internal.(fieldName) = varargin{i+1};
     end
 end
+
+% If schnitznrs known, might as well map framelbls to schnitznrs
+useSchnitzColors=0;
+if isfield(p,'showNr') && isfield(p,'slookup')
+    if (p.showNr==2)
+        useSchnitzColors=1;
+    end
+end
 %--------------------------------------------------------------------------
 
 
@@ -207,54 +215,92 @@ end % note suspicious cell detection algorithm has a 2nd part below
 % elapsed time: 0.33
 %stop1=toc
 
-%{
-Doesn't work for higher frame numbers, and takes too much time
-% If schnitznrs known, might as well map framelbls to schnitznrs
-if isfield(p,'showNr')
-if (isfield(p,'slookup') && (p.showNr==2))
-    conversionTable = p.slookup(p.currentFrame, :);
-    L = changem(L, conversionTable, 1:numel(conversionTable));
-end
-end
-%}
-
 %creation of a rgb colormap
 % Use custom colormap if it is set
-if isfield(p_internal,'customColors')
-    mymap = p_internal.customColors;
+if useSchnitzColors
+    mymap = p.customColors;
     L2=uint8(L);  
+    highestSchnitzIndx = size(p.slookup,1); % # colors
+    highestCellFrameIndx = size(p.slookup,2); % = highest index in L
+        % highestCellFrameIndx == size(p.customColors,1)-2
 else
     % L2 has every non-background blob in range [2,256] and 
     % sets background to one, corresp. to first entry in mymap
     L2 = mod(L,255)+2;
     L2(L==0) = 1;
     % M is the maximum color table entry, at most 256 colors
-    M = min(max2(L)+2,256);
+    highestCellFrameIndx = min(max2(L)+2,256);
     % create a color map
-    mymap = DJK_hsv(M); % DJK 071207
+    mymap = DJK_hsv(highestCellFrameIndx); % DJK 071207
     % explicitly set the colormap's first entry to black for background
     mymap(1,:)=[0 0 0];
     if p_internal.randomize
       % get sequence of random integers in range [1,maxcolors-1]
-      [s,I] = sort(rand(M-1,1));  
+      [s,I] = sort(rand(highestCellFrameIndx-1,1));  
       % randomly reorder mymap color entries [2,maxcolors]
       mymap(2:end,:) = mymap(I+1,:);
     end
     mymap = [mymap ; 1 1 1]; %add white
 end
 
+   
+if useSchnitzColors
+    % Create conversiontable conversionTable(framecellnr+1)=schnitznr
+    lookupForThisFrame = p.slookup(p.currentFrame, :);
+    
+    % cells that are not mapped should become white
+    lookupForThisFrame(lookupForThisFrame==0) = highestCellFrameIndx+1; 
+    
+    conversionTable = [0 lookupForThisFrame highestSchnitzIndx+1]; % add 0 for entry 0
+        % adding extra index at end, which will correspond to color white later
+    
+    % Conversion table is applied later
+    
+    % Alternative way
+    % possible but takes to long because contains loop
+    % L = changem(L, conversionTable, 1:numel(conversionTable));    
+
+end
+
 % 2nd part of suspicious cell detection || problemcellhighlighting
 if assistedCorrection || (problemCellHighlighting && ~isempty(allSuspiciousLabels))
     % elapsed time: 0.34
     %stop2=toc
-    L2(logical(Lsuspicious)) = M+1;
+    L2(logical(Lsuspicious)) = highestCellFrameIndx+1;
     if assistedCorrection % only for susp. detection.
         L2(logical(imdilate(imcentroids,strel('square',2)))) = 0; % costs 0.017 sec    
     end
 end
 
 
-Lrgb = ind2rgb(L2,mymap); % costs 0.04 sec
+if useSchnitzColors
+    
+    % Debug code
+    %{
+    warning('Debug code activated.');
+    sizeTable = size(conversionTable)
+    maxL2 = max(L2(:)+1)
+    Lindices = unique(L2(:))
+        
+    disp('Colors I''ll use:');
+    colorIdx = conversionTable(Lindices+1)
+    colors = mymap(colorIdx+1,:)+1
+    
+    % End debug code
+    %}
+
+    schnitzSegmentationMatrix = conversionTable(L2+1)+1;
+    
+    Lrgb = ind2rgb(schnitzSegmentationMatrix,mymap); 
+        % 2x +1 since L contains 0 for blackground, and accordingly all
+        % both conversionTable and colormap are shifted by 1.
+        % Note that there's also the color white reserved at the end of the
+        % colormap.
+    
+else 
+    Lrgb = ind2rgb(L2,mymap); % costs 0.04 sec
+end
+    
 
 % elapsed time: 0.40
 %stop3=toc
@@ -275,7 +321,12 @@ if existfield(p, 'showPerim') && p.showPerim % show cell outlines
     % Get perimeter image
     %perimImg = bwperim(L).*L; % make outline image; *.L colors the perims
     perimImg = bwperim(L);
-    %perimImg = imdilate(perimImg,strel('disk',3,4)); % imdilate use TODO can be optimized
+        % note that by definition touching stuff isn't recognized as
+        % boundary
+    % make lines thicker
+    perimImg = imdilate(perimImg,strel('disk',1,4)); % imdilate use TODO can be optimized    
+    % actually put in the lines by removing from original color-img areas
+    % that are no line
     perimImg = perimImg.*L;
     
     perimImg = ind2rgb(perimImg+1,mymap); % map indices to colours

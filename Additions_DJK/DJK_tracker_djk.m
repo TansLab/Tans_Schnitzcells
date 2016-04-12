@@ -192,7 +192,7 @@ for count = 2:length(p.manualRange);
   [Lc_today_fullsize_centered, Lc_today_fullsize, Lc_today]             = loadLcData(todaySegFile); % loadCenteredSegData2(todaySegFile);
   [Lc_yesterday_fullsize_centered, Lc_yesterday_fullsize, Lc_yesterday] = loadLcData(yesterdaySegFile); % loadCenteredSegData2(yesterdaySegFile);
   
-  % 2DO: it would better to save cenx & ceny, from thin
+  % TODO: it would better to save cenx & ceny, from thin
   
   % Need to save some properties of cells for recalc_schnitz lateron
   rp  = regionprops(Lc_today,'Centroid','Orientation','MajorAxisLength');
@@ -477,16 +477,10 @@ end
 %--------------------------------------------------------------------------
 % PUT THE TRACKED FRAME PAIRS TOGETHER IN SCHNITZCELLS FILE
 %--------------------------------------------------------------------------
-% Convert matching results to schnitzcells-format lineage
-[P D E G] = DJK_data_treat(p);
-
-[schnitzcells cellid] = recalc_schnitz(P,D,E,G,p.manualRange,'',opts); %
-schnitzcells = renumberschnitzes(p,schnitzcells);
-
-disp(['saving schnitzcells lineage structure to ' p.lineageName]);
-save(p.lineageName,'schnitzcells');
+MW_makeSchnitzFileFromTracking(p, opts);
 %--------------------------------------------------------------------------
   
+end
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % Returns Lc_fullsize_centered  = cell-centered Lc in fullsize image
@@ -567,7 +561,7 @@ end
 % Do the centering
 Lc_fullsize_centered( starty:endy, startx:endx ) = Lc_fullsize( minfy:maxfy, minfx:maxfx );
 
-
+end
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 
@@ -618,6 +612,8 @@ else
   disp('Thin to short?');
   centroids = [cellno round(mean(fx)) round(mean(fy)) round(mean(fx)) round(mean(fy)) round(mean(fx)) round(mean(fy))];
 end
+
+end
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 
@@ -645,6 +641,8 @@ for i = 1:size(centroids_in,1)
                           center_y + scaling_y * (centroids_in(i,5) - center_y) ...
                           center_x + scaling_x * (centroids_in(i,6) - center_x) ...
                           center_y + scaling_y * (centroids_in(i,7) - center_y) ];
+end
+
 end
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 

@@ -1,10 +1,22 @@
 
 
-function p = MW_tracker(p, varargin)
-% function MW_tracker(p, varargin)
-% if p.debugmode is valid field, then also figures are plotted.
-
-% Code from NW_tracker_centroid_vs_area
+function p = MW_calculateSchnitzPropertiesWithoutTracking(p, varargin)
+% This function is a copy of MW_tracker, but does not perform tracking.
+% This is useful because sometimes you want to retrack a few frames using
+% p.overwrite=1 and MW_tracker (or another tracker). If you do this,
+% properties that are required to create the schnitz are calculated only
+% for the frames of interest.
+% Hence, to update the schnitzFile, also the rest needs to be updated. 
+% (Note: of course, the structure of these functions could be edited a bit 
+% so this process would go more smoothly. But this is a TODO.)
+% In any case, this function allows you to loop over all frames once more,
+% and calculate the desired properties such that you can create a
+% .mat schnitzcells file based on all frames.
+% (This function is called from the masterscript.)
+%
+% Again a note: this can obviously all be done more elegantly, as this
+% whole function is a direct copy+paste from MW_tracker, but with the
+% actual tracking teared out.
 % ***************************************************************************
 %--------------------------------------------------------------------------
 % Input error checking
@@ -88,22 +100,18 @@ disp(['Tracking ' num2str(length(p.manualRange)) ' frames ', num2str(p.manualRan
 %% Martijn's tracking
 count = 2;  % because core schnitz functions ignore frame labels, 
             % and always start counting at 1.
-failedFramePairs = [];            
 for i = 2:numel(p.manualRange)
     
     % frame index
     frameIdx = p.manualRange(i);
    
     % Actual tracking MW --------------------------------------------------
-    disp(['Starting pair ' num2str(p.manualRange(i-1)) ', ' num2str(p.manualRange(i)) '.']);
-    [linklistschnitz, segFile1Path, segFile2Path] = MW_linkframes(p, p.manualRange(i-1), p.manualRange(i));
+    disp(['Inspecting frame ' num2str(p.manualRange(i)) '.']);
+    myFileStringStart = [p.dateDir p.movieName '\segmentation\' p.movieName 'seg'];
+    segFile1Path = [myFileStringStart  sprintf('%03d', p.manualRange(i-1)) '.mat'];
+    segFile2Path = [myFileStringStart  sprintf('%03d', p.manualRange(i)) '.mat'];
     % End actual tracking MW ----------------------------------------------
-          
-    % make list of frame pairs that tracker failed on
-    if linklistschnitz == -1
-        failedFramePairs(end+1) = p.manualRange(i-1);
-    end
-    
+            
     % Some stats required for checking the tracking later:
     % First frame only
     if count==2
@@ -161,14 +169,9 @@ end
 % stolen from NW_tracker_centroid_vs_area)
 % -MW
 
-if ~isempty(failedFramePairs)
-    warning('Some frames were not tracked.');
-    disp('Some frames were not tracked since checks were not passed.');
-    disp(['These frames are (listing n only, not n+1): ' num2str(failedFramePairs)]);
-    return;
-elseif count>2 % if frames tracked at all
+if count>2 % if frames tracked at all
     
-    % Update schnitzcells lineage file..
+    % Reculculating whole lineage file from tracking files..
     MW_makeSchnitzFileFromTracking(p, opts);
     
 else

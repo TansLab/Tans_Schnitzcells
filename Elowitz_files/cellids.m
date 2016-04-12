@@ -9,6 +9,7 @@
 function   [cellid PP DD EE]=      cellids(P,D,E,G);
 
 cellid{1}=[1:size(P{1},1)]';
+
 PP(1:size(P{1},1) )=0;
 DD(1:size(D{1},1) )=0;%ST
 EE(1:size(E{1},1) )=0;%ST

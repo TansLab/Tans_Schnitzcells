@@ -27,7 +27,7 @@ function varargout = MW_GUI_schnitzcells(varargin)
 
 % Edit the above text to modify the response to help MW_GUI_schnitzcells
 
-% Last Modified by GUIDE v2.5 24-Feb-2016 16:55:40
+% Last Modified by GUIDE v2.5 08-Apr-2016 16:35:10
 
 % Begin initialization code - DO NOT EDIT
 gui_Singleton = 1;
@@ -462,18 +462,18 @@ function pushbutton31_Callback(hObject, eventdata, handles)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    structure with handles and user data (see GUIDATA)
 
-global runsections customFrameRange p settings
+global runsections p settings
 
 % retrieve settings var
 settings = evalin('base', 'settings');
-p.overwrite=1;
+p.overwrite = get(handles.checkbox5,'Value');
 
 % Get custom framerange
 prompt={'Enter frame range:'};
 name = 'Range:';
 defaultans = {mat2str(settings.currentFrameRange)};
 answer = inputdlg(prompt,name,1,defaultans);
-customFrameRange = str2num(answer{1});
+settings.retrackFrameRange = str2num(answer{1});
 
 % call script, runsections defines which sectino of sript to run
 runsections = 'customtrackersoncustomrange'
@@ -500,14 +500,14 @@ settings = evalin('base', 'settings');
 
 % Set custom tracker:
 settings.specialtracker = 'NW';
-p.overwrite=1;
+p.overwrite = get(handles.checkbox5,'Value');
 
 % Get custom framerange
 prompt={'Enter frame range:'};
 name = 'Range:';
 defaultans = {mat2str(settings.currentFrameRange)};
 answer = inputdlg(prompt,name,1,defaultans);
-customFrameRange = str2num(answer{1});
+settings.retrackFrameRange = str2num(answer{1});
 
 % call script, runsections defines which sectino of sript to run
 runsections = 'customtrackersoncustomrange'
@@ -526,18 +526,18 @@ function pushbutton35_Callback(hObject, eventdata, handles)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    structure with handles and user data (see GUIDATA)
 
-global runsections customFrameRange p settings
+global runsections p settings
 
 % retrieve settings var
 settings = evalin('base', 'settings');
-p.overwrite=1;
+p.overwrite = get(handles.checkbox5,'Value');
 
 % Get custom framerange
 prompt={'Enter frame range:'};
 name = 'Range:';
 defaultans = {mat2str(settings.currentFrameRange)};
 answer = inputdlg(prompt,name,1,defaultans);
-customFrameRange = str2num(answer{1});
+settings.retrackFrameRange = str2num(answer{1});
 
 % call script, runsections defines which sectino of sript to run
 runsections = 'customtrackersoncustomrange'
@@ -557,7 +557,7 @@ function pushbutton36_Callback(hObject, eventdata, handles)
 
 % Re-run segmentation for certain frame
 
-global runsections customFrameRange p settings
+global runsections p settings
 
 % retrieve settings var
 settings = evalin('base', 'settings');
@@ -815,3 +815,117 @@ framenr = get(handles.framenrtracking,'String');
 %slicenr = get(handles.slicenr,'String');
 
 MW_helperforlinkingframes(p, str2num(framenr));
+
+
+% --- Executes on button press in checkbox5.
+function checkbox5_Callback(hObject, eventdata, handles)
+% hObject    handle to checkbox5 (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+
+% Hint: get(hObject,'Value') returns toggle state of checkbox5
+
+
+% --- Executes during object creation, after setting all properties.
+function pushbutton35_CreateFcn(hObject, eventdata, handles)
+% hObject    handle to pushbutton35 (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    empty - handles not created until after all CreateFcns called
+
+
+
+function framenr2_Callback(hObject, eventdata, handles)
+% hObject    handle to framenr2 (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+
+% Hints: get(hObject,'String') returns contents of framenr2 as text
+%        str2double(get(hObject,'String')) returns contents of framenr2 as a double
+
+
+% --- Executes during object creation, after setting all properties.
+function framenr2_CreateFcn(hObject, eventdata, handles)
+% hObject    handle to framenr2 (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    empty - handles not created until after all CreateFcns called
+
+% Hint: edit controls usually have a white background on Windows.
+%       See ISPC and COMPUTER.
+if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColor'))
+    set(hObject,'BackgroundColor','white');
+end
+
+
+
+function cellLabelMYNEEDLE_Callback(hObject, eventdata, handles)
+% hObject    handle to cellLabelMYNEEDLE (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+
+% Hints: get(hObject,'String') returns contents of cellLabelMYNEEDLE as text
+%        str2double(get(hObject,'String')) returns contents of cellLabelMYNEEDLE as a double
+
+
+% --- Executes during object creation, after setting all properties.
+function cellLabelMYNEEDLE_CreateFcn(hObject, eventdata, handles)
+% hObject    handle to cellLabelMYNEEDLE (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    empty - handles not created until after all CreateFcns called
+
+% Hint: edit controls usually have a white background on Windows.
+%       See ISPC and COMPUTER.
+if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColor'))
+    set(hObject,'BackgroundColor','white');
+end
+
+
+% --- Executes on button press in pushbutton49.
+function pushbutton49_Callback(hObject, eventdata, handles)
+% hObject    handle to pushbutton49 (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+
+
+% retrieve settings
+settings = evalin('base', 'settings');
+p = evalin('base', 'p');
+
+% input from user
+framenr = get(handles.framenr2,'String');
+cellLabelMYNEEDLE = str2num(get(handles.cellLabelMYNEEDLE,'String'));
+
+% load segfile
+load([p.segmentationDir 'pos4cropseg' num2str(framenr) '.mat']);
+
+% make figure with highlighted cell
+Lselect=Lc; Lselect(Lc>0)=1; Lselect(Lc==cellLabelMYNEEDLE)=2;
+figure; clf; imshow(Lselect,[]);
+
+
+
+
+
+% --- Executes on button press in pushbutton50.
+function pushbutton50_Callback(hObject, eventdata, handles)
+% hObject    handle to pushbutton50 (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+
+global p
+
+% retrieve settings
+p = evalin('base', 'p');
+settings = evalin('base', 'settings');
+
+myimg = imread([p.imageDir p.movieName '-p-' '2' '-' sprintf('%03d',min(settings.currentFrameRange)) '.tif']);
+figure(1); clf; imshow(myimg, []);
+
+p.customColonyCenter = round(ginput(1))
+
+close(1);
+
+%cellno1 = (location(2),location(1));
+
+% update workspace
+assignin ('base','p',p)
+

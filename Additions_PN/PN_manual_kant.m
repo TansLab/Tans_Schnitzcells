@@ -163,20 +163,26 @@ while ~done
     end                    
           
     % MW 2015/01 also enable for phase fig (strictly not necessary)
-    set(phfig,'WindowButtonMotionFcn',@MW_schnitzfigureinteraction);
-    
+    %set(phfig,'WindowButtonMotionFcn',@MW_schnitzfigureinteraction);    
     % Define function to retrieve mouseclick position.
-    set(ourfig,'WindowButtonMotionFcn',@MW_schnitzfigureinteraction);
+    %set(ourfig,'WindowButtonMotionFcn',@MW_schnitzfigureinteraction);
         
     % Set focus on desired figure (segmented img per default)
+    figure(figureToFocusOn); % MW TODO
     set(0,'CurrentFigure',figureToFocusOn);
     uistack(figureToFocusOn, 'top'); % required in matlab 2014 to actually put figure on top - MW
+        % sometimes still does not work
+        % --
+        % * in that case figureToFocusOn is still set right
+        % * pressing 'm' twice resolve the problem
+        
+    set(figureToFocusOn,'WindowButtonMotionFcn',@MW_schnitzfigureinteraction);
     
     % blubb
     % here the regionprops of the next and previous image could already be
     % calculated to quicken update of image when frame changes
     % NW 2012-05-10
-        
+    
     validPress = 0;
     while ~validPress,
         
@@ -254,9 +260,39 @@ while ~done
                 p.showNr = p.showNr+1; % 
             end
             if p.showNr > 2, p.showNr = 0; end
-            if (p.showNr == 2) && ~isfield(p,'slookup')
-                disp('No lookup table available to find schnitznrs (use MW_slookup.m to create p.slookup).');
-                p.showNr = 0;
+            if (p.showNr == 2) 
+                if ~isfield(p,'slookup')
+                    disp('No lookup table available to find schnitznrs (use MW_slookup.m to create p.slookup).');
+                    p.showNr = 0;
+                else
+                    highestSchnitzIndx = size(p.slookup,1);
+                    % Set up custom colormap
+                    % easy way:
+                    %theColorMap = linspecer(maxCellNo);
+                    
+                    % let's use one of the standard colormaps
+                    standardColorMap = hsv(highestSchnitzIndx); % hsv jet
+                    
+                    % but mix it up such that neighbors have different
+                    % colors                    
+                    shuffle=randperm(highestSchnitzIndx); 
+                    %shuffle = [10  20  28  35  29  27  64  40  33  37  47  58  22  36  18  21  50  57  34  25  19  43   1  49  16  60  23   3  48   9  45  38  44  46   4  26   7  15  54  59  55  24   6  14  42  13   8  61  63  41   5   2  30  53  31  52  32  51  56  17  11  62  12  39];
+                    
+                    % perform shuffling
+                    standardColorMapShuffled = NaN(size(standardColorMap));
+                    standardColorMapShuffled(:,1) = standardColorMap(shuffle,1);
+                    standardColorMapShuffled(:,2) = standardColorMap(shuffle,2);
+                    standardColorMapShuffled(:,3) = standardColorMap(shuffle,3);
+                    
+                    % how many copies of the colormap do we need?
+                    %copiesNeeded = ceil(maxCellNo/COLORMAPSIZE);
+                    
+                    % create the color map
+                    %theColorMap = repmat(standardColorMapShuffled,copiesNeeded,1);
+                    
+                    % set the colormap
+                    p.customColors = [0 0 0; standardColorMapShuffled; 1 1 1];
+                end
             end            
         elseif cc=='p'
             if pp(1) delete(pp(1));delete(pp(2));delete(pp(3));delete(pp(4));end;pp=0;

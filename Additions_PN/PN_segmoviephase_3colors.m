@@ -231,6 +231,7 @@ if (strcmp(p.method,'phasecontrast')==1)
     DphaseAll = dir([p.imageDir, '*-p-*.tif']);
     if ~isfield(p,'numphaseslices')
         if isempty(DphaseAll)
+            disp('Error (see below).. Maybe you need to move images to the appropriate directory?');
             error(['Can''t find any images in directory ' p.imageDir]);
         else
             p.numphaseslices = int8(round(length(DphaseAll)/length(Dphase1))); % MW edit 2014/06/23 - if there's a missing file ceil makes it crash
@@ -443,9 +444,9 @@ for i= p.segRange
     %---------------------------------------------------------------------------
     % THE REAL AND TRUE SEGMENTATION IS HERE:
     if strcmp(p.medium,'normal')==1
-        [phsub,LNsub,rect]= PN_segphase(imageToSegment,inputsOfSegmentation{:});    
+        [phsub,LNsub,rect]= PN_segphase(p,imageToSegment,inputsOfSegmentation{:});    
     elseif strcmp(p.medium,'rich')==1
-        [phsub,LNsub,rect]= NW_segphase_richMed(imageToSegment,inputsOfSegmentation{:});    
+        [phsub,LNsub,rect]= NW_segphase_richMed(p,imageToSegment,inputsOfSegmentation{:});    
     else
         error('Don''t know how to segment...')
     end

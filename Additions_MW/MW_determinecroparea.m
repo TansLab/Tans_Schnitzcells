@@ -19,6 +19,8 @@ function [leftTop, rightBottom] = MW_determinecroparea(p, range)
         DlastPhase = dir(fileNameSearchString);
         
         if numel(DlastPhase)==0
+            disp(['Looking for ' fileNameSearchString]);
+            disp(['Also no images found w. index ' num2str(lastIndex)]);
             error('Also this failed.. Wrong path?');
         end
     end

@@ -231,10 +231,9 @@ if any(strcmp(runsections,{'allpreliminary','cropimages'}))
 
 % Ask user whether cropping is desired.
 settings.performCropping = strcmp(questdlg('Do you want to perform cropping of images on your dataset?','Cropping','Yes','No','No'),'Yes');
-warning('This is not correctly saved.'); % TODO mw
 % save preference to excel
 performCroppingIndex = find(strcmp({alldata{:,1}},'performCropping'))+settings.EXCELREADSTART-1; % find line w. cropRightBottom field.    
-xlswrite([settings.mypathname settings.myconfigfilename],num2str(settings.performCropping),['B' num2str(performCroppingIndex)]); % write value to it
+xlswrite([settings.mypathname settings.myconfigfilename],{num2str(settings.performCropping)},['B' num2str(performCroppingIndex) ':B' num2str(performCroppingIndex) '']); % write value to it
 
 if settings.performCropping
     
@@ -243,16 +242,20 @@ if settings.performCropping
         % Manually make sure image dir is correct
         % (This is done to accomodate cropping.)
         p.imageDir = [settings.rootDir settings.movieDate '\' settings.positionName '\']
-
-        % Determine crop area
-        [selectedLeftTop,selectedRightBottom] = MW_determinecroparea(p, settings.frameRangePreliminary);
-
-        % Close figure from crop popup
-        close(gcf);
-
+        
         % set new croparea and save crop area to excel file
-        myAnswer = questdlg(['Start cropping? And save selection to Excel file (close it first)?'],'Confirmation required.','Save,use,crop','Crop using old','Abort!','Save,use,crop');
-        if strcmp(myAnswer, 'Save,use,crop')
+        % ===
+        % Ask to crop, and ask 
+        myAnswer = questdlg(['Start cropping? And save selection to Excel file (close it first)?'],'Confirmation required.','Save,use,crop','Crop using old','Abort!','Save,use,crop');        
+        % Only select new if desired
+        if strcmp(myAnswer, 'Save,use,crop')            
+
+            % Determine crop area
+            [selectedLeftTop,selectedRightBottom] = MW_determinecroparea(p, settings.frameRangePreliminary);
+
+            % Close figure from crop popup
+            close(gcf);
+            
             settings.cropLeftTop = selectedLeftTop;
             settings.cropRightBottom = selectedRightBottom;
 
@@ -319,6 +322,7 @@ end
 % ADVANCED PARAMETER SETTINGS that can be useful:
 % p.useFullImage=1; % forces to use full image for segmentation
 % p.overwrite=1; % overwrite existing files (to redo segmentation)
+% p.customColonyCenter=[x,y]; % set center of colony to select ROI 
 % =========================================================================
 
 if any(strcmp(runsections,{'allpreliminary', 'allfull','segmentation'}))
@@ -468,6 +472,7 @@ elseif any(strcmp(runsections,{'allfull','trackandmanualcorrections'}))% full
     %MW_tracker(p,'manualRange', [1:244]); 
     % If all else fails:
     % edit MW_helperforlinkingframes
+        
     DJK_tracker_djk(p,'manualRange', settings.currentFrameRange); % default tracker           
 
     % Find problem cells
@@ -478,7 +483,7 @@ elseif any(strcmp(runsections,{'allfull','trackandmanualcorrections'}))% full
     p.problemCells = problems;
 
     % Create lookup table for frame label <-> schnitz label
-    p.slookup=MW_makeslookup(p);
+    p.slookup = MW_makeslookup(p);
 
     % Let user know we're done
     mysound=load('gong'); sound(mysound.y);
@@ -505,13 +510,28 @@ end
 
 if any(strcmp(runsections,{'customtrackersoncustomrange'}))
    
+    if ~isfield(p, 'overwrite')
+        p.overwrite=0; % ADVANCED SETTING
+    end
+    if ~isfield(p, 'showAll');
+        p.showAll = 1; % show all segmented frames to user
+    end
+    
     % call desired tracker
     if ~isfield(settings, 'specialtracker') 
-        DJK_tracker_djk(p,'manualRange', customFrameRange); % default tracker
+        DJK_tracker_djk(p,'manualRange', settings.retrackFrameRange); % default tracker
     elseif strcmp(settings.specialtracker, 'MW')
-        MW_tracker(p,'manualRange', customFrameRange); 
+        MW_tracker(p,'manualRange', settings.retrackFrameRange); 
     elseif strcmp(settings.specialtracker, 'NW')
-        NW_tracker_centroid_vs_area(p,'manualRange', customFrameRange);
+        NW_tracker_centroid_vs_area(p,'manualRange', settings.retrackFrameRange);
+    end
+    
+    % Now, if retracked range was not full range, the overall tracking
+    % should be redone. This function is already executed in the trackers,
+    % but should be re-executed here in this case.
+    if ~isequal(settings.retrackFrameRange, settings.currentFrameRange)
+        disp('CREATING SCHNITZCELLS FROM FULL DESIRED RANGE ***');
+        MW_calculateSchnitzPropertiesWithoutTracking(p,'manualRange', settings.currentFrameRange);
     end
     
 end
@@ -525,14 +545,10 @@ end
 
 if any(strcmp(runsections,{'checkaftercustom'}))
     
-    disp('Option not working yet.. Use (re)track (..) instead.');
+    %disp('Option not working yet.. Use (re)track (..) instead.');
     
-    %{
-    % ADVANCED SETTINGS
-    p.overwrite=0; 
-    p.showAll = 1; % show all segmented frames to user
     
-    % Find problem cells
+    % Find problem cells    
     [problems, theOutputFilePath] = DJK_analyzeTracking(p,'manualRange', settings.currentFrameRange, 'pixelsMoveDef', 15, 'pixelsLenDef', [-4 13]);
     % open output file in external editor (not necessary, but convenient)
     eval(['!' settings.MYTEXTEDITOR ' ' theOutputFilePath ' &']);
@@ -540,7 +556,10 @@ if any(strcmp(runsections,{'checkaftercustom'}))
     p.problemCells = problems;
 
     % Create lookup table for frame label <-> schnitz label
-    p.slookup=MW_makeslookup(p);
+    p.slookup = MW_makeslookup(p);
+
+    % Let user know we're done
+    mysound=load('gong'); sound(mysound.y);
 
     % Manual check again 
     % Since "p" now contains the lookup table, and problemcells is defined, it
@@ -548,7 +567,8 @@ if any(strcmp(runsections,{'checkaftercustom'}))
     % Note that when one performs manual corrections to a frame, the mapping is
     % not correct any more.
     PN_manualcheckseg(p,'manualRange',settings.currentFrameRange,'override',p.overwrite,'assistedCorrection',0); % assisted correction of because problem cells highlighted
-    %}
+
+    
     
 end
 

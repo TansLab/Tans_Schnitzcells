@@ -142,7 +142,7 @@ B_edgeImage2 = B_edgeImage1 & B_fillEdgeImage2;                            %keep
 B_edgeImage2 = bwareaopen(B_edgeImage2,30);                                %remove small loops related to intracell variations
 
 
-DE_boolean=0;
+DE_boolean=0; % TODO make this cleaner
 if DE_boolean
     %DE 2013-07-09. Issue with bright empty areas between the cells detected as
     % jagged regions. Annoying while manual segmentaion.

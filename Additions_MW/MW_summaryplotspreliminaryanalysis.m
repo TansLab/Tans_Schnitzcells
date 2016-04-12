@@ -7,8 +7,11 @@
 % Load the .mat file from the appropriate analysis.
 % (summaryParametersPreliminary.mat should contain "thedata" struct with all
 % "p" and "settings" parameters created during your analyses.)
-if ~exist(MYDIR)
-    MYDIR = 'F:\A_Tans1_step1_incoming_not_backed_up\2016-02-10\outputSummary\';
+if ~exist('MYDIR','var')
+    error('MYDIR NOT DEFINED');
+    % use 
+    % MYDIR = 'F:\Datasets\2016-03-04\outputSummary\';
+    % to set MYDIR.
 end
 load([MYDIR 'summaryParametersPreliminary.mat'])
 

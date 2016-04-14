@@ -13,14 +13,14 @@ paddingsize = round(averageBacterialWidthInPixel*4);
 %% 
 %load('F:\Datasets\2016-03-11\pos4crop\segmentation\pos4cropseg191.mat')
 %load('F:\Datasets\2016-03-11\pos1crop\segmentation\pos1cropseg006.mat')
-%load('F:\Datasets\2016-03-11\pos4crop\segmentation\pos4cropseg191.mat')
-load 'G:\EXPERIMENTAL_DATA_2016\a_incoming\2016-03-23\pos4crop\segmentation\pos4cropseg233.mat'
-load 'G:\EXPERIMENTAL_DATA_2016\a_incoming\2016-03-23\pos4crop\segmentation\pos4cropseg337.mat'
+load('F:\Datasets\2016-03-11\pos4crop\segmentation\pos4cropseg191.mat')
+% load 'G:\EXPERIMENTAL_DATA_2016\a_incoming\2016-03-23\pos4crop\segmentation\pos4cropseg233.mat'
+% load 'G:\EXPERIMENTAL_DATA_2016\a_incoming\2016-03-23\pos4crop\segmentation\pos4cropseg337.mat'
 
 
 %% 
 % Plots segmented image
-cellnum=21;
+cellnum=1;
 figure(1); clf; imshow(Lc,[]);
 [y,x] = find(Lc == cellnum);
 % binary_image =  (Lc == cellnum); % immediate obtain binary, but no
@@ -78,11 +78,11 @@ work_img = imclose(work_img,se); % works best
 % show results
 figure(); 
 subplot(1,2,1);
-imshow(image_in);
+imshow(bin_im);
 subplot(1,2,2)
 imshow(work_img);
 
-if 1 % to turn on/off this filter
+if 0 % to turn on/off this filter
     bin_im = work_img;
 end
 
@@ -94,7 +94,7 @@ BW = bwmorph(bin_im,'skel',Inf);
 
 figure(4); clf;
 imshow(BW)
-imshow((corrected_bin_im+BW)/2,[])
+imshow((bin_im+BW)/2,[])
 
 %%
 % Finds endings

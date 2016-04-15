@@ -5,17 +5,24 @@ function [p,schnitzcells] = NDL_lengthforfillamentedcells(p)
 % function parameters set by user
 micronsPerPixel=0.0431; % TODO! make this p.micronsPerPixel
 AVERAGEBACTERIAWIDTH = .5;
+EXTRAPOLATIONLENGTH = 30;
 
-% paramters calculated based on user-supplied parameters
+% parameters calculated based on user-supplied parameters
 averageBacterialWidthInPixel= AVERAGEBACTERIAWIDTH/micronsPerPixel;
 paddingsize = round(averageBacterialWidthInPixel*4);
+extrapolationLength=round(averageBacterialWidthInPixel);
+
+% if isfield(p,'extraoutput')
+%     % Plot with outline of all bacteria and extended skeletons
+%     plot() 
+%     saveas([p.analysisDir '/lengthNick/' num2str(frame) num2str(cellno) '.tif'])
+% end
 
 %% % Loads one frame of a dataset
-%load('F:\Datasets\2016-03-11\pos1crop\segmentation\pos1cropseg006.mat')
-load('F:\Datasets\2016-03-11\pos4crop\segmentation\pos4cropseg191.mat')
+load('F:\Datasets\2016-03-11\pos1crop\segmentation\pos1cropseg101.mat')
+%load('F:\Datasets\2016-03-11\pos4crop\segmentation\pos4cropseg191.mat')
 % load 'G:\EXPERIMENTAL_DATA_2016\a_incoming\2016-03-23\pos4crop\segmentation\pos4cropseg233.mat'
 % load 'G:\EXPERIMENTAL_DATA_2016\a_incoming\2016-03-23\pos4crop\segmentation\pos4cropseg337.mat'
-
 
 %% % Plots segmented image of particular cell
 cellnum=1;
@@ -156,9 +163,9 @@ for i=1:sizeX
 end
 xyends
 %% Gets x & y values of the branchless skeleton, and sets them in an array
-bound=bwboundaries(BW1,8);
+bound=bwboundaries(BW1,8); % TODO CHECK IF IT DOESN'T GIVE PROBLEMS WITH OTHER BEGIN POINTS
 extract=bound{1,1};
-array=extract(1:(length(bound{1,1})+1)/2,:);
+array=extract(1:round((length(bound{1,1})+1)/2),:);
 % for i=1:sizeX
 %     for i=1:sizeY
 %         
@@ -173,21 +180,26 @@ figure(71)
 plot(array2(:,1),array2(:,2))
 hold on
 plot(array(:,1),array(:,2))
-%% % XXX
+%% % Sets length of dataset (coming from branchless skeleton) which gets extrapolated
+% extra_length=30;
+% if length(array)<extra_length
+%     extra_length=length(array)
+% end
+extra_length = min(EXTRAPOLATIONLENGTH, length(array));
 % vq3 = interp1(array(1:20,1),array(1:20,2),'pchip');
 % bla=bspline(array(1:50,1),array(1:50,2));
 %% % Extrapolates one end
-func=csaps(array(1:20,1),array(1:20,2));
+func=csaps(array(1:extra_length,1),array(1:extra_length,2)); % TODO MAYBE USE OTHER (POLY)FIT?
 extra=fnxtr(func,2);
 figure()
-points = fnplt(extra,[array(1,1)-10 array(1,1)+10]).'
-fnplt(extra,[array(1,1)-10 array(1,1)+10])
+points = fnplt(extra,[array(1,1)-(count+extrapolationLength) array(1,1)+(count+extrapolationLength)]).'
+fnplt(extra,[array(1,1)-(count+extrapolationLength) array(1,1)+(count+extrapolationLength)])
 %% % Extrapolates other end
-func2=csaps(array(length(array)-20:length(array),1),array(length(array)-20:length(array),2));
+func2=csaps(array(length(array)-(extra_length-1):length(array),1),array(length(array)-(extra_length-1):length(array),2));
 extra2=fnxtr(func2);
 figure()
-points2 = fnplt(extra2,[array(length(array),1)-10 array(length(array),1)+10]).'
-fnplt(extra2,[array(length(array),1)-10 array(length(array),1)+10])
+points2 = fnplt(extra2,[array(length(array),1)-(count+extrapolationLength) array(length(array),1)+(count+extrapolationLength)]).'
+fnplt(extra2,[array(length(array),1)-(count+extrapolationLength) array(length(array),1)+(count+extrapolationLength)])
 %% % Plot extrapolations and segmented edges
 figure(72)
 plot(array2(:,1),array2(:,2))
@@ -195,6 +207,8 @@ hold on
 plot(points(:,1),points(:,2))
 hold on
 plot(points2(:,1),points2(:,2))
+hold on
+plot(array(:,1),array(:,2))
 %% % Determine intersection point and with that the correction length for one end
 disx=zeros(length(points),length(array2));
 disy=zeros(length(points),length(array2));

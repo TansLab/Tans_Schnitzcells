@@ -11,7 +11,6 @@ averageBacterialWidthInPixel= AVERAGEBACTERIAWIDTH/micronsPerPixel;
 paddingsize = round(averageBacterialWidthInPixel*4);
 
 %% % Loads one frame of a dataset
-%load('F:\Datasets\2016-03-11\pos4crop\segmentation\pos4cropseg191.mat')
 %load('F:\Datasets\2016-03-11\pos1crop\segmentation\pos1cropseg006.mat')
 load('F:\Datasets\2016-03-11\pos4crop\segmentation\pos4cropseg191.mat')
 % load 'G:\EXPERIMENTAL_DATA_2016\a_incoming\2016-03-23\pos4crop\segmentation\pos4cropseg233.mat'
@@ -175,8 +174,8 @@ plot(array2(:,1),array2(:,2))
 hold on
 plot(array(:,1),array(:,2))
 %% % XXX
-vq3 = interp1(array(1:20,1),array(1:20,2),'pchip');
-bla=bspline(array(1:50,1),array(1:50,2));
+% vq3 = interp1(array(1:20,1),array(1:20,2),'pchip');
+% bla=bspline(array(1:50,1),array(1:50,2));
 %% % Extrapolates one end
 func=csaps(array(1:20,1),array(1:20,2));
 extra=fnxtr(func,2);
@@ -199,7 +198,7 @@ plot(points2(:,1),points2(:,2))
 %% % Determine intersection point and with that the correction length for one end
 disx=zeros(length(points),length(array2));
 disy=zeros(length(points),length(array2));
-disy=zeros(length(points),length(array2));
+distot=zeros(length(points),length(array2));
 for i=1:length(points)
     for j=1:length(array2)
         disx(i,j)=abs(array2(j,1)-points(i,1));
@@ -225,7 +224,7 @@ extra_dist1=min([extra_dist11 extra_dist12])
 %% % Determine other intersection point and with that the correction length for the other end
 disx2=zeros(length(points2),length(array2));
 disy2=zeros(length(points2),length(array2));
-disy2=zeros(length(points2),length(array2));
+distot2=zeros(length(points2),length(array2));
 for i=1:length(points2)
     for j=1:length(array2)
         disx2(i,j)=abs(array2(j,1)-points2(i,1));

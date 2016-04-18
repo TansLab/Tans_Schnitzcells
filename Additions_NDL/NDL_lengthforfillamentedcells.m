@@ -19,10 +19,10 @@ extrapolationLength=round(averageBacterialWidthInPixel);
 % end
 
 %% % Loads one frame of a dataset
-load('F:\Datasets\2016-03-11\pos1crop\segmentation\pos1cropseg101.mat')
+%load('F:\Datasets\2016-03-11\pos1crop\segmentation\pos1cropseg101.mat')
 %load('F:\Datasets\2016-03-11\pos4crop\segmentation\pos4cropseg191.mat')
 % load 'G:\EXPERIMENTAL_DATA_2016\a_incoming\2016-03-23\pos4crop\segmentation\pos4cropseg233.mat'
-% load 'G:\EXPERIMENTAL_DATA_2016\a_incoming\2016-03-23\pos4crop\segmentation\pos4cropseg337.mat'
+ load 'G:\EXPERIMENTAL_DATA_2016\a_incoming\2016-03-23\pos4crop\segmentation\pos4cropseg337.mat'
 
 %% % Plots segmented image of particular cell
 cellnum=1;
@@ -163,9 +163,23 @@ for i=1:sizeX
 end
 xyends
 %% Gets x & y values of the branchless skeleton, and sets them in an array
-bound=bwboundaries(BW1,8); % TODO CHECK IF IT DOESN'T GIVE PROBLEMS WITH OTHER BEGIN POINTS
-extract=bound{1,1};
-array=extract(1:round((length(bound{1,1})+1)/2),:);
+
+% Get "boundaries" of the line (result should make a loop around the line,
+% but from an arbitrary point)
+skeletonBoundary=bwboundaries(BW1,8); 
+skeletonBoundary=skeletonBoundary{1,1};
+
+% paste this loop 2x behind itself
+twotimesskeletonBoundary = [skeletonBoundary; skeletonBoundary];
+leftend = xyends(:,:,1);
+
+% Now find one of the bacterial poles
+poleIndex = find(skeletonBoundary(:,1)==leftend(1) & skeletonBoundary(:,2)==leftend(2));
+
+% Now get skeletonXYpoleToPole(i,:)=v(i), with v(i,:)=[x(i),y(i)],
+% point i along the skeleton
+skeletonXYpoleToPole=twotimesskeletonBoundary(poleIndex:poleIndex+round((size(skeletonBoundary,1)+1)/2),:);
+
 % for i=1:sizeX
 %     for i=1:sizeY
 %         
@@ -179,49 +193,49 @@ array2=edges2{1,1};
 figure(71)
 plot(array2(:,1),array2(:,2))
 hold on
-plot(array(:,1),array(:,2))
+plot(skeletonXYpoleToPole(:,1),skeletonXYpoleToPole(:,2))
 %% % Sets length of dataset (coming from branchless skeleton) which gets extrapolated
 % extra_length=30;
 % if length(array)<extra_length
 %     extra_length=length(array)
 % end
-extra_length = min(EXTRAPOLATIONLENGTH, length(array));
+extra_length = min(EXTRAPOLATIONLENGTH, length(skeletonXYpoleToPole));
 % vq3 = interp1(array(1:20,1),array(1:20,2),'pchip');
 % bla=bspline(array(1:50,1),array(1:50,2));
 %% % Extrapolates one end
-func=csaps(array(1:extra_length,1),array(1:extra_length,2)); % TODO MAYBE USE OTHER (POLY)FIT?
+func=csaps(skeletonXYpoleToPole(1:extra_length,1),skeletonXYpoleToPole(1:extra_length,2)); % TODO MAYBE USE OTHER (POLY)FIT?
 extra=fnxtr(func,2);
 figure()
-points = fnplt(extra,[array(1,1)-(count+extrapolationLength) array(1,1)+(count+extrapolationLength)]).'
-fnplt(extra,[array(1,1)-(count+extrapolationLength) array(1,1)+(count+extrapolationLength)])
+extrapolatedSkeleton1 = fnplt(extra,[skeletonXYpoleToPole(1,1)-(count+extrapolationLength) skeletonXYpoleToPole(1,1)+(count+extrapolationLength)]).'
+fnplt(extra,[skeletonXYpoleToPole(1,1)-(count+extrapolationLength) skeletonXYpoleToPole(1,1)+(count+extrapolationLength)])
 %% % Extrapolates other end
-func2=csaps(array(length(array)-(extra_length-1):length(array),1),array(length(array)-(extra_length-1):length(array),2));
-extra2=fnxtr(func2);
+func2=csaps(skeletonXYpoleToPole(length(skeletonXYpoleToPole)-(extra_length-1):length(skeletonXYpoleToPole),1),skeletonXYpoleToPole(length(skeletonXYpoleToPole)-(extra_length-1):length(skeletonXYpoleToPole),2));
+extrapolatedSkeleton2=fnxtr(func2);
 figure()
-points2 = fnplt(extra2,[array(length(array),1)-(count+extrapolationLength) array(length(array),1)+(count+extrapolationLength)]).'
-fnplt(extra2,[array(length(array),1)-(count+extrapolationLength) array(length(array),1)+(count+extrapolationLength)])
+points2 = fnplt(extrapolatedSkeleton2,[skeletonXYpoleToPole(length(skeletonXYpoleToPole),1)-(count+extrapolationLength) skeletonXYpoleToPole(length(skeletonXYpoleToPole),1)+(count+extrapolationLength)]).'
+fnplt(extrapolatedSkeleton2,[skeletonXYpoleToPole(length(skeletonXYpoleToPole),1)-(count+extrapolationLength) skeletonXYpoleToPole(length(skeletonXYpoleToPole),1)+(count+extrapolationLength)])
 %% % Plot extrapolations and segmented edges
 figure(72)
 plot(array2(:,1),array2(:,2))
 hold on
-plot(points(:,1),points(:,2))
+plot(extrapolatedSkeleton1(:,1),extrapolatedSkeleton1(:,2))
 hold on
 plot(points2(:,1),points2(:,2))
 hold on
-plot(array(:,1),array(:,2))
+plot(skeletonXYpoleToPole(:,1),skeletonXYpoleToPole(:,2))
 %% % Determine intersection point and with that the correction length for one end
-disx=zeros(length(points),length(array2));
-disy=zeros(length(points),length(array2));
-distot=zeros(length(points),length(array2));
-for i=1:length(points)
+disx=zeros(length(extrapolatedSkeleton1),length(array2));
+disy=zeros(length(extrapolatedSkeleton1),length(array2));
+distot=zeros(length(extrapolatedSkeleton1),length(array2));
+for i=1:length(extrapolatedSkeleton1)
     for j=1:length(array2)
-        disx(i,j)=abs(array2(j,1)-points(i,1));
-        disy(i,j)=abs(array2(j,2)-points(i,2));
+        disx(i,j)=abs(array2(j,1)-extrapolatedSkeleton1(i,1));
+        disy(i,j)=abs(array2(j,2)-extrapolatedSkeleton1(i,2));
         distot(i,j)=disx(i,j)+disy(i,j);
     end
 end
 mini=min(min(distot))
-for i=1:length(points)
+for i=1:length(extrapolatedSkeleton1)
     for j=1:length(array2)
         if distot(i,j)==mini
             icor=i;
@@ -230,7 +244,7 @@ for i=1:length(points)
     end
 end
 array2(jcor,:)
-extrapolated_intersection=points(icor,:)
+extrapolated_intersection=extrapolatedSkeleton1(icor,:)
 xyends(1,:,1)
 extra_dist11=pdist2(extrapolated_intersection,xyends(1,:,1));
 extra_dist12=pdist2(extrapolated_intersection,xyends(1,:,num_ends));
@@ -296,4 +310,7 @@ dist_tot=dist_BW1+extra_dist1+extra_dist2
 % hold all;
 % [y,x] = find(B); plot(x,y,'ro')
 % leng=sum(sum(skel,2))
+
+%% Plot the total skeleton on top of the bacterium
+
 end

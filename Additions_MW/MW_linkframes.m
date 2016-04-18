@@ -287,7 +287,8 @@ end
 %% Make an origin picture    
 parentlist=linklist(:,1);
 daughterlist=linklist(:,2);
-frame2parents = changem(frame2, parentlist, daughterlist );
+%frame2parents = changem(frame2, parentlist, daughterlist );
+frame2parents = changem_clone(frame2, parentlist, daughterlist );
 
 if debugmode
     figure, PN_imshowlabel(p,frame1recentered,[],[],[],'CustomColors',myColors);

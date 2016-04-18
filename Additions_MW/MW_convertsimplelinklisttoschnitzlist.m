@@ -17,7 +17,7 @@ uniqueWithoutZeros=uniqueWithoutZeros(find(uniqueWithoutZeros>0));
 
 parentlist = indices(find(parentcount>1))';
 cellListFrame1 = linklist(:,1);
-dividesInLinkList = find(changem(cellListFrame1,parentcount,indices)>1);
+dividesInLinkList = find(changem_clone(cellListFrame1,parentcount,indices)>1);
 
 if debugmode
     dividingrowsbefore = linklistschnitz(dividesInLinkList,:)

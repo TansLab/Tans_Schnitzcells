@@ -143,7 +143,12 @@ if assistedCorrection
     centroids = cat(1, propLp.Centroid);
     centroids = round(centroids + ones(size(propLp))*([rectp(2)-1 rectp(1)-1] + pad_motion));
     imcentroids = zeros(max(rect(3),rectp(3)),max(rect(4),rectp(4)));
-    linearInd = sub2ind(size(imcentroids), centroids(:,2), centroids(:,1));
+    try
+        linearInd = sub2ind(size(imcentroids), centroids(:,2), centroids(:,1));
+    catch
+        warning('Converting centroids to linear indices failed.');
+        linearInd = NaN;
+    end
     if ~isnan(linearInd)
         imcentroids(linearInd) = 1;
     

@@ -3,18 +3,20 @@
 % MW simple straightening algorithm
 
 SMOOTHELEMENTS=8; % how many elements to take +/- each side
-BOXHEIGHT = 10;
+BOXHEIGHT = 10; % BOXHEIGHT>=BOXWIDTH and should be even nr.
 BOXWIDTH = 2; % note that BOXHEIGHT-BOXWIDTH should be an even nr
+
+averageBacterialWidth = pixelAreaOfBacterium/lengthOfBacteriaInPixels;
 
 %% 
 
 figure(101); clf; hold on; 
-axis equal;
 imshow(phsub,[]); hold on;
+plot(skeletonXYpoleToPole(:,2)+minX, skeletonXYpoleToPole(:,1)+minY,'.')
 
 %% plot skeleton
-plot(skeletonXYpoleToPole(:,2)+minX, skeletonXYpoleToPole(:,1)+minY,'.')
-%plot(skeletonXYpoleToPole(:,1), skeletonXYpoleToPole(:,2),'.')
+figure(102); clf; hold on; axis equal;
+plot(skeletonXYpoleToPole(:,1), skeletonXYpoleToPole(:,2),'.')
 
 %% now average the elements
 windowArray = [-SMOOTHELEMENTS:SMOOTHELEMENTS];
@@ -40,12 +42,14 @@ for i = nrIndicesInSkelet-SMOOTHELEMENTS+1:nrIndicesInSkelet
     smoothSkeleton(i,1) = mean(skeletonXYpoleToPole(i+windowArray(SMOOTHELEMENTS+1-plusminus:SMOOTHELEMENTS+1+plusminus),1));
     smoothSkeleton(i,2) = mean(skeletonXYpoleToPole(i+windowArray(SMOOTHELEMENTS+1-plusminus:SMOOTHELEMENTS+1+plusminus),2));
 end
-figure(101); hold on; 
+figure(102); hold on; 
 plot(smoothSkeleton(:,1), smoothSkeleton(:,2),'o')
 
 %% Now determine box coordinates and angles for all points
 
 pointsA = NaN(nrIndicesInSkelet-1,2);
+pointsB = NaN(nrIndicesInSkelet-1,2);
+tangentialLineXY1 = NaN(nrIndicesInSkelet-1,2);
 vectonext = NaN(nrIndicesInSkelet-1,2);
 angles = NaN(nrIndicesInSkelet-1,1);
 for i = 1:(nrIndicesInSkelet-1)
@@ -62,8 +66,8 @@ for i = 1:(nrIndicesInSkelet-1)
     theangle = atan(sideLength2/sideLength1);
 
     % box corner w. respect to x,y
-    deltax = -sin(theangle)*BOXHEIGHT;
-    deltay = cos(theangle)*BOXHEIGHT;
+    deltax = -sin(theangle)*averageBacterialWidth/2;
+    deltay = cos(theangle)*averageBacterialWidth/2;
         
     pointsA(i,:) = smoothSkeleton(i,:)+[deltax, deltay];
     pointsB(i,:) = smoothSkeleton(i+1,:)-[deltax, deltay];
@@ -72,17 +76,23 @@ for i = 1:(nrIndicesInSkelet-1)
     
     vectonext(i,:)=[sideLength1,sideLength2];
     
+    tangentialLineXY1(i,:) = smoothSkeleton(i,:)+[deltax, deltay]+.5*[sideLength1 sideLength2];
+    tangentialLineXY2(i,:) = smoothSkeleton(i,:)-[deltax, deltay]+.5*[sideLength1 sideLength2];
+    
 end
 
-figure(101); hold on; 
+figure(102); hold on; 
 for i = 1:(nrIndicesInSkelet-1)
-    plot([smoothSkeleton(i,1),pointsA(i,1)], [smoothSkeleton(i,2), pointsA(i,2)],'-')
-    plot([smoothSkeleton(i+1,1),pointsB(i,1)], [smoothSkeleton(i+1,2), pointsB(i,2)],'-')
+    %plot([smoothSkeleton(i,1),pointsA(i,1)], [smoothSkeleton(i,2), pointsA(i,2)],'-')
+    %plot([smoothSkeleton(i+1,1),pointsB(i,1)], [smoothSkeleton(i+1,2), pointsB(i,2)],'-')
+
+    plot([tangentialLineXY1(i,1),tangentialLineXY2(i,1)], [tangentialLineXY1(i,2),tangentialLineXY2(i,2)],'-')
     
     %rectangle('Position',[pointsA(i,1) pointsA(i,2) pointsB(i,1) pointsB(i,2)])
 end
 
 plot(array2(:,1),array2(:,2),'-');
+
 
 
 %% plot some boxes
@@ -102,10 +112,25 @@ end
 
 
 %%
+%{
+% set box size again to test
+warning('remove code below');
+BOXHEIGHT = 100;
+BOXWIDTH = 10;
+%}
 
-aBox = ones(BOXHEIGHT,BOXWIDTH)
-padarray(aBox,
+% create box
+standardBox = ones(BOXHEIGHT,BOXWIDTH);
+standardBox = padarray(standardBox,[0,(BOXHEIGHT-BOXWIDTH)/2],'both'); % make total square
+% pad to allow for rotation
+thePadding = round(sqrt(BOXHEIGHT^2+BOXWIDTH^2)-BOXHEIGHT);
+standardBox = padarray(standardBox,[0,(BOXHEIGHT-BOXWIDTH)/2],'both');
 
+for i=1:12
+    theAngle = 360*i/12;
+    rotatedBox = imrotate(standardBox,theAngle,'crop')
+    figure(), imshow(rotatedBox,[]);
+end
 
 %% 
 a=[1,2;3,4]

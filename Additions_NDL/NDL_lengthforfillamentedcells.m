@@ -22,7 +22,8 @@ extrapolationLength=round(averageBacterialWidthInPixel);
 %load('F:\Datasets\2016-03-11\pos1crop\segmentation\pos1cropseg101.mat')
 %load('F:\Datasets\2016-03-11\pos4crop\segmentation\pos4cropseg191.mat')
 % load 'G:\EXPERIMENTAL_DATA_2016\a_incoming\2016-03-23\pos4crop\segmentation\pos4cropseg233.mat'
- load 'G:\EXPERIMENTAL_DATA_2016\a_incoming\2016-03-23\pos4crop\segmentation\pos4cropseg337.mat'
+load 'G:\EXPERIMENTAL_DATA_2016\a_incoming\2016-03-23\pos4crop\segmentation\pos4cropseg337.mat'
+%load 'G:\EXPERIMENTAL_DATA_2016\a_incoming\2016-04-07\pos1crop\segmentation\pos1cropseg172.mat'
 
 %% % Plots segmented image of particular cell
 cellnum=1;

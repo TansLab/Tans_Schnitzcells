@@ -56,6 +56,7 @@ bin_im=zer;
 
 figure(3)
 imshow(bin_im)
+pixelAreaOfBacterium = sum(bin_im(:));
 
 % %% smooth using circular neighborhood
 % % Seems to make it a little better for my cells
@@ -281,7 +282,7 @@ extract_end=xyends(1,:,1);
 distance_mask(extract_end(1),extract_end(2))=0;
 D=bwdistgeodesic(BW1,distance_mask,'quasi-euclidean');
 dist_BW1=max(max(D))
-dist_tot=dist_BW1+extra_dist1+extra_dist2
+lengthOfBacteriaInPixels=dist_BW1+extra_dist1+extra_dist2;
 % int2=zeros(1,length(points));
 % for i=1:length(points)
 %     int2(1,i)=min(disx(i,:))+min(disy(i,:));

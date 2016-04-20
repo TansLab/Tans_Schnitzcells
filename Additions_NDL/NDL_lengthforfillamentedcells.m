@@ -60,12 +60,21 @@ for framenr = framerange
         % Important contents are Lc and Xreg, which respectively hold the
         % checked segmentation, and the fluorescence image, 
     
-    %% Determine all cell numbers in this segmented frame    
+    %% Loop over all cell numbers in this frame
+    
+    % get unique cellnos
     nonZeroIndices = (Lc(:)>0);
     allCellnos = transpose(unique(Lc(nonZeroIndices)));
-    
+    % prepare output parameters for this frame
     lengthOfBacteriaInPixelsInThisFrame = NaN(1,numel(allCellnos));
-    lengthOfBacteriaInMicronsInThisFrame = NaN(1,numel(allCellnos));
+    lengthOfBacteriaInMicronsInThisFrame = NaN(1,numel(allCellnos));    
+    pixelAreaOfBacteriumInThisFrame =  NaN(1,numel(allCellnos));
+    skeletonXYpoleToPoleInThisFrame = cell(1,numel(allCellnos));
+    minXThisFrame = NaN(1,numel(allCellnos));
+    minYThisFrame = NaN(1,numel(allCellnos));
+    array2ThisFrame = cell(1,numel(allCellnos));
+    distanceAlongSkeletonThisFrame = cell(1,numel(allCellnos));
+    % loop
     for cellnum = allCellnos
             
         
@@ -389,23 +398,44 @@ for framenr = framerange
         distance_mask(extract_end(1),extract_end(2))=0;
         D=bwdistgeodesic(BW1,distance_mask,'quasi-euclidean');
         
+        % determine distance along skeleton
+        distanceAlongSkeleton = D(sub2ind(size(D),skeletonXYpoleToPole(:,1),skeletonXYpoleToPole(:,2)));
         
         dist_BW1=max(max(D));
         if extraOutput
             dist_BW1
         end
         
-
+        % export length data 
         lengthOfBacteriaInPixelsInThisFrame(cellnum)  = dist_BW1+extra_dist1+extra_dist2;
         lengthOfBacteriaInMicronsInThisFrame(cellnum) = lengthOfBacteriaInPixelsInThisFrame(cellnum)*p.micronsPerPixel;
-
+        
+        % export additional data
+        pixelAreaOfBacteriumInThisFrame(cellnum) = pixelAreaOfBacterium;
+        skeletonXYpoleToPoleInThisFrame{cellnum} = skeletonXYpoleToPole;
+        minXThisFrame(cellnum) = minX;
+        minYThisFrame(cellnum) = minY;
+        array2ThisFrame{cellnum} = array2;
+        distanceAlongSkeletonThisFrame{cellnum} = distanceAlongSkeleton;
     end
         
+    % lengths
     allLengthsOfBacteriaInPixels{framenr} = lengthOfBacteriaInPixelsInThisFrame;
     allLengthsOfBacteriaInMicrons{framenr} = lengthOfBacteriaInMicronsInThisFrame;
     
+    % Skeleton, area, additional data
+    allPixelAreaOfBacterium{framenr} = pixelAreaOfBacteriumInThisFrame;    
+    allSkeletonXYpoleToPole{framenr} = skeletonXYpoleToPoleInThisFrame;
+    allMinX{framenr} = minXThisFrame;
+    allMinY{framenr} = minYThisFrame;
+    allarray2{framenr} = array2ThisFrame;
+    alldistanceAlongSkeleton{framenr} = distanceAlongSkeletonThisFrame
+    
     save([p.tracksDir p.movieName '-skeletonData.mat'],...
-        'allLengthsOfBacteriaInPixels','allLengthsOfBacteriaInMicrons');
+        'allLengthsOfBacteriaInPixels','allLengthsOfBacteriaInMicrons',...
+        'allPixelAreaOfBacterium','allSkeletonXYpoleToPole',...
+        'allMinX','allMinY',...
+        'allarray2','alldistanceAlongSkeleton');
     
 end
 

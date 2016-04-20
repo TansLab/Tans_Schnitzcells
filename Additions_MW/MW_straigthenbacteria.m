@@ -1,138 +1,197 @@
 
-function MW_straightenbacteria(p, SKELETONDATA, toStraightenImage)
+function MW_straightenbacteria(p, framerange) 
 
-% MW simple straightening algorithm
+%% MW simple straightening algorithm
 SMOOTHELEMENTS=8; % how many elements to take +/- each side
 
-averageBacterialWidth = pixelAreaOfBacterium/lengthOfBacteriaInPixels;
-halfAverageBacterialWidth = averageBacterialWidth/2;
-intAverageBacterialWidth = uint16(averageBacterialWidth);
-
-%% plot the skeleton on the original image
-figure(101); clf; hold on; 
-imshow(phsub,[]); hold on;
-plot(skeletonXYpoleToPole(:,2)+minX, skeletonXYpoleToPole(:,1)+minY,'.')
-
-%% plot skeleton
-figure(102); clf; hold on; axis equal;
-plot(skeletonXYpoleToPole(:,1), skeletonXYpoleToPole(:,2),'x')
-grid on
-grid minor
-set(gca,'XMinorTick','on','YMinorTick','on')
-hA = gca;
-hA.XRuler.MinorTick = [min(skeletonXYpoleToPole(:,1)):1:max(skeletonXYpoleToPole(:,1))];
-hA.YRuler.MinorTick = [min(skeletonXYpoleToPole(:,2)):1:max(skeletonXYpoleToPole(:,2))];
-
-%% now average the elements
-windowArray = [-SMOOTHELEMENTS:SMOOTHELEMENTS];
-%smoothSkeleton = NaN(size(skeletonXYpoleToPole,1)-2*SMOOTHELEMENTS+1,2)
-smoothSkeleton = NaN(size(skeletonXYpoleToPole,1),2);
-nrIndicesInSkelet = size(skeletonXYpoleToPole,1);
-% 1st few elements
-for i = 1:SMOOTHELEMENTS
-    plusminus = i-1;
-    smoothSkeleton(i,1) = mean(skeletonXYpoleToPole(i+windowArray(SMOOTHELEMENTS+1-plusminus:SMOOTHELEMENTS+1+plusminus),1));
-    smoothSkeleton(i,2) = mean(skeletonXYpoleToPole(i+windowArray(SMOOTHELEMENTS+1-plusminus:SMOOTHELEMENTS+1+plusminus),2));
+if isfield(p,'extraOutput')
+    extraOutput = p.extraOutput;
+else
+    extraOutput = 0;
 end
-% main piece of skeleton
-for i = SMOOTHELEMENTS+1:nrIndicesInSkelet-SMOOTHELEMENTS
-       
-    smoothSkeleton(i,1) = mean(skeletonXYpoleToPole(i+windowArray,1));
-    smoothSkeleton(i,2) = mean(skeletonXYpoleToPole(i+windowArray,2));
+
+%% Loop over all frames
+for framenr = framerange
     
-end
-% last few elements
-for i = nrIndicesInSkelet-SMOOTHELEMENTS+1:nrIndicesInSkelet
-    plusminus = nrIndicesInSkelet-i;
-    smoothSkeleton(i,1) = mean(skeletonXYpoleToPole(i+windowArray(SMOOTHELEMENTS+1-plusminus:SMOOTHELEMENTS+1+plusminus),1));
-    smoothSkeleton(i,2) = mean(skeletonXYpoleToPole(i+windowArray(SMOOTHELEMENTS+1-plusminus:SMOOTHELEMENTS+1+plusminus),2));
-end
-figure(102); hold on; 
-plot(smoothSkeleton(:,1), smoothSkeleton(:,2),'o')
+    disp(['Analyzing frame ' num2str(framenr) ' (highest framenr =' num2str(lastFrame) ').']);
 
-%% Now determine box coordinates and angles for all points
-
-pointsA = NaN(nrIndicesInSkelet-1,2);
-pointsB = NaN(nrIndicesInSkelet-1,2);
-tangentialLineXY1 = NaN(nrIndicesInSkelet-1,2);
-tangentialLineXY2 = NaN(nrIndicesInSkelet-1,2);
-tangentialLinesAllCoordsX = NaN(nrIndicesInSkelet-1,intAverageBacterialWidth);
-tangentialLinesAllCoordsY = NaN(nrIndicesInSkelet-1,intAverageBacterialWidth);
-vectonext = NaN(nrIndicesInSkelet-1,2);
-angles = NaN(nrIndicesInSkelet-1,1);
-for i = 1:(nrIndicesInSkelet-1)
+    %% % Load data for current frame of the dataset
+    %e.g. load 'G:\EXPERIMENTAL_DATA_2016\a_incoming\2016-03-23\pos4crop\segmentation\pos4cropseg337.mat'
+    load ([p.segmentationDir p.movieName 'seg' sprintf('%03d',framenr) '.mat']);
+        % Important contents are Lc and Xreg, which respectively hold the
+        % checked segmentation, and the fluorescence image, 
     
-    % two consecutive points
-    vec1 = smoothSkeleton(i,:);
-    vec2 = smoothSkeleton(i+1,:);
+    %% Loop over all cell numbers in this frame
     
-    % x2-x1 and y2-y1
-    sideLength1 = vec1(1)-vec2(1);
-    sideLength2 = vec1(2)-vec2(2);
+    % get unique cellnos
+    nonZeroIndices = (Lc(:)>0);
+    allCellnos = transpose(unique(Lc(nonZeroIndices)));
+    % loop
+    for cellno = allCellnos
 
-    % angle between points
-    theangle = atan(sideLength2/sideLength1);
-
-    % box corner w. respect to x,y
-    deltax = -sin(theangle)*halfAverageBacterialWidth;
-    deltay = cos(theangle)*halfAverageBacterialWidth;
+        %% calculate/load some parameters for this cell
+        currentSkeletonXYpoleToPole = allSkeletonXYpoleToPole{framenr}{cellno};
+        currentminX = allMinX{framenr}(cellno);
+        currentminY = allMinY{framenr}(cellno);
+        currentarray2 = allarray2{framenr}{cellno};
+        currentdistanceAlongSkeleton = alldistanceAlongSkeleton{framenr}{cellno};
         
-    pointsA(i,:) = smoothSkeleton(i,:)+[deltax, deltay];
-    pointsB(i,:) = smoothSkeleton(i+1,:)-[deltax, deltay];
-    
-    angles(i) = theangle;
-    
-    vectonext(i,:)=[sideLength1,sideLength2];
-    
-    tangentialLineXY1(i,:) = smoothSkeleton(i,:)+[deltax, deltay]+.5*[sideLength1 sideLength2];
-    tangentialLineXY2(i,:) = smoothSkeleton(i,:)-[deltax, deltay]+.5*[sideLength1 sideLength2];
-    
-    tangentialLinesAllCoordsX(i,:) = uint16(round(linspace(tangentialLineXY1(i,1),tangentialLineXY2(i,1),intAverageBacterialWidth)));
-    tangentialLinesAllCoordsY(i,:) = uint16(round(linspace(tangentialLineXY1(i,2),tangentialLineXY2(i,2),intAverageBacterialWidth)));
-    
-end
+        averageBacterialWidth = allPixelAreaOfBacterium{framenr}(cellno)/allLengthsOfBacteriaInPixels{framenr}(cellno);
+        halfAverageBacterialWidth = averageBacterialWidth/2;
+        intAverageBacterialWidth = uint16(averageBacterialWidth);
 
-figure(102); hold on; 
-for i = 1:(nrIndicesInSkelet-1)
-    %plot([smoothSkeleton(i,1),pointsA(i,1)], [smoothSkeleton(i,2), pointsA(i,2)],'-')
-    %plot([smoothSkeleton(i+1,1),pointsB(i,1)], [smoothSkeleton(i+1,2), pointsB(i,2)],'-')
+        %% plot the skeleton on the original image
+        if extraOutput
+            figure(101); clf; hold on; 
+            imshow(phsub,[]); hold on;
+            plot(currentSkeletonXYpoleToPole(:,2)+currentminX, currentSkeletonXYpoleToPole(:,1)+currentminY,'.')
+        end
 
-    plot([tangentialLineXY1(i,1),tangentialLineXY2(i,1)], [tangentialLineXY1(i,2),tangentialLineXY2(i,2)],'-')
-    plot(tangentialLinesAllCoordsX(i,:),tangentialLinesAllCoordsY(i,:),'.')
-    %rectangle('Position',[pointsA(i,1) pointsA(i,2) pointsB(i,1) pointsB(i,2)])
-end
+        %% plot skeleton
+        if extraOutput
+            figure(102); clf; hold on; axis equal;
+            plot(currentSkeletonXYpoleToPole(:,1), currentSkeletonXYpoleToPole(:,2),'x')
+            grid on
+            grid minor
+            set(gca,'XMinorTick','on','YMinorTick','on')
+            hA = gca;
+            hA.XRuler.MinorTick = [min(currentSkeletonXYpoleToPole(:,1)):1:max(currentSkeletonXYpoleToPole(:,1))];
+            hA.YRuler.MinorTick = [min(currentSkeletonXYpoleToPole(:,2)):1:max(currentSkeletonXYpoleToPole(:,2))];
+        end
 
-plot(array2(:,1),array2(:,2),'-');
+        %% now average the elements
+        windowArray = [-SMOOTHELEMENTS:SMOOTHELEMENTS];
+        %smoothSkeleton = NaN(size(currentSkeletonXYpoleToPole,1)-2*SMOOTHELEMENTS+1,2)
+        smoothSkeleton = NaN(size(currentSkeletonXYpoleToPole,1),2);
+        nrIndicesInSkelet = size(currentSkeletonXYpoleToPole,1);
+        % 1st few elements
+        for i = 1:SMOOTHELEMENTS
+            plusminus = i-1;
+            smoothSkeleton(i,1) = mean(currentSkeletonXYpoleToPole(i+windowArray(SMOOTHELEMENTS+1-plusminus:SMOOTHELEMENTS+1+plusminus),1));
+            smoothSkeleton(i,2) = mean(currentSkeletonXYpoleToPole(i+windowArray(SMOOTHELEMENTS+1-plusminus:SMOOTHELEMENTS+1+plusminus),2));
+        end
+        % main piece of skeleton
+        for i = SMOOTHELEMENTS+1:nrIndicesInSkelet-SMOOTHELEMENTS
 
-%% Create a figure with the tangential lines on top of original
-figure(103); clf; hold on; 
-imshow(phsub',[]); hold on;
-plot(skeletonXYpoleToPole(:,1)+minY,skeletonXYpoleToPole(:,2)+minX,'.')
-for i = 1:(nrIndicesInSkelet-1)
-    plot(tangentialLinesAllCoordsX(i,:)+minY,tangentialLinesAllCoordsY(i,:)+minX,'.');
-end
+            smoothSkeleton(i,1) = mean(currentSkeletonXYpoleToPole(i+windowArray,1));
+            smoothSkeleton(i,2) = mean(currentSkeletonXYpoleToPole(i+windowArray,2));
 
-%% Now create the straightened bacteria
-% CAREFUL: the axis along the bacterium will be distorted! (Since the
-% distance between points on the skeleton is not equal.)
+        end
+        % last few elements
+        for i = nrIndicesInSkelet-SMOOTHELEMENTS+1:nrIndicesInSkelet
+            plusminus = nrIndicesInSkelet-i;
+            smoothSkeleton(i,1) = mean(currentSkeletonXYpoleToPole(i+windowArray(SMOOTHELEMENTS+1-plusminus:SMOOTHELEMENTS+1+plusminus),1));
+            smoothSkeleton(i,2) = mean(currentSkeletonXYpoleToPole(i+windowArray(SMOOTHELEMENTS+1-plusminus:SMOOTHELEMENTS+1+plusminus),2));
+        end
+        
+        if extraOutput
+            figure(102); hold on; 
+            plot(smoothSkeleton(:,1), smoothSkeleton(:,2),'o')
+        end
 
-straightenedBacterium = NaN(intAverageBacterialWidth,nrIndicesInSkelet-1);
-theSizeBacteriaImage=size(phsub);
+        %% Now determine box coordinates and angles for all points
 
-for i = 1:(nrIndicesInSkelet-1)
-    %straightenedBacterium(:,i) = phsub(sub2ind(theSizeBacteriaImage,tangentialLinesAllCoordsX(i,:)+minX,tangentialLinesAllCoordsY(i,:)+minY));
-    straightenedBacterium(:,i) = phsub(sub2ind(theSizeBacteriaImage,tangentialLinesAllCoordsX(i,:)+minY,tangentialLinesAllCoordsY(i,:)+minX));
-end
+        pointsA = NaN(nrIndicesInSkelet-1,2);
+        pointsB = NaN(nrIndicesInSkelet-1,2);
+        tangentialLineXY1 = NaN(nrIndicesInSkelet-1,2);
+        tangentialLineXY2 = NaN(nrIndicesInSkelet-1,2);
+        tangentialLinesAllCoordsX = NaN(nrIndicesInSkelet-1,intAverageBacterialWidth);
+        tangentialLinesAllCoordsY = NaN(nrIndicesInSkelet-1,intAverageBacterialWidth);
+        vectonext = NaN(nrIndicesInSkelet-1,2);
+        angles = NaN(nrIndicesInSkelet-1,1);
+        for i = 1:(nrIndicesInSkelet-1)
 
-figure(); clf;
-imshow(straightenedBacterium,[]);
+            % two consecutive points
+            vec1 = smoothSkeleton(i,:);
+            vec2 = smoothSkeleton(i+1,:);
+
+            % x2-x1 and y2-y1
+            sideLength1 = vec1(1)-vec2(1);
+            sideLength2 = vec1(2)-vec2(2);
+
+            % angle between points
+            theangle = atan(sideLength2/sideLength1);
+
+            % box corner w. respect to x,y
+            deltax = -sin(theangle)*halfAverageBacterialWidth;
+            deltay = cos(theangle)*halfAverageBacterialWidth;
+
+            pointsA(i,:) = smoothSkeleton(i,:)+[deltax, deltay];
+            pointsB(i,:) = smoothSkeleton(i+1,:)-[deltax, deltay];
+
+            angles(i) = theangle;
+
+            vectonext(i,:)=[sideLength1,sideLength2];
+
+            tangentialLineXY1(i,:) = smoothSkeleton(i,:)+[deltax, deltay]+.5*[sideLength1 sideLength2];
+            tangentialLineXY2(i,:) = smoothSkeleton(i,:)-[deltax, deltay]+.5*[sideLength1 sideLength2];
+
+            tangentialLinesAllCoordsX(i,:) = uint16(round(linspace(tangentialLineXY1(i,1),tangentialLineXY2(i,1),intAverageBacterialWidth)));
+            tangentialLinesAllCoordsY(i,:) = uint16(round(linspace(tangentialLineXY1(i,2),tangentialLineXY2(i,2),intAverageBacterialWidth)));
+
+        end
+
+        figure(102); hold on; 
+        for i = 1:(nrIndicesInSkelet-1)
+            %plot([smoothSkeleton(i,1),pointsA(i,1)], [smoothSkeleton(i,2), pointsA(i,2)],'-')
+            %plot([smoothSkeleton(i+1,1),pointsB(i,1)], [smoothSkeleton(i+1,2), pointsB(i,2)],'-')
+
+            plot([tangentialLineXY1(i,1),tangentialLineXY2(i,1)], [tangentialLineXY1(i,2),tangentialLineXY2(i,2)],'-')
+            plot(tangentialLinesAllCoordsX(i,:),tangentialLinesAllCoordsY(i,:),'.')
+            %rectangle('Position',[pointsA(i,1) pointsA(i,2) pointsB(i,1) pointsB(i,2)])
+        end
+
+        if extraOutput
+            plot(currentarray2(:,1),currentarray2(:,2),'-');
+        end
+
+        %% Create a figure with the tangential lines on top of original
+        if extraOutput
+            figure(103); clf; hold on; 
+            imshow(phsub',[]); hold on;
+            plot(currentSkeletonXYpoleToPole(:,1)+currentminY,currentSkeletonXYpoleToPole(:,2)+currentminX,'.')
+            for i = 1:(nrIndicesInSkelet-1)
+                plot(tangentialLinesAllCoordsX(i,:)+currentminY,tangentialLinesAllCoordsY(i,:)+currentminX,'.');
+            end
+        end
+
+        %% Now create the straightened bacteria
+        % CAREFUL: the axis along the bacterium will be distorted! (Since the
+        % distance between points on the skeleton is not equal.)
+
+        straightenedBacterium = NaN(intAverageBacterialWidth,nrIndicesInSkelet-1);
+        XXX straightenedBacteriumFluor = NaN(intAverageBacterialWidth,nrIndicesInSkelet-1); XXX
+        theSizeBacteriaImage=size(phsub);
+
+        
+        
+        for i = 1:(nrIndicesInSkelet-1)
+            %straightenedBacterium(:,i) = phsub(sub2ind(theSizeBacteriaImage,tangentialLinesAllCoordsX(i,:)+minX,tangentialLinesAllCoordsY(i,:)+minY));
+            straightenedBacterium(:,i) = phsub(sub2ind(theSizeBacteriaImage,tangentialLinesAllCoordsX(i,:)+currentminY,tangentialLinesAllCoordsY(i,:)+currentminX));
+        end
+
+        if extraOutput
+            figure(); clf;
+            subplot(3,1,1);
+            imshow(straightenedBacterium,[]);
+            subplot(3,1,2);
+            %plot(currentdistanceAlongSkeleton','.')
+            pixelToPixelDistance = currentdistanceAlongSkeleton(1:end-1)-currentdistanceAlongSkeleton(2:end);
+            plot(pixelToPixelDistance','.')
+            xlim([0,numel(currentdistanceAlongSkeleton)]);
+            %ylim([min(currentdistanceAlongSkeleton),max(currentdistanceAlongSkeleton)]);
+            ylim([0,2])
+            xlabel('pixels');
+            ylabel('distance in pixels');
+            MW_makeplotlookbetter(20);
+        end
 
 
 
 
-%% 
-figure(); clf;
-imshow(greg,[]);
+        %% 
+        figure(); clf;
+        imshow(greg,[]);
 
 %% plot some boxes
 %for i = 1:(nrIndicesInSkelet-1)

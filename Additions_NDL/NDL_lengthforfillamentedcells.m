@@ -215,15 +215,13 @@ for framenr = frameRange
         count=0;
         num_ends=num_ends_before;
         
-        % 1st round of removing ends, prevents issue that main loop below
-        % has with non-spur ending branches (i.e. branches that end at edge
-        % of image).  
-        ends = bwmorph(BW,'endpoints');        
-        BW(find(ends)) = 0;
-        count=count+1;
-        ends = bwmorph(BW,'endpoints');
-        num_ends=sum(sum(ends,2));
-
+        % make all pixels at the edge 0, as this otherwise can lead to
+        % issues with detecting branches that are at the edge.
+        BW(1,:)   = 0;
+        BW(end,:) = 0;
+        BW(:,1)   = 0;
+        BW(:,end) = 0;
+        
         % Continue removing spur pixels until we have branchless skeleton
         while num_ends>2
                 BW = bwmorph(BW,'spur');                
@@ -313,10 +311,16 @@ for framenr = frameRange
         % vq3 = interp1(array(1:20,1),array(1:20,2),'pchip');
         % bla=bspline(array(1:50,1),array(1:50,2));
         %% % Extrapolates one end
-        func=csaps(skeletonXYpoleToPole(1:extra_length,1),skeletonXYpoleToPole(1:extra_length,2)); % TODO MAYBE USE OTHER (POLY)FIT?
-        extra=fnxtr(func,2);
+        try
+            func=csaps(skeletonXYpoleToPole(1:extra_length,1),skeletonXYpoleToPole(1:extra_length,2)); % TODO MAYBE USE OTHER (POLY)FIT?
+            extra=fnxtr(func,2);
         
-        extrapolatedSkeleton1 = fnplt(extra,[skeletonXYpoleToPole(1,1)-(count+extrapolationLength) skeletonXYpoleToPole(1,1)+(count+extrapolationLength)]).';
+            extrapolatedSkeleton1 = fnplt(extra,[skeletonXYpoleToPole(1,1)-(count+extrapolationLength) skeletonXYpoleToPole(1,1)+(count+extrapolationLength)]).';
+        catch
+            cellnum
+            figure(); imshow(bin_im+BW,[]);
+            skeletonXYpoleToPole
+        end 
         
         if extraOutput
             extrapolatedSkeleton1

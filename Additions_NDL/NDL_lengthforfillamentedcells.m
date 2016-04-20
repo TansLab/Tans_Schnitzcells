@@ -25,12 +25,11 @@ function [p, allLengthsOfBacteriaInPixels, allLengthsOfBacteriaInMicrons] = NDL_
 % >> NDL_lengthforfillamentedcells(p, settings.frameRangeFull) 
 
 % function parameters set by user
-micronsPerPixel=0.0431; % TODO! make this p.micronsPerPixel
 AVERAGEBACTERIAWIDTH = .5;
 EXTRAPOLATIONLENGTH = 30;
 
 % parameters calculated based on user-supplied parameters
-averageBacterialWidthInPixel= AVERAGEBACTERIAWIDTH/micronsPerPixel;
+averageBacterialWidthInPixel= AVERAGEBACTERIAWIDTH/p.micronsPerPixel;
 paddingsize = round(averageBacterialWidthInPixel*4);
 extrapolationLength=round(averageBacterialWidthInPixel);
 
@@ -211,15 +210,31 @@ for framenr = frameRange
         % BWspline=spline(xx,yy)
         
         %% % Removes side-branches
+        % Main idea is to trim branhes until only two end-points are left
+        % such that there's a branchless skeleton (i.e. the main branch).
         count=0;
         num_ends=num_ends_before;
-        cellnum
+        
+        % 1st round of removing ends, prevents issue that main loop below
+        % has with non-spur ending branches (i.e. branches that end at edge
+        % of image).  
+        ends = bwmorph(BW,'endpoints');        
+        BW(find(ends)) = 0;
+        count=count+1;
+        ends = bwmorph(BW,'endpoints');
+        num_ends=sum(sum(ends,2));
+
+        % Continue removing spur pixels until we have branchless skeleton
         while num_ends>2
-                BW = bwmorph(BW,'spur');
+                BW = bwmorph(BW,'spur');                
                 BW = bwmorph(BW,'skel'); % To prevent issue with 4-way crossings
                 count=count+1;
                 ends = bwmorph(BW,'endpoints');
                 num_ends=sum(sum(ends,2));
+                if count>1000
+                    figure(); imshow(BW,[]);
+                    error(['Error spurring, cellnum=' num2str(cellnum) ', showing current skeleton.']);                    
+                end;
         end
         BW1=BW;
         

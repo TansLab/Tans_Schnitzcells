@@ -311,16 +311,16 @@ for framenr = frameRange
         % vq3 = interp1(array(1:20,1),array(1:20,2),'pchip');
         % bla=bspline(array(1:50,1),array(1:50,2));
         %% % Extrapolates one end
-        try
-            func=csaps(skeletonXYpoleToPole(1:extra_length,1),skeletonXYpoleToPole(1:extra_length,2)); % TODO MAYBE USE OTHER (POLY)FIT?
-            extra=fnxtr(func,2);
-        
-            extrapolatedSkeleton1 = fnplt(extra,[skeletonXYpoleToPole(1,1)-(count+extrapolationLength) skeletonXYpoleToPole(1,1)+(count+extrapolationLength)]).';
-        catch
-            cellnum
-            figure(); imshow(bin_im+BW,[]);
-            skeletonXYpoleToPole
-        end 
+        %try
+        func=csaps(skeletonXYpoleToPole(1:extra_length,1),skeletonXYpoleToPole(1:extra_length,2)); % TODO MAYBE USE OTHER (POLY)FIT?
+        extra=fnxtr(func,2);
+
+        extrapolatedSkeleton1 = fnplt(extra,[skeletonXYpoleToPole(1,1)-(count+extrapolationLength) skeletonXYpoleToPole(1,1)+(count+extrapolationLength)]).';
+        %catch
+        %    cellnum
+        %    figure(); imshow(bin_im+BW,[]);
+        %    skeletonXYpoleToPole
+        %end 
         
         if extraOutput
             extrapolatedSkeleton1

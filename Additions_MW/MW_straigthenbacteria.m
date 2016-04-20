@@ -1,7 +1,16 @@
 
-function MW_straightenbacteria(p, framerange) 
+function MW_straightenbacteria(p, frameRange, fluorColor) 
 
-%% MW simple straightening algorithm
+% MW simple straightening algorithm
+% 2016/04
+%
+% input:
+%   p               our standard parameter struct
+%   framerange      range of frames you want to process
+%   fluorColor      one-letter abbreviation for used fluor: 'g','y','r','c'
+% 
+
+%% Parameters
 SMOOTHELEMENTS=8; % how many elements to take +/- each side
 
 if isfield(p,'extraOutput')
@@ -10,16 +19,28 @@ else
     extraOutput = 0;
 end
 
+%% Load skeleton data
+load ([p.tracksDir p.movieName '-skeletonData.mat']);
+
 %% Loop over all frames
-for framenr = framerange
+lastFrame=frameRange(end);
+for framenr = frameRange
     
     disp(['Analyzing frame ' num2str(framenr) ' (highest framenr =' num2str(lastFrame) ').']);
 
     %% % Load data for current frame of the dataset
+    
     %e.g. load 'G:\EXPERIMENTAL_DATA_2016\a_incoming\2016-03-23\pos4crop\segmentation\pos4cropseg337.mat'
-    load ([p.segmentationDir p.movieName 'seg' sprintf('%03d',framenr) '.mat']);
-        % Important contents are Lc and Xreg, which respectively hold the
+    % Load segmentation
+    load ([p.segmentationDir p.movieName 'seg' sprintf('%03d',framenr) '.mat'],'Lc');
+        % Important contents is Lc, which respectively hold the
         % checked segmentation, and the fluorescence image, 
+    %Load (corrected) fluorescence image
+    load([p.tracksDir p.movieName 'Fluor_' fluorColor '_' sprintf('%03d',framenr) '.mat'],[fluorColor 'reg5']);
+    %G:\EXPERIMENTAL_DATA_2016\a_incoming\2016-04-07\pos1crop\data
+    fluorImg = eval([fluorColor 'reg5']); % note is already shifted
+        % xreg5 is corrected (and shifted) fluor image.
+        
     
     %% Loop over all cell numbers in this frame
     
@@ -43,6 +64,10 @@ for framenr = framerange
         %% plot the skeleton on the original image
         if extraOutput
             figure(101); clf; hold on; 
+            subplot(1,2,1);
+            imshow(fluorImg,[]); hold on;
+            plot(currentSkeletonXYpoleToPole(:,2)+currentminX, currentSkeletonXYpoleToPole(:,1)+currentminY,'.')
+            subplot(1,2,2);
             imshow(phsub,[]); hold on;
             plot(currentSkeletonXYpoleToPole(:,2)+currentminX, currentSkeletonXYpoleToPole(:,1)+currentminY,'.')
         end
@@ -148,7 +173,15 @@ for framenr = framerange
         %% Create a figure with the tangential lines on top of original
         if extraOutput
             figure(103); clf; hold on; 
+            subplottight(2,1,1);
             imshow(phsub',[]); hold on;
+            plot(currentSkeletonXYpoleToPole(:,1)+currentminY,currentSkeletonXYpoleToPole(:,2)+currentminX,'.')
+            for i = 1:(nrIndicesInSkelet-1)
+                plot(tangentialLinesAllCoordsX(i,:)+currentminY,tangentialLinesAllCoordsY(i,:)+currentminX,'.');
+            end
+            %
+            subplottight(2,1,2);
+            imshow(fluorImg',[]); hold on;
             plot(currentSkeletonXYpoleToPole(:,1)+currentminY,currentSkeletonXYpoleToPole(:,2)+currentminX,'.')
             for i = 1:(nrIndicesInSkelet-1)
                 plot(tangentialLinesAllCoordsX(i,:)+currentminY,tangentialLinesAllCoordsY(i,:)+currentminX,'.');
@@ -159,32 +192,50 @@ for framenr = framerange
         % CAREFUL: the axis along the bacterium will be distorted! (Since the
         % distance between points on the skeleton is not equal.)
 
-        straightenedBacterium = NaN(intAverageBacterialWidth,nrIndicesInSkelet-1);
-        XXX straightenedBacteriumFluor = NaN(intAverageBacterialWidth,nrIndicesInSkelet-1); XXX
-        theSizeBacteriaImage=size(phsub);
-
-        
+        straightenedBacterium       = NaN(intAverageBacterialWidth,nrIndicesInSkelet-1);
+        straightenedBacteriumFluor  = NaN(intAverageBacterialWidth,nrIndicesInSkelet-1);
+        theSizeBacteriaImage        = size(phsub); % size ph = size fluor        
         
         for i = 1:(nrIndicesInSkelet-1)
             %straightenedBacterium(:,i) = phsub(sub2ind(theSizeBacteriaImage,tangentialLinesAllCoordsX(i,:)+minX,tangentialLinesAllCoordsY(i,:)+minY));
-            straightenedBacterium(:,i) = phsub(sub2ind(theSizeBacteriaImage,tangentialLinesAllCoordsX(i,:)+currentminY,tangentialLinesAllCoordsY(i,:)+currentminX));
+            straightenedBacterium(:,i)      = phsub   (sub2ind(theSizeBacteriaImage,tangentialLinesAllCoordsX(i,:)+currentminY,tangentialLinesAllCoordsY(i,:)+currentminX));
+            straightenedBacteriumFluor(:,i) = fluorImg(sub2ind(theSizeBacteriaImage,tangentialLinesAllCoordsX(i,:)+currentminY,tangentialLinesAllCoordsY(i,:)+currentminX));
         end
 
         if extraOutput
             figure(); clf;
-            subplot(3,1,1);
+            %
+            subplot(4,1,1);
             imshow(straightenedBacterium,[]);
-            subplot(3,1,2);
+            %
+            subplot(4,1,2);
+            imshow(straightenedBacteriumFluor,[]);
+            %
+            subplot(4,1,3);
             %plot(currentdistanceAlongSkeleton','.')
             pixelToPixelDistance = currentdistanceAlongSkeleton(1:end-1)-currentdistanceAlongSkeleton(2:end);
             plot(pixelToPixelDistance','.')
             xlim([0,numel(currentdistanceAlongSkeleton)]);
             %ylim([min(currentdistanceAlongSkeleton),max(currentdistanceAlongSkeleton)]);
             ylim([0,2])
-            xlabel('pixels');
             ylabel('distance in pixels');
             MW_makeplotlookbetter(20);
+            % fluor intensity
+            subplot(4,1,4);
+            fluorIntensity = mean(straightenedBacteriumFluor);
+            plot(fluorIntensity','.','LineWidth',3); hold on;
+            %xlim([0,numel(currentdistanceAlongSkeleton)]);
+            %ylim([min(currentdistanceAlongSkeleton),max(currentdistanceAlongSkeleton)]);
+            ylim([min(fluorIntensity),max(fluorIntensity)*1.1])
+            xlabel('pixels');
+            ylabel('mean fluor (a.u.)');
+            [peakindex, peaky] = peakfinder(fluorIntensity);
+            plot(peakindex, peaky,'o','MarkerSize',10,'LineWidth',3);
+            MW_makeplotlookbetter(20);            
         end
+        
+    end
+end
 
 
 

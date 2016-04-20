@@ -1,6 +1,6 @@
 
 
-function [p, allLengthsOfBacteriaInPixels, allLengthsOfBacteriaInMicrons] = NDL_lengthforfillamentedcells(p, framerange) 
+function [p, allLengthsOfBacteriaInPixels, allLengthsOfBacteriaInMicrons] = NDL_lengthforfillamentedcells(p, frameRange) 
 %function [p,schnitzcells] = NDL_lengthforfillamentedcells(p) 
 % 
 % Function written by Nick de Lange and Martijn Wehrens.
@@ -47,10 +47,23 @@ end
 % end
 
 %% Loop over frames of this dataset
-allLengthsOfBacteriaInPixels = {};
+% Prepare output parameters.
+lastFrame = frameRange(end);
+% lengths
+allLengthsOfBacteriaInPixels    = cell(1,lastFrame);
+allLengthsOfBacteriaInMicrons   = cell(1,lastFrame);
+% Skeleton, area, additional data
+allPixelAreaOfBacterium         = cell(1,lastFrame);    
+allSkeletonXYpoleToPole         = cell(1,lastFrame);
+allMinX                         = cell(1,lastFrame);
+allMinY                         = cell(1,lastFrame);
+allarray2                       = cell(1,lastFrame);
+alldistanceAlongSkeleton        = cell(1,lastFrame);
+
 allLengthsOfBacteriaInMicrons = {};
-lastFrame = framerange(end);
-for framenr = framerange
+
+
+for framenr = frameRange
     
     disp(['Analyzing frame ' num2str(framenr) ' (highest framenr =' num2str(lastFrame) ').']);
 
@@ -427,7 +440,7 @@ for framenr = framerange
     allMinX{framenr} = minXThisFrame;
     allMinY{framenr} = minYThisFrame;
     allarray2{framenr} = array2ThisFrame;
-    alldistanceAlongSkeleton{framenr} = distanceAlongSkeletonThisFrame
+    alldistanceAlongSkeleton{framenr} = distanceAlongSkeletonThisFrame;
     
     save([p.tracksDir p.movieName '-skeletonData.mat'],...
         'allLengthsOfBacteriaInPixels','allLengthsOfBacteriaInMicrons',...

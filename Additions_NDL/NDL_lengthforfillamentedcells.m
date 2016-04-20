@@ -191,11 +191,13 @@ for framenr = framerange
         %% % Removes side-branches
         count=0;
         num_ends=num_ends_before;
+        cellnum
         while num_ends>2
-            BW = bwmorph(BW,'spur');
-            count=count+1;
-            ends = bwmorph(BW,'endpoints');
-            num_ends=sum(sum(ends,2));
+                BW = bwmorph(BW,'spur');
+                BW = bwmorph(BW,'skel'); % To prevent issue with 4-way crossings
+                count=count+1;
+                ends = bwmorph(BW,'endpoints');
+                num_ends=sum(sum(ends,2));
         end
         BW1=BW;
         

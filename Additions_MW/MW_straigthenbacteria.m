@@ -1,10 +1,8 @@
 
+function MW_straightenbacteria(p, SKELETONDATA, toStraightenImage)
 
 % MW simple straightening algorithm
-
 SMOOTHELEMENTS=8; % how many elements to take +/- each side
-BOXHEIGHT = 10; % BOXHEIGHT>=BOXWIDTH and should be even nr.
-BOXWIDTH = 2; % note that BOXHEIGHT-BOXWIDTH should be an even nr
 
 averageBacterialWidth = pixelAreaOfBacterium/lengthOfBacteriaInPixels;
 halfAverageBacterialWidth = averageBacterialWidth/2;
@@ -17,7 +15,7 @@ plot(skeletonXYpoleToPole(:,2)+minX, skeletonXYpoleToPole(:,1)+minY,'.')
 
 %% plot skeleton
 figure(102); clf; hold on; axis equal;
-plot(skeletonXYpoleToPole(:,1), skeletonXYpoleToPole(:,2),'.')
+plot(skeletonXYpoleToPole(:,1), skeletonXYpoleToPole(:,2),'x')
 grid on
 grid minor
 set(gca,'XMinorTick','on','YMinorTick','on')

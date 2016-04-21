@@ -1,6 +1,6 @@
 
 
-function [p, allLengthsOfBacteriaInPixels, allLengthsOfBacteriaInMicrons] = NDL_lengthforfillamentedcells(p, framerange) 
+function [p, allLengthsOfBacteriaInPixels, allLengthsOfBacteriaInMicrons] = NDL_lengthforfillamentedcells(p, frameRange) 
 %function [p,schnitzcells] = NDL_lengthforfillamentedcells(p) 
 % 
 % Function written by Nick de Lange and Martijn Wehrens.
@@ -48,10 +48,23 @@ end
 % end
 
 %% Loop over frames of this dataset
-allLengthsOfBacteriaInPixels = {};
+% Prepare output parameters.
+lastFrame = frameRange(end);
+% lengths
+allLengthsOfBacteriaInPixels    = cell(1,lastFrame);
+allLengthsOfBacteriaInMicrons   = cell(1,lastFrame);
+% Skeleton, area, additional data
+allPixelAreaOfBacterium         = cell(1,lastFrame);    
+allSkeletonXYpoleToPole         = cell(1,lastFrame);
+allMinX                         = cell(1,lastFrame);
+allMinY                         = cell(1,lastFrame);
+allarray2                       = cell(1,lastFrame);
+alldistanceAlongSkeleton        = cell(1,lastFrame);
+
 allLengthsOfBacteriaInMicrons = {};
-lastFrame = framerange(end);
-for framenr = framerange
+
+
+for framenr = frameRange
     
     disp(['Analyzing frame ' num2str(framenr) ' (highest framenr =' num2str(lastFrame) ').']);
 
@@ -199,14 +212,32 @@ for framenr = framerange
         % BWspline=spline(xx,yy)
         
         %% % Removes side-branches
+        % Main idea is to trim branhes until only two end-points are left
+        % such that there's a branchless skeleton (i.e. the main branch).
         count=0;
         num_ends=num_ends_before;
+<<<<<<< HEAD
+=======
+        
+        % make all pixels at the edge 0, as this otherwise can lead to
+        % issues with detecting branches that are at the edge.
+        BW(1,:)   = 0;
+        BW(end,:) = 0;
+        BW(:,1)   = 0;
+        BW(:,end) = 0;
+        
+        % Continue removing spur pixels until we have branchless skeleton
+>>>>>>> Martijn_develop
         while num_ends>2
-                BW = bwmorph(BW,'spur');
+                BW = bwmorph(BW,'spur');                
                 BW = bwmorph(BW,'skel'); % To prevent issue with 4-way crossings
                 count=count+1;
                 ends = bwmorph(BW,'endpoints');
                 num_ends=sum(sum(ends,2));
+                if count>1000
+                    figure(); imshow(BW,[]);
+                    error(['Error spurring, cellnum=' num2str(cellnum) ', showing current skeleton.']);                    
+                end;
         end
         BW1=BW;
         
@@ -285,10 +316,16 @@ for framenr = framerange
         % vq3 = interp1(array(1:20,1),array(1:20,2),'pchip');
         % bla=bspline(array(1:50,1),array(1:50,2));
         %% % Extrapolates one end
+        %try
         func=csaps(skeletonXYpoleToPole(1:extra_length,1),skeletonXYpoleToPole(1:extra_length,2)); % TODO MAYBE USE OTHER (POLY)FIT?
         extra=fnxtr(func,2);
-        
+
         extrapolatedSkeleton1 = fnplt(extra,[skeletonXYpoleToPole(1,1)-(count+extrapolationLength) skeletonXYpoleToPole(1,1)+(count+extrapolationLength)]).';
+        %catch
+        %    cellnum
+        %    figure(); imshow(bin_im+BW,[]);
+        %    skeletonXYpoleToPole
+        %end 
         
         if extraOutput
             extrapolatedSkeleton1
@@ -429,7 +466,7 @@ for framenr = framerange
     allMinX{framenr} = minXThisFrame;
     allMinY{framenr} = minYThisFrame;
     allarray2{framenr} = array2ThisFrame;
-    alldistanceAlongSkeleton{framenr} = distanceAlongSkeletonThisFrame
+    alldistanceAlongSkeleton{framenr} = distanceAlongSkeletonThisFrame;
     
     save([p.tracksDir p.movieName '-skeletonData.mat'],...
         'allLengthsOfBacteriaInPixels','allLengthsOfBacteriaInMicrons',...

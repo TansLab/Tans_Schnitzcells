@@ -28,7 +28,7 @@ function [p, allLengthsOfBacteriaInPixels, allLengthsOfBacteriaInMicrons] = NDL_
 AVERAGEBACTERIAWIDTH = .5;
 EXTRAPOLATIONLENGTH = 30;
 
-% framerange = unique([schnitzcells(:).frame_nrs]);
+% frameRange = unique([schnitzcells(:).frame_nrs]);
 
 % parameters calculated based on user-supplied parameters
 averageBacterialWidthInPixel= AVERAGEBACTERIAWIDTH/p.micronsPerPixel;
@@ -216,9 +216,7 @@ for framenr = frameRange
         % such that there's a branchless skeleton (i.e. the main branch).
         count=0;
         num_ends=num_ends_before;
-<<<<<<< HEAD
-=======
-        
+
         % make all pixels at the edge 0, as this otherwise can lead to
         % issues with detecting branches that are at the edge.
         BW(1,:)   = 0;
@@ -227,10 +225,11 @@ for framenr = frameRange
         BW(:,end) = 0;
         
         % Continue removing spur pixels until we have branchless skeleton
->>>>>>> Martijn_develop
         while num_ends>2
-                BW = bwmorph(BW,'spur');                
-                BW = bwmorph(BW,'skel'); % To prevent issue with 4-way crossings
+                BW = bwmorph(BW,'spur');
+                %if count==0 || count ==1
+                    BW = bwmorph(BW,'skel'); % To prevent issue with 4-way crossings
+                %end
                 count=count+1;
                 ends = bwmorph(BW,'endpoints');
                 num_ends=sum(sum(ends,2));
@@ -285,7 +284,7 @@ for framenr = frameRange
 
         % Now get skeletonXYpoleToPole(i,:)=v(i), with v(i,:)=[x(i),y(i)],
         % point i along the skeleton
-        skeletonXYpoleToPole=twotimesskeletonBoundary(poleIndex:poleIndex+round((size(skeletonBoundary,1)+1)/2),:);
+        skeletonXYpoleToPole=twotimesskeletonBoundary(poleIndex:poleIndex+round((size(skeletonBoundary,1)+1)/2-1),:); % -1 to correct for poleIndex
 
         % for i=1:sizeX
         %     for i=1:sizeY
@@ -315,6 +314,21 @@ for framenr = frameRange
         extra_length = min(EXTRAPOLATIONLENGTH, length(skeletonXYpoleToPole));
         % vq3 = interp1(array(1:20,1),array(1:20,2),'pchip');
         % bla=bspline(array(1:50,1),array(1:50,2));
+        %% %
+        
+        %% % If dataset of skeleton contains only 1 unique x- or y-value --> artificially change 1 number slightly to ensure extrapolation works
+        if length(unique(skeletonXYpoleToPole(:,1)))==1
+            skeletonXYpoleToPole(:,[1 2]) = skeletonXYpoleToPole(:,[2 1]);
+            array2(:,[1 2]) = array2(:,[2 1]);
+            xyends(:,[1 2],:) = xyends(:,[2 1],:);
+            ends=ends';
+            BW1=BW1';
+            % skeletonXYpoleToPole(1,1)=skeletonXYpoleToPole(1,1)+0.4; % Relatively high value, because a steep extrapolation will increase distance error
+            % skeletonXYpoleToPole(end,1)=skeletonXYpoleToPole(end,1)-0.4;
+%         elseif length(unique(skeletonXYpoleToPole(:,2)))==1
+%             skeletonXYpoleToPole(1,2)=skeletonXYpoleToPole(1,2)+10^-10; % Low value, because this won't effect the distance error later on
+%             skeletonXYpoleToPole(end,2)=skeletonXYpoleToPole(end,2)-10^-10;
+        end
         %% % Extrapolates one end
         %try
         func=csaps(skeletonXYpoleToPole(1:extra_length,1),skeletonXYpoleToPole(1:extra_length,2)); % TODO MAYBE USE OTHER (POLY)FIT?
@@ -421,11 +435,11 @@ for framenr = frameRange
         extra_dist2=min([extra_dist21 extra_dist22]);
                 
         if extraOutput
+            extrapolated_intersection2
             mini2
             array2(jcor2,:)            
             xyends(1,:,num_ends)
             extra_dist2
-            extrapolated_intersection2
         end
         
         %% Calculates length of branchless skeleton, and the total estimated length (by adding the extrapolated lengths of the ends)
@@ -436,7 +450,7 @@ for framenr = frameRange
         D=bwdistgeodesic(BW1,distance_mask,'quasi-euclidean');
         
         % determine distance along skeleton
-        distanceAlongSkeleton = D(sub2ind(size(D),skeletonXYpoleToPole(:,1),skeletonXYpoleToPole(:,2)));
+        distanceAlongSkeleton = D(sub2ind(size(D),round(skeletonXYpoleToPole(:,1)),round(skeletonXYpoleToPole(:,2))));
         
         dist_BW1=max(max(D));
         if extraOutput

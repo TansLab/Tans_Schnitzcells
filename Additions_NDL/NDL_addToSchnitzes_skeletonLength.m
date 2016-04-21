@@ -1,7 +1,7 @@
 function [p, schnitzcells] = NDL_addToSchnitzes_skeletonLength(p)
 %% % load schnitzcells
 load([p.tracksDir p.movieName '-Schnitz.mat'])
-frameRange=[170:175];
+frameRange=[6:244];
 % calculate all lengths
 [p, allLengthsOfBacteriaInPixels, allLengthsOfBacteriaInMicrons] = NDL_lengthforfillamentedcells(p, frameRange)
 %% Assign calculated pixel-length to schnitzcells

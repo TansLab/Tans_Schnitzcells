@@ -612,8 +612,6 @@ end
 %--------------------------------------------------------------------------
 % Save new schnitzcells with pole information added
 %--------------------------------------------------------------------------
-% EDIT MW REMOVE
-%schnitzcells.muP11_fitNew
 save(p.schnitzName, 'schnitzcells');
 disp('');
 disp(['Save in ''' p.schnitzName ''' completed...']);

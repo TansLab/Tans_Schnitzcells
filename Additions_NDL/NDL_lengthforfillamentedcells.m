@@ -25,12 +25,13 @@ function [p, allLengthsOfBacteriaInPixels, allLengthsOfBacteriaInMicrons] = NDL_
 % >> NDL_lengthforfillamentedcells(p, settings.frameRangeFull) 
 
 % function parameters set by user
-micronsPerPixel=0.0431; % TODO! make this p.micronsPerPixel
 AVERAGEBACTERIAWIDTH = .5;
 EXTRAPOLATIONLENGTH = 30;
 
+% framerange = unique([schnitzcells(:).frame_nrs]);
+
 % parameters calculated based on user-supplied parameters
-averageBacterialWidthInPixel= AVERAGEBACTERIAWIDTH/micronsPerPixel;
+averageBacterialWidthInPixel= AVERAGEBACTERIAWIDTH/p.micronsPerPixel;
 paddingsize = round(averageBacterialWidthInPixel*4);
 extrapolationLength=round(averageBacterialWidthInPixel);
 
@@ -200,7 +201,6 @@ for framenr = framerange
         %% % Removes side-branches
         count=0;
         num_ends=num_ends_before;
-        cellnum
         while num_ends>2
                 BW = bwmorph(BW,'spur');
                 BW = bwmorph(BW,'skel'); % To prevent issue with 4-way crossings

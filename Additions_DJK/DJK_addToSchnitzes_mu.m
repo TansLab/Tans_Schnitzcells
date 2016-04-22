@@ -96,7 +96,7 @@ if ~existfield(p,'frameSizes')
   p.frameSizes = [7]; % [3 5 7 9]
 end
 if ~existfield(p,'lengthFields')
-  p.lengthFields = {'rp_length' 'length_fitCoef3b' 'length_fitNew'};
+  p.lengthFields = {'rp_length' 'length_fitCoef3b' 'length_fitNew' 'length_skeleton' 'pixLength_skeleton'};
 end
 % check whether lengthFields is a cell, and not an array of char
 if ~iscell(p.lengthFields)

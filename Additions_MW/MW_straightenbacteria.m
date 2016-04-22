@@ -26,7 +26,7 @@ else
     extraOutput = 0;
 end
 
-outputDir = [p.analysisDir 'straightenedPlots\'];
+outputDir = [p.analysisDir 'straightenedCells\'];
 if ~exist(outputDir, 'dir')
     mkdir(outputDir);
 end

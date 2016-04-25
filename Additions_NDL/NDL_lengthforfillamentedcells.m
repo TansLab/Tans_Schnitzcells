@@ -1,5 +1,3 @@
-
-
 function [p, allLengthsOfBacteriaInPixels, allLengthsOfBacteriaInMicrons] = NDL_lengthforfillamentedcells(p, frameRange) 
 %function [p,schnitzcells] = NDL_lengthforfillamentedcells(p) 
 % 
@@ -44,6 +42,8 @@ function [p, allLengthsOfBacteriaInPixels, allLengthsOfBacteriaInMicrons] = NDL_
 AVERAGEBACTERIAWIDTH = .5;
 EXTRAPOLATIONLENGTH = 30;
 
+% frameRange = unique([schnitzcells(:).frame_nrs]);
+
 % parameters calculated based on user-supplied parameters
 averageBacterialWidthInPixel= AVERAGEBACTERIAWIDTH/p.micronsPerPixel;
 paddingsize = round(averageBacterialWidthInPixel*4);
@@ -60,7 +60,6 @@ end
 %     plot() 
 %     saveas([p.analysisDir '/lengthNick/' num2str(frame) num2str(cellno) '.tif'])
 % end
-
 %% Loop over frames of this dataset
 % Prepare output parameters.
 lastFrame = frameRange(end);
@@ -77,6 +76,7 @@ alldistanceAlongSkeletonPixels        = cell(1,lastFrame);
 allextrapolatedDistanceEndsPixels  = cell(1,lastFrame);
 allextrapolatedDistanceEndsMicrons = cell(1,lastFrame);
 
+
 for framenr = frameRange
     
     disp(['Analyzing frame ' num2str(framenr) ' (highest framenr =' num2str(lastFrame) ').']);
@@ -86,9 +86,7 @@ for framenr = frameRange
     load ([p.segmentationDir p.movieName 'seg' sprintf('%03d',framenr) '.mat']);
         % Important contents are Lc and Xreg, which respectively hold the
         % checked segmentation, and the fluorescence image, 
-    
     %% Loop over all cell numbers in this frame
-    
     % get unique cellnos
     nonZeroIndices = (Lc(:)>0);
     allCellnos = transpose(unique(Lc(nonZeroIndices)));
@@ -105,40 +103,30 @@ for framenr = frameRange
     extrapolatedDistanceMicronsEndsThisFrame = NaN(2,numel(allCellnos)); 
     % loop
     for cellnum = allCellnos
-            
-        
         %% Convert one cell to x,y coordinates.        
         [y,x] = find(Lc == cellnum);
         
         if extraOutput
             % show original
             figure(1); clf; 
-            imshow(Lc,[]);            
-            
+            imshow(Lc,[]);
             % show conversion
             figure(2); clf;
             axis equal;
             plot(x,y,'.');
         end
-        
-        
-        
         %% % Select ROI and make image binary
-        
         % administration required to select ROI 
         minY = min(y);
         minX = min(x);
         sizeY = max(y)-minY+1;
         sizeX = max(x)-minX+1;
-
         % create zero array size of bacterium
         zer=zeros(sizeY,sizeX);
-
         % use x,y coordinates to fill it
         for framen=1:length(x)
             zer(y(framen)-minY+1,x(framen)-minX+1)=1;
         end
-
         bin_im=zer;
 
         % % add padding to image (to avoid filters "seeing" edges)
@@ -148,11 +136,8 @@ for framenr = frameRange
             figure(3);
             imshow(bin_im);
         end
-        
         % calculate total area of bacterium
         pixelAreaOfBacterium = sum(bin_im(:));
-        
-
         %% % Skeletonizes image
         BW = bwmorph(bin_im,'skel',Inf);
         %BW = voronoiSkel(bin_im); % downloaded this, but to tricky to get to work
@@ -163,7 +148,6 @@ for framenr = frameRange
             imshow(BW)
             imshow((bin_im+BW)/2,[])
         end
-        
         %% % Finds edges
         edges = bin_im-bwmorph(bin_im,'erode');
         
@@ -171,7 +155,6 @@ for framenr = frameRange
             figure(); clf;
             imshow(edges+BW)
         end
-        
         %% % Finds endings
         ends_before = bwmorph(BW,'endpoints');
         
@@ -179,12 +162,9 @@ for framenr = frameRange
             figure(50); clf;
             imshow(ends_before)
         end
-        
-        %% % Calculate number of ends
+        %% % Calculate number of ends before removing branches
         num_ends_before=sum(sum(ends_before,2));
-        
         %% Finds x & y values of endings before removing branches
-        
         k=1;        
         xyends_before=zeros(1,2,num_ends_before);
         for framen=1:sizeX
@@ -200,16 +180,13 @@ for framenr = frameRange
             num_ends_before
             xyends_before
         end
-        
-        %% % Disconnects at branch points
+        %% % Disconnects at branch points - Is not used anywhere in the script
         disc = BW-bwmorph(BW,'branchpoints');
-        
         if extraOutput
             figure(); clf;
             imshow(disc);
         end
-        
-        %% % XXX
+        %% % XXX Just to try - definitely doesn't work for filamented cells XXX
         [xx,yy]=find(BW==1);
         
         func=csaps(xx,yy);
@@ -221,27 +198,23 @@ for framenr = frameRange
             figure()
             fnplt(extrapolatedSpline1)
         end
-               
         % BWfit=fit(xx,yy,'poly9')
         % plot(BWfit)
         % BWspline=spline(xx,yy)
-        
         %% % Removes side-branches
         % Main idea is to trim branhes until only two end-points are left
         % such that there's a branchless skeleton (i.e. the main branch).
         count=0;
         num_ends=num_ends_before;
-        
         % make all pixels at the edge 0, as this otherwise can lead to
         % issues with detecting branches that are at the edge.
         BW(1,:)   = 0;
         BW(end,:) = 0;
         BW(:,1)   = 0;
         BW(:,end) = 0;
-        
         % Continue removing spur pixels until we have branchless skeleton
         while num_ends>2
-                BW = bwmorph(BW,'spur');                
+                BW = bwmorph(BW,'spur');
                 BW = bwmorph(BW,'skel'); % To prevent issue with 4-way crossings
                 count=count+1;
                 ends = bwmorph(BW,'endpoints');
@@ -258,15 +231,16 @@ for framenr = frameRange
             num_ends
         end
         %% % Finds endings
+        if num_ends==1
+            warning(['Skeleton is only 1 px in frame ' num2str(framenr) ' cell ' num2str(cellnum)]);
+        end  
         ends = bwmorph(BW1,'endpoints');
         
         if extraOutput
             figure(51); clf;
             imshow(ends)
         end
-        
-        %% Finds x & y values of endings after removing branches
-        
+        %% % Finds x & y values of endings after removing branches
         l=1;
         xyends=zeros(1,2,num_ends);
         for framen=1:sizeX
@@ -277,28 +251,41 @@ for framenr = frameRange
                 end
             end
         end
-        
         if extraOutput
             xyends
         end
-        %% Gets x & y values of the branchless skeleton, and sets them in an array
-
+        %% % If skeleton is 1 px --> Adds arbitrary point & finds x & y values of endings (after removing branches)
+        if num_ends==1
+            BW1(xyends(1)+1,xyends(2)-1)=1;
+            ends = bwmorph(BW1,'endpoints');
+            num_ends=num_ends+1;
+            l=1;
+            xyends=zeros(1,2,2);
+            for framen=1:sizeX
+                for j=1:sizeY
+                    if ends(j,framen)==1
+                    xyends(:,:,l)=[j,framen];
+                    l=l+1;
+                    end
+                end
+            end
+        end
+        if extraOutput
+            xyends
+        end
+        %% % Gets x & y values of the branchless skeleton, and sets them in an array
         % Get "boundaries" of the line (result should make a loop around the line,
         % but from an arbitrary point)
         skeletonBoundary=bwboundaries(BW1,8); 
         skeletonBoundary=skeletonBoundary{1,1};
-
         % paste this loop 2x behind itself
         twotimesskeletonBoundary = [skeletonBoundary; skeletonBoundary];
         leftend = xyends(:,:,1);
-
         % Now find one of the bacterial poles
         poleIndex = find(skeletonBoundary(:,1)==leftend(1) & skeletonBoundary(:,2)==leftend(2));
-
         % Now get skeletonXYpoleToPole(i,:)=v(i), with v(i,:)=[x(i),y(i)],
         % point i along the skeleton
-        skeletonXYpoleToPole=twotimesskeletonBoundary(poleIndex:poleIndex+round((size(skeletonBoundary,1)+1)/2),:);
-
+        skeletonXYpoleToPole=twotimesskeletonBoundary(poleIndex:poleIndex+round((size(skeletonBoundary,1)+1)/2-1),:); % -1 to correct for poleIndex
         % for i=1:sizeX
         %     for i=1:sizeY
         %         
@@ -308,7 +295,6 @@ for framenr = frameRange
             figure(5); clf;
             imshow((BW1+bin_im)/2)
         end
-        
         %% % Gets x & y values of the segmented edges, and plots them
         edges2=bwboundaries(edges,8);
         array2=edges2{1,1};
@@ -327,7 +313,17 @@ for framenr = frameRange
         extrapolationLength = min(EXTRAPOLATIONLENGTH, length(skeletonXYpoleToPole));
         % vq3 = interp1(array(1:20,1),array(1:20,2),'pchip');
         % bla=bspline(array(1:50,1),array(1:50,2));
-        %% % Extrapolates start of the bacteria
+
+        %% % If skeleton contains only 1 unique x-value --> Swap x and y (transpose and switch rows/columns of variables) to ensure extrapolation works
+        if length(unique(skeletonXYpoleToPole(:,1)))==1
+            skeletonXYpoleToPole(:,[1 2]) = skeletonXYpoleToPole(:,[2 1]);
+            array2(:,[1 2]) = array2(:,[2 1]);
+            xyends(:,[1 2],:) = xyends(:,[2 1],:);
+            ends=ends';
+            BW1=BW1';
+        end
+        %% % Extrapolates one end
+
         %try
         func=csaps(skeletonXYpoleToPole(1:extrapolationLength,1),skeletonXYpoleToPole(1:extrapolationLength,2)); % TODO MAYBE USE OTHER (POLY)FIT?
         extrapolatedSpline1=fnxtr(func,2);
@@ -438,32 +434,29 @@ for framenr = frameRange
         extra_dist2     = min([extra_dist21 extra_dist22]);
                 
         if extraOutput
+            extrapolated_intersection2
             mini2
             array2(jcor2,:)            
             xyends(1,:,num_ends)
             extra_dist2
-            extrapolated_intersection2
         end
         
-        %% Calculates length of branchless skeleton, and the total estimated length (by adding the extrapolated lengths of the ends)
-        
+        %% % Calculates length of branchless skeleton, and the total estimated length (by adding the extrapolated lengths of the ends) 
         distance_mask=ends;
         extract_end=xyends(1,:,1);
         distance_mask(extract_end(1),extract_end(2))=0;
         D=bwdistgeodesic(BW1,distance_mask,'quasi-euclidean');
-        
+
         % determine distance along skeleton
-        distanceAlongSkeletonPixels = D(sub2ind(size(D),skeletonXYpoleToPole(:,1),skeletonXYpoleToPole(:,2)));
-        
-        dist_BW1=max(max(D));
+        distanceAlongSkeleton       = D(sub2ind(size(D),round(skeletonXYpoleToPole(:,1)),round(skeletonXYpoleToPole(:,2))));
+        dist_BW1=max(max(D)); % Same as length(distanceAlongSkeleton)
+
         if extraOutput
             dist_BW1
-        end
-        
+        end 
         % export length data 
         lengthOfBacteriaInPixelsInThisFrame(cellnum)  = dist_BW1+extra_dist1+extra_dist2;
         lengthOfBacteriaInMicronsInThisFrame(cellnum) = lengthOfBacteriaInPixelsInThisFrame(cellnum)*p.micronsPerPixel;
-        
         % export additional data
         pixelAreaOfBacteriumInThisFrame(cellnum) = pixelAreaOfBacterium;
         skeletonXYpoleToPoleInThisFrame{cellnum} = skeletonXYpoleToPole;
@@ -474,7 +467,7 @@ for framenr = frameRange
         extrapolatedDistancePixelsEndsThisFrame(:,cellnum) = [extra_dist1 extra_dist2];
         extrapolatedDistanceMicronsEndsThisFrame(:,cellnum) = [extra_dist1 extra_dist2]*p.micronsPerPixel;
     end
-        
+    % Saves important information:    
     % lengths
     allLengthsOfBacteriaInPixels{framenr} = lengthOfBacteriaInPixelsInThisFrame;
     allLengthsOfBacteriaInMicrons{framenr} = lengthOfBacteriaInMicronsInThisFrame;
@@ -494,10 +487,8 @@ for framenr = frameRange
         'allPixelAreaOfBacterium','allSkeletonXYpoleToPole',...
         'allMinX','allMinY',...
         'allarray2','alldistanceAlongSkeletonPixels',...
-        'allextrapolatedDistanceEndsPixels','allextrapolatedDistanceEndsMicrons');
-    
+        'allextrapolatedDistanceEndsPixels','allextrapolatedDistanceEndsMicrons');    
 end
-
 
 %{ 
 %% Old code

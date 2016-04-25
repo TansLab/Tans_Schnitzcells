@@ -15,6 +15,22 @@ function MW_straightenbacteria(p, frameRange, fluorColor)
 %       [outputDir p.movieDate p.movieName '_straightFluorData.mat']
 %   - outputs plots to 
 %       [outputDir p.movieDate p.movieName '_straightenedPlot_' fluorColor '_fr' sprintf('%03d',framenr) 'cell' sprintf('%03d',cellno)];
+%
+% parameters exported to .mat file
+%   -  allskeletonDistance{framenr}{cellno} 
+%         excluding extrapolated start
+%   -  allmeanY{framenr}{cellno}          
+%   -  allpeakIndices{framenr}{cellno}      
+%   -  allpeakXPixels{framenr}{cellno}     
+%         including extrapolated start
+%   -  allpeakXMicrons{framenr}{cellno}    
+%         including extrapolated start
+%   -  allpeakmeanY{framenr}{cellno}        
+%
+% TODO
+% Currently, bacteria is only straightened for branchless skeleton, not the
+% extrapolated parts of the skeleton. Also peak distances are determined
+% from this, but corrected using the extrapolated length of the extra ends.
 
 %% Parameters
 SMOOTHELEMENTS=8; % how many elements to take +/- each side
@@ -86,7 +102,7 @@ for framenr = frameRange
         currentminX = allMinX{framenr}(cellno);
         currentminY = allMinY{framenr}(cellno);
         currentarray2 = allarray2{framenr}{cellno};
-        currentdistanceAlongSkeleton = alldistanceAlongSkeleton{framenr}{cellno};
+        currentdistanceAlongSkeleton = alldistanceAlongSkeletonPixels{framenr}{cellno};
         
         averageBacterialWidth = allPixelAreaOfBacterium{framenr}(cellno)/allLengthsOfBacteriaInPixels{framenr}(cellno);
         halfAverageBacterialWidth = averageBacterialWidth/2;
@@ -235,11 +251,16 @@ for framenr = frameRange
         end
 
         if extraOutput
-            figure(); clf;
+            figure(104); clf;
         else
-            figure('Visible','off'); clf;
+            h=figure(104);
+            set(h,'Visible','off'); clf;
         end
 
+        % Calculate peak parameters
+        fluorIntensity = mean(straightenedBacteriumFluor);
+        [peakindexes, peakys] = peakfinder(fluorIntensity);
+        
         % ===
         subplot(4,1,1);
         imshow(straightenedBacterium,[]);
@@ -257,15 +278,13 @@ for framenr = frameRange
         ylabel('distance in pixels');
         MW_makeplotlookbetter(20);
         % === fluor intensity
-        subplot(4,1,4);
-        fluorIntensity = mean(straightenedBacteriumFluor);
+        subplot(4,1,4);        
         plot(fluorIntensity','.','LineWidth',3); hold on;
         xlim([0,numel(currentdistanceAlongSkeleton)]);
         %ylim([min(currentdistanceAlongSkeleton),max(currentdistanceAlongSkeleton)]);
         ylim([0,max(fluorIntensity)*1.1])
         xlabel('pixels');
-        ylabel('mean fluor (a.u.)');
-        [peakindexes, peakys] = peakfinder(fluorIntensity);
+        ylabel('mean fluor (a.u.)');        
         plot(peakindexes, peakys,'o','MarkerSize',10,'LineWidth',3);
         MW_makeplotlookbetter(20);            
         saveLocation = [outputDir p.movieDate p.movieName '_straightenedPlot_' fluorColor '_fr' sprintf('%03d',framenr) 'cell' sprintf('%03d',cellno)];
@@ -276,8 +295,10 @@ for framenr = frameRange
         skeletonDistanceThisFrame{cellno} = currentdistanceAlongSkeleton;
         meanYThisFrame{cellno}            = fluorIntensity;
         peakIndicesThisFrame{cellno}      = peakindexes;
-        peakXPixelsThisFrame{cellno}      = currentdistanceAlongSkeleton(peakindexes);
-        peakXMicronsThisFrame{cellno}     = currentdistanceAlongSkeleton(peakindexes)*p.micronsPerPixel;
+        peakXPixelsThisFrame{cellno}      = allextrapolatedDistanceEndsPixels{framenr}(1,cellno) + ...
+                                                currentdistanceAlongSkeleton(peakindexes);
+        peakXMicronsThisFrame{cellno}     = allextrapolatedDistanceEndsMicrons{framenr}(1,cellno) + ...
+                                                currentdistanceAlongSkeleton(peakindexes)*p.micronsPerPixel;
         peakmeanYThisFrame{cellno}        = peakys;
         
     end

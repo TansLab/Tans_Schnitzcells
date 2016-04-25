@@ -21,8 +21,24 @@ function [p, allLengthsOfBacteriaInPixels, allLengthsOfBacteriaInMicrons] = NDL_
 % p.extraOutput    if this parameter is set, extra output will be shown in
 %                   plots and in command window.
 %
+% Output arguments:
+%     % lengths
+%     allLengthsOfBacteriaInPixels{framenr}(cellnum)
+%     allLengthsOfBacteriaInMicrons{framenr}(cellnum)
+%     
+%     % Skeleton, area, additional data
+%     allPixelAreaOfBacterium{framenr}(cellnum) 
+%     allSkeletonXYpoleToPole{framenr}(cellnum) 
+%     allMinX{framenr}(cellnum)
+%     allMinY{framenr}(cellnum) 
+%     allarray2{framenr}{cellnum}
+%     alldistanceAlongSkeleton{framenr}{cellnum}
+%     allextrapolatedDistanceEnds{framenr}(:,cellnum)
+%
 % Test easily with following command:
 % >> NDL_lengthforfillamentedcells(p, settings.frameRangeFull) 
+%
+%
 
 % function parameters set by user
 AVERAGEBACTERIAWIDTH = .5;
@@ -57,10 +73,9 @@ allSkeletonXYpoleToPole         = cell(1,lastFrame);
 allMinX                         = cell(1,lastFrame);
 allMinY                         = cell(1,lastFrame);
 allarray2                       = cell(1,lastFrame);
-alldistanceAlongSkeleton        = cell(1,lastFrame);
-
-allLengthsOfBacteriaInMicrons = {};
-
+alldistanceAlongSkeletonPixels        = cell(1,lastFrame);
+allextrapolatedDistanceEndsPixels  = cell(1,lastFrame);
+allextrapolatedDistanceEndsMicrons = cell(1,lastFrame);
 
 for framenr = frameRange
     
@@ -85,7 +100,9 @@ for framenr = frameRange
     minXThisFrame = NaN(1,numel(allCellnos));
     minYThisFrame = NaN(1,numel(allCellnos));
     array2ThisFrame = cell(1,numel(allCellnos));
-    distanceAlongSkeletonThisFrame = cell(1,numel(allCellnos));
+    distanceAlongSkeletonPixelsThisFrame = cell(1,numel(allCellnos));
+    extrapolatedDistancePixelsEndsThisFrame = NaN(2,numel(allCellnos)); 
+    extrapolatedDistanceMicronsEndsThisFrame = NaN(2,numel(allCellnos)); 
     % loop
     for cellnum = allCellnos
             
@@ -196,13 +213,13 @@ for framenr = frameRange
         [xx,yy]=find(BW==1);
         
         func=csaps(xx,yy);
-        extra=fnxtr(func);
+        extrapolatedSpline1=fnxtr(func);
         
         if extraOutput
-            extra
+            extrapolatedSpline1
             plot(xx,yy,'.')
             figure()
-            fnplt(extra)
+            fnplt(extrapolatedSpline1)
         end
                
         % BWfit=fit(xx,yy,'poly9')
@@ -307,15 +324,15 @@ for framenr = frameRange
         % if length(array)<extra_length
         %     extra_length=length(array)
         % end
-        extra_length = min(EXTRAPOLATIONLENGTH, length(skeletonXYpoleToPole));
+        extrapolationLength = min(EXTRAPOLATIONLENGTH, length(skeletonXYpoleToPole));
         % vq3 = interp1(array(1:20,1),array(1:20,2),'pchip');
         % bla=bspline(array(1:50,1),array(1:50,2));
-        %% % Extrapolates one end
+        %% % Extrapolates start of the bacteria
         %try
-        func=csaps(skeletonXYpoleToPole(1:extra_length,1),skeletonXYpoleToPole(1:extra_length,2)); % TODO MAYBE USE OTHER (POLY)FIT?
-        extra=fnxtr(func,2);
+        func=csaps(skeletonXYpoleToPole(1:extrapolationLength,1),skeletonXYpoleToPole(1:extrapolationLength,2)); % TODO MAYBE USE OTHER (POLY)FIT?
+        extrapolatedSpline1=fnxtr(func,2);
 
-        extrapolatedSkeleton1 = fnplt(extra,[skeletonXYpoleToPole(1,1)-(count+extrapolationLength) skeletonXYpoleToPole(1,1)+(count+extrapolationLength)]).';
+        extrapolatedSkeleton1 = fnplt(extrapolatedSpline1,[skeletonXYpoleToPole(1,1)-(count+extrapolationLength) skeletonXYpoleToPole(1,1)+(count+extrapolationLength)]).';
         %catch
         %    cellnum
         %    figure(); imshow(bin_im+BW,[]);
@@ -325,17 +342,18 @@ for framenr = frameRange
         if extraOutput
             extrapolatedSkeleton1
             figure()            
-            fnplt(extra,[skeletonXYpoleToPole(1,1)-(count+extrapolationLength) skeletonXYpoleToPole(1,1)+(count+extrapolationLength)])
+            fnplt(extrapolatedSpline1,[skeletonXYpoleToPole(1,1)-(count+extrapolationLength) skeletonXYpoleToPole(1,1)+(count+extrapolationLength)])
         end
-        %% % Extrapolates other end
-        func2=csaps(skeletonXYpoleToPole(length(skeletonXYpoleToPole)-(extra_length-1):length(skeletonXYpoleToPole),1),skeletonXYpoleToPole(length(skeletonXYpoleToPole)-(extra_length-1):length(skeletonXYpoleToPole),2));
-        extrapolatedSkeleton2=fnxtr(func2);
-        points2 = fnplt(extrapolatedSkeleton2,[skeletonXYpoleToPole(length(skeletonXYpoleToPole),1)-(count+extrapolationLength) skeletonXYpoleToPole(length(skeletonXYpoleToPole),1)+(count+extrapolationLength)]).';
+        %% % Extrapolates end of the bacteria
+        func2=csaps(skeletonXYpoleToPole(length(skeletonXYpoleToPole)-(extrapolationLength-1):length(skeletonXYpoleToPole),1),skeletonXYpoleToPole(length(skeletonXYpoleToPole)-(extrapolationLength-1):length(skeletonXYpoleToPole),2));
+        extrapolatedSpline2=fnxtr(func2);
+        
+        extrapolatedSkeleton2 = fnplt(extrapolatedSpline2,[skeletonXYpoleToPole(length(skeletonXYpoleToPole),1)-(count+extrapolationLength) skeletonXYpoleToPole(length(skeletonXYpoleToPole),1)+(count+extrapolationLength)]).';
         
         if extraOutput
-            points2
+            extrapolatedSkeleton2
             figure()            
-            fnplt(extrapolatedSkeleton2,[skeletonXYpoleToPole(length(skeletonXYpoleToPole),1)-(count+extrapolationLength) skeletonXYpoleToPole(length(skeletonXYpoleToPole),1)+(count+extrapolationLength)])
+            fnplt(extrapolatedSpline2,[skeletonXYpoleToPole(length(skeletonXYpoleToPole),1)-(count+extrapolationLength) skeletonXYpoleToPole(length(skeletonXYpoleToPole),1)+(count+extrapolationLength)])
         end
         %% % Plot extrapolations and segmented edges
         if extraOutput
@@ -344,7 +362,7 @@ for framenr = frameRange
             hold on
             plot(extrapolatedSkeleton1(:,1),extrapolatedSkeleton1(:,2))
             hold on
-            plot(points2(:,1),points2(:,2))
+            plot(extrapolatedSkeleton2(:,1),extrapolatedSkeleton2(:,2))
             hold on
             plot(skeletonXYpoleToPole(:,1),skeletonXYpoleToPole(:,2))
         end
@@ -374,8 +392,11 @@ for framenr = frameRange
         
         extrapolated_intersection=extrapolatedSkeleton1(icor,:);
         
+        % determine extra length at start of bacterium
+        % determine distance to both end from intersection
         extra_dist11=pdist2(extrapolated_intersection,xyends(1,:,1));
         extra_dist12=pdist2(extrapolated_intersection,xyends(1,:,num_ends));
+        % take smallest as distance intersect to skeleton
         extra_dist1=min([extra_dist11 extra_dist12]);
         
         if extraOutput
@@ -387,20 +408,20 @@ for framenr = frameRange
         end
         
         %% % Determine other intersection point and with that the correction length for the other end
-        disx2=zeros(length(points2),length(array2));
-        disy2=zeros(length(points2),length(array2));
-        distot2=zeros(length(points2),length(array2));
+        disx2=zeros(length(extrapolatedSkeleton2),length(array2));
+        disy2=zeros(length(extrapolatedSkeleton2),length(array2));
+        distot2=zeros(length(extrapolatedSkeleton2),length(array2));
         
-        for framen=1:length(points2)
+        for framen=1:length(extrapolatedSkeleton2)
             for j=1:length(array2)
-                disx2(framen,j)=abs(array2(j,1)-points2(framen,1));
-                disy2(framen,j)=abs(array2(j,2)-points2(framen,2));
+                disx2(framen,j)=abs(array2(j,1)-extrapolatedSkeleton2(framen,1));
+                disy2(framen,j)=abs(array2(j,2)-extrapolatedSkeleton2(framen,2));
                 distot2(framen,j)=disx2(framen,j)+disy2(framen,j);
             end
         end        
         mini2=min(min(distot2));
         
-        for framen=1:length(points2)
+        for framen=1:length(extrapolatedSkeleton2)
             for j=1:length(array2)
                 if distot2(framen,j)==mini2
                     icor2=framen;
@@ -409,11 +430,12 @@ for framenr = frameRange
             end
         end
            
-        extrapolated_intersection2=points2(icor2,:);
+        extrapolated_intersection2 = extrapolatedSkeleton2(icor2,:);
         
-        extra_dist21=pdist2(extrapolated_intersection2,xyends(1,:,1));
-        extra_dist22=pdist2(extrapolated_intersection2,xyends(1,:,num_ends));
-        extra_dist2=min([extra_dist21 extra_dist22]);
+        % determine extra length at end of bacterium
+        extra_dist21    = pdist2(extrapolated_intersection2,xyends(1,:,1));
+        extra_dist22    = pdist2(extrapolated_intersection2,xyends(1,:,num_ends));
+        extra_dist2     = min([extra_dist21 extra_dist22]);
                 
         if extraOutput
             mini2
@@ -431,7 +453,7 @@ for framenr = frameRange
         D=bwdistgeodesic(BW1,distance_mask,'quasi-euclidean');
         
         % determine distance along skeleton
-        distanceAlongSkeleton = D(sub2ind(size(D),skeletonXYpoleToPole(:,1),skeletonXYpoleToPole(:,2)));
+        distanceAlongSkeletonPixels = D(sub2ind(size(D),skeletonXYpoleToPole(:,1),skeletonXYpoleToPole(:,2)));
         
         dist_BW1=max(max(D));
         if extraOutput
@@ -448,7 +470,9 @@ for framenr = frameRange
         minXThisFrame(cellnum) = minX;
         minYThisFrame(cellnum) = minY;
         array2ThisFrame{cellnum} = array2;
-        distanceAlongSkeletonThisFrame{cellnum} = distanceAlongSkeleton;
+        distanceAlongSkeletonPixelsThisFrame{cellnum} = distanceAlongSkeletonPixels;
+        extrapolatedDistancePixelsEndsThisFrame(:,cellnum) = [extra_dist1 extra_dist2];
+        extrapolatedDistanceMicronsEndsThisFrame(:,cellnum) = [extra_dist1 extra_dist2]*p.micronsPerPixel;
     end
         
     % lengths
@@ -461,13 +485,16 @@ for framenr = frameRange
     allMinX{framenr} = minXThisFrame;
     allMinY{framenr} = minYThisFrame;
     allarray2{framenr} = array2ThisFrame;
-    alldistanceAlongSkeleton{framenr} = distanceAlongSkeletonThisFrame;
+    alldistanceAlongSkeletonPixels{framenr} = distanceAlongSkeletonPixelsThisFrame;
+    allextrapolatedDistanceEndsPixels{framenr} = extrapolatedDistancePixelsEndsThisFrame;
+    allextrapolatedDistanceEndsMicrons{framenr} = extrapolatedDistanceMicronsEndsThisFrame;
     
     save([p.tracksDir p.movieName '-skeletonData.mat'],...
         'allLengthsOfBacteriaInPixels','allLengthsOfBacteriaInMicrons',...
         'allPixelAreaOfBacterium','allSkeletonXYpoleToPole',...
         'allMinX','allMinY',...
-        'allarray2','alldistanceAlongSkeleton');
+        'allarray2','alldistanceAlongSkeletonPixels',...
+        'allextrapolatedDistanceEndsPixels','allextrapolatedDistanceEndsMicrons');
     
 end
 

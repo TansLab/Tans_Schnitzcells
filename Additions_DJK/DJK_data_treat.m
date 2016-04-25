@@ -18,7 +18,7 @@
 
 % JCR mods to input arguments & code to find match files using track range
 
-function [P D E G]= DJK_data_treat(p);
+function [P, D, E, G]= DJK_data_treat(p);
 P={};
 D={};
 E={};
@@ -26,6 +26,7 @@ E={};
 i=1;
 % Loop over all frames 
 for frameNum = p.manualRange(2:end)
+    
     % Administration (what is previous frame)
     mynum_t= str3(frameNum);
     yesterdayFrameNum = p.manualRange(find(p.manualRange==frameNum)-1);

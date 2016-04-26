@@ -890,14 +890,14 @@ function pushbutton49_Callback(hObject, eventdata, handles)
 settings = evalin('base', 'settings');
 p = evalin('base', 'p');
 
-% input from user
+%% input from user
 framenr = get(handles.framenr2,'String');
 cellLabelMYNEEDLE = str2num(get(handles.cellLabelMYNEEDLE,'String'));
 
-% load segfile
-load([p.segmentationDir 'pos4cropseg' num2str(framenr) '.mat']);
+%% load segfile
+load([p.segmentationDir p.movieName 'seg' num2str(framenr) '.mat']);
 
-% make figure with highlighted cell
+%% make figure with highlighted cell
 Lselect=Lc; Lselect(Lc>0)=1; Lselect(Lc==cellLabelMYNEEDLE)=2;
 figure; clf; imshow(Lselect,[]);
 

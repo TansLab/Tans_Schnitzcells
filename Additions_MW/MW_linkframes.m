@@ -316,8 +316,10 @@ if ~isempty(barrenCells)
     barrenCells
     checksPassed = 0;
     disp('This leads to serious issue, since leads to discrepancy between numel(schnitzcells(i).frame_nrs) and numel(schnitzcells(i).cellno)!');
-    warning('Adding them as unconnected cells (connected to 0)..');
-    linklist = [linklist; padarray(barrenCells, [0,1],0,'post')];
+    %warning('Adding them as unconnected cells (connected to 0)..');
+    %linklist = [linklist; padarray(barrenCells, [0,1],0,'post')];
+        % Note: no need to process them since this is done automatically by
+        % DJK_data_treat.
 end
 
 % Daughters of wich ancestry is contended (should be impossible)

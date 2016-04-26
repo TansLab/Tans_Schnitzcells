@@ -19,45 +19,47 @@
 % JCR mods to input arguments & code to find match files using track range
 
 function [P, D, E, G]= DJK_data_treat(p);
+
+%%
 P={};
 D={};
 E={};
 
 i=1;
-% Loop over all frames 
+%% Loop over all frames 
 for frameNum = p.manualRange(2:end)
     
-    % Administration (what is previous frame)
+    %% Administration (what is previous frame)
     mynum_t= str3(frameNum);
     yesterdayFrameNum = p.manualRange(find(p.manualRange==frameNum)-1);
     mynum_y= str3(yesterdayFrameNum);
 
-    % Load tracking file for frames n and n-1 into variable
+    %% Load tracking file for frames n and n-1 into variable
     trackOutputFile = [p.tracksDir,p.movieName,'-djk-output-',...
                        mynum_y,'-to-',mynum_t,'.txt'];                   
-    m = load( trackOutputFile ,'ASCII');
+    sizeCurrentP = load( trackOutputFile ,'ASCII');
 
-    % MW - unclear why this is needed, is data ever not Nx4 matrix?
-    sz=size(m(:),1)/4;      % sz = # all elements divided by four
-    m=reshape(m,[sz,4]);    % reshapes matrix that was already Nx4 to Nx4?
+    %% MW - unclear why this is needed, is data ever not Nx4 matrix?
+    sz=size(sizeCurrentP(:),1)/4;      % sz = # all elements divided by four
+    sizeCurrentP=reshape(sizeCurrentP,[sz,4]);    % reshapes matrix that was already Nx4 to Nx4?
 
-    % MW - after manual edit, data can be sorted in wrong order, fix that
+    %% MW - after manual edit, data can be sorted in wrong order, fix that
     % here
-    msorted = sortrows(m,4);
-    if ismember(0,msorted == m)
+    msorted = sortrows(sizeCurrentP,4);
+    if ismember(0,msorted == sizeCurrentP)
         disp(['WARNING, last column in ' trackOutputFile ' was not sorted correctly. I have corrected this.']);
-        m = msorted;
+        sizeCurrentP = msorted;
     end
     
-    % MW TODO - make more clear what these labels stand for
-    P1=m(:,1); % MW nomencl. pn
-    P2=m(:,4); % MW nomencl. ch
-    D1=m(:,2); % MW nomencl. p1
-    D2=m(:,3); % MW nomencl. p2
+    %% MW TODO - make more clear what these labels stand for
+    P1=sizeCurrentP(:,1); % MW nomencl. pn
+    P2=sizeCurrentP(:,4); % MW nomencl. ch
+    D1=sizeCurrentP(:,2); % MW nomencl. p1
+    D2=sizeCurrentP(:,3); % MW nomencl. p2
    
     %P2sort=sort( round(P2),'ascend' ) ;
 
-    % EDIT MW (TODO: remove these comments if proven to work smoothly)
+    %% EDIT MW (TODO: remove these comments if proven to work smoothly)
     % Data is now sorted if it was not to begin with (see above)
     % Old code:
     % First statement checks whether P2 is sorted 
@@ -69,6 +71,7 @@ for frameNum = p.manualRange(2:end)
         error(['First value last column should be a one, not the case in ', ...
                        trackOutputFile] );
     else
+        % Check whether last column is 1,2,3, correct otherwise
         if( sum(P2==[1:size(P2,1)]')~=size(P2,1) );
             warning(['last column in ',trackOutputFile,...
                     ' is not 1,2,3,... adjusting']);
@@ -97,47 +100,59 @@ for frameNum = p.manualRange(2:end)
         end
     end
 
-
+    %%
+    
+    % Create vars
     p1=zeros(size(P2));
     d1=zeros(size(P2));
     d2=zeros(size(P2));
-
-
-    p1(P1(P1>0))=P2(P1>0);
-    d1(D1(D1>0))=P2(D1>0);
-    d2(D2(D2>0))=P2(D2>0);
-
+    
+    % Note P{nframe}(j) corresponds to the label from (nframe+1) frame 
+    % matching  the cell labeled j on the nframes-th frame, if it did not
+    % split.
+    p1(P1(P1>0)) = ...
+        P2(P1>0); % P1>0 are cells that did not divide, P2 are the labels in the next frame
+    d1(D1(D1>0)) = ...
+        P2(D1>0); % D1>0 are cells that did divide, P2 are the labels in the next frame
+    d2(D2(D2>0)) = ...
+        P2(D2>0); % D2>0 are cells that did divide, P2 are the labels in the next frame
 
     P{i}=p1;
     D{i}=d1;
     E{i}=d2;
+    
+    % For the first frame, ghost cells are needed
     if(i==1)
         G{1}=( ones(size(P2))==1 );
     end
+    % And also create ghost links for unlinked cells
     G{i+1}= ~(P1 > 0 | D1 > 0 | D2 > 0);
 
     maxPnum=max( [max(P1) max(D1) max(D2)] );
  
-%cut extra zeros
-    m=size(P{i},1);
+    %cut extra zeros
+    sizeCurrentP=size(P{i},1);
        
+    % for frames other than the starting frame
     if(i>1)
-        [sizeP maxPnum m i];
-        if(maxPnum>sizeP)
+        %[sizeP maxPnum m i];
+        
+        if(maxPnum>sizePreviousP)
            
             error(sprintf(['The match output files for frames %s %s might ',...
                            'not be consecutive matches: inconsistent IDs'],...
                            mynum_y,mynum_t) );
         end
-        P{i}(sizeP+1)=0;
-        D{i}(sizeP+1)=0; 
-        E{i}(sizeP+1)=0; 
         
-        P{i}(sizeP+1:max([m sizeP+1]) )=[];
-        D{i}(sizeP+1:max([m,sizeP+1]) )=[];
-        E{i}(sizeP+1:max([m,sizeP+1]) )=[];          
+        P{i}(sizePreviousP+1)=0;
+        D{i}(sizePreviousP+1)=0; 
+        E{i}(sizePreviousP+1)=0; 
+        
+        P{i}(sizePreviousP+1:max([sizeCurrentP sizePreviousP+1]) )=[];
+        D{i}(sizePreviousP+1:max([sizeCurrentP,sizePreviousP+1]) )=[];
+        E{i}(sizePreviousP+1:max([sizeCurrentP,sizePreviousP+1]) )=[];          
     end
         
-    sizeP=m;
+    sizePreviousP=sizeCurrentP;
     i = i+1;
 end

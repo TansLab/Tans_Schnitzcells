@@ -458,6 +458,15 @@ elseif any(strcmp(runsections,{'allfull','trackandmanualcorrections'}))% full
     p.overwrite=0; % ADVANCED SETTING
     p.showAll = 1; % show all segmented frames to user
 
+    % Default settings for identifying problem cells, when not given config
+    % file
+    if ~isfield(settings,'pixelsMoveDef')
+        settings.pixelsMoveDef=15;
+    end
+    if ~isfield(settings,'pixelsLenDef')
+        settings.pixelsLenDef=[-4 13];
+    end
+    
     % Alternative trackers one can try
     % This is quite useful if errors occur. manualrange can be edited to
     % two frames only. Set p.overwrite to 1. Then re-run this whole 
@@ -474,9 +483,9 @@ elseif any(strcmp(runsections,{'allfull','trackandmanualcorrections'}))% full
     % edit MW_helperforlinkingframes
         
     DJK_tracker_djk(p,'manualRange', settings.currentFrameRange); % default tracker           
-
+    
     % Find problem cells
-    [problems, theOutputFilePath] = DJK_analyzeTracking(p,'manualRange', settings.currentFrameRange, 'pixelsMoveDef', 15, 'pixelsLenDef', [-4 13]);
+    [problems, theOutputFilePath] = DJK_analyzeTracking(p,'manualRange', settings.currentFrameRange, 'pixelsMoveDef', settings.pixelsMoveDef, 'pixelsLenDef', settings.pixelsLenDef);
     % open output file in external editor (not necessary, but convenient)
     eval(['!' settings.MYTEXTEDITOR ' ' theOutputFilePath ' &']);
     
@@ -544,6 +553,15 @@ end
 % section. This section is under construction.
 
 if any(strcmp(runsections,{'checkaftercustom'}))
+    
+    % Default settings for identifying problem cells, when not given config
+    % file
+    if ~isfield(settings,'pixelsMoveDef')
+        settings.pixelsMoveDef=15;
+    end
+    if ~isfield(settings,'pixelsLenDef')
+        settings.pixelsLenDef=[-4 13];
+    end
     
     %disp('Option not working yet.. Use (re)track (..) instead.');
     

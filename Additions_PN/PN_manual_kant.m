@@ -94,6 +94,13 @@ while ~done
 
     end                    
     
+   
+    if showPhase
+        figure(phfig);
+        imshow(phsub,[]);
+        iptsetpref('imshowborder','tight'); % DJK 090111 added so Lc & phase overlap       
+    end
+
     % Set to fullscreen if desired
     if isfield(p, 'fullscreenResolution')
         set(ourfig, 'position', p.fullscreenResolution); 
@@ -106,11 +113,6 @@ while ~done
         end
     end
     
-    if showPhase
-        figure(phfig);
-        imshow(phsub,[]);
-    end
-
     % Set function to interact with figure
     set(figureToFocusOn,'WindowButtonMotionFcn',@MW_schnitzfigureinteraction);      
     

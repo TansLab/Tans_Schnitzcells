@@ -335,6 +335,7 @@ while loopindex <= length(p.manualRange);
                 else 
                   myInitialMagn=100;
                 end
+                
                close(phfig)
                phfig=figure('Visible','off');
                imshow(g_resized, 'InitialMagnification',myInitialMagn);

@@ -448,7 +448,7 @@ for framenr = frameRange
         D=bwdistgeodesic(BW1,distance_mask,'quasi-euclidean');
 
         % determine distance along skeleton
-        distanceAlongSkeleton       = D(sub2ind(size(D),round(skeletonXYpoleToPole(:,1)),round(skeletonXYpoleToPole(:,2))));
+        distanceAlongSkeletonPixels       = D(sub2ind(size(D),round(skeletonXYpoleToPole(:,1)),round(skeletonXYpoleToPole(:,2))));
         dist_BW1=max(max(D)); % Same as length(distanceAlongSkeleton)
 
         if extraOutput

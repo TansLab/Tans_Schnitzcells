@@ -3,8 +3,8 @@ function MW_showtwoframeslabeled(LcFrame1, LcFrame2,h,showlabels)
 
     %% PARAMETERS
     FONTSIZE=10; 
-    FIGUREHEIGHT=1000;
-    FIGURESCREENMARGIN=40;
+    %FIGUREHEIGHT=1000;
+    %FIGURESCREENMARGIN=40;
     halfFontSize = round(FONTSIZE/2);        
     if ~exist('showlabels','var'), showlabels=1;  end
     
@@ -18,7 +18,7 @@ function MW_showtwoframeslabeled(LcFrame1, LcFrame2,h,showlabels)
     % Was necessary when using axis (old)
     % set(gca,'YDir','Reverse')
 
-    if all(size(LcFrame2)>size(LcFrame1)) % usually, frame1 smaller then frame 2
+    if all(size(LcFrame2)>=size(LcFrame1)) % usually, frame1 smaller then frame 2
         % pad frame 1    
         padLcFrame1 = padarray(LcFrame1,size(LcFrame2)-size(LcFrame1),'post');
         padLcFrame2 = LcFrame2;
@@ -69,6 +69,7 @@ function MW_showtwoframeslabeled(LcFrame1, LcFrame2,h,showlabels)
 
     % Set figure size
     %set(h,'Position',[1,1,sizex,sizey])
-    set(h,'Position',[FIGURESCREENMARGIN,FIGURESCREENMARGIN,FIGUREHEIGHT,ceil(sizey/sizex*FIGUREHEIGHT)]);
+    %set(h,'Position',[FIGURESCREENMARGIN,FIGURESCREENMARGIN,FIGUREHEIGHT,ceil(sizey/sizex*FIGUREHEIGHT)]);
+    set(h,'units','normalized','outerposition',[0 0 1 1])
     
 end

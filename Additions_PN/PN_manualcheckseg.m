@@ -122,8 +122,6 @@ disp('              press ''t'' to mark terraced area.')
 disp('              press ''v'' to define region of interest and restrict to this selection.')
 disp('              press ''c'' to morphologically close each cell area (imclose)')
 disp('              press ''r'' to renumber the cell you are pointing to.')
-disp('              press ''p'' to show a square around the position, on phase image.')
-% inactivated. new 'b' function below (NW2015-07) disp('              press ''b'' to mark the cell you are pointing to, on phase image.  Do not use...')
 disp('              press ''o'' to obliterate all but the cell you''re pointing to.')
 disp('              press ''.'' to skip frame (without saving).')
 disp('              press '','' to go back a frame (without saving).')
@@ -149,10 +147,11 @@ disp('                    ''s'' to toggle no numbers, cell numbers, schnitz numb
 disp(' ')
 
 quit_now=0;
-global pos Limage ourfig res pp phfig % flfig % DJK 071206
+global pos Limage ourfig res pp phfig showPhase % flfig % DJK 071206
 
-ourfig = figure;
-phfig  = figure;
+phfig  = figure(1); 
+ourfig = figure(2);
+
 % flfig  = figure; % former version: fluor picture
 outl=length(p.segmentationDir);
 
@@ -309,70 +308,62 @@ while loopindex <= length(p.manualRange);
     if p.showAll || ... % MW 2015/06
         ((exist('Lc')~=1 || backwards || p.overwrite==1 || (exist('Lc')==1 && tempsegcorrect==1)) && ~mod(frameIdx-1,p.Dskip))
         
-        %----------------------------------------------------------------------
-        % Show Phase Image
-        %----------------------------------------------------------------------
-        % adjust contrast and make negative image
-          
+        %% Calculate phase image
         g = double(phsub);
         if length(g) > 0
             g = DJK_scaleRange(g, [max(max(g)) min(min(g))], [0 1]);
             g = DJK_scaleRange(g, [0.2 1], [0 1]);
         end
-        g = uint8(g * 255);
+        g = uint8(g * 255);    
         
         % scale image to minimum desired size (p.min_size), with maximum of 2
         res = min( (p.min_size./size(LNsub)) );
         res = min( 2, res);
-        g_resized = imresize_old(g,res);
+        g_resized = imresize_old(g,res);    
         
-        % show image
-        iptsetpref('imshowborder','tight'); % DJK 090111 added so Lc & phase overlap
-       % figure(phfig);
+        if showPhase
+            
+            % show phase image
+            iptsetpref('imshowborder','tight'); % DJK 090111 added so Lc & phase overlap       
+
+             %   clf reset;
+                if p.maxImage==1
+                    rowScale=maxValidImageSize(2)/size(g_resized,1)*100;
+                    columnScale=maxValidImageSize(1)/size(g_resized,2)*100;
+                    myInitialMagn=min([rowScale,columnScale,100]);
+                 % =100 for small images, otherwise <100
+                else 
+                  myInitialMagn=100;
+                end
+               close(phfig)
+               phfig=figure('Visible','off');
+               imshow(g_resized, 'InitialMagnification',myInitialMagn);
+                set(phfig,'name',['Frame ',str3(frameIdx),' phase']);
+                set(0,'CurrentFigure',ourfig)                
+
+                % Set position of figure
+
+                % center on screen
+                pos11                 = get(phfig,'position'); % current position
+                width                 = pos11(3); % size(g_resized,1);
+                height                = pos11(4); % size(g_resized,2);
+                x_left_bottom_screen  = 10 + (p.min_size(2)-width)/2 ;
+                y_left_bottom_screen  = 35 + (p.min_size(1)-height)/2 ;
+
+                set(phfig, 'position', [x_left_bottom_screen y_left_bottom_screen width height]); % DJK 090117          
         
-     %   clf reset;
-        if p.maxImage==1
-            rowScale=maxValidImageSize(2)/size(g_resized,1)*100;
-            columnScale=maxValidImageSize(1)/size(g_resized,2)*100;
-            myInitialMagn=min([rowScale,columnScale,100]);
-         % =100 for small images, otherwise <100
-        else 
-          myInitialMagn=100;
+        %----------------------------------------------------------------------     
+        
         end
-       close(phfig)
-       phfig=figure('Visible','off');
-       imshow(g_resized, 'InitialMagnification',myInitialMagn);
-        set(phfig,'name',['Frame ',str3(frameIdx),' phase']);
-        set(0,'CurrentFigure',ourfig)                
-        
-        % Set position of figure
-
-        % center on screen
-        pos11                 = get(phfig,'position'); % current position
-        width                 = pos11(3); % size(g_resized,1);
-        height                = pos11(4); % size(g_resized,2);
-        x_left_bottom_screen  = 10 + (p.min_size(2)-width)/2 ;
-        y_left_bottom_screen  = 35 + (p.min_size(1)-height)/2 ;
-
-        set(phfig, 'position', [x_left_bottom_screen y_left_bottom_screen width height]); % DJK 090117          
-
-        %----------------------------------------------------------------------
-      
-        % ******************************************************
-        % here in former versions a fluor image was displayed
-        % ******************************************************
-        
         
         is_done=0;
         savelist=['''Lc'''];
         crop_pop=0;
-        
+
         % DJK: multiple settings in 1 variable
         clear DJK_settings
         DJK_settings.finetuneimage = p.finetuneimage; DJK_settings.figs = p.figs; DJK_settings.fill_cut = p.fill_cut;
         
-         
-        set(phfig,'Visible', 'on')
         %set(0,'CurrentFigure',ourfig)
         while ~is_done
            
@@ -395,8 +386,9 @@ while loopindex <= length(p.manualRange);
             
             if quit_now
                 
-                close(phfig); close(ourfig); 
-                clear global pos Limage ourfig res pp phfig;
+                if showPhase, close(phfig); end
+                close(ourfig); 
+                clear global pos Limage ourfig res pp phfig showPhase;
                 return;
                 
             end;
@@ -468,6 +460,7 @@ end
 %%
 
 disp('bye');
-close(phfig); close(ourfig); 
+close(ourfig);
+close(ourfig); 
 
 end

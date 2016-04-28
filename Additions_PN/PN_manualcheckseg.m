@@ -150,6 +150,7 @@ quit_now=0;
 global pos Limage ourfig res pp phfig showPhase % flfig % DJK 071206
 
 phfig  = figure(1); 
+set(phfig, 'Visible', 'Off');
 ourfig = figure(2);
 
 % flfig  = figure; % former version: fluor picture
@@ -387,9 +388,11 @@ while loopindex <= length(p.manualRange);
             
             if quit_now
                 
-                if showPhase, close(phfig); end
+                close(phfig); 
                 close(ourfig); 
                 clear global pos Limage ourfig res pp phfig showPhase;
+                
+                disp('Will return now. Bye.');                
                 return;
                 
             end;
@@ -462,6 +465,6 @@ end
 
 disp('bye');
 close(ourfig);
-close(ourfig); 
+close(phfig); 
 
 end

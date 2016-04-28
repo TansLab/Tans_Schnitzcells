@@ -185,6 +185,7 @@ while ~done
         elseif figureToFocusOn == ourfig % vice versa
             figureToFocusOn = phfig;
             showPhase = 1;
+            set(phfig, 'Visible', 'On');
         else % if other figure is on focus (not to be the case)
             figureToFocusOn = ourfig; % switch to default, i.e. segmented one
             showPhase = 1;
@@ -268,8 +269,10 @@ while ~done
                 LZedge = LZedge | bwperim(Lzoom==ie);
             end;
             LZedge=double(+LZedge);
-            imshow(makergb(+imresize_old(LZedge,5),imresize_old(Phzoom(:,:,1),5)));
+            
             figure(addfig); % needed in case current figure changes (in Windows)
+            imshow(makergb(+imresize_old(LZedge,5),imresize_old(Phzoom(:,:,1),5)));
+            
             subaddcell=imresize_old(roipoly,1/5);%(phin);
             if max2(Lzoom(subaddcell>0))>0
                 disp('overlaps existing cell; ignored.');
@@ -644,11 +647,7 @@ while ~done
                     pos1=pos;
                     j1=Lout(round(pos(1,2)),round(pos(1,1)));
                     figure(ourfig);
-                    set(ourfig,'WindowButtonMotionFcn',['global pos Limage ourfig res pp phfig;pos=max(1,round((1/res)*get(gca,''CurrentPoint'')));',...
-                        'if (pos(1,2)>0 & pos(1,2)<size(Limage,1) & pos(1,1)>0 & pos(1,1)<size(Limage,2));',...
-                        'curr_val=num2str(double(Limage(pos(1,2),pos(1,1))));else;curr_val=''-1'';end;',...
-                        'set(ourfig,''name'',[''Pos: '',num2str(pos(1,2)),'' , '',num2str(pos(1,1)),',...
-                        '''  Val: '',curr_val]);']);
+                    set(ourfig,'WindowButtonMotionFcn', @MW_schnitzfigurewaitforclick);                    
                     ct=waitforbuttonpress;
                     cc=get(ourfig,'currentcharacter');
                     set(ourfig,'WindowButtonMotionFcn','');
@@ -800,7 +799,7 @@ while ~done
             pos1=pos;
             j1=Lout(round(pos(1,2)),round(pos(1,1)));
             figure(ourfig);
-            set(ourfig,'WindowButtonMotionFcn',@MW_schnitzfigureinteraction.m);
+            set(ourfig,'WindowButtonMotionFcn',@MW_schnitzfigurewaitforclick);
             ct=waitforbuttonpress;
             set(ourfig,'WindowButtonMotionFcn','');
             if ct

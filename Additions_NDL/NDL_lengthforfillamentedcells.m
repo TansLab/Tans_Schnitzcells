@@ -314,26 +314,30 @@ for framenr = frameRange
         % vq3 = interp1(array(1:20,1),array(1:20,2),'pchip');
         % bla=bspline(array(1:50,1),array(1:50,2));
 
-        %% % If skeleton contains only 1 unique x-value --> Swap x and y (transpose and switch rows/columns of variables) to ensure extrapolation works
-        if length(unique(skeletonXYpoleToPole(:,1)))==1
+        %% % If pieces to extrapolate contain only 1 unique x-value --> Swap x and y (transpose and switch rows/columns of variables) to ensure extrapolation works
+        if numel(unique(skeletonXYpoleToPole(1:extrapolationLength,1))) < 2 || ... % left end
+                numel(unique(skeletonXYpoleToPole(end-(extrapolationLength-1):end,1))) < 2  % right end
             skeletonXYpoleToPole(:,[1 2]) = skeletonXYpoleToPole(:,[2 1]);
             array2(:,[1 2]) = array2(:,[2 1]);
             xyends(:,[1 2],:) = xyends(:,[2 1],:);
             ends=ends';
             BW1=BW1';
         end
+        
+        
         %% % Extrapolates one end
 
-        %try
-        func=csaps(skeletonXYpoleToPole(1:extrapolationLength,1),skeletonXYpoleToPole(1:extrapolationLength,2)); % TODO MAYBE USE OTHER (POLY)FIT?
-        extrapolatedSpline1=fnxtr(func,2);
+        try
+            func=csaps(skeletonXYpoleToPole(1:extrapolationLength,1),skeletonXYpoleToPole(1:extrapolationLength,2)); % TODO MAYBE USE OTHER (POLY)FIT?
+            extrapolatedSpline1=fnxtr(func,2);
 
-        extrapolatedSkeleton1 = fnplt(extrapolatedSpline1,[skeletonXYpoleToPole(1,1)-(count+extrapolationLength) skeletonXYpoleToPole(1,1)+(count+extrapolationLength)]).';
-        %catch
-        %    cellnum
-        %    figure(); imshow(bin_im+BW,[]);
-        %    skeletonXYpoleToPole
-        %end 
+            extrapolatedSkeleton1 = fnplt(extrapolatedSpline1,[skeletonXYpoleToPole(1,1)-(count+extrapolationLength) skeletonXYpoleToPole(1,1)+(count+extrapolationLength)]).';
+        catch
+            cellnum
+            figure(); imshow(bin_im+BW,[]);
+            skeletonXYpoleToPole
+            error('Extrapolation failed.');
+        end 
         
         if extraOutput
             extrapolatedSkeleton1

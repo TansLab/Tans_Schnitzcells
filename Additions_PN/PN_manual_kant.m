@@ -105,6 +105,11 @@ while ~done
             set(phfig, 'position', pos11); 
         end
     end
+    
+    if showPhase
+        figure(phfig);
+        imshow(phsub,[]);
+    end
 
     % Set function to interact with figure
     set(figureToFocusOn,'WindowButtonMotionFcn',@MW_schnitzfigureinteraction);      

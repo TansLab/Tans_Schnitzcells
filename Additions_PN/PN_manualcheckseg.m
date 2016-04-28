@@ -353,7 +353,7 @@ while loopindex <= length(p.manualRange);
                 set(phfig, 'position', [x_left_bottom_screen y_left_bottom_screen width height]); % DJK 090117          
         
         %----------------------------------------------------------------------     
-        
+
         end
         
         is_done=0;

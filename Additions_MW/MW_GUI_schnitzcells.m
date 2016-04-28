@@ -173,9 +173,10 @@ function pushbutton6_Callback(hObject, eventdata, handles)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    structure with handles and user data (see GUIDATA)
 
-global runsections settings
+global runsections settings p
 % obtain settings
 settings = evalin('base', 'settings');
+p = evalin('base', 'p');
     
 % call script, runsections defines which sectino of sript to run
 runsections = 'manualchecksegfull'

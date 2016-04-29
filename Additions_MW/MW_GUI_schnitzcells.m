@@ -27,7 +27,7 @@ function varargout = MW_GUI_schnitzcells(varargin)
 
 % Edit the above text to modify the response to help MW_GUI_schnitzcells
 
-% Last Modified by GUIDE v2.5 08-Apr-2016 16:35:10
+% Last Modified by GUIDE v2.5 29-Apr-2016 12:40:23
 
 % Begin initialization code - DO NOT EDIT
 gui_Singleton = 1;
@@ -929,4 +929,19 @@ close(1);
 
 % update workspace
 assignin ('base','p',p)
+
+
+
+% --- Executes on button press in pushbutton51.
+function pushbutton51_Callback(hObject, eventdata, handles)
+% hObject    handle to pushbutton51 (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+
+global p
+
+% retrieve settings
+p = evalin('base', 'p');
+
+winopen(p.dateDir);
 

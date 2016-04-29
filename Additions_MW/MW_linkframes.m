@@ -3,7 +3,9 @@ function [linklistschnitz, segFile1Path, segFile2Path] = MW_linkframes(p, frame1
 %
 % Performs tracking for frames frame1Number and frame2Number.
 %
+% Extra inputs:
 % if p.debugmode is valid field, then also figures are plotted.
+% 
 %
 % Note term parent and daughter are here also used to link the same
 % individual over two frames!
@@ -26,8 +28,8 @@ DISKSIZE=15;
 MARGIN=10;
 
 if ~exist('frame1Number','var')
-    frame1Number=151;
-    frame2Number=152;
+    frame1Number=180;
+    frame2Number=181;
 end
 
 if isfield(p,'debugmode')
@@ -124,10 +126,10 @@ STATS2 = regionprops(frame2BWarea, 'Area');
     
 if (numel(STATS1) > 1) || (numel(STATS2) > 1)
     warning('Failed to detect single colony area, attempting to fix by summing areas.');
-    sum1 = sum(STATS1.Area);
-    sum2 = sum(STATS2.Area);
-    clear STATS1; STATS1.Area = sum1;
-    clear STATS2; STATS2.Area = sum2;
+    totalArea1=sum(arrayfun(@(k) STATS1(k).Area, 1:numel(STATS1)));
+    totalArea2=sum(arrayfun(@(k) STATS2(k).Area, 1:numel(STATS2)));
+    clear STATS1; STATS1.Area = totalArea1;
+    clear STATS2; STATS2.Area = totalArea2;
 end
 
 resizeratio = sqrt(STATS2.Area/STATS1.Area);
@@ -151,11 +153,28 @@ frame1resizedBWarea=imerode(frame1resizedBWarea,se);
 STATS1 = regionprops(frame1resizedBWarea, 'Centroid');
 STATS2 = regionprops(frame2BWarea, 'Centroid');
 if (numel(STATS1) > 1) || (numel(STATS2) > 1)
-    warning('Failed to detect single colony area. Attempting to fix by averaging centroids.');
+    warning('Failed to detect single colony area. Attempting to fix by averaging centroids.');    
+    
+    % Determine mean, but weigh by area   
+    STATS1 = regionprops(frame1resizedBWarea, 'Centroid','Area');
+    STATS2 = regionprops(frame2BWarea, 'Centroid','Area');
+    
+    totalArea1=sum(arrayfun(@(k) STATS1(k).Area, 1:numel(STATS1)));
+    totalArea2=sum(arrayfun(@(k) STATS2(k).Area, 1:numel(STATS2)));
+    
+    meanx1 = sum(arrayfun(@(k) STATS1(k).Centroid(1)*STATS1(k).Area, 1:numel(STATS1))) / (totalArea1);
+    meany1 = sum(arrayfun(@(k) STATS1(k).Centroid(2)*STATS1(k).Area, 1:numel(STATS1))) / (totalArea1);
+    meanx2 = sum(arrayfun(@(k) STATS2(k).Centroid(1)*STATS2(k).Area, 1:numel(STATS2))) / (totalArea2);
+    meany2 = sum(arrayfun(@(k) STATS2(k).Centroid(2)*STATS2(k).Area, 1:numel(STATS2))) / (totalArea2);    
+
+    % Straight-forward mean
+    %{
     meanx1 = mean(arrayfun(@(k) STATS1(k).Centroid(1), 1:numel(STATS1)));
     meany1 = mean(arrayfun(@(k) STATS1(k).Centroid(2), 1:numel(STATS1)));
     meanx2 = mean(arrayfun(@(k) STATS2(k).Centroid(1), 1:numel(STATS2)));
     meany2 = mean(arrayfun(@(k) STATS2(k).Centroid(2), 1:numel(STATS2)));   
+    %}
+    
     clear STATS1; STATS1.Centroid = [meanx1, meany1];
     clear STATS2; STATS2.Centroid = [meanx2, meany2];
 end
@@ -306,18 +325,20 @@ if ~isempty(orphans)
     checksPassed = 0;
 end
 
-%barren = find(linklist(:,2)==0);
+% Find barren cells and add them to the linklist.
 uniqueExclZerosFr1 = unique(frame1); % get list w. cellno's in this frame
-uniqueExclZerosFr1 = uniqueExclZerosFr1(find(uniqueExclZerosFr1>0)); % but idx=0 isn't a cell, filter out 
+uniqueExclZerosFr1 = uniqueExclZerosFr1(uniqueExclZerosFr1>0); % but idx=0 isn't a cell, filter out 
 Frame1LinkedOnes = ismember(uniqueExclZerosFr1, linklist(:,1)); % check whether the cellno's from 1 are all accounted for in list
-barren = find(Frame1LinkedOnes==0); % if not, they're barren
-if ~isempty(barren)
+barrenCells = uniqueExclZerosFr1(~Frame1LinkedOnes); % if not, they're barren
+if ~isempty(barrenCells)
     disp('WARNING: barren cells found. cellno''s:');
-    barren
+    barrenCells
     checksPassed = 0;
     disp('This leads to serious issue, since leads to discrepancy between numel(schnitzcells(i).frame_nrs) and numel(schnitzcells(i).cellno)!');
-    %warning('Adding them as connected to schnitz #1..');
-    %linklist = [linklist; padarray(barren, [0,1],1,'post')];
+    %warning('Adding them as unconnected cells (connected to 0)..');
+    %linklist = [linklist; padarray(barrenCells, [0,1],0,'post')];
+        % Note: no need to process them since this is done automatically by
+        % DJK_data_treat.. 
 end
 
 % Daughters of wich ancestry is contended (should be impossible)
@@ -335,10 +356,13 @@ end
 if checksPassed 
     disp('All checks passed..')
 else
+    
     disp(['WARNING: Checks not passed. Skipping frames ' num2str(frame1Number) '-' num2str(frame2Number) '. Re-track with other tracker.']);
         % other trackers: DJK_tracker_djk or NW_tracker_centroid_vs_area
     linklistschnitz = -1;
     return
+    
+    %warning('Not all checks passed.');
 end
 
 %% Convert to schnitzcells format 

@@ -2,6 +2,7 @@
 function MW_straightenbacteria(p, frameRange, fluorColor) 
 
 % MW simple straightening algorithm
+% Thanks to Nicola Gritti for help with algorithm.
 % 2016/04
 %
 % input:
@@ -9,30 +10,65 @@ function MW_straightenbacteria(p, frameRange, fluorColor)
 %   framerange      range of frames you want to process
 %   fluorColor      one-letter abbreviation for used fluor: 'g','y','r','c'
 % 
+% output
+%   - outputs to matlab file 
+%       [outputDir p.movieDate p.movieName '_straightFluorData.mat']
+%   - outputs plots to 
+%       [outputDir p.movieDate p.movieName '_straightenedPlot_' fluorColor '_fr' sprintf('%03d',framenr) 'cell' sprintf('%03d',cellno)];
+%
+% parameters exported to .mat file
+%   -  allskeletonDistance{framenr}{cellno} 
+%         excluding extrapolated start
+%   -  allmeanY{framenr}{cellno}          
+%   -  allpeakIndices{framenr}{cellno}      
+%   -  allpeakXPixels{framenr}{cellno}     
+%         including extrapolated start
+%   -  allpeakXMicrons{framenr}{cellno}    
+%         including extrapolated start
+%   -  allpeakmeanY{framenr}{cellno}        
+%
+% TODO
+% Currently, bacteria is only straightened for branchless skeleton, not the
+% extrapolated parts of the skeleton. Also peak distances are determined
+% from this, but corrected using the extrapolated length of the extra ends.
 
 %% Parameters
 SMOOTHELEMENTS=8; % how many elements to take +/- each side
 
+% Non-user parameters
 if isfield(p,'extraOutput')
     extraOutput = p.extraOutput;
 else
     extraOutput = 0;
 end
 
+outputDir = [p.analysisDir 'straightenedCells\'];
+if ~exist(outputDir, 'dir')
+    mkdir(outputDir);
+end
+
 %% Load skeleton data
 load ([p.tracksDir p.movieName '-skeletonData.mat']);
+
+%% Prepare output parameters
+allskeletonDistance = {};
+allmeanY            = {};
+allpeakXPixels      = {};
+allpeakXMicrons     = {};
+allpeakmeanY        = {};
+allpeakIndices      = {};
 
 %% Loop over all frames
 lastFrame=frameRange(end);
 for framenr = frameRange
     
     disp(['Analyzing frame ' num2str(framenr) ' (highest framenr =' num2str(lastFrame) ').']);
-
+    
     %% % Load data for current frame of the dataset
     
     %e.g. load 'G:\EXPERIMENTAL_DATA_2016\a_incoming\2016-03-23\pos4crop\segmentation\pos4cropseg337.mat'
     % Load segmentation
-    load ([p.segmentationDir p.movieName 'seg' sprintf('%03d',framenr) '.mat'],'Lc');
+    load ([p.segmentationDir p.movieName 'seg' sprintf('%03d',framenr) '.mat']);%,'Lc');
         % Important contents is Lc, which respectively hold the
         % checked segmentation, and the fluorescence image, 
     %Load (corrected) fluorescence image
@@ -47,6 +83,17 @@ for framenr = frameRange
     % get unique cellnos
     nonZeroIndices = (Lc(:)>0);
     allCellnos = transpose(unique(Lc(nonZeroIndices)));
+    highestCellno = max(allCellnos);
+    % Prepare output paramers    
+    skeletonDistanceThisFrame = cell(1,highestCellno);
+    meanYThisFrame            = cell(1,highestCellno);
+    peakXPixelsThisFrame      = cell(1,highestCellno);
+    peakXMicronsThisFrame     = cell(1,highestCellno);
+    peakmeanYThisFrame        = cell(1,highestCellno);
+    peakIndicesThisFrame      = cell(1,highestCellno);
+    
+    disp(['    > ' num2str(highestCellno) ' cell(s) in this frame']);
+    
     % loop
     for cellno = allCellnos
 
@@ -55,7 +102,7 @@ for framenr = frameRange
         currentminX = allMinX{framenr}(cellno);
         currentminY = allMinY{framenr}(cellno);
         currentarray2 = allarray2{framenr}{cellno};
-        currentdistanceAlongSkeleton = alldistanceAlongSkeleton{framenr}{cellno};
+        currentdistanceAlongSkeleton = alldistanceAlongSkeletonPixels{framenr}{cellno};
         
         averageBacterialWidth = allPixelAreaOfBacterium{framenr}(cellno)/allLengthsOfBacteriaInPixels{framenr}(cellno);
         halfAverageBacterialWidth = averageBacterialWidth/2;
@@ -155,18 +202,18 @@ for framenr = frameRange
             tangentialLinesAllCoordsY(i,:) = uint16(round(linspace(tangentialLineXY1(i,2),tangentialLineXY2(i,2),intAverageBacterialWidth)));
 
         end
-
-        figure(102); hold on; 
-        for i = 1:(nrIndicesInSkelet-1)
-            %plot([smoothSkeleton(i,1),pointsA(i,1)], [smoothSkeleton(i,2), pointsA(i,2)],'-')
-            %plot([smoothSkeleton(i+1,1),pointsB(i,1)], [smoothSkeleton(i+1,2), pointsB(i,2)],'-')
-
-            plot([tangentialLineXY1(i,1),tangentialLineXY2(i,1)], [tangentialLineXY1(i,2),tangentialLineXY2(i,2)],'-')
-            plot(tangentialLinesAllCoordsX(i,:),tangentialLinesAllCoordsY(i,:),'.')
-            %rectangle('Position',[pointsA(i,1) pointsA(i,2) pointsB(i,1) pointsB(i,2)])
-        end
-
+        
         if extraOutput
+            figure(102); hold on; 
+            for i = 1:(nrIndicesInSkelet-1)
+                %plot([smoothSkeleton(i,1),pointsA(i,1)], [smoothSkeleton(i,2), pointsA(i,2)],'-')
+                %plot([smoothSkeleton(i+1,1),pointsB(i,1)], [smoothSkeleton(i+1,2), pointsB(i,2)],'-')
+
+                plot([tangentialLineXY1(i,1),tangentialLineXY2(i,1)], [tangentialLineXY1(i,2),tangentialLineXY2(i,2)],'-')
+                plot(tangentialLinesAllCoordsX(i,:),tangentialLinesAllCoordsY(i,:),'.')
+                %rectangle('Position',[pointsA(i,1) pointsA(i,2) pointsB(i,1) pointsB(i,2)])
+            end
+
             plot(currentarray2(:,1),currentarray2(:,2),'-');
         end
 
@@ -186,6 +233,7 @@ for framenr = frameRange
             for i = 1:(nrIndicesInSkelet-1)
                 plot(tangentialLinesAllCoordsX(i,:)+currentminY,tangentialLinesAllCoordsY(i,:)+currentminX,'.');
             end
+            
         end
 
         %% Now create the straightened bacteria
@@ -203,46 +251,85 @@ for framenr = frameRange
         end
 
         if extraOutput
-            figure(); clf;
-            %
-            subplot(4,1,1);
-            imshow(straightenedBacterium,[]);
-            %
-            subplot(4,1,2);
-            imshow(straightenedBacteriumFluor,[]);
-            %
-            subplot(4,1,3);
-            %plot(currentdistanceAlongSkeleton','.')
-            pixelToPixelDistance = currentdistanceAlongSkeleton(1:end-1)-currentdistanceAlongSkeleton(2:end);
-            plot(pixelToPixelDistance','.')
-            xlim([0,numel(currentdistanceAlongSkeleton)]);
-            %ylim([min(currentdistanceAlongSkeleton),max(currentdistanceAlongSkeleton)]);
-            ylim([0,2])
-            ylabel('distance in pixels');
-            MW_makeplotlookbetter(20);
-            % fluor intensity
-            subplot(4,1,4);
-            fluorIntensity = mean(straightenedBacteriumFluor);
-            plot(fluorIntensity','.','LineWidth',3); hold on;
-            %xlim([0,numel(currentdistanceAlongSkeleton)]);
-            %ylim([min(currentdistanceAlongSkeleton),max(currentdistanceAlongSkeleton)]);
-            ylim([min(fluorIntensity),max(fluorIntensity)*1.1])
-            xlabel('pixels');
-            ylabel('mean fluor (a.u.)');
-            [peakindex, peaky] = peakfinder(fluorIntensity);
-            plot(peakindex, peaky,'o','MarkerSize',10,'LineWidth',3);
-            MW_makeplotlookbetter(20);            
+            figure(104); clf;
+        else
+            h=figure(104);
+            set(h,'Visible','off'); clf;
         end
+
+        % Calculate peak parameters
+        fluorIntensity = mean(straightenedBacteriumFluor);
+        [peakindexes, peakys] = peakfinder(fluorIntensity);
+        
+        % ===
+        subplot(4,1,1);
+        imshow(straightenedBacterium,[]);
+        %===
+        subplot(4,1,2);
+        imshow(straightenedBacteriumFluor,[]);
+        %===
+        subplot(4,1,3);
+        plot(currentdistanceAlongSkeleton','.')
+        ylim([min(currentdistanceAlongSkeleton),max(currentdistanceAlongSkeleton)]);
+        %pixelToPixelDistance = currentdistanceAlongSkeleton(1:end-1)-currentdistanceAlongSkeleton(2:end);
+        %plot(pixelToPixelDistance','.')
+        %ylim([0,2])
+        xlim([0,numel(currentdistanceAlongSkeleton)]);
+        ylabel('distance in pixels');
+        MW_makeplotlookbetter(20);
+        % === fluor intensity
+        subplot(4,1,4);        
+        plot(fluorIntensity','.','LineWidth',3); hold on;
+        xlim([0,numel(currentdistanceAlongSkeleton)]);
+        %ylim([min(currentdistanceAlongSkeleton),max(currentdistanceAlongSkeleton)]);
+        ylim([0,max(fluorIntensity)*1.1])
+        xlabel('pixels');
+        ylabel('mean fluor (a.u.)');        
+        plot(peakindexes, peakys,'o','MarkerSize',10,'LineWidth',3);
+        MW_makeplotlookbetter(20);            
+        saveLocation = [outputDir p.movieDate p.movieName '_straightenedPlot_' fluorColor '_fr' sprintf('%03d',framenr) 'cell' sprintf('%03d',cellno)];
+        saveas(gca, [saveLocation '.tif']);
+    
+        %% /
+    
+        skeletonDistanceThisFrame{cellno} = currentdistanceAlongSkeleton;
+        meanYThisFrame{cellno}            = fluorIntensity;
+        peakIndicesThisFrame{cellno}      = peakindexes;
+        peakXPixelsThisFrame{cellno}      = allextrapolatedDistanceEndsPixels{framenr}(1,cellno) + ...
+                                                currentdistanceAlongSkeleton(peakindexes);
+        peakXMicronsThisFrame{cellno}     = allextrapolatedDistanceEndsMicrons{framenr}(1,cellno) + ...
+                                                currentdistanceAlongSkeleton(peakindexes)*p.micronsPerPixel;
+        peakmeanYThisFrame{cellno}        = peakys;
         
     end
+     
+    allskeletonDistance{framenr} = skeletonDistanceThisFrame;
+    allmeanY{framenr}            = meanYThisFrame;
+    allpeakIndices{framenr}      = peakIndicesThisFrame;
+    allpeakXPixels{framenr}      = peakXPixelsThisFrame;
+    allpeakXMicrons{framenr}     = peakXMicronsThisFrame;
+    allpeakmeanY{framenr}        = peakmeanYThisFrame;    
+    
+    
+    
+end
+
+% Save data for later processing
+saveLocationMatFile = [outputDir p.movieDate p.movieName '_straightFluorData.mat'];
+    save(saveLocationMatFile,...
+        'allskeletonDistance', 'allmeanY', 'allpeakXPixels',...
+        'allpeakXMicrons', 'allpeakmeanY');
+
 end
 
 
 
 
-        %% 
-        figure(); clf;
-        imshow(greg,[]);
+%% 
+%{
+figure(); clf;
+imshow(greg,[]);
+%}
 
 %% plot some boxes
 %for i = 1:(nrIndicesInSkelet-1)

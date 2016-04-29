@@ -458,6 +458,15 @@ elseif any(strcmp(runsections,{'allfull','trackandmanualcorrections'}))% full
     p.overwrite=0; % ADVANCED SETTING
     p.showAll = 1; % show all segmented frames to user
 
+    % Default settings for identifying problem cells, when not given config
+    % file
+    if ~isfield(settings,'pixelsMoveDef')
+        settings.pixelsMoveDef=15;
+    end
+    if ~isfield(settings,'pixelsLenDef')
+        settings.pixelsLenDef=[-4 13];
+    end
+    
     % Alternative trackers one can try
     % This is quite useful if errors occur. manualrange can be edited to
     % two frames only. Set p.overwrite to 1. Then re-run this whole 
@@ -474,9 +483,9 @@ elseif any(strcmp(runsections,{'allfull','trackandmanualcorrections'}))% full
     % edit MW_helperforlinkingframes
         
     DJK_tracker_djk(p,'manualRange', settings.currentFrameRange); % default tracker           
-
+    
     % Find problem cells
-    [problems, theOutputFilePath] = DJK_analyzeTracking(p,'manualRange', settings.currentFrameRange, 'pixelsMoveDef', 15, 'pixelsLenDef', [-4 13]);
+    [problems, theOutputFilePath] = DJK_analyzeTracking(p,'manualRange', settings.currentFrameRange, 'pixelsMoveDef', settings.pixelsMoveDef, 'pixelsLenDef', settings.pixelsLenDef);
     % open output file in external editor (not necessary, but convenient)
     eval(['!' settings.MYTEXTEDITOR ' ' theOutputFilePath ' &']);
     
@@ -544,6 +553,15 @@ end
 % section. This section is under construction.
 
 if any(strcmp(runsections,{'checkaftercustom'}))
+    
+    % Default settings for identifying problem cells, when not given config
+    % file
+    if ~isfield(settings,'pixelsMoveDef')
+        settings.pixelsMoveDef=15;
+    end
+    if ~isfield(settings,'pixelsLenDef')
+        settings.pixelsLenDef=[-4 13];
+    end
     
     %disp('Option not working yet.. Use (re)track (..) instead.');
     
@@ -955,90 +973,125 @@ if any(strcmp(runsections,{'allfull', 'makeoutputfull', 'rerunfullanalysis'})) %
     % execute script
     MW_growthplots
     
-    % create correlation functions R(concentration, growth)
+    %% Create correlation parameter names
     % ===
+    activeFluorIdx = [];
+    % loop over different fluor slots
+    for fluorIdx = 1:3
+        % check whether this fluor field was set by user in config file
+        if isfield(settings,['fluor' num2str(fluorIdx)])
+        if ~strcmp(upper(settings.(['fluor' num2str(fluorIdx)])),'NONE')
+            % determine fluor code letter
+            theLetter = upper(settings.(['fluor' num2str(fluorIdx)]));
+            % set fields
+            settings.fieldNamesWithFluorLetter(fluorIdx).timeFieldName = ...
+                strrep(settings.timeFieldName,'X',theLetter);
+            settings.fieldNamesWithFluorLetter(fluorIdx).fluorFieldName = ...
+                strrep(settings.fluorFieldName,'X',theLetter);
+            settings.fieldNamesWithFluorLetter(fluorIdx).muFieldName = ...
+                strrep(settings.muFieldName,'X',theLetter)
+            settings.fieldNamesWithFluorLetter(fluorIdx).timeFieldNameDerivative = ...
+                strrep(settings.timeFieldNameDerivative,'X',theLetter);
+            settings.fieldNamesWithFluorLetter(fluorIdx).fluorDerivativeFieldName = ...
+                strrep(settings.fluorDerivativeFieldName,'X',theLetter);
+            settings.fieldNamesWithFluorLetter(fluorIdx).muFieldNameDerivative = ...
+                strrep(settings.muFieldNameDerivative,'X',theLetter);
+            % mark as active
+            activeFluorIdx(end+1)=fluorIdx;
+        end  
+        end
+    end
     
-    % Set up appropriate field names for R(concentration,mu)
-    % TODO MW: todo: make this X_time etc, and do a strrep for X to applicable color
-    associatedFieldNames = {settings.timeFieldName, settings.fluorFieldName, settings.muFieldName};
-    % obtain some settings from Excel file
-    badSchnitzes = settings.badSchnitzes; alreadyRemovedInMatFile = settings.alreadyRemovedInMatFile;
-    myID = settings.myID; myGroupID = settings.myGroupID;
-    myFitTime = settings.fitTimeCrosscorr;
-    myOutputFolder = settings.myOutputFolder;
-    % Execute delayed scatter script
-    MW_delayedScatter
-       
+    %% Create all plots for all fluors
+    for fluorIdx = activeFluorIdx
+        
+
+        %% create correlation functions R(concentration, growth)
+        % ===
+
+        % Set up appropriate field names for R(concentration,mu)
+        % TODO MW: todo: make this X_time etc, and do a strrep for X to applicable color
+        associatedFieldNames = {settings.fieldNamesWithFluorLetter(fluorIdx).timeFieldName, settings.fieldNamesWithFluorLetter(fluorIdx).fluorFieldName, settings.fieldNamesWithFluorLetter(fluorIdx).muFieldName};
+        % obtain some settings from Excel file
+        badSchnitzes = settings.badSchnitzes; alreadyRemovedInMatFile = settings.alreadyRemovedInMatFile;
+        myID = settings.myID; myGroupID = settings.myGroupID;
+        myFitTime = settings.fitTimeCrosscorr;
+        myOutputFolder = settings.myOutputFolder;
+        % Execute delayed scatter script
+        MW_delayedScatter
+
+
+        %% Renaming for later use
+        % output.branchavg{fieldname} contains average data for branches
+        output.concentrationBranch_groups = branch_groups; output.concentrationBranch_groupsControl = branch_groupsControl;
+        output.concentrationCorrData = CorrData; output.concentrationCorrDataControl = CorrDataControl;
+        output.concentrationassociatedFieldNames = associatedFieldNames;
+        output.concentrationbadSchnitzes = badSchnitzes; 
+        if exist('contourPlotData','var')
+            output.concentrationContourPlotData = contourPlotData;
+        end    
+
+        %% create correlation functions R(rate, growth)
+        % ===
+
+        % Set up appropriate field names for R(rate, mu)
+        associatedFieldNames = {settings.fieldNamesWithFluorLetter(fluorIdx).timeFieldNameDerivative, settings.fieldNamesWithFluorLetter(fluorIdx).fluorDerivativeFieldName, settings.fieldNamesWithFluorLetter(fluorIdx).muFieldNameDerivative};
+        % parse some settings from Excel file
+        badSchnitzes = settings.badSchnitzes; alreadyRemovedInMatFile = settings.alreadyRemovedInMatFile;
+        myID = settings.myID; myGroupID = settings.myGroupID;
+        myFitTime = settings.fitTimeCrosscorr;
+        % Execute delayed scatter script
+        MW_delayedScatter
+
+        % Renaming for later use
+        output.rateCorrData = CorrData; output.rateCorrDataControl = CorrDataControl;
+        output.rateassociatedFieldNames = associatedFieldNames;
+        output.ratebadSchnitzes = badSchnitzes;     
+        if exist('contourPlotData','var')
+            output.rateContourPlotData = contourPlotData;
+        end  
+
+        %% create autocorrelation functions R(Y, Y)
+        % ===
+
+        % Set up appropriate field names
+
+        % growth
+        associatedFieldNames = {settings.fieldNamesWithFluorLetter(fluorIdx).timeFieldName, settings.fieldNamesWithFluorLetter(fluorIdx).muFieldName, settings.fieldNamesWithFluorLetter(fluorIdx).muFieldName};
+        % execute analysis scripts
+        MW_delayedScatter
+        MW_autoCorr_corrtime_and_fitExponential
+        % rename for later use
+        output.growthautoCorrData = CorrData; output.growthautoFieldNames = associatedFieldNames; output.growthautoBadSchnitzes = badSchnitzes;     
+        % note that noise parameters are based on all branch data lumped
+        % together, it would be better to take raw schnitzcells data as input.
+        output.growthNoise = theNoise; output.growthMean = theMean; output.growthStd = theStd;
+
+        %% concentration
+        associatedFieldNames = {settings.fieldNamesWithFluorLetter(fluorIdx).timeFieldName, settings.fieldNamesWithFluorLetter(fluorIdx).fluorFieldName, settings.fieldNamesWithFluorLetter(fluorIdx).fluorFieldName};
+        % execute analysis scripts
+        MW_delayedScatter
+        MW_autoCorr_corrtime_and_fitExponential
+        % rename for later use
+        output.concentrationautoCorrData = CorrData; output.concentrationautoFieldNames = associatedFieldNames; output.concentrationautoBadSchnitzes = badSchnitzes; 
+        % note that noise parameters are based on all branch data lumped
+        % together, it would be better to take raw schnitzcells data as input.
+        output.concentrationNoise = theNoise; output.concentrationMean = theMean; output.concentrationStd = theStd;
+
+        %% rate
+        associatedFieldNames = {settings.fieldNamesWithFluorLetter(fluorIdx).timeFieldNameDerivative, settings.fieldNamesWithFluorLetter(fluorIdx).fluorDerivativeFieldName, settings.fieldNamesWithFluorLetter(fluorIdx).fluorDerivativeFieldName};
+        % execute analysis scripts
+        MW_delayedScatter
+        MW_autoCorr_corrtime_and_fitExponential        
+        % rename for later use
+        output.rateautoCorrData = CorrData; output.rateautoFieldNames = associatedFieldNames; output.rateautoBadSchnitzes = badSchnitzes; 
+        % note that noise parameters are based on all branch data lumped
+        % together, it would be better to take raw schnitzcells data as input.
+        output.rateNoise = theNoise; output.rateMean = theMean; output.rateStd = theStd;
     
-    % Renaming for later use
-    % output.branchavg{fieldname} contains average data for branches
-    output.concentrationBranch_groups = branch_groups; output.concentrationBranch_groupsControl = branch_groupsControl;
-    output.concentrationCorrData = CorrData; output.concentrationCorrDataControl = CorrDataControl;
-    output.concentrationassociatedFieldNames = associatedFieldNames;
-    output.concentrationbadSchnitzes = badSchnitzes; 
-    if exist('contourPlotData','var')
-        output.concentrationContourPlotData = contourPlotData;
-    end    
+    end
     
-    % create correlation functions R(rate, growth)
-    % ===
-    
-    % Set up appropriate field names for R(rate, mu)
-    associatedFieldNames = {settings.timeFieldNameDerivative, settings.fluorDerivativeFieldName, settings.muFieldNameDerivative};
-    % parse some settings from Excel file
-    badSchnitzes = settings.badSchnitzes; alreadyRemovedInMatFile = settings.alreadyRemovedInMatFile;
-    myID = settings.myID; myGroupID = settings.myGroupID;
-    myFitTime = settings.fitTimeCrosscorr;
-    % Execute delayed scatter script
-    MW_delayedScatter
-    
-    % Renaming for later use
-    output.rateCorrData = CorrData; output.rateCorrDataControl = CorrDataControl;
-    output.rateassociatedFieldNames = associatedFieldNames;
-    output.ratebadSchnitzes = badSchnitzes;     
-    if exist('contourPlotData','var')
-        output.rateContourPlotData = contourPlotData;
-    end  
-    
-    % create autocorrelation functions R(Y, Y)
-    % ===
-    
-    % Set up appropriate field names
-    
-    % growth
-    associatedFieldNames = {settings.timeFieldName, settings.muFieldName, settings.muFieldName};
-    % execute analysis scripts
-    MW_delayedScatter
-    MW_autoCorr_corrtime_and_fitExponential
-    % rename for later use
-    output.growthautoCorrData = CorrData; output.growthautoFieldNames = associatedFieldNames; output.growthautoBadSchnitzes = badSchnitzes;     
-    % note that noise parameters are based on all branch data lumped
-    % together, it would be better to take raw schnitzcells data as input.
-    output.growthNoise = theNoise; output.growthMean = theMean; output.growthStd = theStd;
-    
-    % concentration
-    associatedFieldNames = {settings.timeFieldName, settings.fluorFieldName, settings.fluorFieldName};
-    % execute analysis scripts
-    MW_delayedScatter
-    MW_autoCorr_corrtime_and_fitExponential
-    % rename for later use
-    output.concentrationautoCorrData = CorrData; output.concentrationautoFieldNames = associatedFieldNames; output.concentrationautoBadSchnitzes = badSchnitzes; 
-    % note that noise parameters are based on all branch data lumped
-    % together, it would be better to take raw schnitzcells data as input.
-    output.concentrationNoise = theNoise; output.concentrationMean = theMean; output.concentrationStd = theStd;
-    
-    % rate
-    associatedFieldNames = {settings.timeFieldNameDerivative, settings.fluorDerivativeFieldName, settings.fluorDerivativeFieldName};
-    % execute analysis scripts
-    MW_delayedScatter
-    MW_autoCorr_corrtime_and_fitExponential        
-    % rename for later use
-    output.rateautoCorrData = CorrData; output.rateautoFieldNames = associatedFieldNames; output.rateautoBadSchnitzes = badSchnitzes; 
-    % note that noise parameters are based on all branch data lumped
-    % together, it would be better to take raw schnitzcells data as input.
-    output.rateNoise = theNoise; output.rateMean = theMean; output.rateStd = theStd;
-    
-    % Let user know done, open output folder.
+    %% Let user know done, open output folder.
     disp('Done making analysis. Opening output folder.')
     winopen(settings.myOutputFolder);
     

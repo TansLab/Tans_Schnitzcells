@@ -3,7 +3,7 @@ function [schnitz cellid]=recalc_schnitz(P,D,E,G,trackRange,varargin)
 % recalculates cellid correspondence cell array
 % and schnitz structure with fields P,D,E,frames,.. and anything else
 % being in the format {frame}(id); 
-
+%
 %     [schnitz cellid]=recalc_schnitz(P,D,E,G,varargin)
 % 
 % recalculates the 'schnitz' structure array (with cell ID indexing) 
@@ -25,6 +25,12 @@ function [schnitz cellid]=recalc_schnitz(P,D,E,G,trackRange,varargin)
 % The P,D,E,G arrays can obtained from raw 'softassign output' with
 % the data_treat function.
 % T.B. 04/05
+
+% Hierarchy of calling:
+% >> MW_makeSchnitzFileFromTracking 
+%       >> DJK_data_treat
+%       >> recalc_schnitz 
+%           >> cellids
 
 % JCR Modified: added trackRange argument 
 

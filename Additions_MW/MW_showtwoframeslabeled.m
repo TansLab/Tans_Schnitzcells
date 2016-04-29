@@ -18,15 +18,15 @@ function MW_showtwoframeslabeled(LcFrame1, LcFrame2,h,showlabels)
     % Was necessary when using axis (old)
     % set(gca,'YDir','Reverse')
 
-    if all(size(LcFrame2)>=size(LcFrame1)) % usually, frame1 smaller then frame 2
-        % pad frame 1    
-        padLcFrame1 = padarray(LcFrame1,size(LcFrame2)-size(LcFrame1),'post');
-        padLcFrame2 = LcFrame2;
-    else % but if not, pad frame2
-        padLcFrame1 = LcFrame1;
-        padLcFrame2 = padarray(LcFrame2,size(LcFrame1)-size(LcFrame2),'post');
-    end % the case x and y are not both larger/smaller is not accounted for
-
+    % Padding such that frames are equal size
+    howMuchPadding=[0, 0; 0, 0]; % [padding fr1i, padding fr1j, padding fr2i, padding fr2j]
+    whichOneBiggerBothDirections = size(LcFrame2)<=size(LcFrame1);
+    whichToChange = whichOneBiggerBothDirections+1;
+    howMuchPadding(whichToChange(1),1) = abs(size(LcFrame2,1)-size(LcFrame1,1));
+    howMuchPadding(whichToChange(2),2) = abs(size(LcFrame2,2)-size(LcFrame1,2));
+    padLcFrame1 = padarray(LcFrame1,howMuchPadding(1,:),'post');
+    padLcFrame2 = padarray(LcFrame2,howMuchPadding(2,:),'post');    
+        
     % modify matrices for display
     frame1Pic = (1-(padLcFrame1>0).*.3);
     frame2Pic = (1-(padLcFrame2>0).*.5);

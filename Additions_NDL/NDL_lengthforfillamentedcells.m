@@ -72,7 +72,7 @@ allPixelAreaOfBacterium         = cell(1,lastFrame);
 allSkeletonXYpoleToPole         = cell(1,lastFrame);
 allMinX                         = cell(1,lastFrame);
 allMinY                         = cell(1,lastFrame);
-allarray2                       = cell(1,lastFrame);
+allEdges                        = cell(1,lastFrame);
 alldistanceAlongSkeletonPixels     = cell(1,lastFrame);
 allextrapolatedDistanceEndsPixels  = cell(1,lastFrame);
 allextrapolatedDistanceEndsMicrons = cell(1,lastFrame);
@@ -98,7 +98,7 @@ for framenr = frameRange
     skeletonXYpoleToPoleInThisFrame = cell(1,numel(allCellnos));
     minXThisFrame = NaN(1,numel(allCellnos));
     minYThisFrame = NaN(1,numel(allCellnos));
-    array2ThisFrame = cell(1,numel(allCellnos));
+    edgesThisFrame = cell(1,numel(allCellnos));
     distanceAlongSkeletonPixelsThisFrame = cell(1,numel(allCellnos));
     extrapolatedDistancePixelsEndsThisFrame = NaN(2,numel(allCellnos)); 
     extrapolatedDistanceMicronsEndsThisFrame = NaN(2,numel(allCellnos)); 
@@ -123,75 +123,75 @@ for framenr = frameRange
         sizeY = max(y)-minY+1;
         sizeX = max(x)-minX+1;
         % create zero array size of bacterium
-        zer=zeros(sizeY,sizeX);
+        zer = zeros(sizeY,sizeX);
         % use x,y coordinates to fill it
         for framen=1:length(x)
             zer(y(framen)-minY+1,x(framen)-minX+1)=1;
         end
-        bin_im=zer;
+        binaryImage = zer;
 
         % % add padding to image (to avoid filters "seeing" edges)
-        % bin_im=padarray(bin_im,[paddingsize,paddingsize]);
+        % binaryImage=padarray(binaryImage,[paddingsize,paddingsize]);
 
         if extraOutput
             figure(3);
-            imshow(bin_im);
+            imshow(binaryImage);
         end
         % calculate total area of bacterium
-        pixelAreaOfBacterium = sum(bin_im(:));
+        pixelAreaOfBacterium = sum(binaryImage(:));
         %% % Skeletonizes image
-        BW = bwmorph(bin_im,'skel',Inf);
-        %BW = voronoiSkel(bin_im); % downloaded this, but to tricky to get to work
-        %BW = skeleton(bin_im); % downloaded this, but to tricky to get to work
+        binaryImageSkeletonized = bwmorph(binaryImage,'skel',Inf);
+        %binaryImageSkeletonized = voronoiSkel(binaryImage); % downloaded this, but to tricky to get to work
+        %binaryImageSkeletonized = skeleton(binaryImage); % downloaded this, but to tricky to get to work
 
         if extraOutput
             figure(4); clf;
-            imshow(BW)
-            imshow((bin_im+BW)/2,[])
+            imshow(binaryImageSkeletonized)
+            imshow((binaryImage+binaryImageSkeletonized)/2,[])
         end
         %% % Finds edges - Gives boundary of the segmented cell
-        edges = bin_im-bwmorph(bin_im,'erode');
+        edgesBinary = binaryImage-bwmorph(binaryImage,'erode');
         
         if extraOutput
             figure(); clf;
-            imshow(edges+BW)
+            imshow(edgesBinary+binaryImageSkeletonized)
         end
         %% % Finds endings of the skeleton
-        ends_before = bwmorph(BW,'endpoints');
+        endsBeforeSpurring = bwmorph(binaryImageSkeletonized,'endpoints');
         
         if extraOutput
             figure(50); clf;
-            imshow(ends_before)
+            imshow(endsBeforeSpurring)
         end
         %% % Calculate number of ends before removing branches
-        num_ends_before=sum(sum(ends_before,2));
+        numEndsBeforeSpurring = sum(sum(endsBeforeSpurring,2));
         %% Finds x & y values of endings before removing branches
         k=1;        
-        xyends_before=zeros(1,2,num_ends_before);
+        xyEndsBeforeSpurring = zeros(1,2,numEndsBeforeSpurring);
         for framen=1:sizeX
             for j=1:sizeY
-                if ends_before(j,framen)==1
-                    xyends_before(:,:,k)=[j,framen];
+                if endsBeforeSpurring(j,framen)==1
+                    xyEndsBeforeSpurring(:,:,k)=[j,framen];
                     k=k+1;
                 end
             end
         end
         
         if extraOutput
-            num_ends_before
-            xyends_before
+            numEndsBeforeSpurring
+            xyEndsBeforeSpurring
         end
         %% % Disconnects at branch points - Not used anywhere in the script
-        disc = BW-bwmorph(BW,'branchpoints');
+        binaryImageDisconnected = binaryImageSkeletonized-bwmorph(binaryImageSkeletonized,'branchpoints');
         if extraOutput
             figure(); clf;
-            imshow(disc);
+            imshow(binaryImageDisconnected);
         end
-        %% % XXX Just to try - definitely doesn't work for filamented cells XXX
-        [xx,yy]=find(BW==1);
+        %% % XXX Just to try other fitting - definitely doesn't work for filamented cells XXX
+        [xx,yy] = find(binaryImageSkeletonized==1);
         
-        func=csaps(xx,yy);
-        extrapolatedSpline1=fnxtr(func);
+        func = csaps(xx,yy);
+        extrapolatedSpline1 = fnxtr(func);
         
         if extraOutput
             extrapolatedSpline1
@@ -205,37 +205,37 @@ for framenr = frameRange
         %% % Removes side-branches
         % Main idea is to trim branhes until only two end-points are left
         % such that there's a branchless skeleton (i.e. the main branch).
-        count=0;
-        num_ends=num_ends_before;
+        countSpurring=0;
+        numEnds=numEndsBeforeSpurring;
         % make all pixels at the edge 0, as this otherwise can lead to
         % issues with detecting branches that are at the edge.
-        BW(1,:)   = 0;
-        BW(end,:) = 0;
-        BW(:,1)   = 0;
-        BW(:,end) = 0;
+        binaryImageSkeletonized(1,:)   = 0;
+        binaryImageSkeletonized(end,:) = 0;
+        binaryImageSkeletonized(:,1)   = 0;
+        binaryImageSkeletonized(:,end) = 0;
         % Continue removing spur pixels until we have branchless skeleton
-        while num_ends>2
-                BW = bwmorph(BW,'spur');
-                BW = bwmorph(BW,'skel'); % To prevent issue with 4-way crossings
-                count=count+1;
-                ends = bwmorph(BW,'endpoints');
-                num_ends=sum(sum(ends,2));
-                if count>1000
-                    figure(); imshow(BW,[]);
+        while numEnds > 2
+                binaryImageSkeletonized = bwmorph(binaryImageSkeletonized,'spur');
+                binaryImageSkeletonized = bwmorph(binaryImageSkeletonized,'skel'); % To prevent issue with 4-way crossings
+                countSpurring = countSpurring+1;
+                ends = bwmorph(binaryImageSkeletonized,'endpoints');
+                numEnds = sum(sum(ends,2));
+                if countSpurring>1000
+                    figure(); imshow(binaryImageSkeletonized,[]);
                     error(['Error spurring, cellnum=' num2str(cellnum) ', showing current skeleton.']);                    
                 end;
         end
-        BW1=BW; % Branchless skeleton
+        binarySkeletonBranchless = binaryImageSkeletonized; % Branchless skeleton
         
         if extraOutput
-            count
-            num_ends
+            countSpurring
+            numEnds
         end
         %% % Finds endings of branchless skeleton
-        if num_ends==1
+        if numEnds==1
             warning(['Skeleton is only 1 px in frame ' num2str(framenr) ' cell ' num2str(cellnum)]);
         end  
-        ends = bwmorph(BW1,'endpoints');
+        ends = bwmorph(binarySkeletonBranchless,'endpoints');
         
         if extraOutput
             figure(51); clf;
@@ -243,63 +243,63 @@ for framenr = frameRange
         end
         %% % Finds x & y values of endings after removing branches
         l=1;
-        xyends=zeros(1,2,num_ends);
+        xyEnds=zeros(1,2,numEnds);
         for framen=1:sizeX
             for j=1:sizeY
                 if ends(j,framen)==1
-                    xyends(:,:,l)=[j,framen];
+                    xyEnds(:,:,l)=[j,framen];
                     l=l+1;
                 end
             end
         end
         if extraOutput
-            xyends
+            xyEnds
         end
         %% % If skeleton is 1 px --> Adds arbitrary point & finds x & y values of endings (after removing branches)
-        if num_ends==1
-            BW1(xyends(1)+1,xyends(2)-1)=1; % Adds arbitrary point (8-connected)
-            ends = bwmorph(BW1,'endpoints'); % Finds the 2 ends
-            num_ends=num_ends+1; % Updates number of ends of branchless skeleton
+        if numEnds==1
+            binarySkeletonBranchless(xyEnds(1)+1,xyEnds(2)-1) = 1; % Adds arbitrary point (8-connected)
+            ends = bwmorph(binarySkeletonBranchless,'endpoints'); % Finds the 2 ends
+            numEnds = numEnds+1; % Updates number of ends of branchless skeleton
             
             l=1;
-            xyends=zeros(1,2,2);
+            xyEnds=zeros(1,2,2);
             for framen=1:sizeX
                 for j=1:sizeY
                     if ends(j,framen)==1
-                    xyends(:,:,l)=[j,framen];
+                    xyEnds(:,:,l)=[j,framen];
                     l=l+1;
                     end
                 end
             end
         end
         if extraOutput
-            xyends
+            xyEnds
         end
         %% % Gets x & y values of the branchless skeleton, and sets them in an array
         % Get "boundaries" of the line (result should make a loop around the line,
         % but from an arbitrary point)
-        skeletonBoundary=bwboundaries(BW1,8); 
-        skeletonBoundary=skeletonBoundary{1,1};
+        skeletonBoundary = bwboundaries(binarySkeletonBranchless,8); 
+        skeletonBoundary = skeletonBoundary{1,1};
         % paste this loop 2x behind itself
-        twotimesskeletonBoundary = [skeletonBoundary; skeletonBoundary];
-        leftend = xyends(:,:,1);
+        twotimesSkeletonBoundary = [skeletonBoundary; skeletonBoundary];
+        leftEnd = xyEnds(:,:,1);
         % Now find one of the bacterial poles
-        poleIndex = find(skeletonBoundary(:,1)==leftend(1) & skeletonBoundary(:,2)==leftend(2));
+        poleIndex = find(skeletonBoundary(:,1)==leftEnd(1) & skeletonBoundary(:,2)==leftEnd(2));
         % Now get skeletonXYpoleToPole(i,:)=v(i), with v(i,:)=[x(i),y(i)],
         % point i along the skeleton
-        skeletonXYpoleToPole=twotimesskeletonBoundary(poleIndex:poleIndex+round((size(skeletonBoundary,1)+1)/2-1),:); % -1 to correct for poleIndex
+        skeletonXYpoleToPole = twotimesSkeletonBoundary(poleIndex:poleIndex+round((size(skeletonBoundary,1)+1)/2-1),:); % -1 to correct for poleIndex
         
         if extraOutput
             figure(5); clf;
-            imshow((BW1+bin_im)/2)
+            imshow((binarySkeletonBranchless+binaryImage)/2)
         end
         %% % Gets x & y values of the segmented edges, and plots them
-        edges2=bwboundaries(edges,8);
-        array2=edges2{1,1}; % Extracts correct boundary
+        boundaries = bwboundaries(edgesBinary,8);
+        edge = boundaries{1,1}; % Extracts correct edge of the 2 determined boundaries
         
         if extraOutput
             figure(71)
-            plot(array2(:,1),array2(:,2))
+            plot(edge(:,1),edge(:,2))
             hold on
             plot(skeletonXYpoleToPole(:,1),skeletonXYpoleToPole(:,2))
         end
@@ -309,37 +309,37 @@ for framenr = frameRange
         % bla=bspline(array(1:50,1),array(1:50,2));
 
         %% % If pieces to extrapolate contain only 1 unique x-value --> Swap x and y (transpose and switch rows/columns of variables) to ensure extrapolation works
-        dyExtrapolation1=max(skeletonXYpoleToPole(1:extrapolationLength,2))-min(skeletonXYpoleToPole(1:extrapolationLength,2));
-        dxExtrapolation1=max(skeletonXYpoleToPole(1:extrapolationLength,1))-min(skeletonXYpoleToPole(1:extrapolationLength,1));
-        dydxExtrapolation1=dyExtrapolation1/dxExtrapolation1; % Calculates how steep one end is
-        dyExtrapolation2=max(skeletonXYpoleToPole(end-(extrapolationLength-1):end,2))-min(skeletonXYpoleToPole(end-(extrapolationLength-1):end,2));
-        dxExtrapolation2=max(skeletonXYpoleToPole(end-(extrapolationLength-1):end,1))-min(skeletonXYpoleToPole(end-(extrapolationLength-1):end,1));
-        dydxExtrapolation2=dyExtrapolation2/dxExtrapolation2; % Calculates how steep other end is
+        dyExtrapolation1 = max(skeletonXYpoleToPole(1:extrapolationLength,2))-min(skeletonXYpoleToPole(1:extrapolationLength,2));
+        dxExtrapolation1 = max(skeletonXYpoleToPole(1:extrapolationLength,1))-min(skeletonXYpoleToPole(1:extrapolationLength,1));
+        dydxExtrapolation1 = dyExtrapolation1/dxExtrapolation1; % Calculates how steep one end is
+        dyExtrapolation2 = max(skeletonXYpoleToPole(end-(extrapolationLength-1):end,2))-min(skeletonXYpoleToPole(end-(extrapolationLength-1):end,2));
+        dxExtrapolation2 = max(skeletonXYpoleToPole(end-(extrapolationLength-1):end,1))-min(skeletonXYpoleToPole(end-(extrapolationLength-1):end,1));
+        dydxExtrapolation2 = dyExtrapolation2/dxExtrapolation2; % Calculates how steep other end is
         
         if numel(unique(skeletonXYpoleToPole(1:extrapolationLength,1))) < 2 || ... % Unique x-values left end
                 numel(unique(skeletonXYpoleToPole(end-(extrapolationLength-1):end,1))) < 2  % Unique x-values right end
             skeletonXYpoleToPole(:,[1 2]) = skeletonXYpoleToPole(:,[2 1]); % Transposes:
-            array2(:,[1 2]) = array2(:,[2 1]);
-            xyends(:,[1 2],:) = xyends(:,[2 1],:);
-            ends=ends';
-            BW1=BW1';
+            edge(:,[1 2]) = edge(:,[2 1]);
+            xyEnds(:,[1 2],:) = xyEnds(:,[2 1],:);
+            ends = ends';
+            binarySkeletonBranchless = binarySkeletonBranchless';
         elseif max(dydxExtrapolation1, dydxExtrapolation2) > max(1/dydxExtrapolation1, 1/dydxExtrapolation2) % Determines if transposing is beneficial
             skeletonXYpoleToPole(:,[1 2]) = skeletonXYpoleToPole(:,[2 1]); % Transposes:
-            array2(:,[1 2]) = array2(:,[2 1]);
-            xyends(:,[1 2],:) = xyends(:,[2 1],:);
-            ends=ends';
-            BW1=BW1';
+            edge(:,[1 2]) = edge(:,[2 1]);
+            xyEnds(:,[1 2],:) = xyEnds(:,[2 1],:);
+            ends = ends';
+            binarySkeletonBranchless = binarySkeletonBranchless';
         end
         %% % Extrapolates first end of the bacteria - fit is forced through the 'end' and extrapolates linearly outside data interval
 
         try
             func=csaps(skeletonXYpoleToPole(1:extrapolationLength,1),skeletonXYpoleToPole(1:extrapolationLength,2)); % TODO MAYBE USE OTHER (POLY)FIT?
-            extrapolatedSpline1=fnxtr(func,2);
-            % 'count' ensures the plotted extrapolation crosses the edge of the cell for cells with small branchless skeletons (many iterations of 'spur' & 'skel')
-            extrapolatedSkeleton1 = fnplt(extrapolatedSpline1,[skeletonXYpoleToPole(1,1)-(count+extrapolationLength) skeletonXYpoleToPole(1,1)+(count+extrapolationLength)]).';
+            extrapolatedSpline1 = fnxtr(func,2);
+            % 'countSpurring' ensures the plotted extrapolation crosses the edge of the cell for cells with small branchless skeletons (many iterations of 'spur' & 'skel')
+            extrapolatedSkeleton1 = fnplt(extrapolatedSpline1,[skeletonXYpoleToPole(1,1)-(countSpurring+extrapolationLength) skeletonXYpoleToPole(1,1)+(countSpurring+extrapolationLength)]).';
         catch
             cellnum
-            figure(); imshow(bin_im+BW,[]);
+            figure(); imshow(binaryImage+binaryImageSkeletonized,[]);
             skeletonXYpoleToPole
             error('Extrapolation failed.');
         end 
@@ -347,23 +347,23 @@ for framenr = frameRange
         if extraOutput
             extrapolatedSkeleton1
             figure()            
-            fnplt(extrapolatedSpline1,[skeletonXYpoleToPole(1,1)-(count+extrapolationLength) skeletonXYpoleToPole(1,1)+(count+extrapolationLength)])
+            fnplt(extrapolatedSpline1,[skeletonXYpoleToPole(1,1)-(countSpurring+extrapolationLength) skeletonXYpoleToPole(1,1)+(countSpurring+extrapolationLength)])
         end
         %% % Extrapolates second end of the bacteria - fit is forced through the 'end' and extrapolates linearly outside data interval
         func2=csaps(skeletonXYpoleToPole(length(skeletonXYpoleToPole)-(extrapolationLength-1):length(skeletonXYpoleToPole),1),skeletonXYpoleToPole(length(skeletonXYpoleToPole)-(extrapolationLength-1):length(skeletonXYpoleToPole),2));
-        extrapolatedSpline2=fnxtr(func2);
-        % 'count' ensures the plotted extrapolation crosses the edge of the cell for cells with small branchless skeletons (many iterations of 'spur' & 'skel')
-        extrapolatedSkeleton2 = fnplt(extrapolatedSpline2,[skeletonXYpoleToPole(length(skeletonXYpoleToPole),1)-(count+extrapolationLength) skeletonXYpoleToPole(length(skeletonXYpoleToPole),1)+(count+extrapolationLength)]).';
+        extrapolatedSpline2 = fnxtr(func2);
+        % 'countSpurring' ensures the plotted extrapolation crosses the edge of the cell for cells with small branchless skeletons (many iterations of 'spur' & 'skel')
+        extrapolatedSkeleton2 = fnplt(extrapolatedSpline2,[skeletonXYpoleToPole(length(skeletonXYpoleToPole),1)-(countSpurring+extrapolationLength) skeletonXYpoleToPole(length(skeletonXYpoleToPole),1)+(countSpurring+extrapolationLength)]).';
         
         if extraOutput
             extrapolatedSkeleton2
             figure()            
-            fnplt(extrapolatedSpline2,[skeletonXYpoleToPole(length(skeletonXYpoleToPole),1)-(count+extrapolationLength) skeletonXYpoleToPole(length(skeletonXYpoleToPole),1)+(count+extrapolationLength)])
+            fnplt(extrapolatedSpline2,[skeletonXYpoleToPole(length(skeletonXYpoleToPole),1)-(countSpurring+extrapolationLength) skeletonXYpoleToPole(length(skeletonXYpoleToPole),1)+(countSpurring+extrapolationLength)])
         end
         %% % Plot extrapolations and segmented edges
         if extraOutput
             figure(72)
-            plot(array2(:,1),array2(:,2))
+            plot(edge(:,1),edge(:,2))
             hold on
             plot(extrapolatedSkeleton1(:,1),extrapolatedSkeleton1(:,2))
             hold on
@@ -373,137 +373,137 @@ for framenr = frameRange
         end
         %% % Determine intersection point and with that the correction length for one end
         % Create parameter arrays
-        disx=zeros(length(extrapolatedSkeleton1),length(array2));
-        disy=zeros(length(extrapolatedSkeleton1),length(array2));
-        distot=zeros(length(extrapolatedSkeleton1),length(array2));
+        disx=zeros(length(extrapolatedSkeleton1),length(edge));
+        disy=zeros(length(extrapolatedSkeleton1),length(edge));
+        distot=zeros(length(extrapolatedSkeleton1),length(edge));
         
         for framen=1:length(extrapolatedSkeleton1)
-            for j=1:length(array2)
-                disx(framen,j)=array2(j,1)-extrapolatedSkeleton1(framen,1); % Distance in x between every point on the edge and the extrapolation
-                disy(framen,j)=array2(j,2)-extrapolatedSkeleton1(framen,2); % Distance in y between every point on the edge and the extrapolation
-                %distot(framen,j)=disx(framen,j)+disy(framen,j); % Distance cityblock-way
-                distot(framen,j)=sqrt(disx(framen,j).^2+disy(framen,j).^2); % Distance Pythagoras-way instead of cityblock-way
+            for j=1:length(edge)
+                disx(framen,j) = edge(j,1)-extrapolatedSkeleton1(framen,1); % Distance in x between every point on the edge and the extrapolation
+                disy(framen,j) = edge(j,2)-extrapolatedSkeleton1(framen,2); % Distance in y between every point on the edge and the extrapolation
+                %distot(framen,j) = disx(framen,j)+disy(framen,j); % Distance cityblock-way
+                distot(framen,j) = sqrt(disx(framen,j).^2+disy(framen,j).^2); % Distance Pythagoras-way instead of cityblock-way
             end
         end        
-        mini=min(min(distot)); % Finds minimum of distance matrix --> Shortest distance between edge and extrapolation
-        if mini>EXTRAPOLATIONLENGTH/5 % Warns when found extrapolated intersection is not close to the segmented boundary
+        minimumDistance1 = min(min(distot)); % Finds minimum of distance matrix --> Shortest distance between edge and extrapolation
+        if minimumDistance1 > EXTRAPOLATIONLENGTH/5 % Warns when found extrapolated intersection is not close to the segmented boundary
             warning(['Extrapolation on first end might have gone wrong in frame ' num2str(framenr) ' cell ' num2str(cellnum)]);
-            mini
-        elseif mini>EXTRAPOLATIONLENGTH/10 % Warns when found extrapolated intersection is not close to the segmented boundary
+            minimumDistance1
+        elseif minimumDistance1 > EXTRAPOLATIONLENGTH/10 % Warns when found extrapolated intersection is not close to the segmented boundary
             warning(['Extrapolation on first end is just above error threshold in frame ' num2str(framenr) ' cell ' num2str(cellnum)]);
-            mini
+            minimumDistance1
         end 
         % Find coördinates corresponding to closest points between edge and extrapolation
         for framen=1:length(extrapolatedSkeleton1)
-            for j=1:length(array2)
-                if distot(framen,j)==mini
-                    icor=framen;
-                    jcor=j;
+            for j=1:length(edge)
+                if distot(framen,j)==minimumDistance1
+                    icor=framen; % Saves which specific point of the extrapolation was closest
+                    jcor=j; % Saves which specific point of the edge was closest
                 end
             end
         end
         
-        %extrapolated_intersection = extrapolatedSkeleton1(icor,:);
-        extrapolated_intersection = array2(jcor,:); % Point on the cell boundary that gets extrapolated to
+        %extrapolatedIntersection1 = extrapolatedSkeleton1(icor,:);
+        extrapolatedIntersection1 = edge(jcor,:); % Point on the cell boundary that gets extrapolated to
         
         % determine distance to both ends from found intersection point
-        extra_dist11=pdist2(extrapolated_intersection,xyends(1,:,1));
-        extra_dist12=pdist2(extrapolated_intersection,xyends(1,:,num_ends));
+        extrapolatedDistance1FirstEnd = pdist2(extrapolatedIntersection1,xyEnds(1,:,1));
+        extrapolatedDistance1SecondEnd = pdist2(extrapolatedIntersection1,xyEnds(1,:,numEnds));
         % take smallest as relevant extrapolation distance of the first end
-        extra_dist1=min([extra_dist11 extra_dist12]);
-        if extra_dist1>EXTRAPOLATIONLENGTH % Warns when the extrapolated distance becomes quite large
+        extrapolatedDistance1 = min([extrapolatedDistance1FirstEnd extrapolatedDistance1SecondEnd]);
+        if extrapolatedDistance1 > EXTRAPOLATIONLENGTH % Warns when the extrapolated distance becomes quite large
             warning(['Extrapolation is quite big on the first end in frame ' num2str(framenr) ' cell ' num2str(cellnum)]);
-            extra_dist1
+            extrapolatedDistance1
         end
         
         if extraOutput
-            extrapolated_intersection
-            mini
-            array2(jcor,:)            
-            xyends(1,:,1)
-            extra_dist1            
+            extrapolatedIntersection1
+            minimumDistance1
+            edge(jcor,:)            
+            xyEnds(1,:,1)
+            extrapolatedDistance1            
         end
         
         %% % Determine other intersection point and with that the correction length for the other end
         % Create parameter arrays
-        disx2=zeros(length(extrapolatedSkeleton2),length(array2));
-        disy2=zeros(length(extrapolatedSkeleton2),length(array2));
-        distot2=zeros(length(extrapolatedSkeleton2),length(array2));
+        disx2=zeros(length(extrapolatedSkeleton2),length(edge));
+        disy2=zeros(length(extrapolatedSkeleton2),length(edge));
+        distot2=zeros(length(extrapolatedSkeleton2),length(edge));
         
         for framen=1:length(extrapolatedSkeleton2)
-            for j=1:length(array2)
-                disx2(framen,j)=array2(j,1)-extrapolatedSkeleton2(framen,1); % Distance in x between every point on the edge and the extrapolation
-                disy2(framen,j)=array2(j,2)-extrapolatedSkeleton2(framen,2); % Distance in y between every point on the edge and the extrapolation
-                %distot2(framen,j)=disx2(framen,j)+disy2(framen,j); % Distance cityblock-way
-                distot2(framen,j)=sqrt(disx2(framen,j).^2+disy2(framen,j).^2); % Distance Pythagoras-way instead of cityblock-way
+            for j=1:length(edge)
+                disx2(framen,j) = edge(j,1)-extrapolatedSkeleton2(framen,1); % Distance in x between every point on the edge and the extrapolation
+                disy2(framen,j) = edge(j,2)-extrapolatedSkeleton2(framen,2); % Distance in y between every point on the edge and the extrapolation
+                %distot2(framen,j) = disx2(framen,j)+disy2(framen,j); % Distance cityblock-way
+                distot2(framen,j) = sqrt(disx2(framen,j).^2+disy2(framen,j).^2); % Distance Pythagoras-way instead of cityblock-way
             end
         end        
-        mini2=min(min(distot2)); % Finds minimum of second distance matrix --> Shortest distance between edge and extrapolation
-        if mini2>EXTRAPOLATIONLENGTH/5 % Warns when found extrapolated intersection is not close to the segmented boundary
+        minimumDistance2 = min(min(distot2)); % Finds minimum of second distance matrix --> Shortest distance between edge and extrapolation
+        if minimumDistance2 > EXTRAPOLATIONLENGTH/5 % Warns when found extrapolated intersection is not close to the segmented boundary
             warning(['Extrapolation on second end might have gone wrong in frame ' num2str(framenr) ' cell ' num2str(cellnum)]);
-            mini2
-        elseif mini2>EXTRAPOLATIONLENGTH/10 % Warns when found extrapolated intersection is not close to the segmented boundary
+            minimumDistance2
+        elseif minimumDistance2 > EXTRAPOLATIONLENGTH/10 % Warns when found extrapolated intersection is not close to the segmented boundary
             warning(['Extrapolation on second end is just above error threshold in frame ' num2str(framenr) ' cell ' num2str(cellnum)]);
-            mini2
+            minimumDistance2
         end
         % Find coördinates corresponding to closest points between edge and extrapolation
         for framen=1:length(extrapolatedSkeleton2)
-            for j=1:length(array2)
-                if distot2(framen,j)==mini2
-                    icor2=framen;
-                    jcor2=j;
+            for j=1:length(edge)
+                if distot2(framen,j)==minimumDistance2
+                    icor2=framen; % Saves which specific point of the extrapolation was closest
+                    jcor2=j; % Saves which specific point of the edge was closest
                 end
             end
         end
            
-        %extrapolated_intersection2 = extrapolatedSkeleton2(icor2,:);
-        extrapolated_intersection2 = array2(jcor2,:); % Second point on the cell boundary that gets extrapolated to
+        %extrapolatedIntersection2 = extrapolatedSkeleton2(icor2,:);
+        extrapolatedIntersection2 = edge(jcor2,:); % Second point on the cell boundary that gets extrapolated to
         
         % determine distance to both ends from found intersection point
-        extra_dist21    = pdist2(extrapolated_intersection2,xyends(1,:,1));
-        extra_dist22    = pdist2(extrapolated_intersection2,xyends(1,:,num_ends));
+        extrapolatedDistance2FirstEnd = pdist2(extrapolatedIntersection2,xyEnds(1,:,1));
+        extrapolatedDistance2SecondEnd = pdist2(extrapolatedIntersection2,xyEnds(1,:,numEnds));
         % take smallest as relevant extrapolation distance of the second end
-        extra_dist2     = min([extra_dist21 extra_dist22]);
-        if extra_dist2>EXTRAPOLATIONLENGTH % Warns when the extrapolated distance becomes quite large
+        extrapolatedDistance2 = min([extrapolatedDistance2FirstEnd extrapolatedDistance2SecondEnd]);
+        if extrapolatedDistance2 > EXTRAPOLATIONLENGTH % Warns when the extrapolated distance becomes quite large
             warning(['Extrapolation is quite big on the second end in frame ' num2str(framenr) ' cell ' num2str(cellnum)]);
-            extra_dist2
+            extrapolatedDistance2
         end
                 
         if extraOutput
-            extrapolated_intersection2
-            mini2
-            array2(jcor2,:)            
-            xyends(1,:,num_ends)
-            extra_dist2
+            extrapolatedIntersection2
+            minimumDistance2
+            edge(jcor2,:)            
+            xyEnds(1,:,numEnds)
+            extrapolatedDistance2
         end
         
         %% % Calculates length of branchless skeleton, and the total estimated length (by adding the extrapolated lengths of the ends) 
-        distance_mask=ends; % Binary array with the ends of the branchless skeleton indicated as 1's
-        extract_end=xyends(1,:,1); % Get x and y value of the first end
-        distance_mask(extract_end(1),extract_end(2))=0; % Set this found end to a 0 in the array
-        D=bwdistgeodesic(BW1,distance_mask,'quasi-euclidean'); % Computes distance along the branchless skeleton
+        distanceMask = ends; % Binary array with the ends of the branchless skeleton indicated as 1's
+        extractEnd = xyEnds(1,:,1); % Get x and y value of the first end
+        distanceMask(extractEnd(1),extractEnd(2)) = 0; % Set this found end to a 0 in the array
+        D = bwdistgeodesic(binarySkeletonBranchless,distanceMask,'quasi-euclidean'); % Computes distance along the branchless skeleton
 
-        % Alternative way to determine distance along skeleton
-        distanceAlongSkeletonPixels       = D(sub2ind(size(D),round(skeletonXYpoleToPole(:,1)),round(skeletonXYpoleToPole(:,2))));
+        % Writes the computed distances (along the branchless skeleton) in a smaller array
+        distanceAlongSkeletonPixels = D(sub2ind(size(D),round(skeletonXYpoleToPole(:,1)),round(skeletonXYpoleToPole(:,2))));
         
         % Get end-to-end distance along the branchless skeleton
-        dist_BW1=max(max(D)); % Same as max(distanceAlongSkeletonPixels)
+        EndToEndDistanceSkeleton = max(max(D)); % Same as "max(distanceAlongSkeletonPixels)"
 
         if extraOutput
-            dist_BW1
+            EndToEndDistanceSkeleton
         end 
         % export length data 
-        lengthOfBacteriaInPixelsInThisFrame(cellnum)  = dist_BW1+extra_dist1+extra_dist2;
+        lengthOfBacteriaInPixelsInThisFrame(cellnum)  = EndToEndDistanceSkeleton+extrapolatedDistance1+extrapolatedDistance2;
         lengthOfBacteriaInMicronsInThisFrame(cellnum) = lengthOfBacteriaInPixelsInThisFrame(cellnum)*p.micronsPerPixel;
         % export additional data
         pixelAreaOfBacteriumInThisFrame(cellnum) = pixelAreaOfBacterium;
         skeletonXYpoleToPoleInThisFrame{cellnum} = skeletonXYpoleToPole;
         minXThisFrame(cellnum) = minX;
         minYThisFrame(cellnum) = minY;
-        array2ThisFrame{cellnum} = array2;
+        edgesThisFrame{cellnum} = edge;
         distanceAlongSkeletonPixelsThisFrame{cellnum} = distanceAlongSkeletonPixels;
-        extrapolatedDistancePixelsEndsThisFrame(:,cellnum) = [extra_dist1 extra_dist2];
-        extrapolatedDistanceMicronsEndsThisFrame(:,cellnum) = [extra_dist1 extra_dist2]*p.micronsPerPixel;
+        extrapolatedDistancePixelsEndsThisFrame(:,cellnum) = [extrapolatedDistance1 extrapolatedDistance2];
+        extrapolatedDistanceMicronsEndsThisFrame(:,cellnum) = [extrapolatedDistance1 extrapolatedDistance2]*p.micronsPerPixel;
     end
     % Saves important information:    
     % lengths
@@ -515,7 +515,7 @@ for framenr = frameRange
     allSkeletonXYpoleToPole{framenr} = skeletonXYpoleToPoleInThisFrame;
     allMinX{framenr} = minXThisFrame;
     allMinY{framenr} = minYThisFrame;
-    allarray2{framenr} = array2ThisFrame;
+    allEdges{framenr} = edgesThisFrame;
     alldistanceAlongSkeletonPixels{framenr} = distanceAlongSkeletonPixelsThisFrame;
     allextrapolatedDistanceEndsPixels{framenr} = extrapolatedDistancePixelsEndsThisFrame;
     allextrapolatedDistanceEndsMicrons{framenr} = extrapolatedDistanceMicronsEndsThisFrame;
@@ -524,7 +524,7 @@ for framenr = frameRange
         'allLengthsOfBacteriaInPixels','allLengthsOfBacteriaInMicrons',...
         'allPixelAreaOfBacterium','allSkeletonXYpoleToPole',...
         'allMinX','allMinY',...
-        'allarray2','alldistanceAlongSkeletonPixels',...
+        'allEdges','alldistanceAlongSkeletonPixels',...
         'allextrapolatedDistanceEndsPixels','allextrapolatedDistanceEndsMicrons');    
 end
 
@@ -538,7 +538,7 @@ end
 % int2;
 % %
 % Alternative script to get rid of side-branches
-% skel= bwmorph(bin_im,'skel',Inf);
+% skel= bwmorph(binaryImage,'skel',Inf);
 % skel = testBacterium>0;
 % 
 % B = bwmorph(skel, 'branchpoints');
@@ -568,7 +568,7 @@ end
         % % Seems to make it a little better for my cells
         % SCALING = 1; % scaling is not so useful actually, 1 means no scaling is applied
         % 
-        % work_img = bin_im;
+        % work_img = binaryImage;
         % 
         % % rescaling, maybe higher resolution better?
         % work_img = imresize(work_img,SCALING,'nearest');
@@ -587,11 +587,11 @@ end
         % % show results
         % figure(); 
         % subplot(1,2,1);
-        % imshow(bin_im);
+        % imshow(binaryImage);
         % subplot(1,2,2)
         % imshow(work_img);
         % 
         % if 0 % to turn on/off this filter
-        %     bin_im = work_img;
+        %     binaryImage = work_img;
         % end
 %}

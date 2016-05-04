@@ -43,11 +43,12 @@ AVERAGEBACTERIAWIDTH = .5;
 EXTRAPOLATIONLENGTH = 30;
 
 % frameRange = unique([schnitzcells(:).frame_nrs]);
+frameRange = settings.frameRangeFull;
 
 % parameters calculated based on user-supplied parameters
-averageBacterialWidthInPixel= AVERAGEBACTERIAWIDTH/p.micronsPerPixel;
-paddingsize = round(averageBacterialWidthInPixel*4);
-extrapolationLength=round(averageBacterialWidthInPixel);
+averageBacterialWidthInPixel= AVERAGEBACTERIAWIDTH/p.micronsPerPixel; % Unused
+paddingsize = round(averageBacterialWidthInPixel*4); % Unused
+PreliminaryExtrapolationLength=round(averageBacterialWidthInPixel); % Unused
 
 if isfield(p,'extraOutput')
     extraOutput = p.extraOutput;
@@ -315,16 +316,26 @@ for framenr = frameRange
         % bla=bspline(array(1:50,1),array(1:50,2));
 
         %% % If pieces to extrapolate contain only 1 unique x-value --> Swap x and y (transpose and switch rows/columns of variables) to ensure extrapolation works
+        dyExtrapolation1=max(skeletonXYpoleToPole(1:extrapolationLength,2))-min(skeletonXYpoleToPole(1:extrapolationLength,2));
+        dxExtrapolation1=max(skeletonXYpoleToPole(1:extrapolationLength,1))-min(skeletonXYpoleToPole(1:extrapolationLength,1));
+        dydxExtrapolation1=dyExtrapolation1/dxExtrapolation1; % Calculates how steep one end is
+        dyExtrapolation2=max(skeletonXYpoleToPole(end-(extrapolationLength-1):end,2))-min(skeletonXYpoleToPole(end-(extrapolationLength-1):end,2));
+        dxExtrapolation2=max(skeletonXYpoleToPole(end-(extrapolationLength-1):end,1))-min(skeletonXYpoleToPole(end-(extrapolationLength-1):end,1));
+        dydxExtrapolation2=dyExtrapolation2/dxExtrapolation2; % Calculates how steep other end is
         if numel(unique(skeletonXYpoleToPole(1:extrapolationLength,1))) < 2 || ... % left end
                 numel(unique(skeletonXYpoleToPole(end-(extrapolationLength-1):end,1))) < 2  % right end
-            skeletonXYpoleToPole(:,[1 2]) = skeletonXYpoleToPole(:,[2 1]);
+            skeletonXYpoleToPole(:,[1 2]) = skeletonXYpoleToPole(:,[2 1]); % Transposes:
+            array2(:,[1 2]) = array2(:,[2 1]);
+            xyends(:,[1 2],:) = xyends(:,[2 1],:);
+            ends=ends';
+            BW1=BW1';
+        elseif max(dydxExtrapolation1, dydxExtrapolation2) > max(1/dydxExtrapolation1, 1/dydxExtrapolation2) % Determines if transposing is beneficial
+            skeletonXYpoleToPole(:,[1 2]) = skeletonXYpoleToPole(:,[2 1]); % Transposes:
             array2(:,[1 2]) = array2(:,[2 1]);
             xyends(:,[1 2],:) = xyends(:,[2 1],:);
             ends=ends';
             BW1=BW1';
         end
-        
-        
         %% % Extrapolates one end
 
         try
@@ -374,12 +385,20 @@ for framenr = frameRange
         
         for framen=1:length(extrapolatedSkeleton1)
             for j=1:length(array2)
-                disx(framen,j)=abs(array2(j,1)-extrapolatedSkeleton1(framen,1));
-                disy(framen,j)=abs(array2(j,2)-extrapolatedSkeleton1(framen,2));
-                distot(framen,j)=disx(framen,j)+disy(framen,j);
+                disx(framen,j)=array2(j,1)-extrapolatedSkeleton1(framen,1);
+                disy(framen,j)=array2(j,2)-extrapolatedSkeleton1(framen,2);
+                %distot(framen,j)=disx(framen,j)+disy(framen,j);
+                distot(framen,j)=sqrt(disx(framen,j).^2+disy(framen,j).^2);
             end
         end        
         mini=min(min(distot));
+        if mini>EXTRAPOLATIONLENGTH/5 % Warns when found extrapolated intersection is not close to the segmented boundary
+            warning(['Extrapolation on first end might have gone wrong in frame ' num2str(framenr) ' cell ' num2str(cellnum)]);
+            mini
+        elseif mini>EXTRAPOLATIONLENGTH/10 % Warns when found extrapolated intersection is not close to the segmented boundary
+            warning(['Extrapolation on first end is just above error threshold in frame ' num2str(framenr) ' cell ' num2str(cellnum)]);
+            mini
+        end 
         
         for framen=1:length(extrapolatedSkeleton1)
             for j=1:length(array2)
@@ -390,7 +409,8 @@ for framenr = frameRange
             end
         end
         
-        extrapolated_intersection=extrapolatedSkeleton1(icor,:);
+        %extrapolated_intersection = extrapolatedSkeleton1(icor,:);
+        extrapolated_intersection = array2(jcor,:);
         
         % determine extra length at start of bacterium
         % determine distance to both end from intersection
@@ -398,6 +418,10 @@ for framenr = frameRange
         extra_dist12=pdist2(extrapolated_intersection,xyends(1,:,num_ends));
         % take smallest as distance intersect to skeleton
         extra_dist1=min([extra_dist11 extra_dist12]);
+        if extra_dist1>EXTRAPOLATIONLENGTH % Warns when the extrapolated distance becomes quite large
+            warning(['Extrapolation is quite big on the first end in frame ' num2str(framenr) ' cell ' num2str(cellnum)]);
+            extra_dist1
+        end
         
         if extraOutput
             extrapolated_intersection
@@ -414,12 +438,20 @@ for framenr = frameRange
         
         for framen=1:length(extrapolatedSkeleton2)
             for j=1:length(array2)
-                disx2(framen,j)=abs(array2(j,1)-extrapolatedSkeleton2(framen,1));
-                disy2(framen,j)=abs(array2(j,2)-extrapolatedSkeleton2(framen,2));
-                distot2(framen,j)=disx2(framen,j)+disy2(framen,j);
+                disx2(framen,j)=array2(j,1)-extrapolatedSkeleton2(framen,1);
+                disy2(framen,j)=array2(j,2)-extrapolatedSkeleton2(framen,2);
+                %distot2(framen,j)=disx2(framen,j)+disy2(framen,j);
+                distot2(framen,j)=sqrt(disx2(framen,j).^2+disy2(framen,j).^2);
             end
         end        
         mini2=min(min(distot2));
+        if mini2>EXTRAPOLATIONLENGTH/5 % Warns when found extrapolated intersection is not close to the segmented boundary
+            warning(['Extrapolation on second end might have gone wrong in frame ' num2str(framenr) ' cell ' num2str(cellnum)]);
+            mini2
+        elseif mini2>EXTRAPOLATIONLENGTH/10 % Warns when found extrapolated intersection is not close to the segmented boundary
+            warning(['Extrapolation on second end is just above error threshold in frame ' num2str(framenr) ' cell ' num2str(cellnum)]);
+            mini2
+        end
         
         for framen=1:length(extrapolatedSkeleton2)
             for j=1:length(array2)
@@ -430,12 +462,17 @@ for framenr = frameRange
             end
         end
            
-        extrapolated_intersection2 = extrapolatedSkeleton2(icor2,:);
+        %extrapolated_intersection2 = extrapolatedSkeleton2(icor2,:);
+        extrapolated_intersection2 = array2(jcor2,:);
         
         % determine extra length at end of bacterium
         extra_dist21    = pdist2(extrapolated_intersection2,xyends(1,:,1));
         extra_dist22    = pdist2(extrapolated_intersection2,xyends(1,:,num_ends));
         extra_dist2     = min([extra_dist21 extra_dist22]);
+        if extra_dist2>EXTRAPOLATIONLENGTH % Warns when the extrapolated distance becomes quite large
+            warning(['Extrapolation is quite big on the second end in frame ' num2str(framenr) ' cell ' num2str(cellnum)]);
+            extra_dist2
+        end
                 
         if extraOutput
             extrapolated_intersection2

@@ -47,6 +47,7 @@ if exist('settings', 'var') == 1
     frameRange = settings.frameRangeFull; % Sets framerange to the full framerange provided in the Excel file
     warning('Uses Excel provided frameRange');
 end
+
 % parameters calculated based on user-supplied parameters
 averageBacterialWidthInPixel= AVERAGEBACTERIAWIDTH/p.micronsPerPixel; % Unused
 EXTRAPOLATIONLENGTH = round(2.5*averageBacterialWidthInPixel)+1; % Maximum size of skeleton end which gets extrapolated in pixels - Independant of pixel size
@@ -131,6 +132,7 @@ for framenr = frameRange
             zer(y(framen)-minY+1,x(framen)-minX+1)=1;
         end
         binaryImage = zer;
+        binaryImage = bwmorph(binaryImage,'fill'); % To avoid sporadious skeletonize error (which results in a small loop at the 'end')
 
         % % add padding to image (to avoid filters "seeing" edges)
         % binaryImage=padarray(binaryImage,[paddingsize,paddingsize]);
@@ -325,20 +327,34 @@ for framenr = frameRange
             xyEnds(:,[1 2],:) = xyEnds(:,[2 1],:);
             ends = ends';
             binarySkeletonBranchless = binarySkeletonBranchless';
+            transposeReminder=1; % Added to be able to compensate for errors later
         elseif max(dydxExtrapolation1, dydxExtrapolation2) > max(1/dydxExtrapolation1, 1/dydxExtrapolation2) % Determines if transposing is beneficial
             skeletonXYpoleToPole(:,[1 2]) = skeletonXYpoleToPole(:,[2 1]); % Transposes:
             edge(:,[1 2]) = edge(:,[2 1]);
             xyEnds(:,[1 2],:) = xyEnds(:,[2 1],:);
             ends = ends';
             binarySkeletonBranchless = binarySkeletonBranchless';
+            transposeReminder=2; % % Added to be able to compensate for errors later
         end
         %% % Extrapolates first end of the bacteria - fit is forced through the 'end' and extrapolates linearly outside data interval
+        if ~exist('transposeReminder', 'var') % Make adjusting factors to compensate for relative longer extrapolation lengths at non-horizontal ends
+            adjustingFactor1 = min([1, dydxExtrapolation1]);
+            adjustingFactor2 = min([1, dydxExtrapolation2]);
+        elseif transposeReminder==1
+            adjustingFactor1 = 1;
+            adjustingFactor2 = 1;
+        elseif transposeReminder==2
+            adjustingFactor1 = min([1, 1/dydxExtrapolation1]);
+            adjustingFactor2 = min([1, 1/dydxExtrapolation2]);
+        end
 
         try
             func=csaps(skeletonXYpoleToPole(1:extrapolationLength,1),skeletonXYpoleToPole(1:extrapolationLength,2)); % TODO MAYBE USE OTHER (POLY)FIT?
             extrapolatedSpline1 = fnxtr(func,2);
             % 'countSpurring' ensures the plotted extrapolation crosses the edge of the cell for cells with small branchless skeletons (many iterations of 'spur' & 'skel')
-            extrapolatedSkeleton1 = fnplt(extrapolatedSpline1,[skeletonXYpoleToPole(1,1)-(countSpurring+extrapolationLength) skeletonXYpoleToPole(1,1)+(countSpurring+extrapolationLength)]).';
+            % 'adjustingFactor' ensures not two times the same extrapolation intersection is found
+            extrapolatedSkeleton1 = fnplt(extrapolatedSpline1,[skeletonXYpoleToPole(1,1)-adjustingFactor1*(countSpurring+extrapolationLength)... 
+                skeletonXYpoleToPole(1,1)+adjustingFactor1*(countSpurring+extrapolationLength)]).';
         catch
             cellnum
             figure(); imshow(binaryImage+binaryImageSkeletonized,[]);
@@ -349,18 +365,20 @@ for framenr = frameRange
         if extraOutput
             extrapolatedSkeleton1
             figure()            
-            fnplt(extrapolatedSpline1,[skeletonXYpoleToPole(1,1)-(countSpurring+extrapolationLength) skeletonXYpoleToPole(1,1)+(countSpurring+extrapolationLength)])
+            fnplt(extrapolatedSpline1,[skeletonXYpoleToPole(1,1)-adjustingFactor1*(countSpurring+extrapolationLength) skeletonXYpoleToPole(1,1)+adjustingFactor1*(countSpurring+extrapolationLength)])
         end
         %% % Extrapolates second end of the bacteria - fit is forced through the 'end' and extrapolates linearly outside data interval
         func2=csaps(skeletonXYpoleToPole(length(skeletonXYpoleToPole)-(extrapolationLength-1):length(skeletonXYpoleToPole),1),skeletonXYpoleToPole(length(skeletonXYpoleToPole)-(extrapolationLength-1):length(skeletonXYpoleToPole),2));
         extrapolatedSpline2 = fnxtr(func2);
         % 'countSpurring' ensures the plotted extrapolation crosses the edge of the cell for cells with small branchless skeletons (many iterations of 'spur' & 'skel')
-        extrapolatedSkeleton2 = fnplt(extrapolatedSpline2,[skeletonXYpoleToPole(length(skeletonXYpoleToPole),1)-(countSpurring+extrapolationLength) skeletonXYpoleToPole(length(skeletonXYpoleToPole),1)+(countSpurring+extrapolationLength)]).';
+        % 'adjustingFactor' ensures not two times the same extrapolation intersection is found
+        extrapolatedSkeleton2 = fnplt(extrapolatedSpline2,[skeletonXYpoleToPole(length(skeletonXYpoleToPole),1)-adjustingFactor2*(countSpurring+extrapolationLength)... 
+            skeletonXYpoleToPole(length(skeletonXYpoleToPole),1)+adjustingFactor2*(countSpurring+extrapolationLength)]).';
         
         if extraOutput
             extrapolatedSkeleton2
             figure()            
-            fnplt(extrapolatedSpline2,[skeletonXYpoleToPole(length(skeletonXYpoleToPole),1)-(countSpurring+extrapolationLength) skeletonXYpoleToPole(length(skeletonXYpoleToPole),1)+(countSpurring+extrapolationLength)])
+            fnplt(extrapolatedSpline2,[skeletonXYpoleToPole(length(skeletonXYpoleToPole),1)-adjustingFactor2*(countSpurring+extrapolationLength) skeletonXYpoleToPole(length(skeletonXYpoleToPole),1)+adjustingFactor2*(countSpurring+extrapolationLength)])
         end
         %% % Plot extrapolations and segmented edges
         if extraOutput

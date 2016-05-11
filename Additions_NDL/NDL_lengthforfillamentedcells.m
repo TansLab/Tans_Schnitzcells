@@ -43,8 +43,10 @@ AVERAGEBACTERIAWIDTH = .5; % In micron
 % EXTRAPOLATIONLENGTH = 30; % In pixels - Dependant of pixel size --> CHANGE WHEN PIXEL SIZE IS DIFFERENT
 
 % frameRange = unique([schnitzcells(:).frame_nrs]);
-frameRange = settings.frameRangeFull; % Sets framerange to the full framerange provided in the Excel file
-
+if exist('settings', 'var') == 1
+    frameRange = settings.frameRangeFull; % Sets framerange to the full framerange provided in the Excel file
+    warning('Uses Excel provided frameRange');
+end
 % parameters calculated based on user-supplied parameters
 averageBacterialWidthInPixel= AVERAGEBACTERIAWIDTH/p.micronsPerPixel; % Unused
 EXTRAPOLATIONLENGTH = round(2.5*averageBacterialWidthInPixel)+1; % Maximum size of skeleton end which gets extrapolated in pixels - Independant of pixel size

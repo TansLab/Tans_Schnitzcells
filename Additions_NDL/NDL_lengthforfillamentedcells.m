@@ -38,11 +38,19 @@ function [p, allLengthsOfBacteriaInPixels, allLengthsOfBacteriaInMicrons] = NDL_
 %
 %
 
-% function parameters set by user
-AVERAGEBACTERIAWIDTH = .5; % In micron
+% function parameters set by user:
+AVERAGEBACTERIAWIDTH = 0.5; % In micron
+DIRECTIONVALUECORRECT = 1.25; % Amount how much gets extrapolated in the 'correct' direction (times EXTRAPOLATIONLENGTH)
+DIRECTIONVALUEINCORRECT = 0.4; % Amount how much gets extrapolated in the 'incorrect' direction (times EXTRAPOLATIONLENGTH)
 % EXTRAPOLATIONLENGTH = 30; % In pixels - Dependant of pixel size --> CHANGE WHEN PIXEL SIZE IS DIFFERENT
 
-% frameRange = unique([schnitzcells(:).frame_nrs]);
+% Error threshold values set by user:
+ERRORVALUESKELETONLENGTH = 1; % In pixels - Gives error when extrapolation went non-optimal for skeletons larger than this number
+ERRORFACTOREXTRAPOLATIONLENGTH = 1.2; % Gives error when extrapolation is at least this amount of times larger than EXTRAPOLATIONLENGTH
+ERRORINTERSECT = 0.2; % Gives an error when the closest intersection between extrapolation and edge is still apart this number times EXTRAPOLATIONLENGTH
+ERRORINTERSECTWARNING = 0.1; % Same as ERRORINTERSECT, but with lower threshold which can mean extrapolation is not optimal
+
+%frameRange = 241%unique([schnitzcells(:).frame_nrs]);
 if exist('settings', 'var') == 1
     frameRange = settings.frameRangeFull; % Sets framerange to the full framerange provided in the Excel file
     warning('Uses Excel provided frameRange');
@@ -50,7 +58,7 @@ end
 
 % parameters calculated based on user-supplied parameters
 averageBacterialWidthInPixel= AVERAGEBACTERIAWIDTH/p.micronsPerPixel; % Unused
-EXTRAPOLATIONLENGTH = round(1.8*averageBacterialWidthInPixel)+1; % Maximum size of skeleton end which gets extrapolated in pixels - Independant of pixel size
+EXTRAPOLATIONLENGTH = round(1.9*averageBacterialWidthInPixel); % Maximum size of skeleton end which gets extrapolated in pixels - Independant of pixel size
 paddingsize = round(averageBacterialWidthInPixel*4); % Unused
 
 if isfield(p,'extraOutput')
@@ -311,7 +319,7 @@ for framenr = frameRange
         extrapolationLength = min(EXTRAPOLATIONLENGTH, length(skeletonXYpoleToPole)); % Ensures maximum window while cells are still straight on this interval
         % vq3 = interp1(array(1:20,1),array(1:20,2),'pchip');
         % bla=bspline(array(1:50,1),array(1:50,2));
-
+        
         %% % If pieces to extrapolate contain only 1 unique x-value --> Swap x and y (transpose and switch rows/columns of variables) to ensure extrapolation works
         dyExtrapolation1 = max(skeletonXYpoleToPole(1:extrapolationLength,2))-min(skeletonXYpoleToPole(1:extrapolationLength,2));
         dxExtrapolation1 = max(skeletonXYpoleToPole(1:extrapolationLength,1))-min(skeletonXYpoleToPole(1:extrapolationLength,1));
@@ -337,8 +345,36 @@ for framenr = frameRange
             binarySkeletonBranchless = binarySkeletonBranchless';
             transposeReminder=2; % % Added to be able to compensate for errors later
         end
+        
+        %% % Finds directionality of skeleton ends & creates variables to account for later on
+        directionFindLength = min(EXTRAPOLATIONLENGTH, round(length(skeletonXYpoleToPole)/2)); % Finds appropriate length over which to decide the direction
+        dxEnd1 = skeletonXYpoleToPole(1,1)-skeletonXYpoleToPole(1+directionFindLength,1); % Positive = to the right, negative = to the left
+        dxEnd2 = skeletonXYpoleToPole(end,1)-skeletonXYpoleToPole(end-directionFindLength,1); % Positive = to the right, negative = to the left
+        directionFactorLeft1 = 1; % Set standard values: - Only used in practice when a filamented cell has its ends (close to) perpendicular on each other
+        directionFactorRight1 = 1;
+        directionFactorLeft2 = 1;
+        directionFactorRight2 = 1;
+        if dxEnd1 < 0 % Change values (that corresponds to the amount of extrapolation) depending upon which direction the skeleton end has:
+            directionFactorLeft1  = DIRECTIONVALUECORRECT;
+            directionFactorRight1 = DIRECTIONVALUEINCORRECT;
+        elseif dxEnd1 > 0
+            directionFactorLeft1  = DIRECTIONVALUEINCORRECT;
+            directionFactorRight1 = DIRECTIONVALUECORRECT;
+        else
+            warning(['First end has no directionality in frame ' num2str(framenr) ' cell ' num2str(cellnum)]);
+        end
+        if dxEnd2 < 0
+            directionFactorLeft2  = DIRECTIONVALUECORRECT;
+            directionFactorRight2 = DIRECTIONVALUEINCORRECT;
+        elseif dxEnd2 > 0
+            directionFactorLeft2  = DIRECTIONVALUEINCORRECT;
+            directionFactorRight2 = DIRECTIONVALUECORRECT;
+        else
+            warning(['Second end has no directionality in frame ' num2str(framenr) ' cell ' num2str(cellnum)]);
+        end
+        
         %% % Extrapolates first end of the bacteria - fit is forced through the 'end' and extrapolates linearly outside data interval
-        if ~exist('transposeReminder', 'var') % Make adjusting factors to compensate for relative longer extrapolation lengths at non-horizontal ends
+        if ~exist('transposeReminder', 'var') % Make adjusting factors to compensate for relative longer extrapolation lengths at non-horizontal ends:
             adjustingFactor1 = min([1, cos(atan(dydxExtrapolation1))]);
             adjustingFactor2 = min([1, cos(atan(dydxExtrapolation2))]);
         elseif transposeReminder==1
@@ -352,10 +388,10 @@ for framenr = frameRange
         try
             func=csaps(skeletonXYpoleToPole(1:extrapolationLength,1),skeletonXYpoleToPole(1:extrapolationLength,2)); % TODO MAYBE USE OTHER (POLY)FIT?
             extrapolatedSpline1 = fnxtr(func,2);
-            % 'countSpurring' ensures the plotted extrapolation crosses the edge of the cell for cells with small branchless skeletons (many iterations of 'spur' & 'skel')
+            % 'directionFactors' ensure the plotted extrapolation crosses the edge of the cell only one time (and thereby prevent calculation error)
             % 'adjustingFactor' ensures not two times the same extrapolation intersection is found
-            extrapolatedSkeleton1 = fnplt(extrapolatedSpline1,[skeletonXYpoleToPole(1,1)-adjustingFactor1*(EXTRAPOLATIONLENGTH)... 
-                skeletonXYpoleToPole(1,1)+adjustingFactor1*(EXTRAPOLATIONLENGTH)]).';
+            extrapolatedSkeleton1 = fnplt(extrapolatedSpline1,[skeletonXYpoleToPole(1,1)-directionFactorLeft1*adjustingFactor1*(EXTRAPOLATIONLENGTH)... 
+                skeletonXYpoleToPole(1,1)+directionFactorRight1*adjustingFactor1*(EXTRAPOLATIONLENGTH)]).';
         catch
             cellnum
             figure(); imshow(binaryImage+binaryImageSkeletonized,[]);
@@ -366,20 +402,22 @@ for framenr = frameRange
         if extraOutput
             extrapolatedSkeleton1
             figure()            
-            fnplt(extrapolatedSpline1,[skeletonXYpoleToPole(1,1)-adjustingFactor1*(EXTRAPOLATIONLENGTH) skeletonXYpoleToPole(1,1)+adjustingFactor1*(EXTRAPOLATIONLENGTH)])
+            fnplt(extrapolatedSpline1,[skeletonXYpoleToPole(1,1)-directionFactorLeft1*adjustingFactor1*(EXTRAPOLATIONLENGTH)... 
+                skeletonXYpoleToPole(1,1)+directionFactorRight1*adjustingFactor1*(EXTRAPOLATIONLENGTH)])
         end
         %% % Extrapolates second end of the bacteria - fit is forced through the 'end' and extrapolates linearly outside data interval
         func2=csaps(skeletonXYpoleToPole(length(skeletonXYpoleToPole)-(extrapolationLength-1):length(skeletonXYpoleToPole),1),skeletonXYpoleToPole(length(skeletonXYpoleToPole)-(extrapolationLength-1):length(skeletonXYpoleToPole),2));
         extrapolatedSpline2 = fnxtr(func2);
-        % 'countSpurring' ensures the plotted extrapolation crosses the edge of the cell for cells with small branchless skeletons (many iterations of 'spur' & 'skel')
+        % 'directionFactors' ensure the plotted extrapolation crosses the edge of the cell only one time (and thereby prevent calculation error)
         % 'adjustingFactor' ensures not two times the same extrapolation intersection is found
-        extrapolatedSkeleton2 = fnplt(extrapolatedSpline2,[skeletonXYpoleToPole(length(skeletonXYpoleToPole),1)-adjustingFactor2*(EXTRAPOLATIONLENGTH)... 
-            skeletonXYpoleToPole(length(skeletonXYpoleToPole),1)+adjustingFactor2*(EXTRAPOLATIONLENGTH)]).';
+        extrapolatedSkeleton2 = fnplt(extrapolatedSpline2,[skeletonXYpoleToPole(length(skeletonXYpoleToPole),1)-directionFactorLeft2*adjustingFactor2*(EXTRAPOLATIONLENGTH)... 
+            skeletonXYpoleToPole(length(skeletonXYpoleToPole),1)+directionFactorRight2*adjustingFactor2*(EXTRAPOLATIONLENGTH)]).';
         
         if extraOutput
             extrapolatedSkeleton2
             figure()            
-            fnplt(extrapolatedSpline2,[skeletonXYpoleToPole(length(skeletonXYpoleToPole),1)-adjustingFactor2*(EXTRAPOLATIONLENGTH) skeletonXYpoleToPole(length(skeletonXYpoleToPole),1)+adjustingFactor2*(EXTRAPOLATIONLENGTH)])
+            fnplt(extrapolatedSpline2,[skeletonXYpoleToPole(length(skeletonXYpoleToPole),1)-directionFactorLeft2*adjustingFactor2*(EXTRAPOLATIONLENGTH)... 
+                skeletonXYpoleToPole(length(skeletonXYpoleToPole),1)+directionFactorRight2*adjustingFactor2*(EXTRAPOLATIONLENGTH)])
         end
         %% % Plot extrapolations and segmented edges
         if extraOutput
@@ -407,10 +445,10 @@ for framenr = frameRange
             end
         end        
         minimumDistance1 = min(min(distot)); % Finds minimum of distance matrix --> Shortest distance between edge and extrapolation
-        if minimumDistance1 > EXTRAPOLATIONLENGTH/5 % Warns when found extrapolated intersection is not close to the segmented boundary
+        if minimumDistance1 > EXTRAPOLATIONLENGTH*ERRORINTERSECT % Warns when found extrapolated intersection is not close to the segmented boundary
             warning(['Extrapolation on first end might have gone wrong in frame ' num2str(framenr) ' cell ' num2str(cellnum)]);
             minimumDistance1
-        elseif minimumDistance1 > EXTRAPOLATIONLENGTH/10 % Warns when found extrapolated intersection is not close to the segmented boundary
+        elseif minimumDistance1 > EXTRAPOLATIONLENGTH*ERRORINTERSECTWARNING % Warns when found extrapolated intersection is not close to the segmented boundary
             warning(['Extrapolation on first end is just above error threshold in frame ' num2str(framenr) ' cell ' num2str(cellnum)]);
             minimumDistance1
         end 
@@ -432,7 +470,7 @@ for framenr = frameRange
         extrapolatedDistance1SecondEnd = pdist2(extrapolatedIntersection1,xyEnds(1,:,numEnds));
         % take smallest as relevant extrapolation distance of the first end
         extrapolatedDistance1 = min([extrapolatedDistance1FirstEnd extrapolatedDistance1SecondEnd]);
-        if extrapolatedDistance1 > EXTRAPOLATIONLENGTH % Warns when the extrapolated distance becomes quite large
+        if extrapolatedDistance1 > ERRORFACTOREXTRAPOLATIONLENGTH*EXTRAPOLATIONLENGTH % Warns when the extrapolated distance becomes quite large
             warning(['Extrapolation is quite big on the first end in frame ' num2str(framenr) ' cell ' num2str(cellnum)]);
             extrapolatedDistance1
         end
@@ -460,10 +498,10 @@ for framenr = frameRange
             end
         end        
         minimumDistance2 = min(min(distot2)); % Finds minimum of second distance matrix --> Shortest distance between edge and extrapolation
-        if minimumDistance2 > EXTRAPOLATIONLENGTH/5 % Warns when found extrapolated intersection is not close to the segmented boundary
+        if minimumDistance2 > EXTRAPOLATIONLENGTH*ERRORINTERSECT % Warns when found extrapolated intersection is not close to the segmented boundary
             warning(['Extrapolation on second end might have gone wrong in frame ' num2str(framenr) ' cell ' num2str(cellnum)]);
             minimumDistance2
-        elseif minimumDistance2 > EXTRAPOLATIONLENGTH/10 % Warns when found extrapolated intersection is not close to the segmented boundary
+        elseif minimumDistance2 > EXTRAPOLATIONLENGTH*ERRORINTERSECTWARNING % Warns when found extrapolated intersection is not close to the segmented boundary
             warning(['Extrapolation on second end is just above error threshold in frame ' num2str(framenr) ' cell ' num2str(cellnum)]);
             minimumDistance2
         end
@@ -485,7 +523,7 @@ for framenr = frameRange
         extrapolatedDistance2SecondEnd = pdist2(extrapolatedIntersection2,xyEnds(1,:,numEnds));
         % take smallest as relevant extrapolation distance of the second end
         extrapolatedDistance2 = min([extrapolatedDistance2FirstEnd extrapolatedDistance2SecondEnd]);
-        if extrapolatedDistance2 > EXTRAPOLATIONLENGTH % Warns when the extrapolated distance becomes quite large
+        if extrapolatedDistance2 > ERRORFACTOREXTRAPOLATIONLENGTH*EXTRAPOLATIONLENGTH % Warns when the extrapolated distance becomes quite large
             warning(['Extrapolation is quite big on the second end in frame ' num2str(framenr) ' cell ' num2str(cellnum)]);
             extrapolatedDistance2
         end
@@ -497,7 +535,11 @@ for framenr = frameRange
             xyEnds(1,:,numEnds)
             extrapolatedDistance2
         end
-        
+        %% % Additional check for errors
+        if isequal(extrapolatedIntersection1, extrapolatedIntersection2) && length(skeletonXYpoleToPole) > ERRORVALUESKELETONLENGTH
+            warning(['Extrapolation distances are the same in frame ' num2str(framenr) ' cell ' num2str(cellnum) ' with skeletonlength ' num2str(length(skeletonXYpoleToPole))]);
+            disp(extrapolatedDistance1);
+        end
         %% % Calculates length of branchless skeleton, and the total estimated length (by adding the extrapolated lengths of the ends) 
         distanceMask = ends; % Binary array with the ends of the branchless skeleton indicated as 1's
         extractEnd = xyEnds(1,:,1); % Get x and y value of the first end

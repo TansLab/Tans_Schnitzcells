@@ -260,8 +260,10 @@ while loopindex <= length(p.manualRange);
     L_prec=[];
     rect_prec=[];
     if frameIdx > p.manualRange(1) %if possible loads the preceeding segmented image, this is used only for assisted correction
+        
         filename = [p.segmentationDir,p.movieName,'seg',str3(p.manualRange(loopindex-1)),'.mat']; % MW 2015/08
-        if p.assistedCorrection && exist(filename)
+        
+        if exist(filename,'file')
             load(filename);
             if exist('Lc','var')
                  L_prec=Lc;
@@ -269,6 +271,7 @@ while loopindex <= length(p.manualRange);
             end
             clear Lc phsub LNsub rect
         end
+        
     end
     
     %new image data

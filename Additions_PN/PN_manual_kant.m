@@ -9,7 +9,7 @@ function  [p,Lout,OKorNot,quit_now,dontsave,addtolist,crop_pop,newrect,savetemp,
 % - L_prec,             : segmented image of preceeding frame 
 % - phin,               : phase image with this frame
 % - rect,               : 
-% - rect_prec,          : 
+% - rect_prec,          : ROI recteangle of previous image
 % - phsub,              : 
 % - DJK_settings,       : 
 % - assistedCorrection  : 
@@ -540,24 +540,11 @@ while ~done
        elseif cc=='b'   % restrict segmentation to overlaps with previous segmentation image (useful for non-growing cells)
                         % NW2015-07
             if ~isempty(L_prec) % previous image exists (can only be loaded in asisted correction mode)
-                Lout_undo=Lout;   %for undo step NW 2014-01
-                % old and new seg need to be located properly:
-                Lout_full=zeros(p.fullsize);
-                Lout_full(rect(1):rect(3),rect(2):rect(4))=Lout;
-                L_prec_full=zeros(p.fullsize);
-                L_prec_full(rect_prec(1):rect_prec(3),rect_prec(2):rect_prec(4))=L_prec;
+                  
+                [Lout, Lout_undo] = MW_removestuffnotoverlappingwithprevious(p,Lout,L_prec,rect,rect_prec);
                 
-                L_prec_mask=L_prec_full;             
-                %L_prec_mask=imdilate(L_prec_full,strel('disk',3)); % enlargen prev. image overlap mask if needed
-                L_prec_mask=L_prec_mask>0;  % binary mask from previous image
-
-                cellsall=unique(Lout);  % same numbers as Lout_full
-                cellsoverlap=unique(Lout_full.*L_prec_mask); %cells overlapping with previous seg. image
-                cellstodelete=setdiff(cellsall,cellsoverlap);
-                for i=cellstodelete(:)'
-                    Lout(Lout==i)=0;
-                end
             else
+                warning('Previous segmentation image not loaded or not existent.')
                 disp('Previous segmentation image not loaded or not existent.')
             end
             done=0; 

@@ -230,7 +230,7 @@ end
 if any(strcmp(runsections,{'allpreliminary','cropimages'}))
 
 % Ask user whether cropping is desired.
-settings.performCropping = strcmp(questdlg('Do you want to perform cropping of images on your dataset?','Cropping','Yes','No','No'),'Yes');
+settings.performCropping = strcmp(questdlg('Select whether you in general want to crop your dataset. (Answer will be saved to Excel config file.','Cropping','Yes','No','No'),'Yes');
 % save preference to excel
 performCroppingIndex = find(strcmp({alldata{:,1}},'performCropping'))+settings.EXCELREADSTART-1; % find line w. cropRightBottom field.    
 xlswrite([settings.mypathname settings.myconfigfilename],{num2str(settings.performCropping)},['B' num2str(performCroppingIndex) ':B' num2str(performCroppingIndex) '']); % write value to it
@@ -245,16 +245,15 @@ if settings.performCropping
         
         % set new croparea and save crop area to excel file
         % ===
+        
         % Ask to crop, and ask 
-        myAnswer = questdlg(['Start cropping? And save selection to Excel file (close it first)?'],'Confirmation required.','Save,use,crop','Crop using old','Abort!','Save,use,crop');        
+        %myAnswer = questdlg(['Start cropping? And save selection to Excel file (close it first)?'],'Confirmation required.','Save,use,crop','Crop using old','Abort!','Save,use,crop');        
+        myAnswer = questdlg(['Do you want to select a crop area?'],'Crop area.','Yes','Crop using current settings','Abort!','Yes');        
         % Only select new if desired
-        if strcmp(myAnswer, 'Save,use,crop')            
-
+        if strcmp(myAnswer, 'Yes')            
+            
             % Determine crop area
             [selectedLeftTop,selectedRightBottom] = MW_determinecroparea(p, settings.frameRangePreliminary);
-
-            % Close figure from crop popup
-            close(gcf);
             
             settings.cropLeftTop = selectedLeftTop;
             settings.cropRightBottom = selectedRightBottom;
@@ -266,7 +265,7 @@ if settings.performCropping
         end
 
         % cropping itself
-        if strcmp(myAnswer, 'Save,use,crop') | strcmp(myAnswer, 'Crop using old')
+        if strcmp(myAnswer, 'Yes') | strcmp(myAnswer, 'Crop using current settings')
             % Crop images
             DJK_cropImages_3colors(p, settings.frameRangePreliminary, settings.cropLeftTop, ...
                 settings.cropRightBottom, 'cropName', [settings.positionName settings.cropSuffix]);    
@@ -284,6 +283,10 @@ if settings.performCropping
             settings.cropRightBottom, 'cropName', [settings.positionName settings.cropSuffix]);
 
         disp('Done cropping');
+        
+    else
+        
+        disp('Did nothing.');
         
     end
     
@@ -401,7 +404,7 @@ end
 % PN_manualcheckseg - the corrected segmentation that is used for the
 % analysis in the matrix Lc.
 
-if any(strcmp(runsections,{'allpreliminary', 'allfull','manualchecksegfull','manualchecksegfull'}))
+if any(strcmp(runsections,{'allpreliminary', 'allfull','manualchecksegfull'}))
 
     % choose option based type analysis
     if strcmp(settings.analysisType, 'preliminary')

@@ -47,6 +47,9 @@ if ~exist(outputDir, 'dir')
     mkdir(outputDir);
 end
 
+%% 
+disp('Starting MW_straightenbacteria..');
+
 %% Load skeleton data
 load ([p.tracksDir p.movieName '-skeletonData.mat']);
 

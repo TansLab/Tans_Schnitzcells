@@ -91,7 +91,7 @@ allextrapolatedDistanceEndsMicrons = cell(1,lastFrame);
 
 for framenr = frameRange
     
-    disp(['Analyzing frame ' num2str(framenr) ' (highest framenr =' num2str(lastFrame) ').']);
+    disp(['Analyzing skeleton for frame ' num2str(framenr) ' (highest framenr =' num2str(lastFrame) ').']);
 
     %% % Load data for current frame of the dataset
     %e.g. load 'G:\EXPERIMENTAL_DATA_2016\a_incoming\2016-03-23\pos4crop\segmentation\pos4cropseg337.mat'

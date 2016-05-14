@@ -33,7 +33,7 @@ function [leftTop, rightBottom] = MW_determinecroparea(p, range)
     end
 
     % Show figure and getrect
-    figure, imshow(myImg,[])
+    h=figure(); imshow(myImg,[]);
     myCrop = round(getrect());
 
     % Get leftTop and rightBottom of cropping region
@@ -55,9 +55,10 @@ function [leftTop, rightBottom] = MW_determinecroparea(p, range)
         rightBottom(2) =  rightBottom(2) +1 ; % make even
         if rightBottom(2) > myImgSize(1), rightBottom(2) = rightBottom(2) - 2; end % make sure not to expand beyond img size
     end        
-    % output to user
-    disp('This function only outputs via disp(), cut and paste below values into Excel:')
+    % output to user    
     disp(['leftTop=' mat2str(leftTop) '; rightBottom=' mat2str(rightBottom)])
 
+    % close figure
+    close(h);
 
 end

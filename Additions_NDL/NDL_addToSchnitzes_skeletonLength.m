@@ -2,11 +2,9 @@ function [p, schnitzcells] = NDL_addToSchnitzes_skeletonLength(p)
 %% % load schnitzcells
 load([p.tracksDir p.movieName '-Schnitz.mat'])
 % Determine frame range
-for h=1:max(size(schnitzcells))
-    minframe(h)=min(schnitzcells(h).frame_nrs,[],2);
-    maxframe(h)=max(schnitzcells(h).frame_nrs,[],2);
-end
-frameRange=[min(minframe):max(maxframe)];
+frameRange=unique([schnitzcells.frame_nrs]);
+frameRange=sort(frameRange);
+
 % calculate all lengths
 [p, allLengthsOfBacteriaInPixels, allLengthsOfBacteriaInMicrons] = NDL_lengthforfillamentedcells(p, frameRange)
 %% Assign calculated pixel-length to schnitzcells

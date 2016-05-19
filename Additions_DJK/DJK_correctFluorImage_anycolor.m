@@ -24,7 +24,13 @@
 % OUTPUT
 %
 % REQUIRED ARGUMENTS:
-% 'p'             Note: p.cropLeftTop & p.cropRightBottom must be set
+% 'p'               Note: p.cropLeftTop & p.cropRightBottom must be set
+% flatfield         The flatfield matrix (is a misnomer and) contains the
+%                   background from microscope settings w. no light to camera 
+%                   (historic reasons).
+% shading           The shading matrix contains the shading correction image.
+% replace           Matrix to indicate dead pixels, 0 means "use this pixel",
+%                   1 means "this pixel is dead". Currently _NOT_ in use.
 %
 % OPTIONAL ARGUMENTS:
 % 'fluorcolor'    Fluor color that will be investigated. This can be

@@ -57,7 +57,7 @@ if ~isfield(settings, 'maxImages')
     warning('maxImages set to default value 200');    
 end
 if ~isfield(settings, 'neighborAveraging')
-    settings.neighborAveraging = 5; % max. number of images that are used
+    settings.neighborAveraging = 5; % 
     warning('neighborAveraging set to default value 5');    
 end 
 
@@ -136,9 +136,11 @@ end
 
 %% calculate medians
 
-% Normalize if desired
+% Use normalized images if desired
 if settings.useNormalizedImages
     theImages = normAllImages;
+else
+    theImages = allImages;
 end
 
 % median images (also for two subsets)
@@ -168,7 +170,7 @@ figure; clf; hold on;
 [myMedianHistAll, xMedianHistAll] = hist(medianImageAll(:),settings.histN);
 plot(xMedianHist1,myMedianHist1,'b.-');
 plot(xMedianHist2,myMedianHist2,'r.-');
-plot(xMedianHist2,myMedianHistAll,'k.-');
+plot(xMedianHistAll,myMedianHistAll,'k.-');
 xlabel('Distr. intensity after median multiple imgs');
 ylabel('Count');
 legend({'Uneven subset','Even subset','All imgs'},'Location','NorthWest')

@@ -9,6 +9,7 @@ function MW_straightenbacteria(p, frameRange, fluorColor)
 %   p               our standard parameter struct
 %   framerange      range of frames you want to process
 %   fluorColor      one-letter abbreviation for used fluor: 'g','y','r','c'
+%   extraOutput     optional to give more info (plots) to user
 % 
 % output
 %   - outputs to matlab file 

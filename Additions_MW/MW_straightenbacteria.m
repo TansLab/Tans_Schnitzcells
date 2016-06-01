@@ -104,7 +104,7 @@ for framenr = frameRange
         currentSkeletonXYpoleToPole = allSkeletonXYpoleToPole{framenr}{cellno};
         currentminX = allMinX{framenr}(cellno);
         currentminY = allMinY{framenr}(cellno);
-        currentarray2 = allarray2{framenr}{cellno};
+        currentEdges = allEdges{framenr}{cellno};
         currentdistanceAlongSkeleton = alldistanceAlongSkeletonPixels{framenr}{cellno};
         
         averageBacterialWidth = allPixelAreaOfBacterium{framenr}(cellno)/allLengthsOfBacteriaInPixels{framenr}(cellno);
@@ -217,7 +217,7 @@ for framenr = frameRange
                 %rectangle('Position',[pointsA(i,1) pointsA(i,2) pointsB(i,1) pointsB(i,2)])
             end
 
-            plot(currentarray2(:,1),currentarray2(:,2),'-');
+            plot(currentEdges(:,1),currentEdges(:,2),'-');
         end
 
         %% Create a figure with the tangential lines on top of original

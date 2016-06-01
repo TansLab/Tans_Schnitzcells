@@ -41,4 +41,5 @@ end
 % schnitzcells(1).pixLength_skeleton=allLengthsOfBacteriaInPixels;
 %% save schnitzcells
 save([p.tracksDir p.movieName '-Schnitz.mat'],'schnitzcells')
+disp(['Schnitzcells file saved at ' p.tracksDir p.movieName '-Schnitz.mat'])
 end

@@ -46,6 +46,12 @@ outputDir = [p.analysisDir 'straightenedCells\'];
 if ~exist(outputDir, 'dir')
     mkdir(outputDir);
 end
+if extraOutput   
+    outputDirMore = [outputDir '\moreplots\'];
+    if ~exist(outputDirMore,'dir')
+        mkdir(outputDirMore);
+    end
+end
 
 %% 
 disp('Starting MW_straightenbacteria..');
@@ -97,7 +103,16 @@ for framenr = frameRange
     
     disp(['    > ' num2str(highestCellno) ' cell(s) in this frame']);
     
-    % loop
+    %% loop
+    % create figure
+    if extraOutput
+        h101=figure(101); clf;
+        subplot(1,2,1);
+        imshow(fluorImg,[]); hold on;
+        subplot(1,2,2);
+        imshow(phsub,[]); hold on;
+    end
+    % start loop
     for cellno = allCellnos
 
         %% calculate/load some parameters for this cell
@@ -113,12 +128,10 @@ for framenr = frameRange
 
         %% plot the skeleton on the original image
         if extraOutput
-            figure(101); clf; hold on; 
-            subplot(1,2,1);
-            imshow(fluorImg,[]); hold on;
+            figure(101); 
+            subplot(1,2,1); hold on; 
             plot(currentSkeletonXYpoleToPole(:,2)+currentminX, currentSkeletonXYpoleToPole(:,1)+currentminY,'.')
-            subplot(1,2,2);
-            imshow(phsub,[]); hold on;
+            subplot(1,2,2); hold on; 
             plot(currentSkeletonXYpoleToPole(:,2)+currentminX, currentSkeletonXYpoleToPole(:,1)+currentminY,'.')
         end
 
@@ -313,7 +326,11 @@ for framenr = frameRange
     allpeakXMicrons{framenr}     = peakXMicronsThisFrame;
     allpeakmeanY{framenr}        = peakmeanYThisFrame;    
     
-    
+    % save some figures if extra output was desired
+    if extraOutput   
+        saveas(h101, [outputDirMore 'skeletons_' num2str(framenr) '.tif']);
+        saveas(h101, [outputDirMore 'skeletons_' num2str(framenr) '.fig']);
+    end
     
 end
 
@@ -323,6 +340,8 @@ saveLocationMatFile = [outputDir p.movieDate p.movieName '_straightFluorData.mat
         'allskeletonDistance', 'allmeanY', 'allpeakXPixels',...
         'allpeakXMicrons', 'allpeakmeanY');
 
+disp(['Completely done straightening. Data saved to ' saveLocationMatFile]);    
+    
 end
 
 

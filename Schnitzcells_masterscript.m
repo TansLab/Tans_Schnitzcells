@@ -233,6 +233,9 @@ if any(strcmp(runsections,{'allpreliminary','cropimages'}))
 settings.performCropping = strcmp(questdlg('Select whether you in general want to crop your dataset. (Answer will be saved to Excel config file.','Cropping','Yes','No','No'),'Yes');
 % save preference to excel
 performCroppingIndex = find(strcmp({alldata{:,1}},'performCropping'))+settings.EXCELREADSTART-1; % find line w. cropRightBottom field.    
+if isempty(performCroppingIndex)
+   error('Could not fiend performCroppingIndex Excel config file field. Maybe parameter performCropping is not set?');
+end
 xlswrite([settings.mypathname settings.myconfigfilename],{num2str(settings.performCropping)},['B' num2str(performCroppingIndex) ':B' num2str(performCroppingIndex) '']); % write value to it
 
 if settings.performCropping
@@ -718,8 +721,7 @@ if any(strcmp(runsections,{'allpreliminary', 'allfull','correctionsandanalysis'}
     NDL_addToSchnitzes_skeletonLength(p);
 
     %8 Add correct mu
-    DJK_addToSchnitzes_mu(p,'frameSizes', settings.muWindow,'lengthFields', {'rp_length' 'length_fitCoef3b' 'length_fitNew' 'length_skeleton' 'pixLength_skeleton'});
-    %DJK_addToSchnitzes_mu(p, 'onScreen', 1, 'frameSizes', [5, 9]);
+    DJK_addToSchnitzes_mu(p, 'frameSizes', settings.muWindow);
 
     % Let user know we're done
     mysound=load('gong'); sound(mysound.y);
@@ -911,7 +913,7 @@ end
 % Press CTRL+enter.
 % Load data if desired.
 
-if any(strcmp(runsections,{'allpreliminary', 'allfull', 'makeoutputfull'}))
+if any(strcmp(runsections,{'allpreliminary', 'allfull', 'makeoutputfull','rerunfullanalysis'}))
 
     % We are done with settings up schnitzcells structure! All data is saved.
     % You can proceed with analyzing the data..
@@ -934,6 +936,8 @@ if any(strcmp(runsections,{'allpreliminary', 'allfull', 'makeoutputfull'}))
         % =========================================================================
 
     end, end
+
+    disp('Loading complete.');
 
 end
 %% More analyses for full analysis
@@ -1091,6 +1095,14 @@ if any(strcmp(runsections,{'allfull', 'makeoutputfull', 'rerunfullanalysis'})) %
         % together, it would be better to take raw schnitzcells data as input.
         output.rateNoise = theNoise; output.rateMean = theMean; output.rateStd = theStd;
     
+    end
+    
+    %% Clear savedirs in case reran
+    if isfield(p,'NW_saveDir')
+        p=rmfield(p,'NW_saveDir');
+    end
+    if isfield(p,'DJK_saveDir')
+        p=rmfield(p,'DJK_saveDir');
     end
     
     %% Let user know done, open output folder.

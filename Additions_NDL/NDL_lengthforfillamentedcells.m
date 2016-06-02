@@ -555,6 +555,16 @@ for framenr = frameRange
         if extraOutput
             EndToEndDistanceSkeleton
         end 
+        
+        % now before exporting backtranspose if necessary
+        if exist('transposeReminder','var') 
+            skeletonXYpoleToPole(:,[1 2]) = skeletonXYpoleToPole(:,[2 1]); % Transposes:
+            edge(:,[1 2]) = edge(:,[2 1]);
+            xyEnds(:,[1 2],:) = xyEnds(:,[2 1],:);
+            ends = ends';
+            binarySkeletonBranchless = binarySkeletonBranchless';
+        end
+        
         % export length data 
         lengthOfBacteriaInPixelsInThisFrame(cellnum)  = EndToEndDistanceSkeleton+extrapolatedDistance1+extrapolatedDistance2;
         lengthOfBacteriaInMicronsInThisFrame(cellnum) = lengthOfBacteriaInPixelsInThisFrame(cellnum)*p.micronsPerPixel;

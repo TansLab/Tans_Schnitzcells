@@ -3,6 +3,12 @@
 
 %% Creating overview of the data generated during preliminary analysis
 
+if ~exist('FLUORIDXTOPLOT','var')
+    error('Please set FLUORIDXTOPLOT');
+    %FLUORIDXTOPLOT = [1]; % use numbers
+    %FLUORIDXTOPLOT = [1 2]; % use numbers
+end
+
 % PARAMETERS ==============================================================
 % Load the .mat file from the appropriate analysis.
 % (summaryParametersPreliminary.mat should contain "thedata" struct with all
@@ -15,7 +21,9 @@ if ~exist('MYDIR','var')
 end
 load([MYDIR 'summaryParametersPreliminary.mat'])
 
-fluorsIdxToPlot = [1]; % use capital letter abbreviations
+% optional input
+% MANUALSCHNITZLOCATIONS = {'..','..'};
+
 % END PARAMETERS ==========================================================
 
 % Load data per position
@@ -29,12 +37,17 @@ for i = 1:numelThedata
         positionIndices(end+1) = i;
     end
     
-    [currentP,currentSchnitzcells] = DJK_compileSchnitzImproved_3colors(thedata(i).p,'quickMode',1);
+    currentP = thedata(i).p;
+    % ugly work around for when stored schnitz location is not correct any more
+    if exist('MANUALSCHNITZLOCATIONS','var')
+        currentP.schnitzName = MANUALSCHNITZLOCATIONS{i};
+        warning('Ugly solution for schnitz location issuel;');
+    end
+    [currentP,currentSchnitzcells] = DJK_compileSchnitzImproved_3colors(currentP,'quickMode',1);
     
     % create struct with summary data per frame
     % - frameData(i).frame_nr gives frame_nr for record i.
-    % - frameData(i).<data> gives data for record i with framenumber
-    %     frameData(i).frame_nr.
+    % - frameData(i).<data> gives data for record i with framenumber frameData(i).frame_nr.
     frameData = struct; count=0;
     for frameNr = unique([currentSchnitzcells.frame_nrs])
         
@@ -43,21 +56,64 @@ for i = 1:numelThedata
         frameData(count).frame_nr = frameNr;
         
         % Select relevant data for this frame
+        %{
+        %applicable to preliminary proxy schnitzcells structs only
         indexesForThisFrame = find([currentSchnitzcells(:).frame_nrs] == frameNr);
         currentFrameSchnitzes = currentSchnitzcells(indexesForThisFrame);
+        %}
+        % applicable both preliminary and full analysis schnitzcells
+        % structs
+        % Loop over schnitzes and see whether it contains records that
+        % belong to the current frame of interest.
+        disp(['Calculating frame ' num2str(frameNr)]);
+        schnitzNrAndIndexForCurrentFrame=[]; %[schnitznr,idx;..]
+        relevantSchnitzes = []; hitCount=0;
+        allFields = fieldnames(currentSchnitzcells(1)); numelallFields = numel(allFields);
+        for schnitzIdx=1:numel(currentSchnitzcells)
+            
+            frameMatch = find(currentSchnitzcells(schnitzIdx).frame_nrs==frameNr);
+            
+            % record relevant indices when there's a match
+            if ~isempty(frameMatch)
+                hitCount=hitCount+1;
+                schnitzNrAndIndexForCurrentFrame=[schnitzNrAndIndexForCurrentFrame;schnitzIdx,frameMatch];
+            
+                % record relevant schnitzinfo at that framenumber            
+                for schnitzFieldIdx = 1:numelallFields
+                    currentFieldName = allFields{schnitzFieldIdx};
+                    relevantSchnitzes(hitCount).(currentFieldName) = ...
+                            currentSchnitzcells(schnitzIdx).(currentFieldName);
+                end
+            end
+        end
         
         % Create summary parameters for this frame
         % ===
         
         % Time at which frame was recorded
-        frameData(count).frameTime = currentFrameSchnitzes(1).time; % all times for frame should be equal, select 1st
+        schnitzLifeTimeIdx=schnitzNrAndIndexForCurrentFrame(1,2); % which record to take for first frame
+        frameData(count).frameTime = relevantSchnitzes(1).time(schnitzLifeTimeIdx); % all times for frame should be equal, select 1st
+        
         % Summed colony length
-        frameData(count).frameSummedLength = sum([currentFrameSchnitzes.length_fitNew]);
+        frameSummedLength=0;
+        for idx=1:hitCount
+            frameSummedLength = frameSummedLength + ...
+                relevantSchnitzes(schnitzNrAndIndexForCurrentFrame(idx,1)).length_fitNew(schnitzNrAndIndexForCurrentFrame(idx,2));
+        end
+        frameData(count).frameSummedLength = frameSummedLength
+        %frameData(count).frameSummedLength = sum([relevantSchnitzes.length_fitNew]);      
         
         % Colony fluor mean
-        for fluorIdx = fluorsIdxToPlot            
+        for fluorIdx = FLUORIDXTOPLOT            
             fluorFieldName = [upper(currentP.(['fluor' num2str(fluorIdx)])(1)) '5_mean_all'];
-            frameData(count).fluorMean(fluorIdx) = mean([currentFrameSchnitzes.(fluorFieldName)]);
+            
+            frameFluorSum=0;
+            for idx=1:hitCount
+                frameFluorSum = frameFluorSum + ...
+                    relevantSchnitzes(schnitzNrAndIndexForCurrentFrame(idx,1)).(fluorFieldName)(schnitzNrAndIndexForCurrentFrame(idx,2));
+            end
+            frameData(count).frameFluorSum(fluorIdx) = frameFluorSum;
+            %frameData(count).fluorMean(fluorIdx) = mean([relevantSchnitzes.(fluorFieldName)]);
         end
                 
     end
@@ -84,77 +140,114 @@ end
 
 
 %% Go over positions again and now create fluor plots======================
-figure(1); clf; 
 
-subplot(1,2,1); hold on;
+figure(1); clf;
 
-% Plot raw fluor data------------------------------------------------------
+plotrows=numel(FLUORIDXTOPLOT);
+
+fluorValuesAll=[];
 for i = positionIndices
-    
-    l = plot([alldata(i).frameData(:).frameTime],[alldata(i).frameData(:).fluorMean],'-x');
-    set(l, 'LineWidth', 2, 'Color', CUSTOMCOLORS(i,:));
-
+for frIdx = 1:numel(alldata(i).frameData)
+for fluorIdx = FLUORIDXTOPLOT
+    fluorValuesAll{i}(fluorIdx,frIdx) = alldata(i).frameData(frIdx).fluorMean(fluorIdx);
+end
+end
 end
 
-% Determine ylim & xlim
-fluordatapile=[];timeDataPile=[];
-for i=positionIndices
-    fluordatapile = [fluordatapile, alldata(i).frameData(:).fluorMean];
-    timeDataPile = [timeDataPile, alldata(i).frameData(:).frameTime];
+fluorYlim1={}; 
+for fluorIdx = FLUORIDXTOPLOT
+
+    subplot(plotrows,2,1+(2*(fluorIdx-1)) ); hold on;
+
+    % Plot raw fluor data------------------------------------------------------
+    for i = positionIndices
+        fluorValuesCurrent = squeeze(fluorValuesAll{i}(fluorIdx,:));
+        l = plot([alldata(i).frameData(:).frameTime],fluorValuesCurrent,'-x');
+        set(l, 'LineWidth', 2, 'Color', CUSTOMCOLORS(i,:));
+
+    end
+
+    % Determine ylim & xlim
+    fluordatapile=[];timeDataPile=[];
+    for i=positionIndices
+        fluorValuesCurrent = squeeze(fluorValuesAll{i}(fluorIdx,:));
+        fluordatapile = [fluordatapile, fluorValuesCurrent];
+        timeDataPile = [timeDataPile, alldata(i).frameData(:).frameTime];
+    end
+    maxtimeDataPile=max(timeDataPile);
+    fluorYlim1{fluorIdx} = [0,max(fluordatapile)*1.1];
+    ylim(fluorYlim1{fluorIdx});
+    xlim([0,maxtimeDataPile]);
+
+    % Set title etc.
+    title('')
+    MW_makeplotlookbetter(FONTSIZE);
+    xlabel('time (min)');
+    ylabel('signal (a.u.)');
+
+    % Plot normalized fluor data-----------------------------------------------
+    subplot(plotrows,2,2+(2*(fluorIdx-1)) ); hold on;
+
+    lines = [];
+    for i = positionIndices
+
+        % get median
+        fluorValuesCurrent = squeeze(fluorValuesAll{i}(fluorIdx,:))';
+        %fluorValuesCurrent = [alldata(i).frameData(:).fluorMean];
+        notNanIndices = ~isnan(fluorValuesCurrent);
+        fluorCurrentmedian = median(fluorValuesCurrent(notNanIndices));
+
+        % current Y data to plot
+        currentFluorY = fluorValuesCurrent./fluorCurrentmedian;    
+        sizecurrentFluorY = size(currentFluorY);
+        
+        % transpose data if required, just for plotting
+        % (this is a bit ugly, but required for backward compatibility)
+        if sizecurrentFluorY(1)>sizecurrentFluorY(2)
+            currentFluorY=currentFluorY';
+        end
+            
+        % plot data
+        currentTimes = [alldata(i).frameData(:).frameTime];
+        l = plot(currentTimes(notNanIndices),currentFluorY(notNanIndices),'-x');
+        % cosmetics
+        set(l, 'LineWidth', 2, 'Color', mycolors(i,:));
+        lines(end+1)=l; % for legend later
+
+    end
+    xlim([0,maxtimeDataPile]);
+    fluorYlim2 = [0,2];
+    ylim(fluorYlim2);
+
+    % Line at 1 (lines are median-normalized, should be ~1)
+    plot([0,maxtimeDataPile],[1,1],'-','Color','k','LineWidth',3)
+
+    % Set title etc.
+    title('')
+    MW_makeplotlookbetter(FONTSIZE);
+    xlabel('time (min)');
+    ylabel('signal (median-normalized)');
+    legend(lines, {alldata(positionIndices).label},'Location', 'NorthOutside');
+
+    % save the figure 
+    saveas(1, [MYDIR 'summaryPlot_fluorsignal.tif'],'tif');
+    saveas(1, [MYDIR 'summaryPlot_fluorsignal.eps'],'epsc');
 end
-maxtimeDataPile=max(timeDataPile);
-fluorYlim1 = [0,max(fluordatapile)*1.1];
-ylim(fluorYlim1);
-xlim([0,maxtimeDataPile]);
-
-% Set title etc.
-title('')
-MW_makeplotlookbetter(FONTSIZE);
-xlabel('time (min)');
-ylabel('signal (a.u.)');
-
-% Plot normalized fluor data-----------------------------------------------
-subplot(1,2,2); hold on;
-
-lines = [];
-for i = positionIndices
-    
-    % get median
-    currentData = [alldata(i).frameData(:).fluorMean];
-    notNanIndices = ~isnan(currentData);
-    fluorCurrentmedian = median(currentData(notNanIndices));
-    
-    % current Y data to plot
-    currentFluorY = [alldata(i).frameData(:).fluorMean]./fluorCurrentmedian;    
-    
-    % plot data
-    l = plot([alldata(i).frameData(:).frameTime],currentFluorY,'-x');
-    % cosmetics
-    set(l, 'LineWidth', 2, 'Color', mycolors(i,:));
-    lines(end+1)=l; % for legend later
-    
-end
-xlim([0,maxtimeDataPile]);
-fluorYlim2 = [0,2];
-ylim(fluorYlim2);
-
-% Line at 1 (lines are median-normalized, should be ~1)
-plot([0,maxtimeDataPile],[1,1],'-','Color','k','LineWidth',3)
-
-% Set title etc.
-title('')
-MW_makeplotlookbetter(FONTSIZE);
-xlabel('time (min)');
-ylabel('signal (median-normalized)');
-legend(lines, {alldata(positionIndices).label},'Location', 'NorthOutside');
-
-% save the figure 
-saveas(1, [MYDIR 'summaryPlot_fluorsignal.tif'],'tif');
-saveas(1, [MYDIR 'summaryPlot_fluorsignal.eps'],'epsc');
 
 %% Go over positions again and now create length/growth plots==============
 figure(2); clf; 
-FITWINDOW = [250,550];
+
+flag=0;
+if exist('settings','var') 
+    if isfield(settings,'fitTimeMu')
+        FITWINDOW = settings.fitTimeMu;
+        flag=1;
+    end
+end
+if ~flag
+    FITWINDOW = [250,550];
+    warning('FITWINDOW set to default');
+end
 
 subplot(1,2,1); hold on;
 

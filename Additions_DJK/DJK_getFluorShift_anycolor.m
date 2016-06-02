@@ -256,44 +256,60 @@ else
     %--------------------------------------------------------------------------
     % AVERAGE OUTPUT OF SHIFT CHECK
     %--------------------------------------------------------------------------
-    average = round(mean(frameShift));
-    dispAndWrite(fid, ['-------------------------------------------------']);
-    dispAndWrite(fid, [' * Best average shifts are  [' num2str(average(2)) ',' num2str(average(3)) '] and  [' num2str(average(4)) ',' num2str(average(5)) ']']);
+    if ~(size(frameShift)==[0,0])
+        
+        average = round(mean(frameShift));
+        dispAndWrite(fid, ['-------------------------------------------------']);
+        if numel(average)>=5
+            dispAndWrite(fid, [' * Best average shifts are  [' num2str(average(2)) ',' num2str(average(3)) '] and  [' num2str(average(4)) ',' num2str(average(5)) ']']);
+        else
+            warning('average parameter has too little information');
+        end
 
-    % Show histograms
-    scrsz = get(0, 'ScreenSize');
-    fig1 = figure('Position', [151 scrsz(4)-200 scrsz(3)-130 scrsz(4)-200], 'visible','off');
-    hist(frameShift(:,4));
-    xlabel('Optimal shifts for x');
-    xlim([-p.maxShift-1 p.maxShift+1]);
-    hold off;
+        % Show histograms
+        scrsz = get(0, 'ScreenSize');
+        fig1 = figure('Position', [151 scrsz(4)-200 scrsz(3)-130 scrsz(4)-200], 'visible','off');
+        hist(frameShift(:,4));
+        xlabel('Optimal shifts for x');
+        xlim([-p.maxShift-1 p.maxShift+1]);
+        hold off;
 
-    fig2 = figure('Position', [151 scrsz(4)-200 scrsz(3)-130 scrsz(4)-200], 'visible','off');
-    hist(frameShift(:,5));
-    xlabel('Optimal shifts for y');
-    xlim([-p.maxShift-1 p.maxShift+1]);
+        fig2 = figure('Position', [151 scrsz(4)-200 scrsz(3)-130 scrsz(4)-200], 'visible','off');
+        hist(frameShift(:,5));
+        xlabel('Optimal shifts for y');
+        xlim([-p.maxShift-1 p.maxShift+1]);
 
-    % Ask to save the figure
-    if p.onScreen
-      set(fig1,'visible','on');
-      set(fig2,'visible','on');
-      saveFigInput = questdlg('Save Figures?','Save Figures?','Yes','Yes and Close','No','Yes');
-      pause(0.2);
+        % Ask to save the figure
+        if p.onScreen
+          set(fig1,'visible','on');
+          set(fig2,'visible','on');
+          saveFigInput = questdlg('Save Figures?','Save Figures?','Yes','Yes and Close','No','Yes');
+          pause(0.2);
+        else
+          saveFigInput='Yes and Close';
+        end
+
+        if (upper(saveFigInput(1))=='Y')
+        %   saveas(fig1,[p.DJK_saveDir p.movieName '-histogram_optimal_shift_x.fig']);
+        %   saveas(fig2,[p.DJK_saveDir p.movieName '-histogram_optimal_shift_y.fig']);
+          saveSameSize(fig1,'file',[p.DJK_saveDir p.movieName '-histogram_optimal_shift_x.png'], 'format', 'png');
+          saveSameSize(fig2,'file',[p.DJK_saveDir p.movieName '-histogram_optimal_shift_y.png'], 'format', 'png');
+          if (strcmp(saveFigInput,'Yes and Close'))
+            close(fig1);close(fig2);
+            pause(0.2);
+          end
+          dispAndWrite(fid, [' * Saved histogram of optimal shift for x in ' p.movieName '-histogram_optimal_shift_x.png']);
+          dispAndWrite(fid, [' * Saved histogram of optimal shift for y in ' p.movieName '-histogram_optimal_shift_y.png']);
+        end
     else
-      saveFigInput='Yes and Close';
-    end
-
-    if (upper(saveFigInput(1))=='Y')
-    %   saveas(fig1,[p.DJK_saveDir p.movieName '-histogram_optimal_shift_x.fig']);
-    %   saveas(fig2,[p.DJK_saveDir p.movieName '-histogram_optimal_shift_y.fig']);
-      saveSameSize(fig1,'file',[p.DJK_saveDir p.movieName '-histogram_optimal_shift_x.png'], 'format', 'png');
-      saveSameSize(fig2,'file',[p.DJK_saveDir p.movieName '-histogram_optimal_shift_y.png'], 'format', 'png');
-      if (strcmp(saveFigInput,'Yes and Close'))
-        close(fig1);close(fig2);
-        pause(0.2);
-      end
-      dispAndWrite(fid, [' * Saved histogram of optimal shift for x in ' p.movieName '-histogram_optimal_shift_x.png']);
-      dispAndWrite(fid, [' * Saved histogram of optimal shift for y in ' p.movieName '-histogram_optimal_shift_y.png']);
+        warning('Optimal shift not found, size(frameShift)==[0,0]. Setting shift to [0,0]. TODO.');
+        disp('Waiting five seconds before continuing..');
+        % I'm not sure what goes wrong when this happens. But I should look
+        % into how this function works. For now I choose the boilerplate
+        % solition, which is ignore if the function spits out nonsense, and
+        % just perform no shift..
+        average=zeros(1,5);
+        pause(5);
     end
     %--------------------------------------------------------------------------
 

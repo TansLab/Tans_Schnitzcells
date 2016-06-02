@@ -718,8 +718,7 @@ if any(strcmp(runsections,{'allpreliminary', 'allfull','correctionsandanalysis'}
     NDL_addToSchnitzes_skeletonLength(p);
 
     %8 Add correct mu
-    DJK_addToSchnitzes_mu(p, 'frameSizes', settings.muWindow);
-    DJK_addToSchnitzes_mu(p,'frameSizes', settings.muWindow,'lengthFields', {'pixLength_skeleton' 'length_skeleton'});
+    DJK_addToSchnitzes_mu(p,'frameSizes', settings.muWindow,'lengthFields', {'rp_length' 'length_fitCoef3b' 'length_fitNew' 'length_skeleton' 'pixLength_skeleton'});
     %DJK_addToSchnitzes_mu(p, 'onScreen', 1, 'frameSizes', [5, 9]);
 
     % Let user know we're done

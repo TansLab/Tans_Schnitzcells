@@ -27,7 +27,7 @@ function varargout = MW_GUI_schnitzcells(varargin)
 
 % Edit the above text to modify the response to help MW_GUI_schnitzcells
 
-% Last Modified by GUIDE v2.5 29-Apr-2016 12:40:23
+% Last Modified by GUIDE v2.5 19-May-2016 16:33:13
 
 % Begin initialization code - DO NOT EDIT
 gui_Singleton = 1;
@@ -64,7 +64,7 @@ handles.output = hObject;
 guidata(hObject, handles);
 
 % UIWAIT makes MW_GUI_schnitzcells wait for user response (see UIRESUME)
-% uiwait(handles.figure1);
+% uiwait(handles.schnitzcellsGUI);
 
 
 % --- Outputs from this function are returned to the command line.
@@ -741,9 +741,9 @@ framenr = get(handles.framenr,'String');
 slicenr = get(handles.slicenr,'String');
 
 myimg = imread([p.imageDir p.movieName '-p-' slicenr '-' framenr '.tif']);
-figure(1); imshow(myimg, []);
+figure(2); imshow(myimg, []);
 
-figure(2); 
+figure(3); 
 for i=1:3
     subplot(3,1,i); hold on;
     myimg = imread([p.imageDir p.movieName '-p-' num2str(i) '-' framenr '.tif']);
@@ -767,7 +767,7 @@ framenr = get(handles.framenr,'String');
 %slicenr = get(handles.slicenr,'String');
 
 % crete fig and make (almost) full screen
-f=figure(1); 
+f=figure(2); 
 set(f, 'units','normalized', 'Position', [0.05,0.05,.9,.8]); % left bottom width height
 
 % plot all slices
@@ -919,7 +919,7 @@ p = evalin('base', 'p');
 settings = evalin('base', 'settings');
 
 myimg = imread([p.imageDir p.movieName '-p-' '2' '-' sprintf('%03d',min(settings.currentFrameRange)) '.tif']);
-figure(1); clf; imshow(myimg, []);
+figure(2); clf; imshow(myimg, []);
 
 p.customColonyCenter = round(ginput(1))
 

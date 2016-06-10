@@ -75,17 +75,22 @@ for framenr = frameRange
     disp(['Analyzing frame ' num2str(framenr) ' (highest framenr =' num2str(lastFrame) ').']);
     
     %% % Load data for current frame of the dataset
+      
+    %Load (corrected) fluorescence image
+    fluorFileName = [p.tracksDir p.movieName 'Fluor_' fluorColor '_' sprintf('%03d',framenr) '.mat'];
+    if exist(fluorFileName,'file')
+        load(fluorFileName);
+    else
+        disp(['Fluor image not found, skipping this frame (' fluorFileName ').']);
+        continue;
+    end
+    fluorImg = eval([fluorColor 'reg5']); % note is already shifted
+        % xreg5 is corrected (and shifted) fluor image.
     
-    %e.g. load 'G:\EXPERIMENTAL_DATA_2016\a_incoming\2016-03-23\pos4crop\segmentation\pos4cropseg337.mat'
     % Load segmentation
     load ([p.segmentationDir p.movieName 'seg' sprintf('%03d',framenr) '.mat']);%,'Lc');
         % Important contents is Lc, which respectively hold the
         % checked segmentation, and the fluorescence image, 
-    %Load (corrected) fluorescence image
-    load([p.tracksDir p.movieName 'Fluor_' fluorColor '_' sprintf('%03d',framenr) '.mat'],[fluorColor 'reg5']);
-    %G:\EXPERIMENTAL_DATA_2016\a_incoming\2016-04-07\pos1crop\data
-    fluorImg = eval([fluorColor 'reg5']); % note is already shifted
-        % xreg5 is corrected (and shifted) fluor image.
         
     
     %% Loop over all cell numbers in this frame

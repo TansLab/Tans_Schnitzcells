@@ -1,4 +1,4 @@
-function [p, schnitzcells] = NDL_addToSchnitzes_skeletonLength(p)
+function [p, schnitzcells] = NDL_addToSchnitzes_skeletonLengthMW(p)
 %% % load schnitzcells
 load([p.tracksDir p.movieName '-Schnitz.mat'])
 % Determine frame range
@@ -6,7 +6,7 @@ frameRange=unique([schnitzcells.frame_nrs]);
 frameRange=sort(frameRange);
 
 % calculate all lengths
-[p, allLengthsOfBacteriaInPixels, allLengthsOfBacteriaInMicrons] = NDL_lengthforfillamentedcells(p, frameRange)
+[p, allLengthsOfBacteriaInPixels, allLengthsOfBacteriaInMicrons,allLengthsOfBacteriaInPixelsMW, allLengthsOfBacteriaInMicronsMW] = NDL_lengthforfillamentedcellsMW(p, frameRange)
 %% Assign calculated pixel-length to schnitzcells
 schnitzcells(1).pixLength_skeleton=[];
 A=0;
@@ -15,8 +15,8 @@ for h=1:max(size(schnitzcells))
         for j=1:length(schnitzcells(h).frame_nrs)
             if (schnitzcells(h).frame_nrs(j)==i)==1
                 A=schnitzcells(h).cellno(j);
-                schnitzcells(h).pixLength_skeleton(j)=allLengthsOfBacteriaInPixels{i}(A);
-                schnitzcells(h).length_skeleton(j)=allLengthsOfBacteriaInMicrons{i}(A);
+                schnitzcells(h).pixLength_skeleton(j)=allLengthsOfBacteriaInPixelsMW{i}(A);
+                schnitzcells(h).length_skeleton(j)=allLengthsOfBacteriaInMicronsMW{i}(A);
             end
         end
     end

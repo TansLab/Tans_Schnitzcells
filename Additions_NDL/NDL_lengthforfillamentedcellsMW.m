@@ -16,8 +16,10 @@ function [p, allLengthsOfBacteriaInPixels, allLengthsOfBacteriaInMicrons,allLeng
 % within the bacteria.)
 %
 % Input arguments:
-% p.extraOutput    if this parameter is set, extra output will be shown in
-%                   plots and in command window.
+% p.extraOutput         if this parameter is set, extra output will be 
+%                       shown in plots and in command window.
+% p.saveSummaryPlots    optional parameter that lets you decide to generate
+%                       output on how skeleton looks to plots
 %
 % Output arguments:
 %     % lengths
@@ -64,6 +66,13 @@ averageBacterialWidthInPixel= AVERAGEBACTERIAWIDTH/p.micronsPerPixel; % Unused
 EXTRAPOLATIONLENGTH = round(1.9*averageBacterialWidthInPixel); % Maximum size of skeleton end which gets extrapolated in pixels - Independant of pixel size
 paddingsize = round(averageBacterialWidthInPixel*4); % Unused
 
+if isfield(p,'saveSummaryPlots')
+    SAVESUMMARYPLOTS = p.saveSummaryPlots;
+else
+    if ~exist('SAVESUMMARYPLOTS','var')
+        SAVESUMMARYPLOTS = 0;
+    end
+end
 
 if isfield(p,'extraOutput')
     extraOutput = p.extraOutput;
@@ -128,9 +137,9 @@ for framenr = frameRange
     extendedSkeletons = cell(1,numel(allCellnos));
     
     %% Loop over all cell numbers in this frame
-    for cellnum = allCellnos
+    for cellno = allCellnos
         %% Convert one cell to x,y coordinates.        
-        [y,x] = find(Lc == cellnum);
+        [y,x] = find(Lc == cellno);
         
         if extraOutput
             % show original
@@ -271,7 +280,7 @@ for framenr = frameRange
                 numEnds = sum(sum(ends,2));
                 if countSpurring>1000
                     figure(); imshow(binaryImageSkeletonized,[]);
-                    error(['Error spurring, cellnum=' num2str(cellnum) ', showing current skeleton.']);                    
+                    error(['Error spurring, cellnum=' num2str(cellno) ', showing current skeleton.']);                    
                 end;
         end
         binarySkeletonBranchless = binaryImageSkeletonized; % Branchless skeleton
@@ -282,7 +291,7 @@ for framenr = frameRange
         end
         %% % Finds endings of branchless skeleton
         if numEnds==1
-            warning(['Skeleton is only 1 px in frame ' num2str(framenr) ' cell ' num2str(cellnum)]);
+            warning(['Skeleton is only 1 px in frame ' num2str(framenr) ' cell ' num2str(cellno)]);
         end  
         ends = bwmorph(binarySkeletonBranchless,'endpoints');
         
@@ -424,7 +433,7 @@ for framenr = frameRange
             directionFactorLeft1  = DIRECTIONVALUEINCORRECT;
             directionFactorRight1 = DIRECTIONVALUECORRECT;
         else
-            warning(['First end has no directionality in frame ' num2str(framenr) ' cell ' num2str(cellnum)]);
+            warning(['First end has no directionality in frame ' num2str(framenr) ' cell ' num2str(cellno)]);
         end
         if directionxEnd2 < 0
             directionFactorLeft2  = DIRECTIONVALUECORRECT;
@@ -433,7 +442,7 @@ for framenr = frameRange
             directionFactorLeft2  = DIRECTIONVALUEINCORRECT;
             directionFactorRight2 = DIRECTIONVALUECORRECT;
         else
-            warning(['Second end has no directionality in frame ' num2str(framenr) ' cell ' num2str(cellnum)]);
+            warning(['Second end has no directionality in frame ' num2str(framenr) ' cell ' num2str(cellno)]);
         end
         
         %% % Extrapolates first end of the bacteria - fit is forced through the 'end' and extrapolates linearly outside data interval
@@ -483,7 +492,7 @@ for framenr = frameRange
             
             extrapolatedSkeleton1 = [toextrapolatexleft' extrapolatedValuesLeft'];
         catch
-            cellnum
+            cellno
             figure(); imshow(binaryImage+binaryImageSkeletonized,[]);
             smoothSkeletonXYpoleToPole
             error('Extrapolation failed.');
@@ -510,10 +519,10 @@ for framenr = frameRange
         
 
         % Create x-values for the extrapolated part
-        if directionxEnd1 < 0
-            toextrapolatexright = [max(toFitXright):max(toFitXright)+extrapolationLength];
-        else    
+        if directionxEnd2 < 0
             toextrapolatexright = [min(toFitXright)-extrapolationLength:min(toFitXright)];
+        else
+            toextrapolatexright = [max(toFitXright):max(toFitXright)+extrapolationLength];            
         end
 
         % create y-values based on those x-values
@@ -542,7 +551,7 @@ for framenr = frameRange
         %% % Plot extrapolations and segmented edges
         if extraOutput
             %%
-            figure(72); clf; axis equal; hold on;
+            figure(72); clf; axis equal; hold on;            
             
             plot(edge(:,1),edge(:,2));
             %plot(extrapolatedSkeleton1(:,1),extrapolatedSkeleton1(:,2)); % Nick's extrapolation (old)
@@ -572,10 +581,10 @@ for framenr = frameRange
         end        
         minimumDistance1 = min(min(distot)); % Finds minimum of distance matrix --> Shortest distance between edge and extrapolation
         if minimumDistance1 > EXTRAPOLATIONLENGTH*ERRORINTERSECT % Warns when found extrapolated intersection is not close to the segmented boundary
-            warning(['Extrapolation on first end might have gone wrong in frame ' num2str(framenr) ' cell ' num2str(cellnum)]);
+            warning(['Extrapolation on first end might have gone wrong in frame ' num2str(framenr) ' cell ' num2str(cellno)]);
             minimumDistance1
         elseif minimumDistance1 > EXTRAPOLATIONLENGTH*ERRORINTERSECTWARNING % Warns when found extrapolated intersection is not close to the segmented boundary
-            warning(['Extrapolation on first end is just above error threshold in frame ' num2str(framenr) ' cell ' num2str(cellnum)]);
+            warning(['Extrapolation on first end is just above error threshold in frame ' num2str(framenr) ' cell ' num2str(cellno)]);
             minimumDistance1
         end 
         % Find coördinates corresponding to closest points between edge and extrapolation
@@ -605,7 +614,7 @@ for framenr = frameRange
         % take smallest as relevant extrapolation distance of the first end        
         extrapolatedDistance1 = min([extrapolatedDistance1FirstEnd extrapolatedDistance1SecondEnd]);        
         if extrapolatedDistance1 > ERRORFACTOREXTRAPOLATIONLENGTH*EXTRAPOLATIONLENGTH % Warns when the extrapolated distance becomes quite large
-            warning(['Extrapolation is quite big on the first end in frame ' num2str(framenr) ' cell ' num2str(cellnum)]);
+            warning(['Extrapolation is quite big on the first end in frame ' num2str(framenr) ' cell ' num2str(cellno)]);
             extrapolatedDistance1
         end
         
@@ -633,10 +642,10 @@ for framenr = frameRange
         end        
         minimumDistance2 = min(min(distot2)); % Finds minimum of second distance matrix --> Shortest distance between edge and extrapolation
         if minimumDistance2 > EXTRAPOLATIONLENGTH*ERRORINTERSECT % Warns when found extrapolated intersection is not close to the segmented boundary
-            warning(['Extrapolation on second end might have gone wrong in frame ' num2str(framenr) ' cell ' num2str(cellnum)]);
+            warning(['Extrapolation on second end might have gone wrong in frame ' num2str(framenr) ' cell ' num2str(cellno)]);
             minimumDistance2
         elseif minimumDistance2 > EXTRAPOLATIONLENGTH*ERRORINTERSECTWARNING % Warns when found extrapolated intersection is not close to the segmented boundary
-            warning(['Extrapolation on second end is just above error threshold in frame ' num2str(framenr) ' cell ' num2str(cellnum)]);
+            warning(['Extrapolation on second end is just above error threshold in frame ' num2str(framenr) ' cell ' num2str(cellno)]);
             minimumDistance2
         end
         % Find coördinates corresponding to closest points between edge and extrapolation
@@ -666,7 +675,7 @@ for framenr = frameRange
         % take smallest as relevant extrapolation distance of the second end
         extrapolatedDistance2 = min([extrapolatedDistance2FirstEnd extrapolatedDistance2SecondEnd]);
         if extrapolatedDistance2 > ERRORFACTOREXTRAPOLATIONLENGTH*EXTRAPOLATIONLENGTH % Warns when the extrapolated distance becomes quite large
-            warning(['Extrapolation is quite big on the second end in frame ' num2str(framenr) ' cell ' num2str(cellnum)]);
+            warning(['Extrapolation is quite big on the second end in frame ' num2str(framenr) ' cell ' num2str(cellno)]);
             extrapolatedDistance2
         end
                 
@@ -681,7 +690,7 @@ for framenr = frameRange
         
         %% % Additional check for errors
         if isequal(extrapolatedIntersection1, extrapolatedIntersection2) && length(smoothSkeletonXYpoleToPole) > ERRORVALUESKELETONLENGTH
-            warning(['Extrapolation distances are the same in frame ' num2str(framenr) ' cell ' num2str(cellnum) ' with skeletonlength ' num2str(length(smoothSkeletonXYpoleToPole))]);
+            warning(['Extrapolation distances are the same in frame ' num2str(framenr) ' cell ' num2str(cellno) ' with skeletonlength ' num2str(length(smoothSkeletonXYpoleToPole))]);
             disp(extrapolatedDistance1);
         end
         %% % Calculates length of branchless skeleton, and the total estimated length (by adding the extrapolated lengths of the ends) 
@@ -713,6 +722,7 @@ for framenr = frameRange
             
             extrapolatedSkeleton1WithinEdge(:,[1 2]) = extrapolatedSkeleton1WithinEdge(:,[2 1]);
             extrapolatedSkeleton2WithinEdge(:,[1 2]) = extrapolatedSkeleton2WithinEdge(:,[2 1]);
+
         end
         
         %% Length of skeleton pieces
@@ -722,8 +732,11 @@ for framenr = frameRange
         totalMWLengthPixels = mainPartLength + extrapolatedPart1Length + extrapolatedPart2Length;
         
          %% summary plot
-        if extraOutput
-             figure(72); clf; axis equal; hold on;
+        if extraOutput || SAVESUMMARYPLOTS
+            h = figure(72); clf; axis equal; hold on;
+            if SAVESUMMARYPLOTS % hide figure if it is saved to disk
+                set(h,'visible','off');
+            end
             
             plot(edge(:,1),edge(:,2));
             %plot(extrapolatedSkeleton1(:,1),extrapolatedSkeleton1(:,2)); % Nick's extrapolation (old)
@@ -736,26 +749,45 @@ for framenr = frameRange
             % right end
             %plot(toFitXright,toFitYright,'.','MarkerSize',10);
             plot(extrapolatedSkeleton2WithinEdge(:,1),extrapolatedSkeleton2WithinEdge(:,2),'-ko');
+            
+            if exist('transposeReminder','var') 
+                plot(toFitYleft,toFitXleft,'.','MarkerSize',10);
+                plot(toFitYright,toFitXright,'.','MarkerSize',10);
+            else
+                plot(toFitXleft,toFitYleft,'.','MarkerSize',10);
+                plot(toFitXright,toFitYright,'.','MarkerSize',10);
+            end
+            
+            % Save the figure if desired
+            if SAVESUMMARYPLOTS
+                theOutputdir = [p.analysisDir 'straightenedCells\skeletons\'];
+
+                if ~exist(theOutputdir,'dir')
+                    mkdir(theOutputdir)
+                end;
+
+                saveas(h,[theOutputdir 'fr' num2str(framenr) 'cellno' num2str(cellno) '.tif']);
+            end
         end
         
         %% export length data 
-        lengthOfBacteriaInPixelsInThisFrame(cellnum)  = EndToEndDistanceSkeleton+extrapolatedDistance1+extrapolatedDistance2;
-        lengthOfBacteriaInMicronsInThisFrame(cellnum) = lengthOfBacteriaInPixelsInThisFrame(cellnum)*p.micronsPerPixel;
+        lengthOfBacteriaInPixelsInThisFrame(cellno)  = EndToEndDistanceSkeleton+extrapolatedDistance1+extrapolatedDistance2;
+        lengthOfBacteriaInMicronsInThisFrame(cellno) = lengthOfBacteriaInPixelsInThisFrame(cellno)*p.micronsPerPixel;
         
-        lengthOfBacteriaInPixelsInThisFrameMW(cellnum) = totalMWLengthPixels;
-        lengthOfBacteriaInMicronsInThisFrameMW(cellnum) = totalMWLengthPixels*p.micronsPerPixel;
+        lengthOfBacteriaInPixelsInThisFrameMW(cellno) = totalMWLengthPixels;
+        lengthOfBacteriaInMicronsInThisFrameMW(cellno) = totalMWLengthPixels*p.micronsPerPixel;
         % export additional data
-        pixelAreaOfBacteriumInThisFrame(cellnum) = pixelAreaOfBacterium;
-        skeletonXYpoleToPoleInThisFrame{cellnum} = skeletonXYpoleToPole;
-        smoothSkeletonXYpoleToPoleInThisFrame{cellnum} = smoothSkeletonXYpoleToPole;
-        minXThisFrame(cellnum) = minX;
-        minYThisFrame(cellnum) = minY;
-        edgesThisFrame{cellnum} = edge;
-        distanceAlongSkeletonPixelsThisFrame{cellnum} = distanceAlongSkeletonPixels;
-        extrapolatedDistancePixelsEndsThisFrame(:,cellnum) = [extrapolatedDistance1 extrapolatedDistance2];
-        extrapolatedDistanceMicronsEndsThisFrame(:,cellnum) = [extrapolatedDistance1 extrapolatedDistance2]*p.micronsPerPixel;
+        pixelAreaOfBacteriumInThisFrame(cellno) = pixelAreaOfBacterium;
+        skeletonXYpoleToPoleInThisFrame{cellno} = skeletonXYpoleToPole;
+        smoothSkeletonXYpoleToPoleInThisFrame{cellno} = smoothSkeletonXYpoleToPole;
+        minXThisFrame(cellno) = minX;
+        minYThisFrame(cellno) = minY;
+        edgesThisFrame{cellno} = edge;
+        distanceAlongSkeletonPixelsThisFrame{cellno} = distanceAlongSkeletonPixels;
+        extrapolatedDistancePixelsEndsThisFrame(:,cellno) = [extrapolatedDistance1 extrapolatedDistance2];
+        extrapolatedDistanceMicronsEndsThisFrame(:,cellno) = [extrapolatedDistance1 extrapolatedDistance2]*p.micronsPerPixel;
         % Skeleton XY values + extrapolated parts
-        extendedSkeletons{cellnum} = [extrapolatedSkeleton1WithinEdge; smoothSkeletonXYpoleToPole; extrapolatedSkeleton2WithinEdge];
+        extendedSkeletons{cellno} = [extrapolatedSkeleton1WithinEdge; smoothSkeletonXYpoleToPole; extrapolatedSkeleton2WithinEdge];
         
     end
     
@@ -784,7 +816,7 @@ for framenr = frameRange
     save([p.tracksDir p.movieName '-skeletonData.mat'],...
         'allLengthsOfBacteriaInPixels','allLengthsOfBacteriaInMicrons',...
         'allLengthsOfBacteriaInPixelsMW','allLengthsOfBacteriaInMicronsMW',...
-        'allPixelAreaOfBacterium','skeletonXYpoleToPole',...
+        'allPixelAreaOfBacterium','allSkeletonXYpoleToPole',...
         'allsmoothSkeletonXYpoleToPole',...
         'allMinX','allMinY',...
         'allEdges','alldistanceAlongSkeletonPixels',...

@@ -396,7 +396,11 @@ Schnitzcells_masterscript
 % update workspace
 assignin ('base','settings',settings)
 assignin ('base','p',p)
-assignin ('base','schnitzcells',schnitzcells)
+if exist('schnitzcells','var')
+    assignin ('base','schnitzcells',schnitzcells)
+else
+    disp('(Schnitzcells not exported to workspace; it does get saved by subfunctions..)');
+end
 
 
 % --- Executes on button press in pushbutton28.

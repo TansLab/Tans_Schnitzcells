@@ -1,4 +1,7 @@
-%function createxmlfilesfromimagemetadata()
+
+%% Extract metadata test
+% To be expanded later to import Nikon image in schnitzcells software.
+% - MW 2016-06
 
 % Give directory where your file is
 ORIGINDIR = 'G:\EXPERIMENTAL_DATA_2016\a_incoming\2016-06-24_Petra_test_data\';
@@ -41,27 +44,3 @@ datenumber = datenum(year,month,day,hour,minute,second);
 % Let user know what we found
 disp(['For ' FILENAME ', date according to matlab is: ' num2str(year) '-' num2str(month) '-' num2str(day) ',' num2str(hour) ':' num2str(minute) ':' num2str(second) '.']);
 
-%%
-
-%{
-p.xmlDirectory = [ORIGINDIR 'xmlmetadata\'];
-mkdir(p.xmlDirectory);
-
-xmlFileLocation = [p.xmlDirectory FILENAMEROOT '.xml'];
-
-%thexmlcodecleaned = strfind(thexmlcode,unicode2native('0x1a'));
-%idx=find(thexmlcode=='0x1a',1,'first')
-
-fileID = fopen(xmlFileLocation,'w');
-fprintf(fileID,escapeString(thexmlcode));
-fclose(fileID);
-
-%%
-
-%myXmlImageMetadataStruct = xml2struct(xmlFileLocation);
-%xmlread(xmlFileLocation);
-
-%}
-
-
-%end

@@ -459,7 +459,9 @@ end
 % posX\data\posX-Schnitz.mat
 
 if any(strcmp(runsections,{'allpreliminary','trackpreliminary'})) % fast
-    DJK_trackcomplete(p,'trackRange',settings.currentFrameRange,'trackMethod','singleCell');
+    DJK_trackcomplete(p,'trackRange',settings.currentFrameRange,'trackMethod','singleCell');    
+    
+    disp('Done tracking');
 elseif any(strcmp(runsections,{'allfull','trackandmanualcorrections'}))% full
     p.overwrite=0; % ADVANCED SETTING
     p.showAll = 1; % show all segmented frames to user
@@ -510,7 +512,11 @@ elseif any(strcmp(runsections,{'allfull','trackandmanualcorrections'}))% full
     % not correct any more.
     PN_manualcheckseg(p,'manualRange',settings.currentFrameRange,'override',p.overwrite,'assistedCorrection',0); % assisted correction of because problem cells highlighted
 
+    disp('Done tracking');
+    
 end
+
+
 
 %% (Optional) Some alternative trackers
 % Press CTRL+enter. Re-iterate previous section when done.
@@ -718,7 +724,7 @@ if any(strcmp(runsections,{'allpreliminary', 'allfull','correctionsandanalysis'}
     %p.onscreen=1;
 
     DJK_addToSchnitzes_length(p);
-    NDL_addToSchnitzes_skeletonLength(p);
+    NDL_addToSchnitzes_skeletonLengthMW(p);
 
     %8 Add correct mu
     DJK_addToSchnitzes_mu(p, 'frameSizes', settings.muWindow);
@@ -948,7 +954,7 @@ end
 % with all your experiments. The script savingFluorDynamicsData provides
 % you with this opportunity (see section "Database" below).
 
-PLOTSCATTER=0; % activate to plot all scatter plots
+
 
 if any(strcmp(runsections,{'allfull', 'makeoutputfull', 'rerunfullanalysis'})) % full
     
@@ -1014,7 +1020,8 @@ if any(strcmp(runsections,{'allfull', 'makeoutputfull', 'rerunfullanalysis'})) %
 
         %% create correlation functions R(concentration, growth)
         % ===
-
+        PLOTSCATTER=settings.PLOTSCATTER; % activate to plot all scatter plots
+        
         % Set up appropriate field names for R(concentration,mu)
         % TODO MW: todo: make this X_time etc, and do a strrep for X to applicable color
         associatedFieldNames = {settings.fieldNamesWithFluorLetter(fluorIdx).timeFieldName, settings.fieldNamesWithFluorLetter(fluorIdx).fluorFieldName, settings.fieldNamesWithFluorLetter(fluorIdx).muFieldName};
@@ -1039,7 +1046,8 @@ if any(strcmp(runsections,{'allfull', 'makeoutputfull', 'rerunfullanalysis'})) %
 
         %% create correlation functions R(rate, growth)
         % ===
-
+        PLOTSCATTER=settings.PLOTSCATTER; % activate to plot all scatter plots
+        
         % Set up appropriate field names for R(rate, mu)
         associatedFieldNames = {settings.fieldNamesWithFluorLetter(fluorIdx).timeFieldNameDerivative, settings.fieldNamesWithFluorLetter(fluorIdx).fluorDerivativeFieldName, settings.fieldNamesWithFluorLetter(fluorIdx).muFieldNameDerivative};
         % parse some settings from Excel file
@@ -1059,7 +1067,8 @@ if any(strcmp(runsections,{'allfull', 'makeoutputfull', 'rerunfullanalysis'})) %
 
         %% create autocorrelation functions R(Y, Y)
         % ===
-
+        PLOTSCATTER=0; % activate to plot all scatter plots
+        
         % Set up appropriate field names
 
         % growth

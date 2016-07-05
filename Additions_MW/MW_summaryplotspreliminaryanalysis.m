@@ -17,6 +17,7 @@ if ~exist('MYDIR','var')
     error('MYDIR NOT DEFINED');
     % use 
     % MYDIR = 'F:\Datasets\2016-03-04\outputSummary\';
+    % MYDIR = 'G:\EXPERIMENTAL_DATA_2016\a_incoming\2016-06-21_cAMP60uM\outputSummary\';
     % to set MYDIR.
 end
 load([MYDIR 'summaryParametersPreliminary.mat'])

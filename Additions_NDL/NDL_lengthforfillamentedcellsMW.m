@@ -396,24 +396,29 @@ for framenr = frameRange
         %smoothSkeleton = NaN(size(currentSkeletonXYpoleToPole,1)-2*SMOOTHELEMENTS+1,2)
         smoothSkeletonXYpoleToPole = NaN(size(skeletonXYpoleToPole,1),2);
         nrIndicesInSkelet = size(skeletonXYpoleToPole,1);
-        % 1st few elements
-        for i = 1:SMOOTHELEMENTS
-            plusminus = i-1;
-            smoothSkeletonXYpoleToPole(i,1) = mean(skeletonXYpoleToPole(i+windowArray(SMOOTHELEMENTS+1-plusminus:SMOOTHELEMENTS+1+plusminus),1));
-            smoothSkeletonXYpoleToPole(i,2) = mean(skeletonXYpoleToPole(i+windowArray(SMOOTHELEMENTS+1-plusminus:SMOOTHELEMENTS+1+plusminus),2));
-        end
-        % main piece of skeleton
-        for i = SMOOTHELEMENTS+1:nrIndicesInSkelet-SMOOTHELEMENTS
+        if nrIndicesInSkelet<(2*SMOOTHELEMENTS)
+            warning('Extremely small skeleton, not smoothing.');
+            smoothSkeletonXYpoleToPole=skeletonXYpoleToPole;
+        else
+            % 1st few elements
+            for i = 1:SMOOTHELEMENTS
+                plusminus = i-1;
+                smoothSkeletonXYpoleToPole(i,1) = mean(skeletonXYpoleToPole(i+windowArray(SMOOTHELEMENTS+1-plusminus:SMOOTHELEMENTS+1+plusminus),1));
+                smoothSkeletonXYpoleToPole(i,2) = mean(skeletonXYpoleToPole(i+windowArray(SMOOTHELEMENTS+1-plusminus:SMOOTHELEMENTS+1+plusminus),2));
+            end
+            % main piece of skeleton
+            for i = SMOOTHELEMENTS+1:nrIndicesInSkelet-SMOOTHELEMENTS
 
-            smoothSkeletonXYpoleToPole(i,1) = mean(skeletonXYpoleToPole(i+windowArray,1));
-            smoothSkeletonXYpoleToPole(i,2) = mean(skeletonXYpoleToPole(i+windowArray,2));
+                smoothSkeletonXYpoleToPole(i,1) = mean(skeletonXYpoleToPole(i+windowArray,1));
+                smoothSkeletonXYpoleToPole(i,2) = mean(skeletonXYpoleToPole(i+windowArray,2));
 
-        end
-        % last few elements
-        for i = nrIndicesInSkelet-SMOOTHELEMENTS+1:nrIndicesInSkelet
-            plusminus = nrIndicesInSkelet-i;
-            smoothSkeletonXYpoleToPole(i,1) = mean(skeletonXYpoleToPole(i+windowArray(SMOOTHELEMENTS+1-plusminus:SMOOTHELEMENTS+1+plusminus),1));
-            smoothSkeletonXYpoleToPole(i,2) = mean(skeletonXYpoleToPole(i+windowArray(SMOOTHELEMENTS+1-plusminus:SMOOTHELEMENTS+1+plusminus),2));
+            end
+            % last few elements
+            for i = nrIndicesInSkelet-SMOOTHELEMENTS+1:nrIndicesInSkelet
+                plusminus = nrIndicesInSkelet-i;
+                smoothSkeletonXYpoleToPole(i,1) = mean(skeletonXYpoleToPole(i+windowArray(SMOOTHELEMENTS+1-plusminus:SMOOTHELEMENTS+1+plusminus),1));
+                smoothSkeletonXYpoleToPole(i,2) = mean(skeletonXYpoleToPole(i+windowArray(SMOOTHELEMENTS+1-plusminus:SMOOTHELEMENTS+1+plusminus),2));
+            end
         end
         
         %% % Finds directionality of skeleton ends & creates variables to account for later on

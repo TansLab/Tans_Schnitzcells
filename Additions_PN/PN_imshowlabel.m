@@ -224,8 +224,8 @@ end % note suspicious cell detection algorithm has a 2nd part below
 % Use custom colormap if it is set
 if useSchnitzColors
     mymap = p.customColors;
-    L2=uint8(L);  
-    highestSchnitzIndx = size(p.slookup,1); % # colors
+    L2=L;
+    highestSchnitzIndx = max(p.slookup(size(p.slookup,1),:));
     highestCellFrameIndx = size(p.slookup,2); % = highest index in L
         % highestCellFrameIndx == size(p.customColors,1)-2
 else
@@ -234,7 +234,8 @@ else
     L2 = mod(L,255)+2;
     L2(L==0) = 1;
     % M is the maximum color table entry, at most 256 colors
-    highestCellFrameIndx = min(max2(L)+2,256);
+    %highestCellFrameIndx = min(max2(L)+2,256); % white-color bug
+    highestCellFrameIndx = max2(L)+2;
     % create a color map
     mymap = DJK_hsv(highestCellFrameIndx); % DJK 071207
     % explicitly set the colormap's first entry to black for background
@@ -245,10 +246,9 @@ else
       % randomly reorder mymap color entries [2,maxcolors]
       mymap(2:end,:) = mymap(I+1,:);
     end
-    mymap = [mymap ; 1 1 1]; %add white
+    mymap = [mymap; 1 1 1]; %duplicate map and add white
 end
 
-   
 if useSchnitzColors
     % Create conversiontable conversionTable(framecellnr+1)=schnitznr
     lookupForThisFrame = p.slookup(p.currentFrame, :);
@@ -293,7 +293,7 @@ if useSchnitzColors
     
     % End debug code
     %}
-
+    
     schnitzSegmentationMatrix = conversionTable(L2+1)+1;
     
     Lrgb = ind2rgb(schnitzSegmentationMatrix,mymap); 
@@ -456,6 +456,7 @@ if p.showNr~=0
         end
     end
 end
+
 end
 
 

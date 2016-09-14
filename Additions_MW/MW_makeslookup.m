@@ -15,15 +15,23 @@ s = myData.schnitzcells;
 
 %% Create lookup table
 
+% total number of individual cells (schnitzes)
 nrOfSchnitzes = length(s);
 
+% Loop over each individual cell
 for i = 1:nrOfSchnitzes
+  % Loop over the frames where it exists
   for j = 1:length(s(i).frame_nrs)
       
-    if ~isempty(s(i).frame_nrs)
+    if ~isempty(s(i).frame_nrs) 
+        
       if s(i).frame_nrs
+        
+        % slookup(framenr,cellno)=schnitznr
         slookup(s(i).frame_nrs(j),s(i).cellno(j))=i;
+        
       end
+      
     end
     
   end

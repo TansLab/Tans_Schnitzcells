@@ -512,7 +512,7 @@ elseif any(strcmp(runsections,{'allfull','trackandmanualcorrections'}))% full
     % not correct any more.
     PN_manualcheckseg(p,'manualRange',settings.currentFrameRange,'override',p.overwrite,'assistedCorrection',0); % assisted correction of because problem cells highlighted
 
-    disp('Done tracking');
+    disp('Done (full) tracking');
     
 end
 
@@ -724,10 +724,17 @@ if any(strcmp(runsections,{'allpreliminary', 'allfull','correctionsandanalysis'}
     %p.onscreen=1;
 
     DJK_addToSchnitzes_length(p);
-    NDL_addToSchnitzes_skeletonLengthMW(p);
+    
+    % In case of full analysis
+    if strcmp(settings.analysisType, 'full')
+        % Also calculate skeleton lengths
+        NDL_addToSchnitzes_skeletonLengthMW(p);
+        % And make sure DJK_addToSchnitzes_mu also uses length_skeleton
+        p.lengthFields = {'rp_length' 'length_fitCoef3b' 'length_fitNew' 'length_skeleton'};         
+    end
 
     %8 Add correct mu
-    DJK_addToSchnitzes_mu(p, 'frameSizes', settings.muWindow);
+    DJK_addToSchnitzes_mu(p, 'frameSizes', settings.muWindow); % p.lengthFields is set above
 
     % Let user know we're done
     mysound=load('gong'); sound(mysound.y);
@@ -962,7 +969,7 @@ if any(strcmp(runsections,{'allfull', 'makeoutputfull', 'rerunfullanalysis'})) %
     output = struct;
     
     % Settings up some more parameters
-    p.myID = settings.myID    
+    p.myID = settings.myID
     settings.myOutputFolder = [settings.mypathname  '\' p.movieDate  '_' p.movieName '_' p.myID  '\'];
     
     p.NW_saveDir = [settings.myOutputFolder 'misc\'];  % To send additional output to
@@ -989,12 +996,14 @@ if any(strcmp(runsections,{'allfull', 'makeoutputfull', 'rerunfullanalysis'})) %
     % ===
     activeFluorIdx = [];
     % loop over different fluor slots
+    settings.theLetters='';
     for fluorIdx = 1:3
         % check whether this fluor field was set by user in config file
         if isfield(settings,['fluor' num2str(fluorIdx)])
         if ~strcmp(upper(settings.(['fluor' num2str(fluorIdx)])),'NONE')
             % determine fluor code letter
             theLetter = upper(settings.(['fluor' num2str(fluorIdx)]));
+            settings.theLetters = [settings.theLetters theLetter];
             % set fields
             settings.fieldNamesWithFluorLetter(fluorIdx).timeFieldName = ...
                 strrep(settings.timeFieldName,'X',theLetter);
@@ -1036,12 +1045,16 @@ if any(strcmp(runsections,{'allfull', 'makeoutputfull', 'rerunfullanalysis'})) %
 
         %% Renaming for later use
         % output.branchavg{fieldname} contains average data for branches
-        output.concentrationBranch_groups = branch_groups; output.concentrationBranch_groupsControl = branch_groupsControl;
-        output.concentrationCorrData = CorrData; output.concentrationCorrDataControl = CorrDataControl;
-        output.concentrationassociatedFieldNames = associatedFieldNames;
-        output.concentrationbadSchnitzes = badSchnitzes; 
+        output.concentrationBranch_groups{fluorIdx} = branch_groups; 
+        output.concentrationBranch_groupsControl{fluorIdx} = branch_groupsControl;
+        
+        output.concentrationCorrData{fluorIdx} = CorrData; 
+        output.concentrationCorrDataControl{fluorIdx} = CorrDataControl;
+        
+        output.concentrationassociatedFieldNames{fluorIdx} = associatedFieldNames;
+        output.concentrationbadSchnitzes{fluorIdx} = badSchnitzes; 
         if exist('contourPlotData','var')
-            output.concentrationContourPlotData = contourPlotData;
+            output.concentrationContourPlotData{fluorIdx} = contourPlotData;
         end    
 
         %% create correlation functions R(rate, growth)
@@ -1058,11 +1071,13 @@ if any(strcmp(runsections,{'allfull', 'makeoutputfull', 'rerunfullanalysis'})) %
         MW_delayedScatter
 
         % Renaming for later use
-        output.rateCorrData = CorrData; output.rateCorrDataControl = CorrDataControl;
-        output.rateassociatedFieldNames = associatedFieldNames;
-        output.ratebadSchnitzes = badSchnitzes;     
+        output.rateCorrData{fluorIdx} = CorrData; 
+        output.rateCorrDataControl{fluorIdx} = CorrDataControl;
+        
+        output.rateassociatedFieldNames{fluorIdx} = associatedFieldNames;
+        output.ratebadSchnitzes{fluorIdx} = badSchnitzes;     
         if exist('contourPlotData','var')
-            output.rateContourPlotData = contourPlotData;
+            output.rateContourPlotData{fluorIdx} = contourPlotData;
         end  
 
         %% create autocorrelation functions R(Y, Y)
@@ -1077,10 +1092,14 @@ if any(strcmp(runsections,{'allfull', 'makeoutputfull', 'rerunfullanalysis'})) %
         MW_delayedScatter
         MW_autoCorr_corrtime_and_fitExponential
         % rename for later use
-        output.growthautoCorrData = CorrData; output.growthautoFieldNames = associatedFieldNames; output.growthautoBadSchnitzes = badSchnitzes;     
+        output.growthautoCorrData = CorrData; 
+        output.growthautoFieldNames = associatedFieldNames; 
+        output.growthautoBadSchnitzes = badSchnitzes;     
         % note that noise parameters are based on all branch data lumped
         % together, it would be better to take raw schnitzcells data as input.
-        output.growthNoise = theNoise; output.growthMean = theMean; output.growthStd = theStd;
+        output.growthNoise = theNoise; 
+        output.growthMean = theMean; 
+        output.growthStd = theStd;
 
         %% concentration
         associatedFieldNames = {settings.fieldNamesWithFluorLetter(fluorIdx).timeFieldName, settings.fieldNamesWithFluorLetter(fluorIdx).fluorFieldName, settings.fieldNamesWithFluorLetter(fluorIdx).fluorFieldName};
@@ -1088,10 +1107,14 @@ if any(strcmp(runsections,{'allfull', 'makeoutputfull', 'rerunfullanalysis'})) %
         MW_delayedScatter
         MW_autoCorr_corrtime_and_fitExponential
         % rename for later use
-        output.concentrationautoCorrData = CorrData; output.concentrationautoFieldNames = associatedFieldNames; output.concentrationautoBadSchnitzes = badSchnitzes; 
+        output.concentrationautoCorrData{fluorIdx} = CorrData; 
+        output.concentrationautoFieldNames{fluorIdx} = associatedFieldNames; 
+        output.concentrationautoBadSchnitzes{fluorIdx} = badSchnitzes; 
         % note that noise parameters are based on all branch data lumped
         % together, it would be better to take raw schnitzcells data as input.
-        output.concentrationNoise = theNoise; output.concentrationMean = theMean; output.concentrationStd = theStd;
+        output.concentrationNoise{fluorIdx} = theNoise; 
+        output.concentrationMean{fluorIdx} = theMean; 
+        output.concentrationStd{fluorIdx} = theStd;
 
         %% rate
         associatedFieldNames = {settings.fieldNamesWithFluorLetter(fluorIdx).timeFieldNameDerivative, settings.fieldNamesWithFluorLetter(fluorIdx).fluorDerivativeFieldName, settings.fieldNamesWithFluorLetter(fluorIdx).fluorDerivativeFieldName};
@@ -1099,11 +1122,43 @@ if any(strcmp(runsections,{'allfull', 'makeoutputfull', 'rerunfullanalysis'})) %
         MW_delayedScatter
         MW_autoCorr_corrtime_and_fitExponential        
         % rename for later use
-        output.rateautoCorrData = CorrData; output.rateautoFieldNames = associatedFieldNames; output.rateautoBadSchnitzes = badSchnitzes; 
+        output.rateautoCorrData{fluorIdx} = CorrData; 
+        output.rateautoFieldNames{fluorIdx} = associatedFieldNames; 
+        output.rateautoBadSchnitzes{fluorIdx} = badSchnitzes; 
         % note that noise parameters are based on all branch data lumped
         % together, it would be better to take raw schnitzcells data as input.
-        output.rateNoise = theNoise; output.rateMean = theMean; output.rateStd = theStd;
+        output.rateNoise{fluorIdx} = theNoise; 
+        output.rateMean{fluorIdx} = theMean; 
+        output.rateStd{fluorIdx} = theStd;
     
+        %% Create cross-correlation functions for fluorescent colors
+        disp('Making crosscorrs for color vs. color');
+        
+        if numel(activeFluorIdx)>1
+        for fluorIdx2 = fluorIdx+1:max(activeFluorIdx)            
+            
+            %% concentration fluor N vs fluor M
+            associatedFieldNames = {settings.fieldNamesWithFluorLetter(fluorIdx).timeFieldName, settings.fieldNamesWithFluorLetter(fluorIdx).fluorFieldName, settings.fieldNamesWithFluorLetter(fluorIdx2).fluorFieldName};
+            % execute analysis scripts
+            MW_delayedScatter
+            MW_autoCorr_corrtime_and_fitExponential
+            % rename for later use
+            output.(['concentrationDualCrossCorrData' settings.theLetters(fluorIdx) settings.theLetters(fluorIdx2)]) = CorrData; 
+            output.(['concentrationDualCrossCorrFieldNames' settings.theLetters(fluorIdx) settings.theLetters(fluorIdx2)]) = associatedFieldNames; 
+            output.(['concentrationDualCrossCorrBadSchnitzes' settings.theLetters(fluorIdx) settings.theLetters(fluorIdx2)]) = badSchnitzes; 
+
+            %% rate fluor N vs fluor M
+            associatedFieldNames = {settings.fieldNamesWithFluorLetter(fluorIdx).timeFieldNameDerivative, settings.fieldNamesWithFluorLetter(fluorIdx).fluorDerivativeFieldName, settings.fieldNamesWithFluorLetter(fluorIdx2).fluorDerivativeFieldName};
+            % execute analysis scripts
+            MW_delayedScatter
+            MW_autoCorr_corrtime_and_fitExponential        
+            % rename for later use
+            output.(['rateDualCrossCorrData' settings.theLetters(fluorIdx) settings.theLetters(fluorIdx2)]) = CorrData; 
+            output.(['rateDualCrossFieldNames' settings.theLetters(fluorIdx) settings.theLetters(fluorIdx2)]) = associatedFieldNames; 
+            output.(['rateDualCrossBadSchnitzes' settings.theLetters(fluorIdx) settings.theLetters(fluorIdx2)]) = badSchnitzes; 
+            
+        end
+        end
     end
     
     %% Clear savedirs in case reran

@@ -80,10 +80,10 @@ if DEBUGMODE
     frame2PicColored(:,:,2) = frame2Pic; % color red channel
     frame2PicColored(:,:,3) = frame2Pic; % color red channel
     % show them
-    figure(1); imshow(frame1PicColored.*frame2PicColored)
+    h1=figure(); imshow(frame1PicColored.*frame2PicColored)
     
-    %figure(2); imshow(OverlappingWithPrevious,[]);
-    %figure(3); imshow(Lout,[]);
+    %h2=figure(); imshow(OverlappingWithPrevious,[]);
+    %h3=figure(); imshow(Lout,[]);
     cellstodelete
 end
 
@@ -91,6 +91,6 @@ end
 Lout(ismember(Lout,cellstodelete)) = 0;
 
 if DEBUGMODE
-    figure(4); imshow(Lout,[]);
+    h4=figure(); imshow(Lout,[]);
 end
 

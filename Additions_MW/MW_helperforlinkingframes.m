@@ -22,7 +22,7 @@ linklist=[];
 % Frame n in blue, frame n+1 in red.
 
 % Create figure
-h = figure(1); clf; hold on;
+h1 = figure(); clf; hold on;
 
 % Start with labels on
 showlabels=1;

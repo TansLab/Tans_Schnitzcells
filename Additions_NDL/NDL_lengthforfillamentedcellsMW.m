@@ -143,10 +143,10 @@ for framenr = frameRange
         
         if extraOutput
             % show original
-            figure(1); clf; 
+            h1=figure(); clf; 
             imshow(Lc,[]);
             % show conversion
-            figure(2); clf;
+            h2=figure(); clf;
             axis equal;
             plot(x,y,'.');
         end
@@ -169,7 +169,7 @@ for framenr = frameRange
         % binaryImage=padarray(binaryImage,[paddingsize,paddingsize]);
 
         if extraOutput
-            figure(3);
+            h3=figure();
             imshow(binaryImage);
         end
         % calculate total area of bacterium
@@ -180,7 +180,7 @@ for framenr = frameRange
         %binaryImageSkeletonized = skeleton(binaryImage); % downloaded this, but to tricky to get to work
 
         if extraOutput
-            figure(4); clf;
+            h4=figure(); clf;
             imshow(binaryImageSkeletonized)
             imshow((binaryImage+binaryImageSkeletonized)/2,[])
         end
@@ -197,7 +197,7 @@ for framenr = frameRange
         edge = boundaries{1,1}; % Extracts correct edge of the 2 determined boundaries
         
         if extraOutput
-            figure(71); clf; hold on;
+            h71=figure(); clf; hold on;
             axis equal;
             
             plot(edge(:,1),edge(:,2))            
@@ -207,7 +207,7 @@ for framenr = frameRange
         endsBeforeSpurring = bwmorph(binaryImageSkeletonized,'endpoints');
         
         if extraOutput
-            figure(50); clf;
+            h50=figure(); clf;
             imshow(endsBeforeSpurring)
         end
         %% % Calculate number of ends before removing branches
@@ -296,7 +296,7 @@ for framenr = frameRange
         ends = bwmorph(binarySkeletonBranchless,'endpoints');
         
         if extraOutput
-            figure(51); clf;
+            h51=figure(); clf;
             imshow(ends)
         end
         %% % Finds x & y values of endings after removing branches
@@ -348,12 +348,12 @@ for framenr = frameRange
         skeletonXYpoleToPole = twotimesSkeletonBoundary(poleIndex:poleIndex+round((size(skeletonBoundary,1)+1)/2-1),:); % -1 to correct for poleIndex
         
         if extraOutput
-            figure(5); clf;
+            h5=figure(); clf;
             imshow((binarySkeletonBranchless+binaryImage)/2)
         end
         
         if extraOutput
-            figure(71); clf; hold on;
+            h71=figure(); clf; hold on;
             axis equal;
             
             plot(edge(:,1),edge(:,2))            
@@ -556,7 +556,7 @@ for framenr = frameRange
         %% % Plot extrapolations and segmented edges
         if extraOutput
             %%
-            figure(72); clf; axis equal; hold on;            
+            h72=figure(); clf; axis equal; hold on;            
             
             plot(edge(:,1),edge(:,2));
             %plot(extrapolatedSkeleton1(:,1),extrapolatedSkeleton1(:,2)); % Nick's extrapolation (old)
@@ -738,9 +738,9 @@ for framenr = frameRange
         
          %% summary plot
         if extraOutput || SAVESUMMARYPLOTS
-            h = figure(72); clf; axis equal; hold on;
+            h72 = figure(72); clf; axis equal; hold on;
             if SAVESUMMARYPLOTS % hide figure if it is saved to disk
-                set(h,'visible','off');
+                set(h72,'visible','off');
             end
             
             plot(edge(:,1),edge(:,2));
@@ -771,7 +771,7 @@ for framenr = frameRange
                     mkdir(theOutputdir)
                 end;
 
-                saveas(h,[theOutputdir 'fr' num2str(framenr) 'cellno' num2str(cellno) '.tif']);
+                saveas(h72,[theOutputdir 'fr' num2str(framenr) 'cellno' num2str(cellno) '.tif']);
             end
         end
         
@@ -854,7 +854,7 @@ end
 %     Dmask(D < distanceToBranchPt) =true;
 % end
 % skelD = skel - Dmask;
-% figure(60); clf;
+% h60=figure(); clf;
 % imshow(skelD);
 % hold all;
 % [y,x] = find(B); plot(x,y,'ro')

@@ -18,14 +18,14 @@ end;
 for i = 1:length(allExtendedSkeletons)
     for j = 1:length(allExtendedSkeletons{i})
 
-    h=figure(2); clf;
+    h2=figure(); clf;
     axis equal; hold on;
     
     plot(allExtendedSkeletons{i}{j}(:,1),allExtendedSkeletons{i}{j}(:,2));    
     plot(allExtendedSkeletons{i}{j}(:,1),allExtendedSkeletons{i}{j}(:,2));
     plot(allEdges{i}{j}(:,1),allEdges{i}{j}(:,2));
     
-    saveas(h,[theOutputdir 'fr' num2str(i) 'cellno' num2str(j) '.tif']);
+    saveas(h2,[theOutputdir 'fr' num2str(i) 'cellno' num2str(j) '.tif']);
     
     end
 end

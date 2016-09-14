@@ -209,7 +209,9 @@ for yfieldbranchtoplot=[2,3]
     distinguishableColors = distinguishable_colors(numel(branchData)+1,[1 1 1]); 
 
     % Plot all branches
-    figure(1); clf; hold on;
+    h1=figure(); clf; hold on;
+    offset=100; width1=800; height1=600;
+    set(h1, 'Position', [offset offset width1 height1]);
     numelBranches = numel(branchData);
     for branchIdx = 1:numelBranches
         l = plot(branchData(branchIdx).(associatedFieldNames{1}), branchData(branchIdx).(associatedFieldNames{yfieldbranchtoplot}),'-o','Color',distinguishableColors(branchIdx,:))
@@ -242,7 +244,7 @@ for yfieldbranchtoplot=[2,3]
     MW_makeplotlookbetter(20);
     
     % Plot histogram
-    figure(2), clf, hold on
+    h2=figure(h), clf, hold on
     allYdata = [branchData.(associatedFieldNames{yfieldbranchtoplot})];
     [nelements, centers] = hist(allYdata,200)
     deltaY = centers(2)-centers(1);
@@ -278,7 +280,7 @@ for yfieldbranchtoplot=[2,3]
     plot([sigma5(2),sigma5(2)],[0,myYlim],':','Color',[.5 .5 .5],'LineWidth', 2)
 
     % Now also plot confidence intervals in previous figure
-    figure(1), hold on;
+    figure(h1), hold on;
     l1=plot([0,myXlimFig1],[sigma2(1),sigma2(1)],'--','Color',[.5 .5 .5],'LineWidth', 2)
     plot([0,myXlimFig1],[sigma2(2),sigma2(2)],'--','Color',[.5 .5 .5],'LineWidth', 2)
     l2=plot([0,myXlimFig1],[sigma5(1),sigma5(1)],':','Color',[.5 .5 .5],'LineWidth', 2)
@@ -311,14 +313,14 @@ for yfieldbranchtoplot=[2,3]
     suspiciousBranches        
 
     % Plot mean behavior
-    figure(1), hold on;
+    figure(h1), hold on;
     plot(meanXvector, meanYvector,'-','Color','k','LineWidth',3)
     
-    saveas(1,[myOutputFolder 'TIF_branches_' associatedFieldNames{1,yfieldbranchtoplot} '.tif']);
-    saveas(1,[myOutputFolder 'EPS_branches_' associatedFieldNames{1,yfieldbranchtoplot} '.eps'],'epsc');
+    saveas(h1,[myOutputFolder 'TIF_branches_' associatedFieldNames{1,yfieldbranchtoplot} '.tif']);
+    saveas(h1,[myOutputFolder 'EPS_branches_' associatedFieldNames{1,yfieldbranchtoplot} '.eps'],'epsc');
 
-    saveas(2,[myOutputFolder 'TIF_PDF_' associatedFieldNames{1,yfieldbranchtoplot} '.tif']);
-    saveas(2,[myOutputFolder 'EPS_PDF_' associatedFieldNames{1,yfieldbranchtoplot} '.eps'],'epsc');
+    saveas(h2,[myOutputFolder 'TIF_PDF_' associatedFieldNames{1,yfieldbranchtoplot} '.tif']);
+    saveas(h2,[myOutputFolder 'EPS_PDF_' associatedFieldNames{1,yfieldbranchtoplot} '.eps'],'epsc');
     
     % For later output
     output.branchavg.([associatedFieldNames{yfieldbranchtoplot} '_xfield']) = meanXvector; % usually time
@@ -353,15 +355,28 @@ p.extraNorm=0;
 [CorrData,composite_corr] = DJK_plot_crosscorrelation_standard_error_store(p, branch_groups, [FIELDPREFIX associatedFieldNames{1,2}],[FIELDPREFIX associatedFieldNames{1,3}] ,'selectionName',name_rm_branch,'timeField',associatedFieldNames{1},'onScreen',ONSCREEN); 
 
 % For negative control, combine growth rates and fluor signal traces randomly
-branch_groupsControl = branch_groups;
-for groupIdx=1:numel(branch_groupsControl)
-    data = {branch_groupsControl(groupIdx).branches(:).(associatedFieldNames{1,3})};
+% control one becomes equal to original
+branch_groupsControl = struct;
+for groupIdx=1:numel(branch_groups)
+    % Get original data for last field
+    data = {branch_groups(groupIdx).branches(:).(associatedFieldNames{1,3})};
+    % Randomize data for last field
     randomizeddata = {data{randperm(numel(data))}};
+    
+    % Repeat above for noise_(..) fields
+    % Get original data for last field
     noisedata = {branch_groupsControl(groupIdx).branches(:).([FIELDPREFIX associatedFieldNames{1,3}])};
+    % Randomize data for last field
     noiserandomizeddata = {noisedata{randperm(numel(noisedata))}};
+    
+    % for each branch
     for i=1:numel(branch_groupsControl(groupIdx).branches)
-        branch_groupsControl(groupIdx).branches(i).(associatedFieldNames{1,3}) = randomizeddata{i};
-        branch_groupsControl(groupIdx).branches(i).([FIELDPREFIX associatedFieldNames{1,3}]) = noiserandomizeddata{i};
+        % set to randomized lineages within that branch
+        branch_groupsControl(groupIdx).branches(i).(associatedFieldNames{1,3}) = ...
+            randomizeddata{i};
+        % set to randomized lineages within that branch
+        branch_groupsControl(groupIdx).branches(i).([FIELDPREFIX associatedFieldNames{1,3}]) = ...
+            noiserandomizeddata{i};
     end
 end
 
@@ -391,7 +406,7 @@ if NOTMEANSUBTRACTED
     if ~exist('SHOWPLUSMINFROMZERO','var'), SHOWPLUSMINFROMZERO = 25; end
     
     % Set up figure
-    figure(98), clf, hold on;
+    h98=figure(), clf, hold on;
     
     % Redundant with below
     indexMidpoint = ceil(numel(iTausCalculated)/2)
@@ -432,12 +447,12 @@ end
 
 %% Plot "raw" cross cor I calculate (MW)
 
-myfig=figure(99),clf,hold on;
+myfig=figure(),clf,hold on;
 l=plot(iTausCalculated,correlationsPerTau,'o-r','LineWidth',2)
 
 %% Compare two cross-corrs (DJK & MW)
 
-myfig=figure(5),clf,hold on;
+h5=figure(),clf,hold on;
 
 % Plot DJK cross correlation function
 errorbar(CorrData(:,1),CorrData(:,2),CorrData(:,3),'s-','Color', [.5,.5,.5], 'LineWidth',2)
@@ -477,8 +492,8 @@ set(gca,'FontSize',15);
 
 plot([0,0],[-1,1],'-k');
 
-saveas(myfig,[myOutputFolder 'TIF_crosscorrs_' associatedFieldNames{1,2} '_' associatedFieldNames{1,3} '.tif']);
-saveas(myfig,[myOutputFolder 'EPS_crosscorrs_' associatedFieldNames{1,2} '_' associatedFieldNames{1,3} '.eps'],'epsc');
+saveas(h5,[myOutputFolder 'TIF_crosscorrs_' associatedFieldNames{1,2} '_' associatedFieldNames{1,3} '.tif']);
+saveas(h5,[myOutputFolder 'EPS_crosscorrs_' associatedFieldNames{1,2} '_' associatedFieldNames{1,3} '.eps'],'epsc');
 
 
 
@@ -503,12 +518,12 @@ numelRangeiTausCalculated = numel(rangeiTausCalculated);
 myColorMap = colormap(winter(numel(iTausCalculated)));
 
 if PLOT3DSCATTER
-    hFig = figure(2); clf; hold on;
+    h2 = figure(); clf; hold on;
     offset=100; width1=500; height1=500;
-    set(hFig, 'Position', [offset offset width1 height1]);
+    set(h2, 'Position', [offset offset width1 height1]);
 end
 
-hFig = figure(3); 
+h3 = figure(); 
 if ~FIGUREVISIBLE, set(gcf,'Visible', 'off'); end
 clf; hold on;
 
@@ -523,16 +538,16 @@ for delayIdx = rangeiTausCalculated
     
     % plot scatter
     if PLOT3DSCATTER
-        hFig = figure(2);
+        h2 = figure(h2);
         if ~FIGUREVISIBLE, set(gcf,'Visible', 'off'); end
         hold on;
         scatter3(data(:,1),data(:,2),ones(1,numel(data(:,2)))*iTausCalculated(delayIdx),3,myColorMap(delayIdx,:),'.');%,'Color',distinguishableColors(myGrouping(i)+1,:),'MarkerSize',3);
     end
 
     % plot
-    set(0,'CurrentFigure',3); clf, hold on;
+    figure(h3); clf, hold on;
     offset=100; width1=500; height1=500;
-    set(hFig, 'Position', [(offset+width1) offset width1 height1]);     
+    set(h3, 'Position', [(offset+width1) offset width1 height1]);     
 
     % scatter
     for pointIdx = 1:numel(data(:,1))
@@ -561,8 +576,8 @@ for delayIdx = rangeiTausCalculated
     xlim([  min(dataPairsPerTau{indexMidpoint}(:,1)), max(dataPairsPerTau{indexMidpoint}(:,1))  ])
     ylim([  min(dataPairsPerTau{indexMidpoint}(:,2)), max(dataPairsPerTau{indexMidpoint}(:,2))  ])
 
-    saveas(3,[myOutputFolder 'TIF_z_graphTauIdx_' associatedFieldNames{1,2} '_' sprintf('%05d',delayIdx) '.tif']);
-    saveas(3,[myOutputFolder 'EPS_z_graphTauIdx_' associatedFieldNames{1,2} '_' sprintf('%05d',delayIdx) '.eps'],'epsc');   
+    saveas(h3,[myOutputFolder 'TIF_z_graphTauIdx_' associatedFieldNames{1,2} '_' sprintf('%05d',delayIdx) '.tif']);
+    saveas(h3,[myOutputFolder 'EPS_z_graphTauIdx_' associatedFieldNames{1,2} '_' sprintf('%05d',delayIdx) '.eps'],'epsc');   
 
     % Let user know progress
     count=count+1;
@@ -598,7 +613,7 @@ legend( legendLines, legendDescriptions,'Location','northeast');
 %}
 
 if PLOT3DSCATTER && ~CALCULATEONLY
-    figure(2);
+    figure(h2);
     xlabel('Growth rate (dbl/hr)');
     ylabel('Concentration (a.u.)');
     %Set all fontsizes
@@ -615,7 +630,7 @@ end
 MAXLAGS=40; % width of the correlation function, i.e. frames lag 
 
 % Plot all branches
-figure(4); clf; hold on;
+h4=figure(); clf; hold on;
 numelBranches = numel(branchData);
 lengthCorr = MAXLAGS*2+1;
 meanR = zeros(1,lengthCorr); meanTau = zeros(1,lengthCorr); 

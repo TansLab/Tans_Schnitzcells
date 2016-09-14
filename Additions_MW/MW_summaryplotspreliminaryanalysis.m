@@ -57,8 +57,9 @@ for i = 1:numelThedata
         frameData(count).frame_nr = frameNr;
         
         % Select relevant data for this frame
-        %{
+        
         %applicable to preliminary proxy schnitzcells structs only
+        %{
         indexesForThisFrame = find([currentSchnitzcells(:).frame_nrs] == frameNr);
         currentFrameSchnitzes = currentSchnitzcells(indexesForThisFrame);
         %}
@@ -99,7 +100,7 @@ for i = 1:numelThedata
         frameSummedLength=0;
         for idx=1:hitCount
             frameSummedLength = frameSummedLength + ...
-                relevantSchnitzes(schnitzNrAndIndexForCurrentFrame(idx,1)).length_fitNew(schnitzNrAndIndexForCurrentFrame(idx,2));
+                relevantSchnitzes(idx).length_fitNew(schnitzNrAndIndexForCurrentFrame(idx,2));
         end
         frameData(count).frameSummedLength = frameSummedLength
         %frameData(count).frameSummedLength = sum([relevantSchnitzes.length_fitNew]);      
@@ -108,13 +109,15 @@ for i = 1:numelThedata
         for fluorIdx = FLUORIDXTOPLOT            
             fluorFieldName = [upper(currentP.(['fluor' num2str(fluorIdx)])(1)) '5_mean_all'];
             
-            frameFluorSum=0;
+            frameFluorSum=0; frameFluorvalues=[];
             for idx=1:hitCount
                 frameFluorSum = frameFluorSum + ...
-                    relevantSchnitzes(schnitzNrAndIndexForCurrentFrame(idx,1)).(fluorFieldName)(schnitzNrAndIndexForCurrentFrame(idx,2));
+                    relevantSchnitzes(idx).(fluorFieldName)(schnitzNrAndIndexForCurrentFrame(idx,2));
+                frameFluorvalues = [frameFluorvalues ...
+                    relevantSchnitzes(idx).(fluorFieldName)(schnitzNrAndIndexForCurrentFrame(idx,2))];
             end
             frameData(count).frameFluorSum(fluorIdx) = frameFluorSum;
-            %frameData(count).fluorMean(fluorIdx) = mean([relevantSchnitzes.(fluorFieldName)]);
+            frameData(count).fluorMean(fluorIdx) = mean(frameFluorvalues);
         end
                 
     end
@@ -142,7 +145,7 @@ end
 
 %% Go over positions again and now create fluor plots======================
 
-figure(1); clf;
+h1=figure(); clf;
 
 plotrows=numel(FLUORIDXTOPLOT);
 
@@ -176,8 +179,10 @@ for fluorIdx = FLUORIDXTOPLOT
         timeDataPile = [timeDataPile, alldata(i).frameData(:).frameTime];
     end
     maxtimeDataPile=max(timeDataPile);
-    fluorYlim1{fluorIdx} = [0,max(fluordatapile)*1.1];
-    ylim(fluorYlim1{fluorIdx});
+    if ~isnan(max(fluordatapile))
+        fluorYlim1{fluorIdx} = [0,max(fluordatapile)*1.1];
+        ylim(fluorYlim1{fluorIdx});
+    end    
     xlim([0,maxtimeDataPile]);
 
     % Set title etc.
@@ -212,8 +217,10 @@ for fluorIdx = FLUORIDXTOPLOT
         currentTimes = [alldata(i).frameData(:).frameTime];
         l = plot(currentTimes(notNanIndices),currentFluorY(notNanIndices),'-x');
         % cosmetics
-        set(l, 'LineWidth', 2, 'Color', mycolors(i,:));
-        lines(end+1)=l; % for legend later
+        if ~isempty(l)
+            set(l, 'LineWidth', 2, 'Color', mycolors(i,:));
+            lines(end+1)=l; % for legend later
+        end
 
     end
     xlim([0,maxtimeDataPile]);
@@ -231,12 +238,12 @@ for fluorIdx = FLUORIDXTOPLOT
     legend(lines, {alldata(positionIndices).label},'Location', 'NorthOutside');
 
     % save the figure 
-    saveas(1, [MYDIR 'summaryPlot_fluorsignal.tif'],'tif');
-    saveas(1, [MYDIR 'summaryPlot_fluorsignal.eps'],'epsc');
+    saveas(h1, [MYDIR 'summaryPlot_fluorsignal.tif'],'tif');
+    saveas(h1, [MYDIR 'summaryPlot_fluorsignal.eps'],'epsc');
 end
 
 %% Go over positions again and now create length/growth plots==============
-figure(2); clf; 
+h2=figure(); clf; 
 
 flag=0;
 if exist('settings','var') 
@@ -246,7 +253,7 @@ if exist('settings','var')
     end
 end
 if ~flag
-    FITWINDOW = [250,550];
+    FITWINDOW = [0,800];
     warning('FITWINDOW set to default');
 end
 
@@ -312,8 +319,8 @@ xlabel('time (min)');
 ylabel('fitted growth rate (doublings/hour)');
 
 % save the figure 
-saveas(2, [MYDIR 'summaryPlot_colonylength.tif'],'tif');
-saveas(2, [MYDIR 'summaryPlot_colonylength.eps'],'epsc');
+saveas(h2, [MYDIR 'summaryPlot_colonylength.tif'],'tif');
+saveas(h2, [MYDIR 'summaryPlot_colonylength.eps'],'epsc');
 
 %% plot for 2 growth regimes
 

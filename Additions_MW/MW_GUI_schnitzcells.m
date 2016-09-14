@@ -37,6 +37,7 @@ gui_State = struct('gui_Name',       mfilename, ...
                    'gui_OutputFcn',  @MW_GUI_schnitzcells_OutputFcn, ...
                    'gui_LayoutFcn',  [] , ...
                    'gui_Callback',   []);
+
 if nargin && ischar(varargin{1})
     gui_State.gui_Callback = str2func(varargin{1});
 end
@@ -745,9 +746,9 @@ framenr = get(handles.framenr,'String');
 slicenr = get(handles.slicenr,'String');
 
 myimg = imread([p.imageDir p.movieName '-p-' slicenr '-' framenr '.tif']);
-figure(2); imshow(myimg, []);
+h2=figure(); imshow(myimg, []);
 
-figure(3); 
+h3=figure(); 
 for i=1:3
     subplot(3,1,i); hold on;
     myimg = imread([p.imageDir p.movieName '-p-' num2str(i) '-' framenr '.tif']);
@@ -771,8 +772,8 @@ framenr = get(handles.framenr,'String');
 %slicenr = get(handles.slicenr,'String');
 
 % crete fig and make (almost) full screen
-f=figure(2); 
-set(f, 'units','normalized', 'Position', [0.05,0.05,.9,.8]); % left bottom width height
+h2=figure(); 
+set(h2, 'units','normalized', 'Position', [0.05,0.05,.9,.8]); % left bottom width height
 
 % plot all slices
 for i=1:3
@@ -923,11 +924,11 @@ p = evalin('base', 'p');
 settings = evalin('base', 'settings');
 
 myimg = imread([p.imageDir p.movieName '-p-' '2' '-' sprintf('%03d',min(settings.currentFrameRange)) '.tif']);
-figure(2); clf; imshow(myimg, []);
+h2=figure(); clf; imshow(myimg, []);
 
 p.customColonyCenter = round(ginput(1))
 
-close(1);
+close(h2);
 
 %cellno1 = (location(2),location(1));
 

@@ -377,7 +377,7 @@ for framenr=p.frameRange
         
         
         % actual plotting
-        fig1=figure(1);
+        fig1=figure();
         set(fig1,'Position', [50 50 size(plotFieldImage,2), size(plotFieldImage,1)]);
         clf
         colormap(p.myColorMap)
@@ -417,7 +417,7 @@ for framenr=p.frameRange
         % ARITHMETIC MEAN
         if showscatterplot_arithm==1
             
-        fig2=figure(2);
+        fig2=figure();
         set(fig2,'Position', [50 50 800 600]);
         clf
         plot(dist_arithm,mu,'.r')
@@ -454,7 +454,7 @@ for framenr=p.frameRange
         % MASS MEAN
         if showscatterplot_mass==1
         
-        fig3=figure(3);
+        fig3=figure();
         set(fig3,'Position', [50 50 800 600]);
         clf
         plot(dist_mass,mu,'.b')

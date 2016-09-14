@@ -161,13 +161,12 @@ fig1Name=['meanBinnedData_', fieldY];
 fig2Name=['interpolation_', fieldY, '_', p.interpolMethodCC];
 
 % initiate figures
-close(figure(1)); close(figure(2));
-fig1=figure(1);
+fig1=figure(); clf;
 scrsz = get(0, 'ScreenSize');
 set(fig1,'Position', [50 50 scrsz(3)-200 scrsz(4)-150], 'Name', fig1Name);%, 'visible','off');
 clf
 hold on
-fig2=figure(2);
+fig2=figure(); clf;
 scrsz = get(0, 'ScreenSize');
 set(fig2,'Position', [50 50 scrsz(3)-200 scrsz(4)-150], 'Name', fig2Name);%, 'visible','off');
 clf

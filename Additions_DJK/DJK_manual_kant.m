@@ -306,7 +306,7 @@ if ct
 
       % dilate into original cell
       if (DJK_settings.fill_cut)
-        cutcell_dilated = carefuldilate( cutcell, strel('diamond',1), 2, Lcell); %figure(111);imshowlabel(cutcell);figure(112);imshowlabel(cutcell_dilated);pause;close(111);close(112);
+        cutcell_dilated = carefuldilate( cutcell, strel('diamond',1), 2, Lcell); 
         cutcell = cutcell_dilated; % not required with carefuldilate: cutcell(find(Lcell>0)) = cutcell_dilated(find(Lcell>0));
       end
       
@@ -380,11 +380,11 @@ else
     ymax = min(max(fy)+5,size(cell,2));
     subcell = cell(xmin:xmax, ymin:ymax);
     % subcell is only cell that will be cut
-    % figure(1);imshowlabel(subcell);pause;close(1);
+    
     
     % perim is perimeter of dilated cell
     perim = bwperim(imdilate(subcell,strel('disk',1)));
-    % figure(1);imshowlabel(perim);pause;close(1);
+    
 
     % starting from clicked point, will increase a box untill 2 sides are
     % found: this will be perims
@@ -398,7 +398,7 @@ else
       perims(pxmin:pxmax,pymin:pymax) = bwlabel(perim(pxmin:pxmax,pymin:pymax));
       radp = radp+1;
     end
-    % figure(1);imshowlabel(perims);pause;close(1);
+    
 
     % if indeed 2 sides are found, will cut
     if max2(perims)>1

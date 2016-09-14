@@ -16,13 +16,13 @@ output_name = ['D' img_name]
 my_image = int16(my_image);
 
 % Show image
-h = figure(1);
+h1 = figure();
 imshow(my_image,my_colormap);
 
 % Select average from which to determine average background________________
 
 % Select region from which to determine average
-my_rect = round(getrect(h))
+my_rect = round(getrect(h1))
 % Rename vars for clearity - note counter-intuitive x/y 
 my_xmin = my_rect(1); my_ymin = my_rect(2); 
 my_xmax = my_rect(1)+my_rect(3); my_ymax = my_rect(2)+my_rect(4);
@@ -39,7 +39,7 @@ my_min = min(my_avg_area(:));
 my_min_margin = my_min * min_multiplier;
 my_min_prctile = prctile(my_avg_area(:),my_prctile);
 
-m = figure(101);
+m = figure();
 hist(double(my_avg_area(:)),[double(min(my_avg_area(:))):1:double(max(my_avg_area(:)))]);
 
 % Determine delta image____________________________________________________
@@ -48,7 +48,7 @@ hist(double(my_avg_area(:)),[double(min(my_avg_area(:))):1:double(max(my_avg_are
 my_delta_image = my_image;
 my_delta_image = my_delta_image - my_mean;
 
-h = figure(102);
+h102 = figure();
 
 %norm_my_delta_image = (my_delta_image - min(my_delta_image(:))) / (max(my_delta_image(:)) - min(my_delta_image(:)));
 
@@ -93,7 +93,7 @@ for y = [1:size(my_image,1)]
 end
 
 % Show dust image
-h = figure(2);
+h2 = figure();
 imshow(my_dust_image);
 
 % Save image_______________________________________________________________
@@ -103,7 +103,7 @@ imshow(my_dust_image);
 my_shiny_image = uint16(my_shiny_image);
 
 % Show result
-h = figure(3);
+h3 = figure();
 imshow(my_shiny_image,my_colormap);
 
 % Get old image metadata
@@ -149,7 +149,7 @@ my_image = offset_my_image;
 my_image = int16(my_image);
 
 % Show image
-h = figure(1);
+h1 = figure();
 imshow(my_image,my_colormap);
  
 % Subtract average image __________________________________________________
@@ -197,7 +197,7 @@ end
 my_shiny_image = uint16(my_shiny_image);
 
 % Show result
-h = figure(3);
+h3 = figure();
 imshow(my_shiny_image,my_colormap);
 
 % Get old image metadata

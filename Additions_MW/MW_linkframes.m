@@ -77,14 +77,14 @@ end
 data=load(segFile1Path,'Lc');
 frame1=data.Lc;
 if debugmode
-    figure(1)
+    h1=figure()
     PN_imshowlabel(p,frame1,[],[],[]);
 end
 % Load file 2
 data=load(segFile2Path,'Lc');
 frame2=data.Lc;
 if debugmode
-    figure(2), PN_imshowlabel(p,frame2,[],[],[]);
+    h2=figure(), PN_imshowlabel(p,frame2,[],[],[]);
 end
 
 myColors = [0,0,0; distinguishable_colors(max([frame1(:); frame2(:)]),[0,0,0])];
@@ -103,7 +103,7 @@ frame2BW = (frame2>0);
 frame2BWarea=imdilate(frame2BW,se);
 frame2BWarea=imerode(frame2BWarea,se);
 
-%figure(3), imshow(frame2BWwork)
+%figure(), imshow(frame2BWwork)
 
 
 %% Perimiter image
@@ -113,10 +113,10 @@ if debugmode
     %perimImg = imdilate(perimImg,strel('disk',3,4)); % imdilate use TODO can be optimized
 
     areaImg1 = frame1BWarea+frame1;
-    figure(4), PN_imshowlabel(p,areaImg1,[],[],[]);
+    h4=figure(), PN_imshowlabel(p,areaImg1,[],[],[]);
 
     areaImg2 = frame2BWarea+frame2;
-    figure(5), PN_imshowlabel(p,areaImg2,[],[],[]);    
+    h5=figure(), PN_imshowlabel(p,areaImg2,[],[],[]);    
     
 end
 
@@ -138,7 +138,7 @@ frame1resized = imresize(frame1, resizeratio,'nearest');
 
 if debugmode
     resizeratio
-    figure(6), PN_imshowlabel(p,frame1resized,[],[],[]);
+    h6=figure(), PN_imshowlabel(p,frame1resized,[],[],[]);
 end
 
  

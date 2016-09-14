@@ -20,7 +20,7 @@ s2=rescalefactor(2);
 %origimage=checkerboard(10,2); debugging
 %origimage=imread('D:\DummyExp\2012-fl-uo\TestData\pos5crop-c-035.tif');
 if showfig==1
-    figure(1);
+    h1=figure();
     clf
     colormap('gray');
     %imshow(origimage,'Border','loose')
@@ -53,7 +53,7 @@ t_aff = maketform('affine',T);
 image_affine = imtransform(origimage,t_aff,'FillValues',0.3,'XYScale',1);
 
 if showfig==1
-    figure(2);
+    h2=figure();
     hold off
     clf
     colormap('gray');
@@ -99,7 +99,7 @@ imagescaled(1:imagedim(1),1:imagedim(2))=image_affine(1+rowshift:imagedim(1)+row
 
 
 if showfig==1
-    figure(3);
+    h3=figure();
     hold off
     clf
     colormap('gray');

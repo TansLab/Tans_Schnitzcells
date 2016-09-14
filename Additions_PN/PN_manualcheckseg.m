@@ -149,16 +149,10 @@ disp(' ')
 quit_now=0;
 global pos Limage ourfig res pp phfig showPhase % flfig % DJK 071206
 
-% Create figures, use handle 2 and 3, as 1 could be reserved by the GUI,
-% and this leads to messy situations.
-%===
-% close potentially existing figures
-if ishandle(2), close(2); end
-if ishandle(3), close(3); end
 % create new figures
-phfig  = figure(2); clf;
+phfig  = figure(); clf;
 set(phfig, 'Visible', 'Off');
-ourfig = figure(3); clf;
+ourfig = figure(); clf;
 
 % flfig  = figure; % former version: fluor picture
 outl=length(p.segmentationDir);

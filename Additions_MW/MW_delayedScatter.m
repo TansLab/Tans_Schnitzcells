@@ -244,7 +244,7 @@ for yfieldbranchtoplot=[2,3]
     MW_makeplotlookbetter(20);
     
     % Plot histogram
-    h2=figure(h), clf, hold on
+    h2=figure(), clf, hold on
     allYdata = [branchData.(associatedFieldNames{yfieldbranchtoplot})];
     [nelements, centers] = hist(allYdata,200)
     deltaY = centers(2)-centers(1);
@@ -335,6 +335,7 @@ REDUNDANCYALLOWED = 2^2;
 ONSCREEN=1;
 NRBRANCHGROUPS=4;
 FIELDPREFIX = 'noise_';
+CONTROLSUFFIX = '_randomizedlineages';
 %FIELDPREFIX = 'relative_';
 
 % Some additional editing of the branches:
@@ -356,8 +357,13 @@ p.extraNorm=0;
 
 % For negative control, combine growth rates and fluor signal traces randomly
 % control one becomes equal to original
-branch_groupsControl = struct;
+branch_groupsControl = branch_groups;
 for groupIdx=1:numel(branch_groups)
+
+    % Clear last field (which is field that's going to be scrambled)
+    branch_groupsControl(groupIdx).(associatedFieldNames{1,3}) = [];
+    branch_groupsControl(groupIdx).([FIELDPREFIX associatedFieldNames{1,3}]) = [];
+    
     % Get original data for last field
     data = {branch_groups(groupIdx).branches(:).(associatedFieldNames{1,3})};
     % Randomize data for last field
@@ -365,22 +371,24 @@ for groupIdx=1:numel(branch_groups)
     
     % Repeat above for noise_(..) fields
     % Get original data for last field
-    noisedata = {branch_groupsControl(groupIdx).branches(:).([FIELDPREFIX associatedFieldNames{1,3}])};
+    noisedata = {branch_groups(groupIdx).branches(:).([FIELDPREFIX associatedFieldNames{1,3}])};
     % Randomize data for last field
     noiserandomizeddata = {noisedata{randperm(numel(noisedata))}};
     
     % for each branch
-    for i=1:numel(branch_groupsControl(groupIdx).branches)
+    for i=1:numel(branch_groups(groupIdx).branches)
+        
         % set to randomized lineages within that branch
-        branch_groupsControl(groupIdx).branches(i).(associatedFieldNames{1,3}) = ...
+        branch_groupsControl(groupIdx).branches(i).([associatedFieldNames{1,3} CONTROLSUFFIX]) = ...
             randomizeddata{i};
+        
         % set to randomized lineages within that branch
-        branch_groupsControl(groupIdx).branches(i).([FIELDPREFIX associatedFieldNames{1,3}]) = ...
+        branch_groupsControl(groupIdx).branches(i).([FIELDPREFIX associatedFieldNames{1,3} CONTROLSUFFIX]) = ...
             noiserandomizeddata{i};
     end
 end
 
-[CorrDataControl, composite_corrControl] = DJK_plot_crosscorrelation_standard_error_store(p, branch_groupsControl, [FIELDPREFIX associatedFieldNames{1,2}],[FIELDPREFIX associatedFieldNames{1,3}] ,'selectionName',name_rm_branch,'timeField',associatedFieldNames{1},'onScreen',ONSCREEN); 
+[CorrDataControl, composite_corrControl] = DJK_plot_crosscorrelation_standard_error_store(p, branch_groupsControl, [FIELDPREFIX associatedFieldNames{1,2}],[FIELDPREFIX associatedFieldNames{1,3} CONTROLSUFFIX] ,'selectionName',name_rm_branch,'timeField',associatedFieldNames{1},'onScreen',ONSCREEN); 
 
 % Do we want to filter out colony average behavior for the "delayed
 % scatter" plots also? Maybe do this with noise fields?

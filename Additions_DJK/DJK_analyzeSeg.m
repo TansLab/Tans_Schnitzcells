@@ -219,8 +219,8 @@ end
 % Plots nrCells vs Time logarithmically
 %--------------------------------------------------------------------------
 % make figure
-scrsz = get(0, 'ScreenSize');
-fig2 = figure('Position', [1 scrsz(4) scrsz(3) scrsz(4)]);
+screensize = get(0, 'ScreenSize');
+fig2 = figure('Position', screensize);
 hold on;
 
 % make plot 1

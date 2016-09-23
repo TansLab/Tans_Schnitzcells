@@ -1024,6 +1024,7 @@ if any(strcmp(runsections,{'allfull', 'makeoutputfull', 'rerunfullanalysis'})) %
     end
     
     %% Create all plots for all fluors
+    dualCounter=0;
     for fluorIdx = activeFluorIdx
         
 
@@ -1137,15 +1138,17 @@ if any(strcmp(runsections,{'allfull', 'makeoutputfull', 'rerunfullanalysis'})) %
         if numel(activeFluorIdx)>1
         for fluorIdx2 = fluorIdx+1:max(activeFluorIdx)            
             
+            dualCounter=dualCounter+1; 
+            
             %% concentration fluor N vs fluor M
             associatedFieldNames = {settings.fieldNamesWithFluorLetter(fluorIdx).timeFieldName, settings.fieldNamesWithFluorLetter(fluorIdx).fluorFieldName, settings.fieldNamesWithFluorLetter(fluorIdx2).fluorFieldName};
             % execute analysis scripts
             MW_delayedScatter
             MW_autoCorr_corrtime_and_fitExponential
             % rename for later use
-            output.(['concentrationDualCrossCorrData' settings.theLetters(fluorIdx) settings.theLetters(fluorIdx2)]) = CorrData; 
-            output.(['concentrationDualCrossCorrFieldNames' settings.theLetters(fluorIdx) settings.theLetters(fluorIdx2)]) = associatedFieldNames; 
-            output.(['concentrationDualCrossCorrBadSchnitzes' settings.theLetters(fluorIdx) settings.theLetters(fluorIdx2)]) = badSchnitzes; 
+            output.concentrationDualCrossCorrData{dualCounter}          = CorrData; 
+            output.concentrationDualCrossCorrFieldNames{dualCounter}    = associatedFieldNames; 
+            output.concentrationDualCrossCorrBadSchnitzes{dualCounter}  = badSchnitzes; 
 
             %% rate fluor N vs fluor M
             associatedFieldNames = {settings.fieldNamesWithFluorLetter(fluorIdx).timeFieldNameDerivative, settings.fieldNamesWithFluorLetter(fluorIdx).fluorDerivativeFieldName, settings.fieldNamesWithFluorLetter(fluorIdx2).fluorDerivativeFieldName};
@@ -1153,9 +1156,9 @@ if any(strcmp(runsections,{'allfull', 'makeoutputfull', 'rerunfullanalysis'})) %
             MW_delayedScatter
             MW_autoCorr_corrtime_and_fitExponential        
             % rename for later use
-            output.(['rateDualCrossCorrData' settings.theLetters(fluorIdx) settings.theLetters(fluorIdx2)]) = CorrData; 
-            output.(['rateDualCrossFieldNames' settings.theLetters(fluorIdx) settings.theLetters(fluorIdx2)]) = associatedFieldNames; 
-            output.(['rateDualCrossBadSchnitzes' settings.theLetters(fluorIdx) settings.theLetters(fluorIdx2)]) = badSchnitzes; 
+            output.rateDualCrossCorrData{dualCounter}       = CorrData; 
+            output.rateDualCrossFieldNames{dualCounter}     = associatedFieldNames; 
+            output.rateDualCrossBadSchnitzes{dualCounter}   = badSchnitzes; 
             
         end
         end
@@ -1177,9 +1180,10 @@ end
 
 %% Save p and settings struct to file in output dir if desired
 if any(strcmp(runsections,{'allfull', 'makeoutputfull','rerunfullanalysis'})) % full
-   save([p.dateDir 'outputandsettings_' p.movieName '.mat'], 'p', 'settings', 'schnitzcells', 'output');
+   outputFilename = [p.dateDir 'outputandsettings_' p.movieName '.mat'];
+   save(outputFilename, 'p', 'settings', 'schnitzcells', 's_rm', 'output');
    
-   disp('p (parameter), output, schnitzcells and settings structs were saved.');
+   disp(['p (parameter), output, schnitzcells and settings structs were saved to: ' outputFilename]);
 end
 
 

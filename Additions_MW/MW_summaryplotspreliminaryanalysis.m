@@ -1,5 +1,5 @@
 
-
+% See section below for input requirements
 
 %% Creating overview of the data generated during preliminary analysis
 
@@ -23,7 +23,8 @@ end
 load([MYDIR 'summaryParametersPreliminary.mat'])
 
 % optional input
-% MANUALSCHNITZLOCATIONS = {'..','..'};
+%   MANUALSCHNITZLOCATIONS = {'..','..'};
+%   FITWINDOW = settings.fitTimeMu % settings.fitTimeMu = [0, 800]
 
 % END PARAMETERS ==========================================================
 
@@ -134,7 +135,7 @@ end
 FONTSIZE=15;
 % MAKE CUSTOMCOLORS BELOW MATCH POSITIONS!
 
-mycolors=colormap('lines');
+mycolors=lines(64); % note lines is a built-in fn, should not be param w. that name
 preferredcolors=[0 0 0;0 0.568627450980392 1;0 0.709803921568627 0.235294117647059;0.545098039215686 0.450980392156863 0.92156862745098;0.564705882352941 0.552941176470588 0.619607843137255;0.909803921568627 0 0];% from some_colors.m
 preferredcolors=[preferredcolors;preferredcolors;preferredcolors];
 if ~exist('CUSTOMCOLORS','var')
@@ -189,12 +190,12 @@ for fluorIdx = FLUORIDXTOPLOT
     title('')
     MW_makeplotlookbetter(FONTSIZE);
     xlabel('time (min)');
-    ylabel('signal (a.u.)');
+    ylabel(['signal ''' currentP.(['fluor' num2str(fluorIdx)]) ''' fluor (a.u.)']);
 
     % Plot normalized fluor data-----------------------------------------------
     subplot(plotrows,2,2+(2*(fluorIdx-1)) ); hold on;
 
-    lines = [];
+    mylines = [];
     for i = positionIndices
 
         % get median
@@ -218,8 +219,8 @@ for fluorIdx = FLUORIDXTOPLOT
         l = plot(currentTimes(notNanIndices),currentFluorY(notNanIndices),'-x');
         % cosmetics
         if ~isempty(l)
-            set(l, 'LineWidth', 2, 'Color', mycolors(i,:));
-            lines(end+1)=l; % for legend later
+            set(l, 'LineWidth', 2, 'Color', CUSTOMCOLORS(i,:));
+            mylines(end+1)=l; % for legend later
         end
 
     end
@@ -235,7 +236,7 @@ for fluorIdx = FLUORIDXTOPLOT
     MW_makeplotlookbetter(FONTSIZE);
     xlabel('time (min)');
     ylabel('signal (median-normalized)');
-    legend(lines, {alldata(positionIndices).label},'Location', 'NorthOutside');
+    legend(mylines, {alldata(positionIndices).label},'Location', 'NorthOutside');
 
     % save the figure 
     saveas(h1, [MYDIR 'summaryPlot_fluorsignal.tif'],'tif');
@@ -322,9 +323,15 @@ ylabel('fitted growth rate (doublings/hour)');
 saveas(h2, [MYDIR 'summaryPlot_colonylength.tif'],'tif');
 saveas(h2, [MYDIR 'summaryPlot_colonylength.eps'],'epsc');
 
+%% Done
+
+flagMW_summaryplotspreliminaryanalysis=1;
+disp('Done');
+
 %% plot for 2 growth regimes
 
 
+% use MW_summaryplotspreliminaryanalysisforswitch
 
 
 

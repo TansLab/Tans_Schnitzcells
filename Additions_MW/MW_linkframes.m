@@ -5,6 +5,8 @@ function [linklistschnitz, segFile1Path, segFile2Path] = MW_linkframes(p, frame1
 %
 % Extra inputs:
 % if p.debugmode is valid field, then also figures are plotted.
+% if p.ignoreFailedChecksTracker is a valid field, also frames with failed
+%   checks are linked.
 % 
 %
 % Note term parent and daughter are here also used to link the same
@@ -354,14 +356,20 @@ end
 %}
 
 if checksPassed 
+    
     disp('All checks passed..')
+    
 else
     
-    disp(['WARNING: Checks not passed. Skipping frames ' num2str(frame1Number) '-' num2str(frame2Number) '. Re-track with other tracker.']);
-        % other trackers: DJK_tracker_djk or NW_tracker_centroid_vs_area
-    linklistschnitz = -1;
-    return
-    
+    if ~isfield(p,'ignoreFailedChecksTracker')
+        disp(['WARNING: Checks not passed. Skipping frames ' num2str(frame1Number) '-' num2str(frame2Number) '. Re-track with other tracker.']);
+            % other trackers: DJK_tracker_djk or NW_tracker_centroid_vs_area
+        linklistschnitz = -1;
+        return
+    else
+        disp(['WARNING: Checks not passed. Tracking used anyways, since you set p.ignoreFailedChecksTracker=1..']);        
+    end
+        
     %warning('Not all checks passed.');
 end
 

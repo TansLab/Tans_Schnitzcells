@@ -1,3 +1,6 @@
+function branchData = DJK_get_branches(p, s, varargin)
+% function branchData = DJK_get_branches(p, s, varargin)
+%
 % DJK_get_branches takes schnitzcells and returns branch data of
 % particular branches & defined data. 
 %
@@ -25,7 +28,13 @@
 % 'branchData'        cell structure with branches
 %
 % REQUIRED ARGUMENTS:
-% 'p'    
+% 'p'                 parameter struct, with 
+%                       p.dataFields (default {'Y_time' 'Y_mean' 'mu_fitCoef3'};)
+%                       p.singleSchnitz (optional)
+%                       p.fitTime (optional)
+%                       p.sameLength (optional, default 1): [not sure but I think if =1 takes into account only branches that run from fitTime(1) to fitTime(2), i.e. are "complete"]
+%                       (also stores parameters given by varargin)
+%
 % 's'                 schnitzcells with useForPlot
 %
 % OPTIONAL ARGUMENTS:
@@ -43,7 +52,6 @@
 %                     (default: all timepoints)
 %
 
-function branchData = DJK_get_branches(p, s, varargin)
 
 %--------------------------------------------------------------------------
 % Input error checking

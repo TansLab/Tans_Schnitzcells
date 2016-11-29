@@ -131,9 +131,9 @@ for frameNum = p.manualRange
   % Get number of segmented cells in frame
   NrCellsInFrame(frameNum) = max2(Lc);
 
-  % Get time of frame
+  % Get time of frame  
   TimeOfFrame(frameNum) = timestamp;
-
+  
   % Get length, width and area of cells in frame
   rp = regionprops(Lc,'majoraxislength','MinorAxisLength','Area');
 

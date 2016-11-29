@@ -44,6 +44,7 @@ function outim = PN_imshowlabel(p,L,rect,Lp,rectp,varargin)
 %                     index) If p.problemCells is given, cells from that
 %                     array will be highlighted (too). 
 %                     problemcells = [schnitznr, framenr, labelnr; ..]
+% p.showPerim         if this is a valid field, sohws outlines of cells
 %
 %
 %
@@ -54,7 +55,7 @@ function outim = PN_imshowlabel(p,L,rect,Lp,rectp,varargin)
 
 
 
-%--------------------------------------------------------------------------
+%%-------------------------------------------------------------------------
 % Input error checking and parsing
 %--------------------------------------------------------------------------
 
@@ -99,7 +100,7 @@ end
 %--------------------------------------------------------------------------
 
 
-%--------------------------------------------------------------------------
+%%-------------------------------------------------------------------------
 % Overwrite any schnitzcells parameters/defaults given optional fields/values
 %--------------------------------------------------------------------------
 
@@ -129,7 +130,7 @@ sizeL = size(L);
 %start time (calculate cost)
 %tic
 
-% If previous (preceeding) frame provided, perform suspicious cell. detection
+%% If previous (preceeding) frame provided, perform suspicious cell. detection
 if assistedCorrection
 
     %Detect cells that have certainly been divided in the preceeding image
@@ -189,7 +190,7 @@ else
     problemCellHighlighting = 0;
 end
 
-% if either suspicious cell detection || problemcell highlighting,
+%% if either suspicious cell detection || problemcell highlighting,
 % start highlighting cells.
 if assistedCorrection || (problemCellHighlighting && (~isempty(allSuspiciousLabels)))        
     %create a logical of suspicious cells
@@ -220,7 +221,7 @@ end % note suspicious cell detection algorithm has a 2nd part below
 % elapsed time: 0.33
 %stop1=toc
 
-%creation of a rgb colormap
+%% creation of a rgb colormap
 % Use custom colormap if it is set
 if useSchnitzColors
     mymap = p.customColors;
@@ -267,7 +268,7 @@ if useSchnitzColors
 
 end
 
-% 2nd part of suspicious cell detection || problemcellhighlighting
+%% 2nd part of suspicious cell detection || problemcellhighlighting
 if assistedCorrection || (problemCellHighlighting && ~isempty(allSuspiciousLabels))
     % elapsed time: 0.34
     %stop2=toc
@@ -310,7 +311,7 @@ end
 % elapsed time: 0.40
 %stop3=toc
 if existfield(p, 'showPerim') && p.showPerim % show cell outlines        
-    % MW 2014/12        
+    %% MW 2014/12                
     
     % Get phaseimg
     phaseImg = double(p_internal.phaseImage);
@@ -325,20 +326,44 @@ if existfield(p, 'showPerim') && p.showPerim % show cell outlines
     
     % Get perimeter image
     %perimImg = bwperim(L).*L; % make outline image; *.L colors the perims
-    perimImg = bwperim(L);
+    %perimImg = bwperim(L);
         % note that by definition touching stuff isn't recognized as
         % boundary
     % make lines thicker
-    perimImg = imdilate(perimImg,strel('disk',1,4)); % imdilate use TODO can be optimized    
+    %perimImg = imdilate(perimImg,strel('disk',1,4)); % imdilate use TODO can be optimized            
+        
+    perimImg = L;
+    
+    cellBodies=zeros(size(L));
+    
+    for cellIdx = 1:max(max(L))
+        
+        workImg=zeros(size(L));
+        workImg(L==cellIdx)=1;
+        
+        cellBodies = cellBodies+imerode(workImg,strel('disk',1,4));
+    end
+    
     % actually put in the lines by removing from original color-img areas
     % that are no line
-    perimImg = perimImg.*L;
+    %perimImg = perimImg.*L;    
+    perimImg(cellBodies>0) = 0;
     
-    perimImg = ind2rgb(perimImg+1,mymap); % map indices to colours
+    if useSchnitzColors
+        perimImg = conversionTable(perimImg+1)+1;
+        
+        %perimImg = conversionTable(perimImg+1)+1;    
+        perimImg = ind2rgb(perimImg,mymap); 
+    else
+        perimImg = ind2rgb(perimImg+1,mymap); % map indices to colours
+    end
+    
           
     % Put perimeters in phase image
-    nonZeroIdx = find(perimImg>0);
-    outim(nonZeroIdx)=perimImg(nonZeroIdx);  
+    nonZeroIdx = perimImg(:,:,1)>0 | perimImg(:,:,2)>0 | perimImg(:,:,3)>0; % some RGB values have a 0 in them, e.g. red = [1,0,0]
+    nonZeroIdx = [nonZeroIdx,nonZeroIdx,nonZeroIdx];
+    
+    outim(nonZeroIdx)=perimImg(nonZeroIdx);
 
     % IF YOU WANT WHITE LINES:
     %{

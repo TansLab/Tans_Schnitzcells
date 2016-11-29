@@ -3,6 +3,8 @@ function  [p,Lout,OKorNot,quit_now,dontsave,addtolist,crop_pop,newrect,savetemp,
 % function  [p,Lout,OKorNot,quit_now,dontsave,addtolist,crop_pop,newrect,savetemp,backwards,gotoframenum,DJK_settings] = ...
 %    PN_manual_kant(p,Lin,L_prec,phin,rect,rect_prec,phsub,DJK_settings,assistedCorrection)
 %
+% This function is called by PN_manualcheckseg.
+%
 % Input arguments:
 % - p                   : holds general information about current movie
 % - Lin,                : segmented input image
@@ -26,14 +28,11 @@ function  [p,Lout,OKorNot,quit_now,dontsave,addtolist,crop_pop,newrect,savetemp,
 
 % elapsed time for frame 444 in 2012-05-08. 390 cells
 
-
-
 iptsetpref('imshowborder','tight');
 backwards = 0;
 global pos Limage ourfig res pp phfig currentFrameStr figureToFocusOn showPhase
 
 %set(phfig,'Visible', 'on') % ugly way to force phase image away from foreground during computation time NW2012-10-05
-
 
 pp=0;pps=0;
 zd3=25;
@@ -53,7 +52,6 @@ OKorNot=0;
 done=0;
 quit_now=0;
 pos=[1 1];
-showPhase = 0;
 
 % create array with cell numbers that changed (-> regioprops have to be
 % recalculated) (NW2012-05-10)
@@ -63,7 +61,6 @@ updatedCellNumbers=[];
 % initialize image for undo-step ('u')
 Lout_undo=Lout;
 
-figureToFocusOn = ourfig;
 
 %% Main loop
 
@@ -76,7 +73,9 @@ while ~done
      
     %% Update segmented figure
     figure(ourfig) % NW2012-05-10        
-
+    
+    % make the assisted image
+    
     % If assisted correction desired call PN_imshowlabel with 
     % suspicious cell detection functionality
     if assistedCorrection && ~isempty(L_prec)       
@@ -94,7 +93,7 @@ while ~done
 
     end                    
     
-   
+    % make the raw phase image
     if showPhase
         figure(phfig);
         imshow(phsub,[]);
@@ -118,16 +117,21 @@ while ~done
     
     % Title of figure 
     set(ourfig,'name',['Frame ' currentFrameStr]);
-                  
+        
+    % set the sizes of those figures equal
+    theFigurePosition=get(ourfig,'Position');
+    set(phfig,'Position',theFigurePosition);
+    
     % Set focus on desired figure (segmented img per default)
     figure(figureToFocusOn); % MW TODO
+    %{
     set(0,'CurrentFigure',figureToFocusOn);    
     uistack(figureToFocusOn, 'top'); % required in matlab 2014 to actually put figure on top - MW
         % sometimes still does not work
         % --
         % * in that case figureToFocusOn is still set right
         % * pressing 'm' twice resolve the problem
-        
+    %}          
   
     
     %% Get keypress
@@ -165,7 +169,7 @@ while ~done
     
     
  % 'm' switch between phase contrast and segmentation image
-    if ct & cc=='m'
+    if cc=='m'
         
         % MW 2016/04
         % When upgrading to matlab 2014b some issues started appearing with
@@ -185,7 +189,6 @@ while ~done
         elseif figureToFocusOn == ourfig % vice versa
             figureToFocusOn = phfig;
             showPhase = 1;
-            set(phfig, 'Visible', 'On');
         else % if other figure is on focus (not to be the case)
             figureToFocusOn = ourfig; % switch to default, i.e. segmented one
             showPhase = 1;
@@ -779,7 +782,8 @@ while ~done
 
         cz=get(ourfig,'selectiontype');
         
-        % normal = left mouse button
+        % left mouse button: connect two cells
+        % ===
         if cz(1)=='n'
             Lout_undo=Lout;   %for undo step NW 2014-01
             % join cells
@@ -810,6 +814,9 @@ while ~done
             updatedCellNumbers=[updatedCellNumbers;j1;j2];
             
             % delete cell = shift+left button (or both?)
+        
+        % .............
+        % ===
         elseif (cz(1)=='e' & Lout(round(pos(1,2)),round(pos(1,1))))
             Lout_undo=Lout;   %for undo step NW 2014-01
             % erase cell
@@ -821,6 +828,8 @@ while ~done
             % updated cellnumbers NW2012-05-10
             updatedCellNumbers=[updatedCellNumbers;Lout(round(pos(1,2)),round(pos(1,1)))];
             
+        % Right mouse click: cut cell where clicked
+        % ===
         elseif (cz(1)=='a' & Lout(round(pos(1,2)),round(pos(1,1))))
             Lout_undo=Lout;   %for undo step NW 2014-01
                         
@@ -857,8 +866,7 @@ while ~done
                 perims(pxmin:pxmax,pymin:pymax) = bwlabel(perim(pxmin:pxmax,pymin:pymax));
                 radp = radp+1;
             end
-            
-            
+                        
             % if indeed 2 sides are found, will cut
             if max2(perims)>1
                 % kim is image with only clicked point drawn
@@ -881,6 +889,7 @@ while ~done
                 while ~any(any(kim2 & perims))
                     kim2=imdilate(kim2,strel('disk',1));
                 end
+                
                 % randomly select first point as end of drawline
                 [cut2x,cut2y]=find(kim2 & perims);
                 color2=perims(cut2x(1),cut2y(1));
@@ -898,8 +907,6 @@ while ~done
                 % first cell gets original color
                 Lout(cutcell==1) = chosencolor;
                 
-                
-                
                 % new cells get new color
                 for k = 2:max2(cutcell),
                     
@@ -908,9 +915,7 @@ while ~done
                     
                     Lout(cutcell==k) = max2(Lout)+k-1;
                 end;
-                
-                
-                
+                                                
             else
                 disp(['less than 2 perims! cell number: ' num2str(Lout(cutx,cuty)) ' in Lbot_back.'])
             end

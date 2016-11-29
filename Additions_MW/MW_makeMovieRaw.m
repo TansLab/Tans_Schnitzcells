@@ -9,7 +9,7 @@ if ~exist(outputDir,'dir')
 end
 
 %% Loop over currently set frames
-for frameIndex = settings.currentFrameRange
+for frameIndex = ourSettings.currentFrameRange
     
     % Load segmentation from this frame
     load([p.segmentationDir 'pos2cropseg' sprintf('%03d', frameIndex) '.mat'],'Lc','rect');

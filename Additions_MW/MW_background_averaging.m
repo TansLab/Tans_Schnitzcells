@@ -1,5 +1,5 @@
-function outputImage = MW_background_averaging(myFolder, myImages, settings)
-% function outputImage = MW_background_averaging(myFolder, myImages, settings)
+function outputImage = MW_background_averaging(myFolder, myImages, ourSettings)
+% function outputImage = MW_background_averaging(myFolder, myImages, ourSettings)
 % MW shading images script
 %
 % Creates median image of supplied list of images, if NeighborAveraging =
@@ -11,17 +11,17 @@ function outputImage = MW_background_averaging(myFolder, myImages, settings)
 % - myFolder            Folder where to find images
 % - myImages            List of image filenames. Set to 'auto' to search for
 %                       images.
-% - settings            Struct for optional settings. Default values
+% - ourSettings            Struct for optional ourSettings. Default values
 %                       hard-coded.
-%   settings.histN                  Number of bins used for histogram
-%   settings.maxImages              Matlab doesn't handle loading a large nr of images
+%   ourSettings.histN                  Number of bins used for histogram
+%   ourSettings.maxImages              Matlab doesn't handle loading a large nr of images
 %                                   very well. So this is capped!
-%   settings.neighborAveraging      Sets degree of smoothing. (How many neighbors to
+%   ourSettings.neighborAveraging      Sets degree of smoothing. (How many neighbors to
 %                                   take into account for neighborhood averaging of 
 %                                   pixels.) Only use for shading, not for
 %                                   flatfield!
-%   settings.useNormalizedImages    Whether imgs should be normalized.
-%   settings.backgroundImage        If a (same sized) background image
+%   ourSettings.useNormalizedImages    Whether imgs should be normalized.
+%   ourSettings.backgroundImage        If a (same sized) background image
 %                                   (sometimes called 'flatfield' throughout the script)
 %                                   is given, this will be substracted from
 %                                   the input images.
@@ -30,11 +30,11 @@ function outputImage = MW_background_averaging(myFolder, myImages, settings)
 % %%% Background image
 %   myFolder = 'F:\A_Tans0_step1_incoming_not_backed_up\2015-05-27_background\OPT-flatfield\10ms\'
 %   myImages = 'auto'; 
-%   settings.neighborAveraging = 0;
-%   settings.useNormalizedImages = 0;
-%   settings.maxImages = 500;
-%   settings.histN = 50;
-%   outputImage = MW_background_averaging(myFolder, myImages, settings);
+%   ourSettings.neighborAveraging = 0;
+%   ourSettings.useNormalizedImages = 0;
+%   ourSettings.maxImages = 500;
+%   ourSettings.histN = 50;
+%   outputImage = MW_background_averaging(myFolder, myImages, ourSettings);
 %
 %
 % Output is img that can be used as shading image, shuold be saves as
@@ -42,22 +42,22 @@ function outputImage = MW_background_averaging(myFolder, myImages, settings)
 %%%%%%%%%%%%%%%%%%
 
 % Parameter settings
-if ~isfield(settings, 'useNormalizedImages')
-    settings.useNormalizedImages = 1; % whether normalized imgs should be used
+if ~isfield(ourSettings, 'useNormalizedImages')
+    ourSettings.useNormalizedImages = 1; % whether normalized imgs should be used
         % MW TODO OPTIMALIZATION (optional) note that code creates 
         % normalized version nevertheless
     warning('useNormalizedImages set to default value 1');
 end
-if ~isfield(settings, 'histN')
-    settings.histN = 50; % number of bins used for histogram.
+if ~isfield(ourSettings, 'histN')
+    ourSettings.histN = 50; % number of bins used for histogram.
     warning('histN set to default value 50');
 end
-if ~isfield(settings, 'maxImages')
-    settings.maxImages = 200; % max. number of images that are used
+if ~isfield(ourSettings, 'maxImages')
+    ourSettings.maxImages = 200; % max. number of images that are used
     warning('maxImages set to default value 200');    
 end
-if ~isfield(settings, 'neighborAveraging')
-    settings.neighborAveraging = 5; % 
+if ~isfield(ourSettings, 'neighborAveraging')
+    ourSettings.neighborAveraging = 5; % 
     warning('neighborAveraging set to default value 5');    
 end 
 
@@ -71,8 +71,8 @@ if ~iscell(myImages), if (myImages == 'auto')
 end, end
 
 % cap number of images used
-if numel(myImages) > settings.maxImages
-    myImages = myImages(1:settings.maxImages); 
+if numel(myImages) > ourSettings.maxImages
+    myImages = myImages(1:ourSettings.maxImages); 
 end; 
 
 % Administration
@@ -93,17 +93,17 @@ for i = 1:nrImages
     % load image
     currentImage = double(imread([myFolder myImages{i}]));
     % substract background if given
-    if isfield(settings, 'backgroundImage')
-        currentImage = currentImage-settings.backgroundImage;
+    if isfield(ourSettings, 'backgroundImage')
+        currentImage = currentImage-ourSettings.backgroundImage;
         disp('Substracting background.');
     end
     % store raw image
     allImages(i,:,:) = currentImage;
     % store filtered and normalized image    
     currentImage = currentImage/median(currentImage(:)); % normalizing by median works better than max    
-    if settings.neighborAveraging>0 % 
+    if ourSettings.neighborAveraging>0 % 
         % smooth
-        currentImage = medfilt2(currentImage,[settings.neighborAveraging,settings.neighborAveraging]); 
+        currentImage = medfilt2(currentImage,[ourSettings.neighborAveraging,ourSettings.neighborAveraging]); 
     end
     normAllImages(i,:,:) = currentImage;
     % update user
@@ -125,10 +125,10 @@ set(findall(gcf,'type','text'),'FontSize',15,'fontWeight','normal'); set(gca,'Fo
 myColors = distinguishable_colors(nrImages); 
 for i = 1:nrImages
     subplot(2,1,1);
-    [myHist, xHist] = hist(allImages(i,:),settings.histN);
+    [myHist, xHist] = hist(allImages(i,:),ourSettings.histN);
     plot(xHist, myHist, '.-','Color',myColors(i,:));   
     subplot(2,1,2);
-    [myHist, xHist] = hist(normAllImages(i,:),settings.histN);
+    [myHist, xHist] = hist(normAllImages(i,:),ourSettings.histN);
     plot(xHist, myHist, '.-','Color',myColors(i,:));
 end
 
@@ -137,7 +137,7 @@ end
 %% calculate medians
 
 % Use normalized images if desired
-if settings.useNormalizedImages
+if ourSettings.useNormalizedImages
     theImages = normAllImages;
 else
     theImages = allImages;
@@ -165,9 +165,9 @@ RBGmedianImage2 = repmat(medianImage2,[1 1 3]);
 
 %% show histogram of the three created imgs
 figure; clf; hold on;
-[myMedianHist1, xMedianHist1] = hist(medianImage1(:),settings.histN);
-[myMedianHist2, xMedianHist2] = hist(medianImage2(:),settings.histN);
-[myMedianHistAll, xMedianHistAll] = hist(medianImageAll(:),settings.histN);
+[myMedianHist1, xMedianHist1] = hist(medianImage1(:),ourSettings.histN);
+[myMedianHist2, xMedianHist2] = hist(medianImage2(:),ourSettings.histN);
+[myMedianHistAll, xMedianHistAll] = hist(medianImageAll(:),ourSettings.histN);
 plot(xMedianHist1,myMedianHist1,'b.-');
 plot(xMedianHist2,myMedianHist2,'r.-');
 plot(xMedianHistAll,myMedianHistAll,'k.-');
@@ -194,7 +194,7 @@ deviationImage = medianImage1./medianImage2;
 
 % create histogram of that and show user
 figure; 
-[myDevHist1, xDevHist1] = hist(deviationImage(:),settings.histN);
+[myDevHist1, xDevHist1] = hist(deviationImage(:),ourSettings.histN);
 plot(xDevHist1, myDevHist1,'.-');
 xlim([0.8,1.2]);
 xlabel('distribution (matrix subset1)./(matrix subset2) values');

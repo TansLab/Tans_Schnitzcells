@@ -37,10 +37,10 @@ ASCnumber = 852; % Not necessary this script, for later analysis scripts
 filterset='engfp'; % Not necessary this script, for later analysis scripts
 fluoName = 'GFP'; % Not necessary this script, for later analysis scripts
 
-settings.myOutputFolder = ['F:\A_Tans1_step1_incoming_not_backed_up\'  p. movieDate   '\' p. movieDate  '_' p.movieName '_' myID  '\'];
+ourSettings.myOutputFolder = ['F:\A_Tans1_step1_incoming_not_backed_up\'  p. movieDate   '\' p. movieDate  '_' p.movieName '_' myID  '\'];
 
-p.NW_saveDir = [settings.myOutputFolder 'misc\'];  % To send additional output to
-p.DJK_saveDir = [settings.myOutputFolder 'misc\']; % To send additional output to
+p.NW_saveDir = [ourSettings.myOutputFolder 'misc\'];  % To send additional output to
+p.DJK_saveDir = [ourSettings.myOutputFolder 'misc\']; % To send additional output to
 
 % Location of .mat file containing schnitzcells struct
 myDataFile = ['F:\A_Tans1_step1_incoming_not_backed_up\' p.movieDate '\' p.movieName  '\data\' p.movieName '-Schnitz.mat'];
@@ -519,7 +519,8 @@ if ~exist('FIGUREVISIBLE','var'), FIGUREVISIBLE=1; end;
 % What range should be plotted.
 numeliTausCalculated=numel(iTausCalculated);
 indexMidpoint = ceil(numeliTausCalculated/2)
-rangeiTausCalculated = [indexMidpoint-SHOWPLUSMINFROMZERO:indexMidpoint+SHOWPLUSMINFROMZERO];
+ShowPlusMinFromZero=min(SHOWPLUSMINFROMZERO, indexMidpoint-1);
+rangeiTausCalculated = [indexMidpoint-ShowPlusMinFromZero:indexMidpoint+ShowPlusMinFromZero];
 numelRangeiTausCalculated = numel(rangeiTausCalculated);
 % delayIdx = 11; % 39 is middle
 

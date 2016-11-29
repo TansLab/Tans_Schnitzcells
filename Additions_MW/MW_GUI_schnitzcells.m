@@ -89,10 +89,10 @@ global runsections
 
 % call script, runsections defines which sectino of sript to run
 runsections = 'loadfile'
-Schnitzcells_masterscript 
+Schnitzcells_masterscript
 
 % update workspace
-assignin ('base','settings',settings)
+assignin ('base','ourSettings',ourSettings)
 assignin ('base','alldata',alldata)
 
 % --- Executes on button press in pushbutton3.
@@ -108,7 +108,7 @@ runsections = 'reloadfile'
 Schnitzcells_masterscript 
 
 % update workspace
-assignin ('base','settings',settings)
+assignin ('base','ourSettings',ourSettings)
 assignin ('base','alldata',alldata)
 
 % --- Executes on button press in pushbutton2.
@@ -123,7 +123,7 @@ runsections = 'createp'
 Schnitzcells_masterscript 
 
 % update workspace
-assignin ('base','settings',settings)
+assignin ('base','ourSettings',ourSettings)
 assignin ('base','p',p)
 
 % --- Executes on button press in pushbutton4.
@@ -142,7 +142,7 @@ runsections = 'cropimages'
 Schnitzcells_masterscript 
 
 % update workspace
-assignin ('base','settings',settings)
+assignin ('base','ourSettings',ourSettings)
 assignin ('base','p',p)
 
 % --- Executes on button press in pushbutton5.
@@ -165,7 +165,7 @@ runsections = 'segmentation'
 Schnitzcells_masterscript 
 
 % update workspace
-assignin ('base','settings',settings)
+assignin ('base','ourSettings',ourSettings)
 assignin ('base','p',p)
 
 % --- Executes on button press in pushbutton6.
@@ -174,9 +174,9 @@ function pushbutton6_Callback(hObject, eventdata, handles)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    structure with handles and user data (see GUIDATA)
 
-global runsections settings p
-% obtain settings
-settings = evalin('base', 'settings');
+global runsections ourSettings p
+% obtain ourSettings
+ourSettings = evalin('base', 'ourSettings');
 p = evalin('base', 'p');
     
 % call script, runsections defines which sectino of sript to run
@@ -184,7 +184,7 @@ runsections = 'manualchecksegfull'
 Schnitzcells_masterscript 
 
 % update workspace
-assignin ('base','settings',settings)
+assignin ('base','ourSettings',ourSettings)
 assignin ('base','p',p)
 
 % --- Executes on button press in pushbutton7.
@@ -193,14 +193,14 @@ function pushbutton7_Callback(hObject, eventdata, handles)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    structure with handles and user data (see GUIDATA)
 
-global runsections settings
+global runsections ourSettings
 
 % call script, runsections defines which sectino of sript to run
 runsections = 'quickanalysis'
 Schnitzcells_masterscript 
 
 % update workspace
-assignin ('base','settings',settings)
+assignin ('base','ourSettings',ourSettings)
 assignin ('base','p',p)
 
 % --- Executes on button press in pushbutton8.
@@ -216,7 +216,7 @@ runsections = 'trackandmanualcorrections'
 Schnitzcells_masterscript 
 
 % update workspace
-assignin ('base','settings',settings)
+assignin ('base','ourSettings',ourSettings)
 assignin ('base','p',p)
 
 
@@ -252,7 +252,7 @@ runsections = 'analysispreliminary'
 Schnitzcells_masterscript 
 
 % update workspace
-assignin ('base','settings',settings)
+assignin ('base','ourSettings',ourSettings)
 assignin ('base','p',p)
 
 % --- Executes on button press in pushbutton14.
@@ -281,7 +281,7 @@ runsections = 'trackpreliminary'
 Schnitzcells_masterscript 
 
 % update workspace
-assignin ('base','settings',settings)
+assignin ('base','ourSettings',ourSettings)
 assignin ('base','p',p)
 
 
@@ -327,7 +327,7 @@ runsections = 'cropimagespreliminary'
 Schnitzcells_masterscript 
 
 % update workspace
-assignin ('base','settings',settings)
+assignin ('base','ourSettings',ourSettings)
 assignin ('base','p',p)
 
 
@@ -361,7 +361,7 @@ runsections = 'makemovie'
 Schnitzcells_masterscript 
 
 % update workspace
-assignin ('base','settings',settings)
+assignin ('base','ourSettings',ourSettings)
 assignin ('base','p',p)
 
 
@@ -378,7 +378,7 @@ runsections = 'createbackup'
 Schnitzcells_masterscript 
 
 % update workspace
-assignin ('base','settings',settings)
+assignin ('base','ourSettings',ourSettings)
 assignin ('base','p',p)
 
 
@@ -395,7 +395,7 @@ runsections = 'correctionsandanalysis'
 Schnitzcells_masterscript 
 
 % update workspace
-assignin ('base','settings',settings)
+assignin ('base','ourSettings',ourSettings)
 assignin ('base','p',p)
 if exist('schnitzcells','var')
     assignin ('base','schnitzcells',schnitzcells)
@@ -417,7 +417,7 @@ runsections = 'loadpforcropped'
 Schnitzcells_masterscript 
 
 % update workspace
-assignin ('base','settings',settings)
+assignin ('base','ourSettings',ourSettings)
 assignin ('base','p',p)
 
 % --- Executes on button press in pushbutton29.
@@ -434,7 +434,7 @@ runsections = 'makeoutputfull'
 Schnitzcells_masterscript 
 
 % update workspace
-assignin ('base','settings',settings)
+assignin ('base','ourSettings',ourSettings)
 assignin ('base','p',p)
 assignin ('base','schnitzcells',schnitzcells)
 assignin ('base','s_rm',s_rm)
@@ -468,28 +468,29 @@ function pushbutton31_Callback(hObject, eventdata, handles)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    structure with handles and user data (see GUIDATA)
 
-global runsections p settings
+global runsections p ourSettings
 
-% retrieve settings var
-settings = evalin('base', 'settings');
+% retrieve ourSettings var
+ourSettings = evalin('base', 'ourSettings');
+p = evalin('base', 'p');
 p.overwrite = get(handles.checkbox5,'Value');
 
 % Get custom framerange
 prompt={'Enter frame range:'};
 name = 'Range:';
-defaultans = {mat2str(settings.currentFrameRange)};
+defaultans = {mat2str(ourSettings.currentFrameRange)};
 answer = inputdlg(prompt,name,1,defaultans);
-settings.retrackFrameRange = str2num(answer{1});
+ourSettings.retrackFrameRange = str2num(answer{1});
 
 % call script, runsections defines which sectino of sript to run
 runsections = 'customtrackersoncustomrange'
-settings.specialtracker = 'MW';
+ourSettings.specialtracker = 'MW';
 Schnitzcells_masterscript 
 % reset specialtracker
-settings = rmfield(settings,'specialtracker');
+ourSettings = rmfield(ourSettings,'specialtracker');
 
 % update workspace
-assignin ('base','settings',settings);
+assignin ('base','ourSettings',ourSettings);
 assignin ('base','p',p);
 
 % --- Executes on button press in pushbutton34.
@@ -499,31 +500,32 @@ function pushbutton34_Callback(hObject, eventdata, handles)
 % handles    structure with handles and user data (see GUIDATA)
 
 
-global runsections customFrameRange p settings
+global runsections customFrameRange p ourSettings
 
-% retrieve settings var
-settings = evalin('base', 'settings');
+% retrieve ourSettings var
+ourSettings = evalin('base', 'ourSettings');
+p = evalin('base', 'p');
 
 % Set custom tracker:
-settings.specialtracker = 'NW';
+ourSettings.specialtracker = 'NW';
 p.overwrite = get(handles.checkbox5,'Value');
 
 % Get custom framerange
 prompt={'Enter frame range:'};
 name = 'Range:';
-defaultans = {mat2str(settings.currentFrameRange)};
+defaultans = {mat2str(ourSettings.currentFrameRange)};
 answer = inputdlg(prompt,name,1,defaultans);
-settings.retrackFrameRange = str2num(answer{1});
+ourSettings.retrackFrameRange = str2num(answer{1});
 
 % call script, runsections defines which sectino of sript to run
 runsections = 'customtrackersoncustomrange'
-settings.specialtracker = 'NW';
+ourSettings.specialtracker = 'NW';
 Schnitzcells_masterscript 
 % reset specialtracker
-settings = rmfield(settings,'specialtracker');
+ourSettings = rmfield(ourSettings,'specialtracker');
 
 % update workspace
-assignin ('base','settings',settings);
+assignin ('base','ourSettings',ourSettings);
 assignin ('base','p',p);
 
 % --- Executes on button press in pushbutton35.
@@ -532,18 +534,19 @@ function pushbutton35_Callback(hObject, eventdata, handles)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    structure with handles and user data (see GUIDATA)
 
-global runsections p settings
+global runsections p ourSettings
 
-% retrieve settings var
-settings = evalin('base', 'settings');
+% retrieve ourSettings var
+ourSettings = evalin('base', 'ourSettings');
+p = evalin('base', 'p');
 p.overwrite = get(handles.checkbox5,'Value');
 
 % Get custom framerange
 prompt={'Enter frame range:'};
 name = 'Range:';
-defaultans = {mat2str(settings.currentFrameRange)};
+defaultans = {mat2str(ourSettings.currentFrameRange)};
 answer = inputdlg(prompt,name,1,defaultans);
-settings.retrackFrameRange = str2num(answer{1});
+ourSettings.retrackFrameRange = str2num(answer{1});
 
 % call script, runsections defines which sectino of sript to run
 runsections = 'customtrackersoncustomrange'
@@ -551,7 +554,7 @@ runsections = 'customtrackersoncustomrange'
 Schnitzcells_masterscript 
 
 % update workspace
-assignin ('base','settings',settings);
+assignin ('base','ourSettings',ourSettings);
 assignin ('base','p',p);
 
 
@@ -563,27 +566,31 @@ function pushbutton36_Callback(hObject, eventdata, handles)
 
 % Re-run segmentation for certain frame
 
-global runsections p settings
+global runsections p ourSettings
 
-% retrieve settings var
-settings = evalin('base', 'settings');
+% retrieve ourSettings var
+ourSettings = evalin('base', 'ourSettings');
 p.overwrite=1;
 % Pass on whether we want to use full image for segmentation (default = 0)
 p.useFullImage = get(handles.checkbox4,'Value');
 
 % Get custom parameters
 % Formulate questions
-prompt={'Frame number or range:','Slices','Laplace of Gaussian smoothing:','Minimum depth:','Minimum cell area'};
-defaultanswers = {'1','[1,2,3]','2','5','250'}
+prompt={'Frame number or range:','Slices','Laplace of Gaussian smoothing:','Minimum depth:','Minimum cell area','rangeFiltSize:', 'maskMargin:', 'GaussianFilter:', 'neckDepth:'};
+defaultanswers = {'1','[1,2,3]','2','5','250','35','5','5','2'}
 name = 'Enter segmentation parameters';
 % Get answers using prompt
 answers = inputdlg(prompt,name,1,defaultanswers);
-% Rename answers and pass through using settings
-settings.TOREDOFRAME            = str2num(answers{1});
-settings.SLICESTEMPORARY        = str2num(answers{2});
-settings.LOGSMOOTHINGTEMPORARY  = str2num(answers{3});
-settings.MINDEPTHTEMP           = str2num(answers{4});
-settings.MINCELLAREA            = str2num(answers{5});
+% Rename answers and pass through using ourSettings
+ourSettings.TOREDOFRAME            = str2num(answers{1});
+ourSettings.SLICESTEMPORARY        = str2num(answers{2});
+ourSettings.LOGSMOOTHINGTEMPORARY  = str2num(answers{3});
+ourSettings.MINDEPTHTEMP           = str2num(answers{4});
+ourSettings.MINCELLAREA            = str2num(answers{5});
+ourSettings.RANGEFILTSIZE          = str2num(answers{6});
+ourSettings.MASKMARGIN             = str2num(answers{7});
+ourSettings.GAUSSIANFILTER         = str2num(answers{8});
+ourSettings.NECKDEPTH              = str2num(answers{9});
 
 % call script, runsections defines which sectino of sript to run
 runsections = 'redosegforframe'
@@ -591,7 +598,7 @@ runsections = 'redosegforframe'
 Schnitzcells_masterscript 
 
 % update workspace
-assignin ('base','settings',settings);
+assignin ('base','ourSettings',ourSettings);
 assignin ('base','p',p);
 
 
@@ -608,7 +615,7 @@ runsections = 'checkaftercustom'
 Schnitzcells_masterscript 
 
 % update workspace
-assignin ('base','settings',settings)
+assignin ('base','ourSettings',ourSettings)
 assignin ('base','p',p)
 
 
@@ -618,11 +625,11 @@ function pushbutton38_Callback(hObject, eventdata, handles)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    structure with handles and user data (see GUIDATA)
 
-% retrieve settings var from base
-settings = evalin('base', 'settings');
+% retrieve ourSettings var from base
+ourSettings = evalin('base', 'ourSettings');
 
 % open config file
-winopen(settings.configfilepath);
+winopen(ourSettings.configfilepath);
 
 % --- Executes on button press in pushbutton41.
 function pushbutton41_Callback(hObject, eventdata, handles)
@@ -630,16 +637,16 @@ function pushbutton41_Callback(hObject, eventdata, handles)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    structure with handles and user data (see GUIDATA)
 
-global settings
+global ourSettings
 
-% retrieve settings
-settings = evalin('base', 'settings');
+% retrieve ourSettings
+ourSettings = evalin('base', 'ourSettings');
 
 % set flag
-settings.analysisType = 'preliminary';
+ourSettings.analysisType = 'preliminary';
 
 % export flag
-assignin ('base','settings',settings);
+assignin ('base','ourSettings',ourSettings);
 disp('Preliminary flag set.');
 
 % --- Executes on button press in pushbutton42.
@@ -648,16 +655,16 @@ function pushbutton42_Callback(hObject, eventdata, handles)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    structure with handles and user data (see GUIDATA)
 
-global settings
+global ourSettings
 
-% retrieve settings
-settings = evalin('base', 'settings');
+% retrieve ourSettings
+ourSettings = evalin('base', 'ourSettings');
 
 % set flag
-settings.analysisType = 'full';
+ourSettings.analysisType = 'full';
 
 % export flag
-assignin ('base','settings',settings)
+assignin ('base','ourSettings',ourSettings)
 
 
 % --- Executes on button press in checkbox4.
@@ -737,8 +744,8 @@ function pushbutton44_Callback(hObject, eventdata, handles)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    structure with handles and user data (see GUIDATA)
 
-% retrieve settings
-settings = evalin('base', 'settings');
+% retrieve ourSettings
+ourSettings = evalin('base', 'ourSettings');
 p = evalin('base', 'p');
 
 % input from user
@@ -763,8 +770,8 @@ function pushbutton46_Callback(hObject, eventdata, handles)
 % handles    structure with handles and user data (see GUIDATA)
 
 
-% retrieve settings
-settings = evalin('base', 'settings');
+% retrieve ourSettings
+ourSettings = evalin('base', 'ourSettings');
 p = evalin('base', 'p');
 
 % input from user
@@ -812,8 +819,8 @@ function pushbutton48_Callback(hObject, eventdata, handles)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    structure with handles and user data (see GUIDATA)
 
-% retrieve settings
-settings = evalin('base', 'settings');
+% retrieve ourSettings
+ourSettings = evalin('base', 'ourSettings');
 p = evalin('base', 'p');
 
 % input from user
@@ -892,8 +899,8 @@ function pushbutton49_Callback(hObject, eventdata, handles)
 % handles    structure with handles and user data (see GUIDATA)
 
 
-% retrieve settings
-settings = evalin('base', 'settings');
+% retrieve ourSettings
+ourSettings = evalin('base', 'ourSettings');
 p = evalin('base', 'p');
 
 %% input from user
@@ -919,11 +926,11 @@ function pushbutton50_Callback(hObject, eventdata, handles)
 
 global p
 
-% retrieve settings
+% retrieve ourSettings
 p = evalin('base', 'p');
-settings = evalin('base', 'settings');
+ourSettings = evalin('base', 'ourSettings');
 
-myimg = imread([p.imageDir p.movieName '-p-' '2' '-' sprintf('%03d',min(settings.currentFrameRange)) '.tif']);
+myimg = imread([p.imageDir p.movieName '-p-' '2' '-' sprintf('%03d',min(ourSettings.currentFrameRange)) '.tif']);
 h2=figure(); clf; imshow(myimg, []);
 
 p.customColonyCenter = round(ginput(1))
@@ -945,7 +952,7 @@ function pushbutton51_Callback(hObject, eventdata, handles)
 
 global p
 
-% retrieve settings
+% retrieve ourSettings
 p = evalin('base', 'p');
 
 winopen(p.dateDir);

@@ -1,13 +1,13 @@
-function [settings, alldata] = MW_readsettingsfromexcelfile(settings)
+function [ourSettings, alldata] = MW_readsettingsfromexcelfile(ourSettings)
     % Input argument required:
-    % struct settings that has a field called configfilepath, which holds
+    % struct ourSettings that has a field called configfilepath, which holds
     % the location of the configfile.
 
 
     % configfilepath = CONFIGFILEPATH
 
     %% read in excel file (note that we start reading at line 14)
-    [ndata, text, alldata] = xlsread(settings.configfilepath,'Configuration','A14:B100');
+    [ndata, text, alldata] = xlsread(ourSettings.configfilepath,'Configuration','A14:B100');
 
     %% Create the variables that are listed in the configuration file
     % ===
@@ -51,7 +51,7 @@ function [settings, alldata] = MW_readsettingsfromexcelfile(settings)
             end
             
             %% Use the eval command to produce a parameter with the current value
-            command = ['settings.' alldata{i, 1} '=' parameterValue ';']
+            command = ['ourSettings.' alldata{i, 1} '=' parameterValue ';']
             eval (command); 
             
             % Administration
@@ -59,5 +59,5 @@ function [settings, alldata] = MW_readsettingsfromexcelfile(settings)
         end
     end    
 
-    disp('All configuration settings stored in ''settings'' struct.');
+    disp('All configuration ourSettings stored in ''ourSettings'' struct.');
 end

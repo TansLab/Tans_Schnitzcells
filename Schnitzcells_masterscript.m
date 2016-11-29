@@ -9,7 +9,7 @@
 % should be present in the root directory. I suggest you copy this Excel
 % file, rename it such that you can relate it to your dataset (current
 % format Schnitzcells_Config_<experiment-date>_<microcolony-pos#>), and
-% edit it to your needs.
+% edit it to your needs.7
 %
 % If you have edited your Excel file appropriately, continue with the
 % analysis below by executing the script section by section. The parameter
@@ -64,7 +64,7 @@
 if ~exist('runsections','var') || strcmp(runsections, 'none')
 
     runsections = 'none';
-    MW_GUI_schnitzcells
+    GUIHandle = MW_GUI_schnitzcells
 
 end
 
@@ -76,13 +76,13 @@ end
 % behavior. (The preliminary analysis will create a schnitzcells file, but
 % this file will not allow for a appropriate full analysis of your data.)
 %
-% settings.analysisType     should be 'preliminary' or 'full' to
+% ourSettings.analysisType     should be 'preliminary' or 'full' to
 %                           automatically run the appropriate sections for
 %                           a preliminary or full analysis.
 
 
 % declaration of necessary global paramteters (for running from GUI)
-global p settings
+global p ourSettings
 
 % In case you DO NOT want to run from GUI, the following code is
 % automatically executed when runsections is not set by the GUI
@@ -92,15 +92,15 @@ if ~exist('runsections', 'var')
     % ==
     
     % Full or prelinary analysis
-    if ~isfield(settings,'analysisType')
-        % settings.analysisType = 'preliminary'; % preliminary or full
-        settings.analysisType = 'full';
+    if ~isfield(ourSettings,'analysisType')
+        % ourSettings.analysisType = 'preliminary'; % preliminary or full
+        ourSettings.analysisType = 'full';
     end   
 
     % Set the runsections parameter appropriately
-    if strcmp(settings.analysisType, 'preliminary')
+    if strcmp(ourSettings.analysisType, 'preliminary')
         runsections = 'allpreliminary'; % all is default
-    elseif strcmp(settings.analysisType, 'full')
+    elseif strcmp(ourSettings.analysisType, 'full')
         runsections = 'allfull';        
     end
     
@@ -116,26 +116,26 @@ end
 % Parameters you should NOT change
 % ===
 % line where list of parameters starts in Excel file.
-settings.EXCELREADSTART = 14; 
+ourSettings.EXCELREADSTART = 14; 
 % text editor that matlab will attempt to open to show you files.
-settings.MYTEXTEDITOR = 'notepad.exe'; 
+ourSettings.MYTEXTEDITOR = 'notepad.exe'; 
 
 
-%% Choose the Excel file with settings for your dataset.
+%% Choose the Excel file with setting for your dataset.
 % Press CTRL+enter.
 % Run this section and a dialogue box will allow you to choose an Excel
 % file. This section simply saves the path of the file you have chosen to
-% settings.configfilepath.
+% ourSettings.configfilepath.
 
 if any(strcmp(runsections,{'allpreliminary', 'allfull' 'loadfile'}))
     
     %select the configfile to run
-    [settings.myconfigfilename, settings.mypathname] = uigetfile('*.xls;*.xlsx','Select a Schnitzcells configuration file');
+    [ourSettings.myconfigfilename, ourSettings.mypathname] = uigetfile('*.xls;*.xlsx','Select a Schnitzcells configuration file');
     % full path to file
-    settings.configfilepath = [settings.mypathname settings.myconfigfilename];
+    ourSettings.configfilepath = [ourSettings.mypathname ourSettings.myconfigfilename];
         
     %old way
-    %settings.mypathname = 'F:\A_Tans1_step1_incoming_not_backed_up\2015-12-02\';
+    %ourSettings.mypathname = 'F:\A_Tans1_step1_incoming_not_backed_up\2015-12-02\';
     %myfilename = 'Schnitzcells_Analysis_Config_2015_12_02_pos2col1.xlsx';
 
 end
@@ -143,19 +143,19 @@ end
 %% Read configuration settings from excel file.
 % Press CTRL+enter.
 % The function MW_readsettingsfromexcelfile reads in the Excel file, and
-% puts all settings in a struct called "settings".
+% puts all settings in a struct called "ourSettings".
 
 if any(strcmp(runsections,{'allpreliminary', 'allfull', 'loadfile','reloadfile'}))
-    % One can execute this section again to reload settings 
+    % One can execute this section again to reload ourSettings 
     % Note that these are then not immediate parsed to the "p" struct.    
     
-    % load settings from excel file
-    % settings.configfilepath gives the path to MW_readsettingsfromexcelfile
-    [settings, alldata] = MW_readsettingsfromexcelfile(settings)
+    % load ourSettings from excel file
+    % ourSettings.configfilepath gives the path to MW_readsettingsfromexcelfile
+    [ourSettings, alldata] = MW_readsettingsfromexcelfile(ourSettings)
     
     % Update field in GUI w. name of config file
     if ranFromGUI
-        set(handles.thefilename,'String',[settings.mypathname settings.myconfigfilename]);
+        set(handles.thefilename,'String',[ourSettings.mypathname ourSettings.myconfigfilename]);
     end
 end
 
@@ -167,7 +167,7 @@ if any(strcmp(runsections,{'allpreliminary', 'allfull'}))
         
     analysisTypes = {'PRELIMINARY','FULL'}
 
-    myAnswer = questdlg(['Loaded ' [settings.mypathname settings.myconfigfilename] ', for ' settings.analysisType ' analysis do you want to continue?'],'Confirmation required.','Yes','No','No');
+    myAnswer = questdlg(['Loaded ' [ourSettings.mypathname ourSettings.myconfigfilename] ', for ' ourSettings.analysisType ' analysis do you want to continue?'],'Confirmation required.','Yes','No','No');
     if strcmp(myAnswer, 'No') || strcmp(myAnswer, 'Cancel')
         error('Analysis aborted.');
     end
@@ -177,31 +177,31 @@ end
 %% Now make a vector with parameter values that schnitzcells scripts can handle. (and some misc. other admin)
 % Press CTRL+enter.
 % Schnitzcells takes the struct "p" as input. This is basically a less
-% extended version of the settings struct. "p" is set here.
+% extended version of the ourSettings struct. "p" is set here.
 
 if any(strcmp(runsections,{'allpreliminary', 'allfull','createp'}))
     
-    disp('Now creating ''p'' struct from settings struct.');
+    disp('Now creating ''p'' struct from ourSettings struct.');
 
     % Create the p vector which holds all parameters and is fed into, and also
     % returned by most functions of the schnitzcells analysis software.
-    % Use "settings" struct as a base.
+    % Use "ourSettings" struct as a base.
     % DJK_initschnitz only checks for errors and adds a few parameters based on
     % the already given paramteres.
     % ===
     % TODO this can be done more elegantly (but note that existence of two
-    % vectors, "settings" and "p", allows user to update "settings" vector 
+    % vectors, "ourSettings" and "p", allows user to update "ourSettings" vector 
     % intermediately.
-    p = DJK_initschnitz(settings.positionName,settings.movieDate,'e.coli.amolf','rootDir',...
-        settings.rootDir, 'cropLeftTop',settings.cropLeftTop, 'cropRightBottom',settings.cropRightBottom,...
-        'fluor1',settings.fluor1,'fluor2',settings.fluor2,'fluor3',settings.fluor3,...
-        'setup',settings.setup,'softwarePackage',settings.softwarePackage,'camera',settings.camera);
+    p = DJK_initschnitz(ourSettings.positionName,ourSettings.movieDate,'e.coli.amolf','rootDir',...
+        ourSettings.rootDir, 'cropLeftTop',ourSettings.cropLeftTop, 'cropRightBottom',ourSettings.cropRightBottom,...
+        'fluor1',ourSettings.fluor1,'fluor2',ourSettings.fluor2,'fluor3',ourSettings.fluor3,...
+        'setup',ourSettings.setup,'softwarePackage',ourSettings.softwarePackage,'camera',ourSettings.camera);
 
     % Set framerange according to analysis type
-    if any(strcmp(settings.analysisType,'preliminary')) % fast analysis
-        settings.currentFrameRange = settings.frameRangePreliminary;
-    elseif any(strcmp(settings.analysisType,'full')) % full analysis
-        settings.currentFrameRange = settings.frameRangeFull;
+    if any(strcmp(ourSettings.analysisType,'preliminary')) % fast analysis
+        ourSettings.currentFrameRange = ourSettings.frameRangePreliminary;
+    elseif any(strcmp(ourSettings.analysisType,'full')) % full analysis
+        ourSettings.currentFrameRange = ourSettings.frameRangeFull;
     end
     
 end
@@ -212,7 +212,7 @@ end
 if any(strcmp(runsections,{'allpreliminary', 'allfull','createp'}))
 
     % Output directory for figures etc.    
-    settings.MYOUTPUTDIR = [p.dateDir 'outputSummary\'];
+    ourSettings.MYOUTPUTDIR = [p.dateDir 'outputSummary\'];
     
 end
 
@@ -230,60 +230,60 @@ end
 if any(strcmp(runsections,{'allpreliminary','cropimages'}))
 
 % Ask user whether cropping is desired.
-settings.performCropping = strcmp(questdlg('Select whether you in general want to crop your dataset. (Answer will be saved to Excel config file.','Cropping','Yes','No','No'),'Yes');
+ourSettings.performCropping = strcmp(questdlg('Select whether you in general want to crop your dataset. (Answer will be saved to Excel config file.','Cropping','Yes','No','No'),'Yes');
 % save preference to excel
-performCroppingIndex = find(strcmp({alldata{:,1}},'performCropping'))+settings.EXCELREADSTART-1; % find line w. cropRightBottom field.    
+performCroppingIndex = find(strcmp({alldata{:,1}},'performCropping'))+ourSettings.EXCELREADSTART-1; % find line w. cropRightBottom field.    
 if isempty(performCroppingIndex)
    error('Could not fiend performCroppingIndex Excel config file field. Maybe parameter performCropping is not set?');
 end
-xlswrite([settings.mypathname settings.myconfigfilename],{num2str(settings.performCropping)},['B' num2str(performCroppingIndex) ':B' num2str(performCroppingIndex) '']); % write value to it
+xlswrite([ourSettings.mypathname ourSettings.myconfigfilename],{num2str(ourSettings.performCropping)},['B' num2str(performCroppingIndex) ':B' num2str(performCroppingIndex) '']); % write value to it
 
-if settings.performCropping
+if ourSettings.performCropping
     
-    if strcmp(settings.analysisType, 'preliminary')
+    if strcmp(ourSettings.analysisType, 'preliminary')
 
         % Manually make sure image dir is correct
         % (This is done to accomodate cropping.)
-        p.imageDir = [settings.rootDir settings.movieDate '\' settings.positionName '\']
+        p.imageDir = [ourSettings.rootDir ourSettings.movieDate '\' ourSettings.positionName '\']
         
         % set new croparea and save crop area to excel file
         % ===
         
         % Ask to crop, and ask 
         %myAnswer = questdlg(['Start cropping? And save selection to Excel file (close it first)?'],'Confirmation required.','Save,use,crop','Crop using old','Abort!','Save,use,crop');        
-        myAnswer = questdlg(['Do you want to select a crop area?'],'Crop area.','Yes','Crop using current settings','Abort!','Yes');        
+        myAnswer = questdlg(['Do you want to select a crop area?'],'Crop area.','Yes','Crop using current ourSettings','Abort!','Yes');        
         % Only select new if desired
         if strcmp(myAnswer, 'Yes')            
             
             % Determine crop area
-            [selectedLeftTop,selectedRightBottom] = MW_determinecroparea(p, settings.frameRangePreliminary);
+            [selectedLeftTop,selectedRightBottom] = MW_determinecroparea(p, ourSettings.frameRangePreliminary);
             
-            settings.cropLeftTop = selectedLeftTop;
-            settings.cropRightBottom = selectedRightBottom;
+            ourSettings.cropLeftTop = selectedLeftTop;
+            ourSettings.cropRightBottom = selectedRightBottom;
 
-            ExcelcropLeftTopIndex = find(strcmp({alldata{:,1}},'cropLeftTop'))+settings.EXCELREADSTART-1; % find line w. cropLeftTop field.
-            xlswrite([settings.mypathname settings.myconfigfilename],{mat2str(settings.cropLeftTop)},['B' num2str(ExcelcropLeftTopIndex) ':B' num2str(ExcelcropLeftTopIndex) '']); % write value to it
-            ExcelcropRightBottomIndex = find(strcmp({alldata{:,1}},'cropRightBottom'))+settings.EXCELREADSTART-1; % find line w. cropRightBottom field.    
-            xlswrite([settings.mypathname settings.myconfigfilename],{mat2str(settings.cropRightBottom)},['B' num2str(ExcelcropRightBottomIndex) ':B' num2str(ExcelcropRightBottomIndex) '']); % write value to it
+            ExcelcropLeftTopIndex = find(strcmp({alldata{:,1}},'cropLeftTop'))+ourSettings.EXCELREADSTART-1; % find line w. cropLeftTop field.
+            xlswrite([ourSettings.mypathname ourSettings.myconfigfilename],{mat2str(ourSettings.cropLeftTop)},['B' num2str(ExcelcropLeftTopIndex) ':B' num2str(ExcelcropLeftTopIndex) '']); % write value to it
+            ExcelcropRightBottomIndex = find(strcmp({alldata{:,1}},'cropRightBottom'))+ourSettings.EXCELREADSTART-1; % find line w. cropRightBottom field.    
+            xlswrite([ourSettings.mypathname ourSettings.myconfigfilename],{mat2str(ourSettings.cropRightBottom)},['B' num2str(ExcelcropRightBottomIndex) ':B' num2str(ExcelcropRightBottomIndex) '']); % write value to it
         end
 
         % cropping itself
-        if strcmp(myAnswer, 'Yes') | strcmp(myAnswer, 'Crop using current settings')
+        if strcmp(myAnswer, 'Yes') | strcmp(myAnswer, 'Crop using current ourSettings')
             % Crop images
-            DJK_cropImages_3colors(p, settings.frameRangePreliminary, settings.cropLeftTop, ...
-                settings.cropRightBottom, 'cropName', [settings.positionName settings.cropSuffix]);    
+            DJK_cropImages_3colors(p, ourSettings.frameRangePreliminary, ourSettings.cropLeftTop, ...
+                ourSettings.cropRightBottom, 'cropName', [ourSettings.positionName ourSettings.cropSuffix]);    
         end
 
         disp('Done cropping');
     
-    elseif strcmp(settings.analysisType, 'full')
+    elseif strcmp(ourSettings.analysisType, 'full')
     
         % Manually make sure image dir is correct
         % (This is done to accomodate cropping.)
-        p.imageDir = [settings.rootDir settings.movieDate '\' settings.positionName '\']
+        p.imageDir = [ourSettings.rootDir ourSettings.movieDate '\' ourSettings.positionName '\']
 
-        DJK_cropImages_3colors(p, settings.frameRangeFull, settings.cropLeftTop, ...
-            settings.cropRightBottom, 'cropName', [settings.positionName settings.cropSuffix]);
+        DJK_cropImages_3colors(p, ourSettings.frameRangeFull, ourSettings.cropLeftTop, ...
+            ourSettings.cropRightBottom, 'cropName', [ourSettings.positionName ourSettings.cropSuffix]);
 
         disp('Done cropping');
         
@@ -303,16 +303,16 @@ end
 % new location of the images. 
 
 if any(strcmp(runsections,{'allpreliminary', 'allfull','cropimages','loadpforcropped'}))
-if settings.performCropping
+if ourSettings.performCropping
 
     % =========================================================================
     % Load this setting later if you want to skip cropping
     % =========================================================================
-    % (After loading settings from excel file.)
-    p = DJK_initschnitz([settings.positionName settings.cropSuffix],settings.movieDate,'e.coli.amolf','rootDir',...
-        settings.rootDir, 'cropLeftTop',settings.cropLeftTop, 'cropRightBottom',settings.cropRightBottom,...
-        'fluor1',settings.fluor1,'fluor2',settings.fluor2,'fluor3',settings.fluor3,...
-        'setup',settings.setup,'softwarePackage',settings.softwarePackage,'camera',settings.camera)
+    % (After loading ourSettings from excel file.)
+    p = DJK_initschnitz([ourSettings.positionName ourSettings.cropSuffix],ourSettings.movieDate,'e.coli.amolf','rootDir',...
+        ourSettings.rootDir, 'cropLeftTop',ourSettings.cropLeftTop, 'cropRightBottom',ourSettings.cropRightBottom,...
+        'fluor1',ourSettings.fluor1,'fluor2',ourSettings.fluor2,'fluor3',ourSettings.fluor3,...
+        'setup',ourSettings.setup,'softwarePackage',ourSettings.softwarePackage,'camera',ourSettings.camera)
     % =========================================================================
 
     disp('p (parameters) loaded');
@@ -323,9 +323,9 @@ end
 %% Segmenation
 % Press CTRL+enter.
 % The function PN_segmoviephase_3colors will segment all images in the
-% framerange provided by settings.currentFrameRange.
+% framerange provided by ourSettings.currentFrameRange.
 % =========================================================================
-% ADVANCED PARAMETER SETTINGS that can be useful:
+% ADVANCED PARAMETER ourSettings that can be useful:
 % p.useFullImage=1; % forces to use full image for segmentation
 % p.overwrite=1; % overwrite existing files (to redo segmentation)
 % p.customColonyCenter=[x,y]; % set center of colony to select ROI 
@@ -333,15 +333,15 @@ end
 
 if any(strcmp(runsections,{'allpreliminary', 'allfull','segmentation'}))
 
-    PN_segmoviephase_3colors(p,'segRange', settings.currentFrameRange,'slices', settings.slices,...
-        'rangeFiltSize', settings.rangeFiltSize,'maskMargin', settings.maskMargin,'LoG_Smoothing',...
-        settings.LoG_Smoothing,'minCellArea', settings.minCellArea,...
-        'GaussianFilter', settings.GaussianFilter,'minDepth', settings.minDepth,'neckDepth', settings.neckDepth);
+    PN_segmoviephase_3colors(p,'segRange', ourSettings.currentFrameRange,'slices', ourSettings.slices,...
+        'rangeFiltSize', ourSettings.rangeFiltSize,'maskMargin', ourSettings.maskMargin,'LoG_Smoothing',...
+        ourSettings.LoG_Smoothing,'minCellArea', ourSettings.minCellArea,...
+        'GaussianFilter', ourSettings.GaussianFilter,'minDepth', ourSettings.minDepth,'neckDepth', ourSettings.neckDepth);
 
-    PN_copySegFiles(p,'segRange', settings.currentFrameRange,'slices', settings.slices,...
-        'rangeFiltSize', settings.rangeFiltSize,'maskMargin', settings.maskMargin,'LoG_Smoothing',...
-        settings.LoG_Smoothing,'minCellArea', settings.minCellArea,...
-        'GaussianFilter', settings.GaussianFilter,'minDepth', settings.minDepth,'neckDepth', settings.neckDepth);
+    PN_copySegFiles(p,'segRange', ourSettings.currentFrameRange,'slices', ourSettings.slices,...
+        'rangeFiltSize', ourSettings.rangeFiltSize,'maskMargin', ourSettings.maskMargin,'LoG_Smoothing',...
+        ourSettings.LoG_Smoothing,'minCellArea', ourSettings.minCellArea,...
+        'GaussianFilter', ourSettings.GaussianFilter,'minDepth', ourSettings.minDepth,'neckDepth', ourSettings.neckDepth);
 
     % Let user now section is done by sound
     mysound=load('gong'); sound(mysound.y);
@@ -360,40 +360,48 @@ if any(strcmp(runsections,{'redosegforframe'}))
     if ~ranFromGUI
         % EDIT PARAMETERS HERE IF MANUALLY REDOING
         TOREDOFRAME = 10;
-        SLICESTEMPORARY = [2]; % default [1 2 3] instead of settings.slices
-        LOGSMOOTHINGTEMPORARY = 10; % default 2; instead of settings.LoG_Smoothing
+        SLICESTEMPORARY = [2]; % default [1 2 3] instead of ourSettings.slices
+        LOGSMOOTHINGTEMPORARY = 10; % default 2; instead of ourSettings.LoG_Smoothing
         MINDEPTHTEMP = 5;% default 5;
-        MINCELLAREA = 250; % default 250        
+        MINCELLAREA = 250; % default 250      
+        RANGEFILTSIZE          = 35; % default 35
+        MASKMARGIN             = 5; % default 5
+        GAUSSIANFILTER         = 5; % default 5 
+        NECKDEPTH              = 2; % default 2
     else    
-        % Settings from GUI
-        TOREDOFRAME            = settings.TOREDOFRAME;
-        SLICESTEMPORARY        = settings.SLICESTEMPORARY;
-        LOGSMOOTHINGTEMPORARY  = settings.LOGSMOOTHINGTEMPORARY;
-        MINDEPTHTEMP           = settings.MINDEPTHTEMP;
-        MINCELLAREA            = settings.MINCELLAREA;
+        % ourSettings from GUI
+        TOREDOFRAME            = ourSettings.TOREDOFRAME;
+        SLICESTEMPORARY        = ourSettings.SLICESTEMPORARY;
+        LOGSMOOTHINGTEMPORARY  = ourSettings.LOGSMOOTHINGTEMPORARY;
+        MINDEPTHTEMP           = ourSettings.MINDEPTHTEMP;
+        MINCELLAREA            = ourSettings.MINCELLAREA;
+        RANGEFILTSIZE          = ourSettings.RANGEFILTSIZE;
+        MASKMARGIN             = ourSettings.MASKMARGIN;
+        GAUSSIANFILTER         = ourSettings.GAUSSIANFILTER;
+        NECKDEPTH              = ourSettings.NECKDEPTH;
     end
     
-    theOriginalFrameRange = settings.currentFrameRange; settings.currentFrameRange = TOREDOFRAME;
+    theOriginalFrameRange = ourSettings.currentFrameRange; ourSettings.currentFrameRange = TOREDOFRAME;
     p.overwrite=1;    
     
     % a set problemCells field functions as flag, so should 
     if isfield(p, 'problemCells'), p=rmfield(p, 'problemCells'), end
     
-    PN_segmoviephase_3colors(p,'segRange', settings.currentFrameRange,'slices', SLICESTEMPORARY,...
-        'rangeFiltSize', settings.rangeFiltSize,'maskMargin', settings.maskMargin,'LoG_Smoothing',...
+    PN_segmoviephase_3colors(p,'segRange', ourSettings.currentFrameRange,'slices', SLICESTEMPORARY,...
+        'rangeFiltSize', RANGEFILTSIZE,'maskMargin', MASKMARGIN,'LoG_Smoothing',...
         LOGSMOOTHINGTEMPORARY,'minCellArea', MINCELLAREA,...
-        'GaussianFilter', settings.GaussianFilter,'minDepth', MINDEPTHTEMP,'neckDepth', settings.neckDepth);
+        'GaussianFilter', GAUSSIANFILTER,'minDepth', MINDEPTHTEMP,'neckDepth', NECKDEPTH);
 
-    PN_copySegFiles(p,'segRange', settings.currentFrameRange,'slices', SLICESTEMPORARY,...
-        'rangeFiltSize', settings.rangeFiltSize,'maskMargin', settings.maskMargin,'LoG_Smoothing',...
+    PN_copySegFiles(p,'segRange', ourSettings.currentFrameRange,'slices', SLICESTEMPORARY,...
+        'rangeFiltSize', RANGEFILTSIZE,'maskMargin', MASKMARGIN,'LoG_Smoothing',...
         LOGSMOOTHINGTEMPORARY,'minCellArea', MINCELLAREA,...
-        'GaussianFilter', settings.GaussianFilter,'minDepth', MINDEPTHTEMP,'neckDepth', settings.neckDepth);    
+        'GaussianFilter', GAUSSIANFILTER,'minDepth', MINDEPTHTEMP,'neckDepth', NECKDEPTH);    
    
-    settings.currentFrameRange = theOriginalFrameRange;
+    ourSettings.currentFrameRange = theOriginalFrameRange;
     p.overwrite=0;
 end
 
-
+disp('Section done');
 
 %% Start the manual checking by user
 % Press CTRL+enter.
@@ -410,14 +418,14 @@ end
 if any(strcmp(runsections,{'allpreliminary', 'allfull','manualchecksegfull'}))
 
     % choose option based type analysis
-    if strcmp(settings.analysisType, 'preliminary')
-        settings.assistedYesNo=0;
-    elseif strcmp(settings.analysisType, 'full')
-        settings.assistedYesNo=1;
+    if strcmp(ourSettings.analysisType, 'preliminary')
+        ourSettings.assistedYesNo=0;
+    elseif strcmp(ourSettings.analysisType, 'full')
+        ourSettings.assistedYesNo=1;
     end
 
     % run function which allows user to manually check segmentation
-    PN_manualcheckseg(p,'manualRange',settings.currentFrameRange,'overwrite',0,'assistedCorrection',settings.assistedYesNo); % ADVANCED PARAMETERS in fn arguments
+    PN_manualcheckseg(p,'manualRange',ourSettings.currentFrameRange,'overwrite',0,'assistedCorrection',ourSettings.assistedYesNo); % ADVANCED PARAMETERS in fn arguments
 
 end
 %% Perform quick analysis of segmentation
@@ -427,7 +435,7 @@ end
 
 if any(strcmp(runsections,{'allpreliminary', 'allfull','quickanalysis'}))
     
-    DJK_analyzeSeg(p,'manualRange',settings.currentFrameRange,'onscreen',1,'DJK_saveDir',settings.MYOUTPUTDIR);
+    DJK_analyzeSeg(p,'manualRange',ourSettings.currentFrameRange,'onscreen',1,'DJK_saveDir',ourSettings.MYOUTPUTDIR);
     %close(gcf);
     
     disp('Quick analysis done.');
@@ -459,20 +467,20 @@ end
 % posX\data\posX-Schnitz.mat
 
 if any(strcmp(runsections,{'allpreliminary','trackpreliminary'})) % fast
-    DJK_trackcomplete(p,'trackRange',settings.currentFrameRange,'trackMethod','singleCell');    
+    DJK_trackcomplete(p,'trackRange',ourSettings.currentFrameRange,'trackMethod','singleCell');    
     
     disp('Done tracking');
 elseif any(strcmp(runsections,{'allfull','trackandmanualcorrections'}))% full
     p.overwrite=0; % ADVANCED SETTING
     p.showAll = 1; % show all segmented frames to user
 
-    % Default settings for identifying problem cells, when not given config
+    % Default ourSettings for identifying problem cells, when not given config
     % file
-    if ~isfield(settings,'pixelsMoveDef')
-        settings.pixelsMoveDef=15;
+    if ~isfield(ourSettings,'pixelsMoveDef')
+        ourSettings.pixelsMoveDef=15;
     end
-    if ~isfield(settings,'pixelsLenDef')
-        settings.pixelsLenDef=[-4 13];
+    if ~isfield(ourSettings,'pixelsLenDef')
+        ourSettings.pixelsLenDef=[-4 13];
     end
     
     % Alternative trackers one can try
@@ -482,7 +490,7 @@ elseif any(strcmp(runsections,{'allfull','trackandmanualcorrections'}))% full
     % automatically above).
     % ===
     % default tracker
-    %DJK_tracker_djk(p,'manualRange', settings.currentFrameRange)
+    %DJK_tracker_djk(p,'manualRange', ourSettings.currentFrameRange)
     % slow but more robust:
     %NW_tracker_centroid_vs_area(p,'manualRange', [1:244]); 
     % fast but fails often:
@@ -490,12 +498,12 @@ elseif any(strcmp(runsections,{'allfull','trackandmanualcorrections'}))% full
     % If all else fails:
     % edit MW_helperforlinkingframes
         
-    DJK_tracker_djk(p,'manualRange', settings.currentFrameRange); % default tracker           
+    DJK_tracker_djk(p,'manualRange', ourSettings.currentFrameRange); % default tracker           
     
     % Find problem cells
-    [problems, theOutputFilePath] = DJK_analyzeTracking(p,'manualRange', settings.currentFrameRange, 'pixelsMoveDef', settings.pixelsMoveDef, 'pixelsLenDef', settings.pixelsLenDef);
+    [problems, theOutputFilePath] = DJK_analyzeTracking(p,'manualRange', ourSettings.currentFrameRange, 'pixelsMoveDef', ourSettings.pixelsMoveDef, 'pixelsLenDef', ourSettings.pixelsLenDef);
     % open output file in external editor (not necessary, but convenient)
-    eval(['!' settings.MYTEXTEDITOR ' ' theOutputFilePath ' &']);
+    eval(['!' ourSettings.MYTEXTEDITOR ' ' theOutputFilePath ' &']);
     
     p.problemCells = problems;
 
@@ -510,7 +518,7 @@ elseif any(strcmp(runsections,{'allfull','trackandmanualcorrections'}))% full
     % will highlight the problemcells.
     % Note that when one performs manual corrections to a frame, the mapping is
     % not correct any more.
-    PN_manualcheckseg(p,'manualRange',settings.currentFrameRange,'override',p.overwrite,'assistedCorrection',0); % assisted correction of because problem cells highlighted
+    PN_manualcheckseg(p,'manualRange',ourSettings.currentFrameRange,'override',p.overwrite,'assistedCorrection',0); % assisted correction of because problem cells highlighted
 
     disp('Done (full) tracking');
     
@@ -526,7 +534,7 @@ end
 % NW_tracker_centroid_vs_area (slow, but often offers good tracking where 
 % DJK_tracker_djk has failed).
 % This section will only be run if customtrackersoncustomrange is set.
-% Set settings.specialtracker to run a desired alternative tracker (either 
+% Set ourSettings.specialtracker to run a desired alternative tracker (either 
 % MW or NW). If this field is not set, default tracker is run.
 
 if any(strcmp(runsections,{'customtrackersoncustomrange'}))
@@ -539,20 +547,20 @@ if any(strcmp(runsections,{'customtrackersoncustomrange'}))
     end
     
     % call desired tracker
-    if ~isfield(settings, 'specialtracker') 
-        DJK_tracker_djk(p,'manualRange', settings.retrackFrameRange); % default tracker
-    elseif strcmp(settings.specialtracker, 'MW')
-        MW_tracker(p,'manualRange', settings.retrackFrameRange); 
-    elseif strcmp(settings.specialtracker, 'NW')
-        NW_tracker_centroid_vs_area(p,'manualRange', settings.retrackFrameRange);
+    if ~isfield(ourSettings, 'specialtracker') 
+        DJK_tracker_djk(p,'manualRange', ourSettings.retrackFrameRange); % default tracker
+    elseif strcmp(ourSettings.specialtracker, 'MW')
+        MW_tracker(p,'manualRange', ourSettings.retrackFrameRange); 
+    elseif strcmp(ourSettings.specialtracker, 'NW')
+        NW_tracker_centroid_vs_area(p,'manualRange', ourSettings.retrackFrameRange);
     end
     
     % Now, if retracked range was not full range, the overall tracking
     % should be redone. This function is already executed in the trackers,
     % but should be re-executed here in this case.
-    if ~isequal(settings.retrackFrameRange, settings.currentFrameRange)
+    if ~isequal(ourSettings.retrackFrameRange, ourSettings.currentFrameRange)
         disp('CREATING SCHNITZCELLS FROM FULL DESIRED RANGE ***');
-        MW_calculateSchnitzPropertiesWithoutTracking(p,'manualRange', settings.currentFrameRange);
+        MW_calculateSchnitzPropertiesWithoutTracking(p,'manualRange', ourSettings.currentFrameRange);
     end
     
 end
@@ -566,22 +574,22 @@ end
 
 if any(strcmp(runsections,{'checkaftercustom'}))
     
-    % Default settings for identifying problem cells, when not given config
+    % Default ourSettings for identifying problem cells, when not given config
     % file
-    if ~isfield(settings,'pixelsMoveDef')
-        settings.pixelsMoveDef=15;
+    if ~isfield(ourSettings,'pixelsMoveDef')
+        ourSettings.pixelsMoveDef=15;
     end
-    if ~isfield(settings,'pixelsLenDef')
-        settings.pixelsLenDef=[-4 13];
+    if ~isfield(ourSettings,'pixelsLenDef')
+        ourSettings.pixelsLenDef=[-4 13];
     end
     
     %disp('Option not working yet.. Use (re)track (..) instead.');
     
     
     % Find problem cells    
-    [problems, theOutputFilePath] = DJK_analyzeTracking(p,'manualRange', settings.currentFrameRange, 'pixelsMoveDef', 15, 'pixelsLenDef', [-4 13]);
+    [problems, theOutputFilePath] = DJK_analyzeTracking(p,'manualRange', ourSettings.currentFrameRange, 'pixelsMoveDef', 15, 'pixelsLenDef', [-4 13]);
     % open output file in external editor (not necessary, but convenient)
-    eval(['!' settings.MYTEXTEDITOR ' ' theOutputFilePath ' &']);
+    eval(['!' ourSettings.MYTEXTEDITOR ' ' theOutputFilePath ' &']);
     
     p.problemCells = problems;
 
@@ -596,7 +604,7 @@ if any(strcmp(runsections,{'checkaftercustom'}))
     % will highlight the problemcells.
     % Note that when one performs manual corrections to a frame, the mapping is
     % not correct any more.
-    PN_manualcheckseg(p,'manualRange',settings.currentFrameRange,'override',p.overwrite,'assistedCorrection',0); % assisted correction of because problem cells highlighted
+    PN_manualcheckseg(p,'manualRange',ourSettings.currentFrameRange,'override',p.overwrite,'assistedCorrection',0); % assisted correction of because problem cells highlighted
 
     
     
@@ -632,7 +640,7 @@ if any(strcmp(runsections,{'allfull','makemovie'}))
     end
 
     % Make movie
-    DJK_makeMovie (p, 'tree', 'schAll', 'stabilize', 1,'manualRange',settings.currentFrameRange);
+    DJK_makeMovie (p, 'tree', 'schAll', 'stabilize', 1,'manualRange',ourSettings.currentFrameRange);
 
     %{
     % Other movie making options
@@ -668,9 +676,9 @@ if any(strcmp(runsections,{'allpreliminary', 'allfull','correctionsandanalysis'}
 
     % Initialization, applies to all colors
     % ===
-    NW_initializeFluorData(p,'manualRange', settings.currentFrameRange);
+    NW_initializeFluorData(p,'manualRange', ourSettings.currentFrameRange);
     % Load PSF (color-independent)
-    load(settings.fluorPointSpreadFunctionPath, 'PSF');
+    load(ourSettings.fluorPointSpreadFunctionPath, 'PSF');
 
     % Loop over all colors
     % ===
@@ -689,14 +697,14 @@ if any(strcmp(runsections,{'allpreliminary', 'allfull','correctionsandanalysis'}
 
         % Load background (mistakenly called flatfield; legacy), shading and
         % replace matrices
-        load(settings.fluorCorrectionImagePaths{colorIdx}, 'flatfield', 'shading', 'replace');
+        load(ourSettings.fluorCorrectionImagePaths{colorIdx}, 'flatfield', 'shading', 'replace');
 
         % Finding shifts.
         disp('Looking for shifts');
-        optimalShift = DJK_getFluorShift_anycolor(p,'manualRange', settings.currentFrameRange,'fluorcolor',currentFluor,'maxShift',MAXSHIFT);
+        optimalShift = DJK_getFluorShift_anycolor(p,'manualRange', ourSettings.currentFrameRange,'fluorcolor',currentFluor,'maxShift',MAXSHIFT);
         disp('Correcting');
         % Correct images (shading, background).
-        DJK_correctFluorImage_anycolor(p, flatfield, shading, replace,'manualRange', settings.currentFrameRange,  'fluorShift', optimalShift, 'deconv_func', @(im) deconvlucy(im, PSF),'fluorcolor',currentFluor,'minimalMode',0);
+        DJK_correctFluorImage_anycolor(p, flatfield, shading, replace,'manualRange', ourSettings.currentFrameRange,  'fluorShift', optimalShift, 'deconv_func', @(im) deconvlucy(im, PSF),'fluorcolor',currentFluor,'minimalMode',0);
 
     end
 
@@ -726,7 +734,7 @@ if any(strcmp(runsections,{'allpreliminary', 'allfull','correctionsandanalysis'}
     DJK_addToSchnitzes_length(p);
     
     % In case of full analysis
-    if strcmp(settings.analysisType, 'full')
+    if strcmp(ourSettings.analysisType, 'full')
         % Also calculate skeleton lengths
         NDL_addToSchnitzes_skeletonLengthMW(p);
         % And make sure DJK_addToSchnitzes_mu also uses length_skeleton
@@ -734,7 +742,7 @@ if any(strcmp(runsections,{'allpreliminary', 'allfull','correctionsandanalysis'}
     end
 
     %8 Add correct mu
-    DJK_addToSchnitzes_mu(p, 'frameSizes', settings.muWindow); % p.lengthFields is set above
+    DJK_addToSchnitzes_mu(p, 'frameSizes', ourSettings.muWindow); % p.lengthFields is set above
 
     % Let user know we're done
     mysound=load('gong'); sound(mysound.y);
@@ -798,7 +806,7 @@ if any(strcmp(runsections,{'allpreliminary', 'allfull','correctionsandanalysis'}
             [X '6_mean'],... % X6mean
             ['phase2_at' X '']); % etc..
 
-        for muWindowSize = settings.muWindow
+        for muWindowSize = ourSettings.muWindow
             currentMuWindowSizeStr = num2str(muWindowSize);
             schnitzcells = DJK_addToSchnitzes_cycleCor(schnitzcells,...
                 ['muP' currentMuWindowSizeStr '_fitNew'],...
@@ -816,7 +824,7 @@ if any(strcmp(runsections,{'allpreliminary', 'allfull','correctionsandanalysis'}
             ['phase2_at' X '']);
 
         % Cropping vectors
-        for muWindowSize = settings.muWindow
+        for muWindowSize = ourSettings.muWindow
 
             currentMuWindowSizeStr = num2str(muWindowSize);
 
@@ -861,7 +869,7 @@ if any(strcmp(runsections,{'allpreliminary','analysispreliminary'}))
     [p,schnitzcells] = DJK_compileSchnitzImproved_3colors(p,'quickMode',1);
 
     % Fit mu
-    [fitTime, fitMu] = DJK_analyzeMu(p, schnitzcells, 'onScreen', 1,'fitTime',[0 10000],'DJK_saveDir',settings.MYOUTPUTDIR);
+    [fitTime, fitMu] = DJK_analyzeMu(p, schnitzcells, 'onScreen', 1,'fitTime',[0 10000],'DJK_saveDir',ourSettings.MYOUTPUTDIR);
     close(gcf);
     %[fitTime, fitMu] = DJK_analyzeMu(p, schnitzcells, 'xlim', [0 900], 'onScreen', 1,'fitTime',[0 10000]);
 
@@ -880,7 +888,7 @@ if any(strcmp(runsections,{'allpreliminary','analysispreliminary'}))
 
         % plot fluor behavior
         fluorFieldName = [upper(p.(currentFluor)(1)) '5_mean_all'];
-        [fitFluorMean(colorIdx), fitFluorVariance(colorIdx)] = DJK_plot_avColonyOverTime(p, schnitzcells, fluorFieldName, 'fitTime', fitTime, 'onScreen', 1,'DJK_saveDir',settings.MYOUTPUTDIR);
+        [fitFluorMean(colorIdx), fitFluorVariance(colorIdx)] = DJK_plot_avColonyOverTime(p, schnitzcells, fluorFieldName, 'fitTime', fitTime, 'onScreen', 1,'DJK_saveDir',ourSettings.MYOUTPUTDIR);
         close(gcf);
         %DJK_plot_avColonyOverTime(p, schnitzcells, 'C5_mean_all', 'xlim', [0 900], 'ylim', [0 150], 'fitTime', fitTime, 'onScreen',1);
     end
@@ -897,24 +905,24 @@ if any(strcmp(runsections,{'allpreliminary','analysispreliminary'}))
     lineToWriteTo = num2str(posNumber+1);
     
     % Output to excel sheet
-    xlswrite([settings.MYOUTPUTDIR 'summaryParametersPreliminary.xls'],{'Identifier'},['A1:A1'])
-    xlswrite([settings.MYOUTPUTDIR 'summaryParametersPreliminary.xls'],{[p.movieDate '_' p.movieName]},['A' lineToWriteTo ':' 'A' lineToWriteTo])
+    xlswrite([ourSettings.MYOUTPUTDIR 'summaryParametersPreliminary.xls'],{'Identifier'},['A1:A1'])
+    xlswrite([ourSettings.MYOUTPUTDIR 'summaryParametersPreliminary.xls'],{[p.movieDate '_' p.movieName]},['A' lineToWriteTo ':' 'A' lineToWriteTo])
     
     for i = 1:numel(summaryParameters)
         letterToWriteTo = ['' i+64+1]; % +1 since start at B
         %disp(['writing ' [letterToWriteTo lineToWriteTo]]);
-        xlswrite([settings.MYOUTPUTDIR 'summaryParametersPreliminary.xls'],{summaryParametersNames{i}},[letterToWriteTo '1:' letterToWriteTo '1'])
-        xlswrite([settings.MYOUTPUTDIR 'summaryParametersPreliminary.xls'],summaryParameters(i),[letterToWriteTo lineToWriteTo ':' letterToWriteTo lineToWriteTo])
+        xlswrite([ourSettings.MYOUTPUTDIR 'summaryParametersPreliminary.xls'],{summaryParametersNames{i}},[letterToWriteTo '1:' letterToWriteTo '1'])
+        xlswrite([ourSettings.MYOUTPUTDIR 'summaryParametersPreliminary.xls'],summaryParameters(i),[letterToWriteTo lineToWriteTo ':' letterToWriteTo lineToWriteTo])
     end
 
     % Save output to .mat file (update the matfile)
-    if exist([settings.MYOUTPUTDIR 'summaryParametersPreliminary.mat'],'file') == 2
-        load([settings.MYOUTPUTDIR 'summaryParametersPreliminary.mat'],'thedata');
+    if exist([ourSettings.MYOUTPUTDIR 'summaryParametersPreliminary.mat'],'file') == 2
+        load([ourSettings.MYOUTPUTDIR 'summaryParametersPreliminary.mat'],'thedata');
     end
     thedata(posNumber).summaryParameters = summaryParameters;
-    thedata(posNumber).settings = settings;
-    thedata(posNumber).p = p; % "settings" and "p" are a bit redundant for historic reasons.
-    save([settings.MYOUTPUTDIR 'summaryParametersPreliminary.mat'],'thedata','summaryParametersNames');
+    thedata(posNumber).ourSettings = ourSettings;
+    thedata(posNumber).p = p; % "ourSettings" and "p" are a bit redundant for historic reasons.
+    save([ourSettings.MYOUTPUTDIR 'summaryParametersPreliminary.mat'],'thedata','summaryParametersNames');
     
 disp('Done making summary preliminary analysis.');
 disp('Check out MW_summaryplotspreliminaryanalysis.m for more plots when all positions done');
@@ -928,7 +936,7 @@ end
 
 if any(strcmp(runsections,{'allpreliminary', 'allfull', 'makeoutputfull','rerunfullanalysis'}))
 
-    % We are done with settings up schnitzcells structure! All data is saved.
+    % We are done with ourSettings up schnitzcells structure! All data is saved.
     % You can proceed with analyzing the data..
 
     % To load after full analysis is done:
@@ -936,14 +944,14 @@ if any(strcmp(runsections,{'allpreliminary', 'allfull', 'makeoutputfull','rerunf
 
         % Load this dataset using
         % =========================================================================
-        p = DJK_initschnitz([settings.positionName settings.cropSuffix], settings.movieDate,'e.coli.AMOLF','rootDir',...
-         settings.rootDir, 'cropLeftTop', settings.cropLeftTop, 'cropRightBottom', settings.cropRightBottom,...
-             'fluor1',settings.fluor1,...
-             'fluor2',settings.fluor2,...
-             'fluor3',settings.fluor3,...
-             'setup',settings.setup,...
-             'softwarePackage',settings.softwarePackage,...
-             'camera',settings.camera);
+        p = DJK_initschnitz([ourSettings.positionName ourSettings.cropSuffix], ourSettings.movieDate,'e.coli.AMOLF','rootDir',...
+         ourSettings.rootDir, 'cropLeftTop', ourSettings.cropLeftTop, 'cropRightBottom', ourSettings.cropRightBottom,...
+             'fluor1',ourSettings.fluor1,...
+             'fluor2',ourSettings.fluor2,...
+             'fluor3',ourSettings.fluor3,...
+             'setup',ourSettings.setup,...
+             'softwarePackage',ourSettings.softwarePackage,...
+             'camera',ourSettings.camera);
 
         [p,schnitzcells] = DJK_compileSchnitzImproved_3colors(p,'quickMode',1);
         % =========================================================================
@@ -968,21 +976,21 @@ if any(strcmp(runsections,{'allfull', 'makeoutputfull', 'rerunfullanalysis'})) %
     % Seting up main output parameter
     output = struct;
     
-    % Settings up some more parameters
-    p.myID = settings.myID
-    settings.myOutputFolder = [settings.mypathname  '\' p.movieDate  '_' p.movieName '_' p.myID  '\'];
+    % ourSettings up some more parameters
+    p.myID = ourSettings.myID
+    ourSettings.myOutputFolder = [ourSettings.mypathname  '\' p.movieDate  '_' p.movieName '_' p.myID  '\'];
     
-    p.NW_saveDir = [settings.myOutputFolder 'misc\'];  % To send additional output to
-    p.DJK_saveDir = [settings.myOutputFolder 'misc\']; % To send additional output to
+    p.NW_saveDir = [ourSettings.myOutputFolder 'misc\'];  % To send additional output to
+    p.DJK_saveDir = [ourSettings.myOutputFolder 'misc\']; % To send additional output to
     
     % Location of .mat file containing schnitzcells struct
-    settings.myDataFile = [settings.mypathname '\' p.movieName  '\data\' p.movieName '-Schnitz.mat'];
+    ourSettings.myDataFile = [ourSettings.mypathname '\' p.movieName  '\data\' p.movieName '-Schnitz.mat'];
    
     % Load datafile
-    load(settings.myDataFile);
+    load(ourSettings.myDataFile);
 
     % Some more parameter renaming
-    myFile = settings.myDataFile; EXPORTFOLDER = settings.myOutputFolder; FITTIME = settings.fitTimeMu;    
+    myFile = ourSettings.myDataFile; EXPORTFOLDER = ourSettings.myOutputFolder; FITTIME = ourSettings.fitTimeMu;    
     
     % Set up export directory
     if ~exist(EXPORTFOLDER,'dir'), mkdir(EXPORTFOLDER); end
@@ -996,27 +1004,27 @@ if any(strcmp(runsections,{'allfull', 'makeoutputfull', 'rerunfullanalysis'})) %
     % ===
     activeFluorIdx = [];
     % loop over different fluor slots
-    settings.theLetters='';
+    ourSettings.theLetters='';
     for fluorIdx = 1:3
         % check whether this fluor field was set by user in config file
-        if isfield(settings,['fluor' num2str(fluorIdx)])
-        if ~strcmp(upper(settings.(['fluor' num2str(fluorIdx)])),'NONE')
+        if isfield(ourSettings,['fluor' num2str(fluorIdx)])
+        if ~strcmp(upper(ourSettings.(['fluor' num2str(fluorIdx)])),'NONE')
             % determine fluor code letter
-            theLetter = upper(settings.(['fluor' num2str(fluorIdx)]));
-            settings.theLetters = [settings.theLetters theLetter];
+            theLetter = upper(ourSettings.(['fluor' num2str(fluorIdx)]));
+            ourSettings.theLetters = [ourSettings.theLetters theLetter];
             % set fields
-            settings.fieldNamesWithFluorLetter(fluorIdx).timeFieldName = ...
-                strrep(settings.timeFieldName,'X',theLetter);
-            settings.fieldNamesWithFluorLetter(fluorIdx).fluorFieldName = ...
-                strrep(settings.fluorFieldName,'X',theLetter);
-            settings.fieldNamesWithFluorLetter(fluorIdx).muFieldName = ...
-                strrep(settings.muFieldName,'X',theLetter)
-            settings.fieldNamesWithFluorLetter(fluorIdx).timeFieldNameDerivative = ...
-                strrep(settings.timeFieldNameDerivative,'X',theLetter);
-            settings.fieldNamesWithFluorLetter(fluorIdx).fluorDerivativeFieldName = ...
-                strrep(settings.fluorDerivativeFieldName,'X',theLetter);
-            settings.fieldNamesWithFluorLetter(fluorIdx).muFieldNameDerivative = ...
-                strrep(settings.muFieldNameDerivative,'X',theLetter);
+            ourSettings.fieldNamesWithFluorLetter(fluorIdx).timeFieldName = ...
+                strrep(ourSettings.timeFieldName,'X',theLetter);
+            ourSettings.fieldNamesWithFluorLetter(fluorIdx).fluorFieldName = ...
+                strrep(ourSettings.fluorFieldName,'X',theLetter);
+            ourSettings.fieldNamesWithFluorLetter(fluorIdx).muFieldName = ...
+                strrep(ourSettings.muFieldName,'X',theLetter)
+            ourSettings.fieldNamesWithFluorLetter(fluorIdx).timeFieldNameDerivative = ...
+                strrep(ourSettings.timeFieldNameDerivative,'X',theLetter);
+            ourSettings.fieldNamesWithFluorLetter(fluorIdx).fluorDerivativeFieldName = ...
+                strrep(ourSettings.fluorDerivativeFieldName,'X',theLetter);
+            ourSettings.fieldNamesWithFluorLetter(fluorIdx).muFieldNameDerivative = ...
+                strrep(ourSettings.muFieldNameDerivative,'X',theLetter);
             % mark as active
             activeFluorIdx(end+1)=fluorIdx;
         end  
@@ -1030,16 +1038,16 @@ if any(strcmp(runsections,{'allfull', 'makeoutputfull', 'rerunfullanalysis'})) %
 
         %% create correlation functions R(concentration, growth)
         % ===
-        PLOTSCATTER=settings.PLOTSCATTER; % activate to plot all scatter plots
+        PLOTSCATTER=ourSettings.PLOTSCATTER; % activate to plot all scatter plots
         
         % Set up appropriate field names for R(concentration,mu)
         % TODO MW: todo: make this X_time etc, and do a strrep for X to applicable color
-        associatedFieldNames = {settings.fieldNamesWithFluorLetter(fluorIdx).timeFieldName, settings.fieldNamesWithFluorLetter(fluorIdx).fluorFieldName, settings.fieldNamesWithFluorLetter(fluorIdx).muFieldName};
-        % obtain some settings from Excel file
-        badSchnitzes = settings.badSchnitzes; alreadyRemovedInMatFile = settings.alreadyRemovedInMatFile;
-        myID = settings.myID; myGroupID = settings.myGroupID;
-        myFitTime = settings.fitTimeCrosscorr;
-        myOutputFolder = settings.myOutputFolder;
+        associatedFieldNames = {ourSettings.fieldNamesWithFluorLetter(fluorIdx).timeFieldName, ourSettings.fieldNamesWithFluorLetter(fluorIdx).fluorFieldName, ourSettings.fieldNamesWithFluorLetter(fluorIdx).muFieldName};
+        % obtain some ourSettings from Excel file
+        badSchnitzes = ourSettings.badSchnitzes; alreadyRemovedInMatFile = ourSettings.alreadyRemovedInMatFile;
+        myID = ourSettings.myID; myGroupID = ourSettings.myGroupID;
+        myFitTime = ourSettings.fitTimeCrosscorr;
+        myOutputFolder = ourSettings.myOutputFolder;
         % Execute delayed scatter script
         MW_delayedScatter
 
@@ -1060,14 +1068,14 @@ if any(strcmp(runsections,{'allfull', 'makeoutputfull', 'rerunfullanalysis'})) %
 
         %% create correlation functions R(rate, growth)
         % ===
-        PLOTSCATTER=settings.PLOTSCATTER; % activate to plot all scatter plots
+        PLOTSCATTER=ourSettings.PLOTSCATTER; % activate to plot all scatter plots
         
         % Set up appropriate field names for R(rate, mu)
-        associatedFieldNames = {settings.fieldNamesWithFluorLetter(fluorIdx).timeFieldNameDerivative, settings.fieldNamesWithFluorLetter(fluorIdx).fluorDerivativeFieldName, settings.fieldNamesWithFluorLetter(fluorIdx).muFieldNameDerivative};
-        % parse some settings from Excel file
-        badSchnitzes = settings.badSchnitzes; alreadyRemovedInMatFile = settings.alreadyRemovedInMatFile;
-        myID = settings.myID; myGroupID = settings.myGroupID;
-        myFitTime = settings.fitTimeCrosscorr;
+        associatedFieldNames = {ourSettings.fieldNamesWithFluorLetter(fluorIdx).timeFieldNameDerivative, ourSettings.fieldNamesWithFluorLetter(fluorIdx).fluorDerivativeFieldName, ourSettings.fieldNamesWithFluorLetter(fluorIdx).muFieldNameDerivative};
+        % parse some ourSettings from Excel file
+        badSchnitzes = ourSettings.badSchnitzes; alreadyRemovedInMatFile = ourSettings.alreadyRemovedInMatFile;
+        myID = ourSettings.myID; myGroupID = ourSettings.myGroupID;
+        myFitTime = ourSettings.fitTimeCrosscorr;
         % Execute delayed scatter script
         MW_delayedScatter
 
@@ -1088,7 +1096,7 @@ if any(strcmp(runsections,{'allfull', 'makeoutputfull', 'rerunfullanalysis'})) %
         % Set up appropriate field names
 
         % growth
-        associatedFieldNames = {settings.fieldNamesWithFluorLetter(fluorIdx).timeFieldName, settings.fieldNamesWithFluorLetter(fluorIdx).muFieldName, settings.fieldNamesWithFluorLetter(fluorIdx).muFieldName};
+        associatedFieldNames = {ourSettings.fieldNamesWithFluorLetter(fluorIdx).timeFieldName, ourSettings.fieldNamesWithFluorLetter(fluorIdx).muFieldName, ourSettings.fieldNamesWithFluorLetter(fluorIdx).muFieldName};
         % execute analysis scripts
         MW_delayedScatter
         MW_autoCorr_corrtime_and_fitExponential
@@ -1103,7 +1111,7 @@ if any(strcmp(runsections,{'allfull', 'makeoutputfull', 'rerunfullanalysis'})) %
         output.growthStd = theStd;
 
         %% concentration
-        associatedFieldNames = {settings.fieldNamesWithFluorLetter(fluorIdx).timeFieldName, settings.fieldNamesWithFluorLetter(fluorIdx).fluorFieldName, settings.fieldNamesWithFluorLetter(fluorIdx).fluorFieldName};
+        associatedFieldNames = {ourSettings.fieldNamesWithFluorLetter(fluorIdx).timeFieldName, ourSettings.fieldNamesWithFluorLetter(fluorIdx).fluorFieldName, ourSettings.fieldNamesWithFluorLetter(fluorIdx).fluorFieldName};
         % execute analysis scripts
         MW_delayedScatter
         MW_autoCorr_corrtime_and_fitExponential
@@ -1118,7 +1126,7 @@ if any(strcmp(runsections,{'allfull', 'makeoutputfull', 'rerunfullanalysis'})) %
         output.concentrationStd{fluorIdx} = theStd;
 
         %% rate
-        associatedFieldNames = {settings.fieldNamesWithFluorLetter(fluorIdx).timeFieldNameDerivative, settings.fieldNamesWithFluorLetter(fluorIdx).fluorDerivativeFieldName, settings.fieldNamesWithFluorLetter(fluorIdx).fluorDerivativeFieldName};
+        associatedFieldNames = {ourSettings.fieldNamesWithFluorLetter(fluorIdx).timeFieldNameDerivative, ourSettings.fieldNamesWithFluorLetter(fluorIdx).fluorDerivativeFieldName, ourSettings.fieldNamesWithFluorLetter(fluorIdx).fluorDerivativeFieldName};
         % execute analysis scripts
         MW_delayedScatter
         MW_autoCorr_corrtime_and_fitExponential        
@@ -1141,7 +1149,7 @@ if any(strcmp(runsections,{'allfull', 'makeoutputfull', 'rerunfullanalysis'})) %
             dualCounter=dualCounter+1; 
             
             %% concentration fluor N vs fluor M
-            associatedFieldNames = {settings.fieldNamesWithFluorLetter(fluorIdx).timeFieldName, settings.fieldNamesWithFluorLetter(fluorIdx).fluorFieldName, settings.fieldNamesWithFluorLetter(fluorIdx2).fluorFieldName};
+            associatedFieldNames = {ourSettings.fieldNamesWithFluorLetter(fluorIdx).timeFieldName, ourSettings.fieldNamesWithFluorLetter(fluorIdx).fluorFieldName, ourSettings.fieldNamesWithFluorLetter(fluorIdx2).fluorFieldName};
             % execute analysis scripts
             MW_delayedScatter
             MW_autoCorr_corrtime_and_fitExponential
@@ -1151,7 +1159,7 @@ if any(strcmp(runsections,{'allfull', 'makeoutputfull', 'rerunfullanalysis'})) %
             output.concentrationDualCrossCorrBadSchnitzes{dualCounter}  = badSchnitzes; 
 
             %% rate fluor N vs fluor M
-            associatedFieldNames = {settings.fieldNamesWithFluorLetter(fluorIdx).timeFieldNameDerivative, settings.fieldNamesWithFluorLetter(fluorIdx).fluorDerivativeFieldName, settings.fieldNamesWithFluorLetter(fluorIdx2).fluorDerivativeFieldName};
+            associatedFieldNames = {ourSettings.fieldNamesWithFluorLetter(fluorIdx).timeFieldNameDerivative, ourSettings.fieldNamesWithFluorLetter(fluorIdx).fluorDerivativeFieldName, ourSettings.fieldNamesWithFluorLetter(fluorIdx2).fluorDerivativeFieldName};
             % execute analysis scripts
             MW_delayedScatter
             MW_autoCorr_corrtime_and_fitExponential        
@@ -1174,16 +1182,16 @@ if any(strcmp(runsections,{'allfull', 'makeoutputfull', 'rerunfullanalysis'})) %
     
     %% Let user know done, open output folder.
     disp('Done making analysis. Opening output folder.')
-    winopen(settings.myOutputFolder);
+    winopen(ourSettings.myOutputFolder);
     
 end    
 
-%% Save p and settings struct to file in output dir if desired
+%% Save p and ourSettings struct to file in output dir if desired
 if any(strcmp(runsections,{'allfull', 'makeoutputfull','rerunfullanalysis'})) % full
    outputFilename = [p.dateDir 'outputandsettings_' p.movieName '.mat'];
-   save(outputFilename, 'p', 'settings', 'schnitzcells', 's_rm', 'output');
+   save(outputFilename, 'p', 'ourSettings', 'schnitzcells', 's_rm', 'output');
    
-   disp(['p (parameter), output, schnitzcells and settings structs were saved to: ' outputFilename]);
+   disp(['p (parameter), output, schnitzcells and ourSettings structs were saved to: ' outputFilename]);
 end
 
 

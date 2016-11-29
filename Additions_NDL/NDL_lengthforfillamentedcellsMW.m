@@ -36,7 +36,7 @@ function [p, allLengthsOfBacteriaInPixels, allLengthsOfBacteriaInMicrons,allLeng
 %     allextrapolatedDistanceEnds{framenr}(:,cellnum)
 %
 % Test easily with following command:
-% >> NDL_lengthforfillamentedcells(p, settings.frameRangeFull) 
+% >> NDL_lengthforfillamentedcells(p, ourSettings.frameRangeFull) 
 %
 %
 
@@ -56,8 +56,8 @@ ERRORINTERSECTWARNING = 0.1; % Same as ERRORINTERSECT, but with lower threshold 
 SMOOTHELEMENTS = 8;
 
 %frameRange = 241%unique([schnitzcells(:).frame_nrs]);
-if exist('settings', 'var') == 1
-    frameRange = settings.frameRangeFull; % Sets framerange to the full framerange provided in the Excel file
+if exist('ourSettings', 'var') == 1
+    frameRange = ourSettings.frameRangeFull; % Sets framerange to the full framerange provided in the Excel file
     warning('Uses Excel provided frameRange');
 end
 

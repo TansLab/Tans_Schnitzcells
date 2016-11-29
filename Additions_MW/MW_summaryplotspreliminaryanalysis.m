@@ -12,7 +12,7 @@ end
 % PARAMETERS ==============================================================
 % Load the .mat file from the appropriate analysis.
 % (summaryParametersPreliminary.mat should contain "thedata" struct with all
-% "p" and "settings" parameters created during your analyses.)
+% "p" and "ourSettings" parameters created during your analyses.)
 if ~exist('MYDIR','var')
     error('MYDIR NOT DEFINED');
     % use 
@@ -24,7 +24,7 @@ load([MYDIR 'summaryParametersPreliminary.mat'])
 
 % optional input
 %   MANUALSCHNITZLOCATIONS = {'..','..'};
-%   FITWINDOW = settings.fitTimeMu % settings.fitTimeMu = [0, 800]
+%   FITWINDOW = ourSettings.fitTimeMu % ourSettings.fitTimeMu = [0, 800]
 
 % END PARAMETERS ==========================================================
 
@@ -247,9 +247,9 @@ end
 h2=figure(); clf; 
 
 flag=0;
-if exist('settings','var') 
-    if isfield(settings,'fitTimeMu')
-        FITWINDOW = settings.fitTimeMu;
+if exist('ourSettings','var') 
+    if isfield(ourSettings,'fitTimeMu')
+        FITWINDOW = ourSettings.fitTimeMu;
         flag=1;
     end
 end

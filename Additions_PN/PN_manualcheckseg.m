@@ -82,6 +82,8 @@ if ~existfield(p,'showAll')
     p.showAll=1;  
 end
 
+
+
 % Load the watermark (MW edit 2014/12)
 % Note that only the green channel is used, and only binary form.
 p.mywatermark=imread('watermark.png');
@@ -146,13 +148,16 @@ disp('                    ''s'' to toggle no numbers, cell numbers, schnitz numb
 
 disp(' ')
 
+%%
 quit_now=0;
-global pos Limage ourfig res pp phfig showPhase % flfig % DJK 071206
+global pos Limage ourfig res pp phfig showPhase figureToFocusOn % flfig % DJK 071206
 
 % create new figures
 phfig  = figure(); clf;
-set(phfig, 'Visible', 'Off');
 ourfig = figure(); clf;
+% phfig/ourfig settings
+figureToFocusOn = ourfig;
+showPhase=0;
 
 % flfig  = figure; % former version: fluor picture
 outl=length(p.segmentationDir);
@@ -270,7 +275,7 @@ while loopindex <= length(p.manualRange);
                  L_prec=Lc;
                  rect_prec=rect;
             end
-            clear Lc phsub LNsub rect
+            clear Lc LNsub rect
         end
         
     end
@@ -327,7 +332,7 @@ while loopindex <= length(p.manualRange);
         g_resized = imresize_old(g,res);    
         
         if showPhase
-            
+                                  
             % show phase image
             iptsetpref('imshowborder','tight'); % DJK 090111 added so Lc & phase overlap       
 
@@ -341,11 +346,11 @@ while loopindex <= length(p.manualRange);
                   myInitialMagn=100;
                 end
                 
-               close(phfig)
-               phfig=figure('Visible','off');
+               figure(phfig); % MW 
                imshow(g_resized, 'InitialMagnification',myInitialMagn);
                 set(phfig,'name',['Frame ',str3(frameIdx),' phase']);
-                set(0,'CurrentFigure',ourfig)                
+                %set(0,'CurrentFigure',ourfig)                
+                figure(ourfig);
 
                 % Set position of figure
 
@@ -360,7 +365,7 @@ while loopindex <= length(p.manualRange);
         
         %----------------------------------------------------------------------     
 
-        end
+    end
         
         is_done=0;
         savelist=['''Lc'''];
@@ -390,11 +395,11 @@ while loopindex <= length(p.manualRange);
                 % now that segRange and manualRange should handle arbitrary frames
             end;
             
-            if quit_now
+            if quit_now                                
                 
+                close(ourfig);
                 close(phfig); 
-                close(ourfig); 
-                clear global pos Limage ourfig res pp phfig showPhase;
+                clear global pos Limage ourfig res pp phfig showPhase;                
                 
                 disp('Will return now. Bye.');                
                 return;
@@ -467,8 +472,10 @@ end
 
 %%
 
-disp('bye');
 close(ourfig);
 close(phfig); 
+clear global pos Limage ourfig res pp phfig showPhase;
+
+disp('bye');
 
 end

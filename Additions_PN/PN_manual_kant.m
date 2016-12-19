@@ -30,7 +30,7 @@ function  [p,Lout,OKorNot,quit_now,dontsave,addtolist,crop_pop,newrect,savetemp,
 
 iptsetpref('imshowborder','tight');
 backwards = 0;
-global pos Limage ourfig res pp phfig currentFrameStr figureToFocusOn showPhase
+global pos Limage ourfig pp phfig currentFrameStr figureToFocusOn showPhase
 
 %set(phfig,'Visible', 'on') % ugly way to force phase image away from foreground during computation time NW2012-10-05
 
@@ -72,6 +72,56 @@ while ~done
     else currentFrameStr = '??'; warning('p.currentFrame not set'); end % MW TODO: num2str(p.currentFrame) can just be used directly below
      
     %% Update segmented figure
+    
+    % Newest version MW of showing figures             
+
+    % Update the figure size
+    if ~isfield(p, 'fullscreenResolution')
+        
+        % note imSize= leny, lenx, depth; screensize is lenx, leny
+        imSize=size(phsub);
+        desiredLocation = (p.screenSize([3,4])-[imSize([2,1])])/2;
+        desiredPosition = [desiredLocation,imSize([2,1])];
+        
+        % left, bottom, width, height
+        if ~any(desiredLocation+imSize([2,1])>p.screenSize([3,4]))
+            set(ourfig, 'Position', desiredPosition); % to be given as x,y,width,height
+            
+            ha = axes('Parent',ourfig,'Units','pixels','Position',[1 1 imSize([2,1])]);
+        else        
+            % if figure is bigger than the screen, set it to the size of
+            % the screen
+            figure(ourfig); clf; % needs to be cleared to remove prev. img
+            set(ourfig, 'position', p.screenSize,'Toolbar','none'); % hide toolbar because would cover img
+            ha = axes('Parent',ourfig,'Units','pixels','Position',[1 1 p.screenSize(3:4)]);
+        end        
+    else
+        % For full screen mode, just set both positions to full screen position
+        figure(ourfig); clf; % needs to be cleared to remove prev. img
+        set(ourfig, 'position', p.fullscreenResolution,'Toolbar','none'); % hide toolbar because would cover img
+        ha = axes('Parent',ourfig,'Units','pixels','Position',[1 1 p.screenSize(3:4)]);
+    end
+        
+    % Update the figure
+    figure(ourfig);
+    if ~showPhase        
+        if assistedCorrection && ~isempty(L_prec)        
+            % Update figure with segmentation + suspicious cell detection
+            PN_imshowlabel(p, Lout,rect,L_prec,rect_prec,'phaseImage',phsub);                        
+        else
+            % % Update figure with segmentation 
+            PN_imshowlabel(p, Lout,[],[],[],'phaseImage',phsub);            
+        end
+    else
+        % Show unsegmented image
+        imshow(phsub,[]);
+    end               
+    
+    set(ourfig,'WindowButtonMotionFcn', @MW_schnitzfigureinteraction);
+    %iptsetpref('imshowborder','tight') % not sure if necessary
+    
+    % edited stuff
+    %{
     figure(ourfig) % NW2012-05-10        
     
     % make the assisted image
@@ -99,18 +149,6 @@ while ~done
         imshow(phsub,[]);
         iptsetpref('imshowborder','tight'); % DJK 090111 added so Lc & phase overlap       
     end
-
-    % Set to fullscreen if desired
-    if isfield(p, 'fullscreenResolution')
-        set(ourfig, 'position', p.fullscreenResolution); 
-        if showPhase, set(phfig, 'position', p.fullscreenResolution); end
-    else
-        if showPhase
-            % Set phase and segmented image to same position
-            pos11 = get(ourfig,'position');         
-            set(phfig, 'position', pos11); 
-        end
-    end
     
     % Set function to interact with figure
     set(figureToFocusOn,'WindowButtonMotionFcn',@MW_schnitzfigureinteraction);      
@@ -118,12 +156,34 @@ while ~done
     % Title of figure 
     set(ourfig,'name',['Frame ' currentFrameStr]);
         
-    % set the sizes of those figures equal
-    theFigurePosition=get(ourfig,'Position');
-    set(phfig,'Position',theFigurePosition);
+    % set the sizes of those figures equal    
+    if isfield(p, 'fullscreenResolution')
+        % For full screen mode, just set both positions to full screen position
+        set(ourfig, 'position', p.fullscreenResolution); 
+        if showPhase, set(phfig, 'position', p.fullscreenResolution); end
+    else
+        % Normal mode (default)
+        % calculate center position
+        pos11                 = get(ourfig,'position'); % current position
+        width = pos11(3); height = pos11(4); 
+        x_left_bottom_screen  = 10 + (p.min_size(2)-width)/2 ;
+        y_left_bottom_screen  = 35 + (p.min_size(1)-height)/2 ;
+
+        % set figures to that position
+        set(ourfig, 'position', [x_left_bottom_screen y_left_bottom_screen width height]); % DJK 090117          
+        % also set phase image to that position
+        if showPhase, set(phfig, 'position',[x_left_bottom_screen y_left_bottom_screen width height]); end
+
+    end
     
-    % Set focus on desired figure (segmented img per default)
-    figure(figureToFocusOn); % MW TODO
+    %theFigurePosition=get(ourfig,'Position');
+    %set(phfig,'Position',theFigurePosition);
+    
+    % Set focus on desired figure (segmented img per default)    
+    figure(figureToFocusOn); % MW TODO    
+    %}
+    
+    % Old stuff
     %{
     set(0,'CurrentFigure',figureToFocusOn);    
     uistack(figureToFocusOn, 'top'); % required in matlab 2014 to actually put figure on top - MW
@@ -183,17 +243,8 @@ while ~done
         % during editing of this frame.
         
         % And switch
-        if figureToFocusOn == phfig % if current is ph 
-            figureToFocusOn = ourfig; % switch to segmented
-            showPhase = 0;
-        elseif figureToFocusOn == ourfig % vice versa
-            figureToFocusOn = phfig;
-            showPhase = 1;
-        else % if other figure is on focus (not to be the case)
-            figureToFocusOn = ourfig; % switch to default, i.e. segmented one
-            showPhase = 1;
-        end
-            
+        showPhase = ~showPhase;            
+        
         done = 0; % continue keypress-loop
         
     end           
@@ -263,6 +314,7 @@ while ~done
             
             zoomrect=[max([1,pos(1,2)-50]),min([size(Lout,1),pos(1,2)+49]),...
                 max([1,pos(1,1)-50]),min([size(Lout,2),pos(1,1)+49])];
+            
             Lzoom=Lout(zoomrect(1):zoomrect(2),zoomrect(3):zoomrect(4));
             Phzoom=phin(zoomrect(1):zoomrect(2),zoomrect(3):zoomrect(4));
             addfig=figure;
@@ -290,7 +342,8 @@ while ~done
             done=0;
         elseif cc=='x'
             Lout_undo=Lout;   %for undo step NW 2014-01
-            subcolroi=imresize_old(~roipoly,1/res);
+            %subcolroi=imresize_old(~roipoly,1/res);
+            subcolroi=~roipoly;
             if size(subcolroi,1)~=size(Lout,1) | size(subcolroi,2)~=size(Lout,2)
                 subcolroi2=zeros(size(Lout));
                 subcolroi2(1:size(subcolroi,1),1:size(subcolroi,2))=subcolroi;
@@ -309,7 +362,8 @@ while ~done
             done=0;
         elseif cc=='k' % don't use!
             disp(['obsolete and not correct version!'])
-            subcolroi=imresize_old(~roipoly,1/res);
+            %subcolroi=imresize_old(~roipoly,1/res);
+            subcolroi=~roipoly;
             if size(subcolroi,1)~=size(Lout,1) | size(subcolroi,2)~=size(Lout,2)
                 subcolroi2=zeros(size(Lout));
                 subcolroi2(1:size(subcolroi,1),1:size(subcolroi,2))=subcolroi;
@@ -323,7 +377,8 @@ while ~done
             
         elseif cc=='t'
             
-            subcolroi=imresize_old(~roipoly,1/res);
+            %subcolroi=imresize_old(~roipoly,1/res);
+            subcolroi=~roipoly;
             if size(subcolroi,1)~=size(Lout,1) | size(subcolroi,2)~=size(Lout,2)
                 subcolroi2=zeros(size(Lout));
                 subcolroi2(1:size(subcolroi,1),1:size(subcolroi,2))=subcolroi;
@@ -347,7 +402,8 @@ while ~done
             
         elseif cc=='v' %NW2014-02 opposite of terace 't' -> restricts to region of interest
             
-            subcolroi=imresize_old(~roipoly,1/res);
+            %subcolroi=imresize_old(~roipoly,1/res);
+            subcolroi=~roipoly;
             if size(subcolroi,1)~=size(Lout,1) | size(subcolroi,2)~=size(Lout,2)
                 subcolroi2=zeros(size(Lout));
                 subcolroi2(1:size(subcolroi,1),1:size(subcolroi,2))=subcolroi;
@@ -394,12 +450,17 @@ while ~done
             % obtain monitor resolution
             set(0,'units','pixels');            
             Pix_SS = get(0,'screensize');
+            
             % Set flag to go fullscreen
             if ~isfield(p,'fullscreenResolution')
                 p.fullscreenResolution = Pix_SS;
             else
                 p = rmfield(p,'fullscreenResolution');
-            end
+            end           
+            
+            % figure needs to be cleared because otherwise smaller
+            % version of figure will remain visible
+            figure(ourfig); clf;
             
             % (Setting the size here doesn't work since it's edited later.)
             %set(ourfig, 'units','pixels','position',Pix_SS);  % handles are also stored in phfig or ourfig
@@ -553,7 +614,7 @@ while ~done
             done=0; 
                         
                         
-            %%%%%%%%%%%%%%%%%%% START DJK 090105 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+        %%%%%%%%%%%%%%%%%%% START DJK 090105 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
         elseif cc=='9'  % still part of keyboard clicks
             if DJK_settings.fill_cut
                 DJK_settings.fill_cut = 0;
@@ -630,14 +691,15 @@ while ~done
             %
             % ------------ start NW 2013-05 replace mouse ---------
         elseif (cc=='4' || cc=='7' || cc=='5')
-            % alternative ways to replace mouse button function (does the same things as mouse button functions)
+            
+                % alternative ways to replace mouse button function (does the same things as mouse button functions)            
                 if cc=='4' % join cells by pressing '4' twice
                     Lout_undo=Lout;   %for undo step NW 2014-01
                     % join cells
                     pos1=pos;
                     j1=Lout(round(pos(1,2)),round(pos(1,1)));
                     figure(ourfig);
-                    set(ourfig,'WindowButtonMotionFcn', @MW_schnitzfigurewaitforclick);                    
+                    set(ourfig,'WindowButtonMotionFcn', @MW_schnitzfigureinteraction);
                     ct=waitforbuttonpress;
                     cc=get(ourfig,'currentcharacter');
                     set(ourfig,'WindowButtonMotionFcn','');
@@ -790,7 +852,7 @@ while ~done
             pos1=pos;
             j1=Lout(round(pos(1,2)),round(pos(1,1)));
             figure(ourfig);
-            set(ourfig,'WindowButtonMotionFcn',@MW_schnitzfigurewaitforclick);
+            set(ourfig,'WindowButtonMotionFcn',@MW_schnitzfigureinteraction);
             ct=waitforbuttonpress;
             set(ourfig,'WindowButtonMotionFcn','');
             if ct
@@ -815,6 +877,8 @@ while ~done
             
             % delete cell = shift+left button (or both?)
         
+            done=0;
+            
         % .............
         % ===
         elseif (cz(1)=='e' & Lout(round(pos(1,2)),round(pos(1,1))))
@@ -827,6 +891,8 @@ while ~done
             
             % updated cellnumbers NW2012-05-10
             updatedCellNumbers=[updatedCellNumbers;Lout(round(pos(1,2)),round(pos(1,1)))];
+            
+            done=0;
             
         % Right mouse click: cut cell where clicked
         % ===
@@ -919,12 +985,16 @@ while ~done
             else
                 disp(['less than 2 perims! cell number: ' num2str(Lout(cutx,cuty)) ' in Lbot_back.'])
             end
+            
+            done=0;
+            
         end
     end
     
     % get correct array for updated cell numbers NW2012-05-10. Not yet used
     updatedCellNumbers=unique(updatedCellNumbers);
     updatedCellNumbers=updatedCellNumbers(updatedCellNumbers>0);
+    
     %
 end
 if ~DJK_settings.finetuneimage & OKorNot 

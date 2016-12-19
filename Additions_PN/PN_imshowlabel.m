@@ -385,9 +385,9 @@ if existfield(p, 'showPerim') && p.showPerim % show cell outlines
     outim = MW_stampit(outim,p);
     
     if nargout == 0 && isempty(Lp)
-        imshow(outim);        
+        imshow(outim);
         % hard print frame nr
-        if isfield(p,'currentFrame'), text(40, 17, ['fr #' num2str(p.currentFrame)], 'FontSize', 12, 'Color', 'g'); end
+        if isfield(p,'currentFrame'), text(17, 17, ['fr #' num2str(p.currentFrame)], 'FontSize', 12, 'Color', 'g'); end
     end
     
 elseif addPhaseImage % costs 0.045 sec
@@ -421,7 +421,7 @@ elseif addPhaseImage % costs 0.045 sec
     if nargout == 0 && isempty(Lp)
         imshow(outim);
         % hard print frame nr
-        if isfield(p,'currentFrame'), text(40, 17, ['fr #' num2str(p.currentFrame)], 'FontSize', 12, 'Color', 'g'); end
+        if isfield(p,'currentFrame'), text(17, 17, ['fr #' num2str(p.currentFrame)], 'FontSize', 12, 'Color', 'g'); end
     end
     
 else
@@ -432,7 +432,7 @@ else
     if nargout == 0 && isempty(Lp)
         imshow(outim);
         % hard print frame nr
-        if isfield(p,'currentFrame'), text(40, 17, ['fr #' num2str(p.currentFrame)], 'FontSize', 12, 'Color', 'g'); end
+        if isfield(p,'currentFrame'), text(17, 17, ['fr #' num2str(p.currentFrame)], 'FontSize', 12, 'Color', 'g'); end
     end
     
     %stop4b=toc
@@ -440,10 +440,14 @@ end
 
 % For assisted correction, outim is resized
 if assistedCorrection
-    outim = imresize_old(outim,p.res);
-    imshow(outim,'InitialMagnification','fit');    
+    % outim = imresize_old(outim,p.res); % MW REMOVED LINE REMOVE THIS
+    
+    %imshow(outim,'InitialMagnification','fit');    % MW REMOVED LINE REMOVE THIS
+    imshow(outim);
+
     % hard print frame nr
-    if isfield(p,'currentFrame'), text(40*p.res, 17, ['fr #' num2str(p.currentFrame)], 'FontSize', 12, 'Color', 'g'); end
+    %if isfield(p,'currentFrame'), text(40*p.res, 17, ['fr #' num2str(p.currentFrame)], 'FontSize', 12, 'Color', 'g'); end
+    if isfield(p,'currentFrame'), text(17, 17, ['fr #' num2str(p.currentFrame)], 'FontSize', 12, 'Color', 'g'); end
 end
 
 if isfield(p,'showNr')
@@ -464,7 +468,6 @@ if p.showNr~=0
                 schnitzNr = p.slookup(p.currentFrame,i);
                 textx=propL(i).Centroid(1)-halfFontSize;
                 texty=propL(i).Centroid(2)-halfFontSize;
-                if assistedCorrection, textx=textx*p.res; texty=texty*p.res; end
                 text(textx,texty,sprintf('%03d', schnitzNr),'FontSize',FONTSIZE,'Color',[1,1,1],'FontWeight','bold')
             else
                 % Tell users that other numbers might be incorrect too..
@@ -476,7 +479,6 @@ if p.showNr~=0
         for i = 1:numel(propL)
             textx=propL(i).Centroid(1)-halfFontSize;
             texty=propL(i).Centroid(2)-halfFontSize;
-            if assistedCorrection, textx=textx*p.res; texty=texty*p.res; end
             text(textx,texty,sprintf('%03d', i),'FontSize',FONTSIZE,'Color',[1,1,1],'FontWeight','bold')            
         end
     end

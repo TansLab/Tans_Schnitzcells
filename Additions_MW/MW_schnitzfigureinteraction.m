@@ -1,10 +1,12 @@
 
 function MW_schnitzfigureinteraction(src,callbackdata)
+% note redundancy with MW_schnitzfigurewaitforclick
+% is this function still used?
 
-global pos currentFrameStr Limage ourfig res pp phfig;
+global pos currentFrameStr Limage ourfig pp phfig;
 
 % position in figure
-pos=max(1,round((1/res)*get(gca,'CurrentPoint')));
+pos=max(1,round(get(gca,'CurrentPoint')));
 
 % obtain intensity from image
 if (pos(1,2)>0 && pos(1,2)<size(Limage,1) && pos(1,1)>0 && pos(1,1)<size(Limage,2));

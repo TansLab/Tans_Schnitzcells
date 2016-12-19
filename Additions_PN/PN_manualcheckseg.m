@@ -150,11 +150,12 @@ disp(' ')
 
 %%
 quit_now=0;
-global pos Limage ourfig res pp phfig showPhase figureToFocusOn % flfig % DJK 071206
+global pos Limage ourfig pp phfig showPhase figureToFocusOn % flfig % DJK 071206
 
 % create new figures
-phfig  = figure(); clf;
+%phfig  = figure(); clf; % MW should be done later when needed
 ourfig = figure(); clf;
+
 % phfig/ourfig settings
 figureToFocusOn = ourfig;
 showPhase=0;
@@ -210,14 +211,17 @@ if existfield(p,'frnum')
     end
 end
 
-if ~existfield(p,'upend') % height screen
-    p.upend   = 1024; % DJK 090117 was 680;
+if ~existfield(p,'screensize')
+    try
+        p.screenSize=get(0,'ScreenSize');
+    catch
+        p.screenSize=[1280 1024];
+        warning('Set screen size to manual dimensions');
+    end
 end
-if ~existfield(p,'leftend') % width screen
-    p.leftend = 1280; % DJK 090117 was 516;
-end
+
 if ~existfield(p,'min_size') %[height width] desired figure, using 70 for top part, 35 for bottom part, 10 for sides
-    p.min_size = [p.upend-105 p.leftend-20]; % DJK 090117 was [p.upend-60 p.leftend-10];
+    p.min_size = p.screenSize(3:4)-[105 20]; % DJK 090117 was [p.upend-60 p.leftend-10];
 end
 
 if ~existfield(p,'finetuneimage')
@@ -324,48 +328,7 @@ while loopindex <= length(p.manualRange);
             g = DJK_scaleRange(g, [max(max(g)) min(min(g))], [0 1]);
             g = DJK_scaleRange(g, [0.2 1], [0 1]);
         end
-        g = uint8(g * 255);    
-        
-        % scale image to minimum desired size (p.min_size), with maximum of 2
-        res = min( (p.min_size./size(LNsub)) );
-        res = min( 2, res);
-        g_resized = imresize_old(g,res);    
-        
-        if showPhase
-                                  
-            % show phase image
-            iptsetpref('imshowborder','tight'); % DJK 090111 added so Lc & phase overlap       
-
-             %   clf reset;
-                if p.maxImage==1
-                    rowScale=maxValidImageSize(2)/size(g_resized,1)*100;
-                    columnScale=maxValidImageSize(1)/size(g_resized,2)*100;
-                    myInitialMagn=min([rowScale,columnScale,100]);
-                 % =100 for small images, otherwise <100
-                else 
-                  myInitialMagn=100;
-                end
-                
-               figure(phfig); % MW 
-               imshow(g_resized, 'InitialMagnification',myInitialMagn);
-                set(phfig,'name',['Frame ',str3(frameIdx),' phase']);
-                %set(0,'CurrentFigure',ourfig)                
-                figure(ourfig);
-
-                % Set position of figure
-
-                % center on screen
-                pos11                 = get(phfig,'position'); % current position
-                width                 = pos11(3); % size(g_resized,1);
-                height                = pos11(4); % size(g_resized,2);
-                x_left_bottom_screen  = 10 + (p.min_size(2)-width)/2 ;
-                y_left_bottom_screen  = 35 + (p.min_size(1)-height)/2 ;
-
-                set(phfig, 'position', [x_left_bottom_screen y_left_bottom_screen width height]); % DJK 090117          
-        
-        %----------------------------------------------------------------------     
-
-    end
+        g = uint8(g * 255);            
         
         is_done=0;
         savelist=['''Lc'''];
@@ -398,7 +361,7 @@ while loopindex <= length(p.manualRange);
             if quit_now                                
                 
                 close(ourfig);
-                close(phfig); 
+                if showPhase close(phfig); end;
                 clear global pos Limage ourfig res pp phfig showPhase;                
                 
                 disp('Will return now. Bye.');                
@@ -473,7 +436,7 @@ end
 %%
 
 close(ourfig);
-close(phfig); 
+if showPhase, close(phfig); end;
 clear global pos Limage ourfig res pp phfig showPhase;
 
 disp('bye');

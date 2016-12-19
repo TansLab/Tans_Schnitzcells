@@ -254,6 +254,7 @@ Schnitzcells_masterscript
 % update workspace
 assignin ('base','ourSettings',ourSettings)
 assignin ('base','p',p)
+assignin ('base','schnitzcells',schnitzcells)
 
 % --- Executes on button press in pushbutton14.
 function pushbutton14_Callback(hObject, eventdata, handles)

@@ -131,8 +131,8 @@ B_negPh = imcomplement(A_cropPhImage);
 se = strel('disk',1);
 B_negPhErode = imerode(B_negPh, se);                                       %Morphological reconstruction ...
 B_negPh = imreconstruct(B_negPhErode,B_negPh);                             %... in the mask of the original image
-B_negPh = imdilate(B_negPh, se);                                          %Allows a better edge determination at contacts.
-B_edgeImage1 = edge(B_negPh,'log',0,q.Results.LoG_Smoothing);                      %edge detection by smoothing (laplacian of gaussian ensures closed edges)
+B_negPh = imdilate(B_negPh, se);                                           %Allows a better edge determination at contacts.
+B_edgeImage1 = edge(B_negPh,'log',0,q.Results.LoG_Smoothing);              %edge detection by smoothing (laplacian of gaussian ensures closed edges)
 
 %suppress noisy surroundings
 B_edgeImage2 = B_edgeImage1 & A_cropMaskImage;

@@ -51,6 +51,11 @@ function p = PN_segmoviephase_3colors(p,varargin)
 % overwrite :   default:1, if set to 0, segmentation of frames for which
 %               a segfile already exists are skipped. 
 % onScreen :    show result of each seg to user by plotting
+% p.mothermachine  if this is a valid field, certain post- and
+%                   pre-processing of images is performed to handle mother
+%                   machine data better. 
+%                   Set to 1 if bacteria disappear at bottom, set ot 2 if 
+%                   bacteria disappear at the top. 
 
 %-------------------------------------------------------------------------------
 % Parse the input arguments, input error checking. Use inputParser in
@@ -174,10 +179,12 @@ end
 %--------------------------------------------------------------------------
 % Checking or creation of directories
 %--------------------------------------------------------------------------
+
 % make sure every directory field has a trailing filesep
 if (p.PN_saveDir(end) ~= filesep)
     p.PN_saveDir = [p.PN_saveDir filesep];
 end
+
 % if directory doesn't exist, create it
 if exist(p.PN_saveDir)~=7
     [status,msg,id] = mkdir([p.segmentationDir p.PN_saveDir]);
@@ -185,6 +192,7 @@ if exist(p.PN_saveDir)~=7
         disp(['Warning: unable to mkdir ' p.PN_saveDir ' : ' msg]);
     end
 end
+
 % Als make sure \png\ directory exists
 png_dir = [p.segmentationDir 'png' filesep];
 if exist(png_dir)~=7
@@ -194,6 +202,7 @@ if exist(png_dir)~=7
         return;
     end
 end
+
 if (strcmp(p.method,'brightfield')==1)
     % create extra directory for average images (brightfield only) (NW 23.1.12)
     if (p.NW_brightfieldsaveDir(end) ~= filesep)
@@ -227,13 +236,22 @@ end
 %--------------------------------------------------------------------------
 % PHASECONTRAST
 if (strcmp(p.method,'phasecontrast')==1)
+    
+    % Get # of files that are labeled as slice 1
     Dphase1   = dir([p.imageDir, '*-p-1-*.tif']);
+    % Get # of total files
     DphaseAll = dir([p.imageDir, '*-p-*.tif']);
-    if ~isfield(p,'numphaseslices')
-        if isempty(DphaseAll)
+    
+    % 
+    if isfield(p,'slices')
+        if ~isfield(p,'numphaseslices')
+            p.numphaseslices = numel(p.slices);
+        end
+    elseif ~isfield(p,'numphaseslices') % if not given by user
+        if isempty(DphaseAll) % if there are no phase images, error
             disp('Error (see below).. Maybe you need to move images to the appropriate directory?');
             error(['Can''t find any images in directory ' p.imageDir]);
-        else
+        else % else estimate # slices
             p.numphaseslices = int8(round(length(DphaseAll)/length(Dphase1))); % MW edit 2014/06/23 - if there's a missing file ceil makes it crash
             disp(['You appear to have ' num2str(p.numphaseslices) ' phase image per frame.']);
         end
@@ -331,23 +349,34 @@ for i= p.segRange
     %----------------------------------------------------------------------
     % PHASECONTRAST
     if (strcmp(p.method,'phasecontrast')==1)
+        
         % Load images into X
         Dframe = dir([p.imageDir p.movieName '*-p*-' str3(i) '.tif']); %list of all phase contrast images of this frame in directory
         if isempty(Dframe)
             disp(['Looking for: ' p.imageDir p.movieName '*-p*-' str3(i) '.tif']);
             error(['List with images for this frame (' str3(i) ') is empty! - p.imageDir = ' p.imageDir]) 
         end
+        
         pname = Dframe(1).name; % first filename
+        
         if p.numphaseslices==1
+            
             ph3(:,:,1) = imread([p.imageDir,pname]);
             disp(['reading ',p.imageDir,pname]);
+            
         else
+            
             fstr = findstr(pname,'-p-');
-            for islice = 1:p.numphaseslices
-                pname(fstr+3) = num2str(islice);
-                ph3(:,:,islice) = imread([p.imageDir,pname]);
-                disp(['reading ',p.imageDir,pname,' as slice ',num2str(islice)]);
+            
+            for i = 1:p.numphaseslices                
+                
+                sliceIdx = p.slices(i);                
+                pname(fstr+3) = num2str(sliceIdx);
+                ph3(:,:,sliceIdx) = imread([p.imageDir,pname]);
+                disp(['reading ',p.imageDir,pname,' as slice ',num2str(sliceIdx)]);
+                
             end
+            
         end
         %----------------------------------------------------------------------
         % Prepare image and do segmentation
@@ -364,7 +393,7 @@ for i= p.segRange
             p.slices=1:1:p.numphaseslices;
         end
         
-        imageToSegment = PN_prepareImages(ph3,p.slices);  
+        imageToSegment = PN_prepareImages(ph3,[1:p.numphaseslices]);  
         
    
     %----------------------------------------------------------------------
@@ -443,6 +472,17 @@ for i= p.segRange
     %---------------------------------------------------------------------------
     %---------------------------------------------------------------------------
     % THE REAL AND TRUE SEGMENTATION IS HERE:
+    if isfield(p,'mothermachine')
+        imageToSegment = MW_preprocessimagefadeedge(imageToSegment,p.mothermachine); 
+        disp('Mothermachine option activated.')
+        % This is an addition that could be considered somewhat of a
+        % "hack". It pre-processes images by adding a gradient at one edge
+        % to make sure cells that are at the edge of the image are
+        % processed conveniently. 
+        % This leads to cells that are partially detected at the edges,
+        % which can be removed later by MW_deletecellsattheedge.
+    end
+    
     if strcmp(p.medium,'normal')==1
         [phsub,LNsub,rect]= PN_segphase(p,imageToSegment,inputsOfSegmentation{:});    
     elseif strcmp(p.medium,'rich')==1
@@ -450,6 +490,11 @@ for i= p.segRange
     else
         error('Don''t know how to segment...')
     end
+
+    if isfield(p,'mothermachine')
+        LNsub = MW_deletecellsattheedge(LNsub);
+    end
+    
     
     %----------------------------------------------------------------------
     %----------------------------------------------------------------------

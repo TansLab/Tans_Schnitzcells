@@ -263,7 +263,7 @@ gotoframenum=0;
 loopindex = 1;
 
 %% main loop
-while loopindex <= length(p.manualRange);
+while loopindex <= length(p.manualRange)
    frameIdx = p.manualRange(loopindex);
    
    %former image data if available (L_prec for L preceeding)

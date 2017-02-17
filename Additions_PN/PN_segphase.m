@@ -33,8 +33,11 @@ function [A_cropPhImage, Z_segmentedImage, ROI_segmentation] = PN_segphase(p,ima
 
 
 %%%%%%%%%%%%%%%%%%%%%%  PARAMETERS INITIALIZATION  %%%%%%%%%%%%%%%%%%%%%%
-%Reads parameter values or initializes with default values not too bad for
+%%Reads parameter values or initializes with default values not too bad for
 %E. Coli colonies on acryl gel pad with 100X phase contrast images.
+%
+% Set varargin={} to manually execute this part
+
 q = inputParser;
 q.addRequired('imageToSegment', @isnumeric);
 
@@ -65,14 +68,15 @@ q.parse(imageToSegment, varargin{:});
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%    SEGMENTATION   %%%%%%%%%%%%%%%%%%%%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
+%%
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %STEP O (O the letter, not 0 the zero !): suppress shot noise
 O_PhImageFilt = medfilt2(imageToSegment);
-
+% figure; imshow(O_PhImageFilt);
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%STEP A : find a global mask and crop the image
+%% STEP A : find a global mask and crop the image
 
 
 % Find a global mask if desired (see useFullImage param) and crop the image
@@ -108,7 +112,7 @@ if q.Results.useFullImage~=1  % default: crop image to ROI
     bb = propsMaskImage(idx).BoundingBox;
     ROI_segmentation = [ceil(bb([2 1])) ceil(bb([2 1]))+bb([4 3])-[1 1]];   %ymin xmin ymax xmax
 else  % exception: skip cropping
-    A_cropMaskImage=labelMaskImage;
+    A_cropMaskImage=ones(size(imageToSegment));
     %crop a little bit, otherwise background calculation of fluor is going
     %to fail
     myIncr=15;
@@ -125,7 +129,7 @@ end
 
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%STEP B : find edges 
+%% STEP B : find edges 
 
 B_negPh = imcomplement(A_cropPhImage);
 se = strel('disk',1);
@@ -185,7 +189,7 @@ end
 
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%STEP C : prepare seeds for watershedding
+%% STEP C : prepare seeds for watershedding
 
 %makes a clean filled cells mask
 C_smoothPh = imfilter(A_cropPhImage,fspecial('gaussian',q.Results.GaussianFilter,q.Results.GaussianFilter));
@@ -206,7 +210,7 @@ end
 
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%STEP D : suppress branch points of the skeleton
+%% STEP D : suppress branch points of the skeleton
 brchpts = PN_FindBranchPoints(C_seeds2);
 C_seeds2(logical(brchpts)) = 0;
 %some cleaning
@@ -215,7 +219,7 @@ C_seeds2 = bwareaopen(C_seeds2,10,8);
 
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%STEP E : cut long cells which neck is deeper than neckDepth
+%% STEP E : cut long cells which neck is deeper than neckDepth
 continueToCut = true;
 icut = C_seeds2;
 while continueToCut
@@ -236,7 +240,7 @@ end
 
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%STEP Z : final segmentation by watershedding
+%% STEP Z : final segmentation by watershedding
 
 %prepare mask for watershedding
 Z_maskToFill = bwmorph(C_cellMask,'dilate');

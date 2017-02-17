@@ -7,6 +7,7 @@ function schnitzcells = MW_calculateframe_nrs(schnitzcells)
 % Some old schnitzcells files still use the "frames" as index, and this
 % function - very straightforwardly - converts the old index to the new,
 % and adds it to the schnitzcells structure.
+% See also: MW_addframenrsfix
 % 
 % INPUT
 % Schnitzcells struct

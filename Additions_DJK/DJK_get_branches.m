@@ -60,8 +60,8 @@ function branchData = DJK_get_branches(p, s, varargin)
 numRequiredArgs = 2; functionName = 'DJK_get_branches';
 
 if (nargin < numRequiredArgs) | (mod(nargin,2) ~= (mod(numRequiredArgs,2)) | ~isSchnitzParamStruct(p))
-  errorMessage = sprintf('%s\n%s',['Error width input arguments of ' functionName],['Try "help ' functionName '".']);
-  error(errorMessage);
+  errorMessage = sprintf('%s\n%s',['Error with input arguments of ' functionName],['Try "help ' functionName '".']);
+  warning(errorMessage);
 end
 
 numExtraArgs = nargin - numRequiredArgs;

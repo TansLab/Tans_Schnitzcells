@@ -44,6 +44,9 @@ if sizeratio(1)==sizeratio(2) %& sizeratio(1)==round(sizeratio(1))
     end
     xbinning = sizeratio(1);
 else
+    sizeratio
+    fullsize
+    sizeimx = size(imx)
     disp('fluor image dimensions have different proportions than phase image.');
     error(' not equipped for such cases.');
 end;

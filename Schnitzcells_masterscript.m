@@ -350,7 +350,7 @@ if any(strcmp(runsections,{'allpreliminary', 'allfull','segmentation'}))
    
 end
 
-%% To manually redo 1 frame, execute this code manually or via GUI
+%% To manually redo frames, execute this code manually or via GUI
 % Press CTRL+enter.
 % This section is generally not executed; only when a frame's segmentation
 % has failed, you can execute this code that allows you to redo that frame
@@ -736,7 +736,7 @@ if any(strcmp(runsections,{'allpreliminary', 'allfull','correctionsandanalysis'}
     % In case of full analysis
     if strcmp(ourSettings.analysisType, 'full')
         % Also calculate skeleton lengths
-        NDL_addToSchnitzes_skeletonLengthMW(p);
+        NDL_addToSchnitzes_skeletonLengthMW(p); % saves schnitzcells param
         % And make sure DJK_addToSchnitzes_mu also uses length_skeleton
         p.lengthFields = {'rp_length' 'length_fitCoef3b' 'length_fitNew' 'length_skeleton'};         
     end

@@ -569,8 +569,9 @@ function pushbutton36_Callback(hObject, eventdata, handles)
 
 global runsections p ourSettings
 
-% retrieve ourSettings var
+% retrieve our parameters
 ourSettings = evalin('base', 'ourSettings');
+p = evalin('base', 'p');
 p.overwrite=1;
 % Pass on whether we want to use full image for segmentation (default = 0)
 p.useFullImage = get(handles.checkbox4,'Value');
@@ -597,6 +598,8 @@ ourSettings.NECKDEPTH              = str2num(answers{9});
 runsections = 'redosegforframe'
 % run w. default tracker
 Schnitzcells_masterscript 
+
+p.overwrite=0;
 
 % update workspace
 assignin ('base','ourSettings',ourSettings);

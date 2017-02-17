@@ -103,6 +103,9 @@ while ~done
     end
         
     % Update the figure
+    % NOTE: the figure needs to be cleared (matlab's clf function) to
+    % prevent memory from filling up. In most cases this is done in the 
+    % PN_imshowlabel function.
     figure(ourfig);
     if ~showPhase        
         if assistedCorrection && ~isempty(L_prec)        
@@ -114,10 +117,12 @@ while ~done
         end
     else
         % Show unsegmented image
+        clf; % to prevent memory filling up
         imshow(phsub,[]);
     end               
     
     set(ourfig,'WindowButtonMotionFcn', @MW_schnitzfigureinteraction);
+    
     %iptsetpref('imshowborder','tight') % not sure if necessary
     
     % edited stuff

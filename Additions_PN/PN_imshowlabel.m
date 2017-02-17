@@ -45,6 +45,9 @@ function outim = PN_imshowlabel(p,L,rect,Lp,rectp,varargin)
 %                     array will be highlighted (too). 
 %                     problemcells = [schnitznr, framenr, labelnr; ..]
 % p.showPerim         if this is a valid field, sohws outlines of cells
+% p.showPhaseImage    if this field exists and is false, the phase image is
+%                     hidden (per default phase image is shown and 
+%                     p.showPhaseImage is set to 1).
 %
 %
 %
@@ -104,10 +107,8 @@ end
 % Overwrite any schnitzcells parameters/defaults given optional fields/values
 %--------------------------------------------------------------------------
 
-if existfield(p_internal,'phaseImage') & length(p_internal.phaseImage)>0
-    addPhaseImage = true;
-else
-    addPhaseImage = false; % MW 
+if ~existfield(p,'showPhaseImage') 
+    p.showPhaseImage = true;
 end
 
 if ~existfield(p_internal,'randomize')
@@ -385,12 +386,13 @@ if existfield(p, 'showPerim') && p.showPerim % show cell outlines
     outim = MW_stampit(outim,p);
     
     if nargout == 0 && isempty(Lp)
+        clf; % to prevent memory filling up
         imshow(outim);
         % hard print frame nr
         if isfield(p,'currentFrame'), text(17, 17, ['fr #' num2str(p.currentFrame)], 'FontSize', 12, 'Color', 'g'); end
     end
     
-elseif addPhaseImage % costs 0.045 sec
+elseif p.showPhaseImage % costs 0.045 sec
     %{
     rgb = 0.5 * Lrgb; % rgb = 0.5 * Lrgb; % MW here alpha set, TODO
     bwscreen = double(p_internal.phaseImage); % bwscreen = 0.5 * bwscreen / max(max(bwscreen));
@@ -419,6 +421,7 @@ elseif addPhaseImage % costs 0.045 sec
     outim = MW_stampit(outim,p); % TODO CHECK MW    
     
     if nargout == 0 && isempty(Lp)
+        clf; % to prevent memory filling up
         imshow(outim);
         % hard print frame nr
         if isfield(p,'currentFrame'), text(17, 17, ['fr #' num2str(p.currentFrame)], 'FontSize', 12, 'Color', 'g'); end
@@ -430,6 +433,7 @@ else
     outim = MW_stampit(outim,p); % TODO CHECK MW
 
     if nargout == 0 && isempty(Lp)
+        clf; % to prevent memory filling up
         imshow(outim);
         % hard print frame nr
         if isfield(p,'currentFrame'), text(17, 17, ['fr #' num2str(p.currentFrame)], 'FontSize', 12, 'Color', 'g'); end
@@ -443,6 +447,7 @@ if assistedCorrection
     % outim = imresize_old(outim,p.res); % MW REMOVED LINE REMOVE THIS
     
     %imshow(outim,'InitialMagnification','fit');    % MW REMOVED LINE REMOVE THIS
+    clf; % to prevent memory filling up
     imshow(outim);
 
     % hard print frame nr

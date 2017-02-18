@@ -386,7 +386,7 @@ if existfield(p, 'showPerim') && p.showPerim % show cell outlines
     outim = MW_stampit(outim,p);
     
     if nargout == 0 && isempty(Lp)
-        clf; % to prevent memory filling up
+        %clf; % to prevent memory filling up
         imshow(outim);
         % hard print frame nr
         if isfield(p,'currentFrame'), text(17, 17, ['fr #' num2str(p.currentFrame)], 'FontSize', 12, 'Color', 'g'); end
@@ -421,7 +421,7 @@ elseif p.showPhaseImage % costs 0.045 sec
     outim = MW_stampit(outim,p); % TODO CHECK MW    
     
     if nargout == 0 && isempty(Lp)
-        clf; % to prevent memory filling up
+        clf(gca); % to prevent memory filling up
         imshow(outim);
         % hard print frame nr
         if isfield(p,'currentFrame'), text(17, 17, ['fr #' num2str(p.currentFrame)], 'FontSize', 12, 'Color', 'g'); end
@@ -433,7 +433,7 @@ else
     outim = MW_stampit(outim,p); % TODO CHECK MW
 
     if nargout == 0 && isempty(Lp)
-        clf; % to prevent memory filling up
+        clf(gca); % to prevent memory filling up
         imshow(outim);
         % hard print frame nr
         if isfield(p,'currentFrame'), text(17, 17, ['fr #' num2str(p.currentFrame)], 'FontSize', 12, 'Color', 'g'); end
@@ -447,7 +447,7 @@ if assistedCorrection
     % outim = imresize_old(outim,p.res); % MW REMOVED LINE REMOVE THIS
     
     %imshow(outim,'InitialMagnification','fit');    % MW REMOVED LINE REMOVE THIS
-    clf; % to prevent memory filling up
+    clf(gca); % to prevent memory filling up
     imshow(outim);
 
     % hard print frame nr

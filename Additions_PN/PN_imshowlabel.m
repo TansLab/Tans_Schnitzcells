@@ -39,7 +39,7 @@ function outim = PN_imshowlabel(p,L,rect,Lp,rectp,varargin)
 % TODO: 'recalcCellNumbers' array for which region properties have to be
 %                     recalculated because cell was updated. default: all
 %                     cells. taking fewer cells will speed up process
-% showNr              if set, prints cell idxs for this frame on cells.
+% p.showNr            if set, prints cell idxs for this frame on cells.
 % problemCells        (requires p.currentFrame to be set to current frame
 %                     index) If p.problemCells is given, cells from that
 %                     array will be highlighted (too). 
@@ -48,6 +48,8 @@ function outim = PN_imshowlabel(p,L,rect,Lp,rectp,varargin)
 % p.showPhaseImage    if this field exists and is false, the phase image is
 %                     hidden (per default phase image is shown and 
 %                     p.showPhaseImage is set to 1).
+% p.slookup           if this field is set to a frame label to schnitz nr
+%                     lookup table, schnitz nrs will be displayed.
 %
 %
 %
@@ -473,7 +475,7 @@ if p.showNr~=0
                 schnitzNr = p.slookup(p.currentFrame,i);
                 textx=propL(i).Centroid(1)-halfFontSize;
                 texty=propL(i).Centroid(2)-halfFontSize;
-                text(textx,texty,sprintf('%03d', schnitzNr),'FontSize',FONTSIZE,'Color',[1,1,1],'FontWeight','bold')
+                text(textx,texty,sprintf('%03d', schnitzNr),'FontSize',FONTSIZE,'Color',[1,1,1],'FontWeight','bold')                
             else
                 % Tell users that other numbers might be incorrect too..
                 warning(['Lookup of schnitznrs might be wrong, probably bc you corrected seg (attempted f= ' num2str(p.currentFrame) ' i=' num2str(i) ')..']);

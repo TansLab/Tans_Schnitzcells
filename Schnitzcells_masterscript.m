@@ -742,7 +742,7 @@ if any(strcmp(runsections,{'allpreliminary', 'allfull','correctionsandanalysis'}
     end
 
     %8 Add correct mu
-    DJK_addToSchnitzes_mu(p, 'frameSizes', ourSettings.muWindow); % p.lengthFields is set above
+    DJK_addToSchnitzes_mu(p, 'frameSizes', ourSettings.muWindow );% p.lengthFields is set above
 
     % Let user know we're done
     mysound=load('gong'); sound(mysound.y);

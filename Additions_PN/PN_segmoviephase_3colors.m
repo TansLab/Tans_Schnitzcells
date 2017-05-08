@@ -1,5 +1,9 @@
 function p = PN_segmoviephase_3colors(p,varargin)
 %
+% This function loops over the different frames, and calls the actual
+% segmentation function for each frame (usually that function is 
+% PN_segphase()).
+%
 % REQUIRED ARGUMENTS:
 % 'p' 
 %
@@ -11,7 +15,7 @@ function p = PN_segmoviephase_3colors(p,varargin)
 %               for highly structured cells (rich medium) try slightly defocused
 %               slice (typically '1')
 % 'rangeFiltSize' : typical area for dectection of interesting features of
-%               the image (interesting feature = contrast changes laegely
+%               the image (interesting feature = contrast changes largely
 %               within this area). default: 35
 % 'maskMargin' : enlarge mask to avoid cutting cells at boundary of
 %                interesting region. default: 5 [nb: previously (before

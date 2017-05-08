@@ -30,6 +30,8 @@ ________________________________________________________________________________
 General information
 ================================================================================
 
+(Note 2017: See the file 2017-04-21_schnitzcells_short_guide.docx for a quick guide on using the GUI.)
+
 In end 2015, beginning of 2016, I made an effort to update the code in such a way that you can run your whole analysis from one script. Moreover, this script can also be controlled from a GUI (graphical user interface).
 
 The main file you currently need to perform an analysis is 

@@ -56,7 +56,11 @@
 % the info that analyis saves to a separate file. (This might have been
 % implemented better in the excell files with command lists that were
 % previously used..)
-
+% (2)
+% Look at configfile and DJK_initschnitz, w. respect to p.micronsPerPixel 
+% and p.camera; if used outside our lab, this is not convenient..
+% (3)
+% fitTimeScatterHist in the config file seems to be an unused parameter.
 
 %% Run this section to start the GUI interface
 % (Press ctrl+enter when cursor is here.)

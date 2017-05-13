@@ -7,8 +7,8 @@
 % is the width of the fit window (# frames), and YY is the length parameter
 % on which the calculation was based. muPXX_YY _only contains_ calculated
 % mu values that match with the points at which fluor images where taken.
-% [*MW TODO: and I think this corresponds to the first fluor*] muPXX_YY has
-% the fields with all mu values.
+% [*MW TODO: and I think this corresponds to the first fluor*] muPXX_YY_all
+% has the fields with all mu values.
 %
 % DJK_compileSchnitzImproved must have been run before. For other length
 % measures than rp_length, also DJK_addToSchnitzes_length has to be run
@@ -84,7 +84,7 @@ end
 %--------------------------------------------------------------------------
 % overwrite any schnitzcells parameters/defaults given optional fields/values
 %--------------------------------------------------------------------------
-% Set default parameter values if they don't exist yet
+%% Set default parameter values if they don't exist yet
 if ~existfield(p,'schnitzName')
   p.schnitzName = [p.tracksDir,p.movieName,'-Schnitz.mat'];
 end
@@ -120,7 +120,7 @@ end
 %--------------------------------------------------------------------------
 % Load Schnitzcells
 %--------------------------------------------------------------------------
-% Loading an existing schnitz file which contains the image-derived fields
+%% Loading an existing schnitz file which contains the image-derived fields
 if exist(p.schnitzName)~=2
   error(['Could not read ' p.schnitzName ' , which is required for quick mode']);
 end
@@ -134,10 +134,10 @@ disp(['Load from ''' p.schnitzName ''' completed...']);
 %--------------------------------------------------------------------------
 % Reintroducing option to plot all fits - MW 23/3/2014
 if existfield(p,'schnitzNum')  
-    if p.schnitzNum == 'all'
+    if isstr(p.schnitzNum), if p.schnitzNum == 'all'
         p.schnitzNum = [1:length(schnitzcells)];
         % p.schnitzNum = [1:100:length(schnitzcells)]; %; %blubb
-    end   
+        end, end
 else
   p.schnitzNum = [1:100:length(schnitzcells)];
 end
@@ -152,7 +152,7 @@ lengthFields = {};
 nameFields = {};
 for i = 1:length(p.lengthFields)
   f = char(p.lengthFields(i));
-  if isfield(schnitzcells, f)
+  if isfield(schnitzcells, f) 
     % update total nr fields taken into account - MW 2014/07
     lengthFieldsCount               = lengthFieldsCount + 1;
     % put name into "admin" struct - MW 2014/07
@@ -167,6 +167,8 @@ for i = 1:length(p.lengthFields)
     nameFields{lengthFieldsCount}   = f_renamed;
     
     disp(['Will calc mu for ' f '(''' f_renamed ''')']);  % MW extra feature
+  else
+      error('One of the provided length fields does not exist!');
   end
 end
 for i = 1:length(p.frameSizes)
@@ -186,6 +188,7 @@ for i = 1:length(schnitzcells)
   % automatically.)
   %--------------------------------------------------------------------
   for num = 1:lengthFieldsCount
+    %%
     lengthField   = char(lengthFields(num));
     name          = char(nameFields(num));
 
@@ -380,13 +383,7 @@ for i = 1:length(schnitzcells)
       % no fluor images. TODO: fix this.
       %--------------------------------------------------------------------
       
-      fluor_used=0; % flag to see whether fluorescence images detected
-      
-      % MW 2015/04 give warning of inconvenient behavior for multiple
-      % fluors.
-      if (~strcmp(p.fluor1,'none')+~strcmp(p.fluor2,'none')+~strcmp(p.fluor3,'none'))>1
-          disp('INFO: You are using multiple fluors, muPXX_YY will match only the first fluor!');
-      end
+      fluor_used=0; % flag to see whether fluorescence images detected            
       
       % Determine which fluors are used, and what they are.
       if strcmp(p.fluor1,'none')==0
@@ -608,6 +605,11 @@ for i = 1:length(schnitzcells)
 end
 %--------------------------------------------------------------------------
 
+% MW 2015/04 give warning of inconvenient behavior for multiple
+% fluors.
+if (~strcmp(p.fluor1,'none')+~strcmp(p.fluor2,'none')+~strcmp(p.fluor3,'none'))>1
+  disp('INFO: You are using multiple fluors, muPXX_YY will match only the first fluor!');
+end
 
 %--------------------------------------------------------------------------
 % Save new schnitzcells with pole information added

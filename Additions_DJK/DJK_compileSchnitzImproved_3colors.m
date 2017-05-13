@@ -24,6 +24,7 @@
 
 function [p,schnitzcells] = DJK_compileSchnitzImproved_3colors(p,varargin) 
 
+%%
 %--------------------------------------------------------------------------
 % Input error checking and parsing
 %--------------------------------------------------------------------------
@@ -48,7 +49,7 @@ if numExtraArgs > 0
 end
 %--------------------------------------------------------------------------
 
-
+%%
 %--------------------------------------------------------------------------
 % overwrite any schnitzcells parameters/defaults given optional fields/values
 %--------------------------------------------------------------------------
@@ -145,6 +146,7 @@ end
 % -------------------------------------------------
 % create variable names
 % -------------------------------------------------
+%%
 reg1=genvarname([p.fluor1 'reg']);  % creates 'nonereg' if fluorcolor not existent
 reg2=genvarname([p.fluor2 'reg']);  % -> distinguish later if real fluorcolor
 reg3=genvarname([p.fluor3 'reg']);  %
@@ -171,8 +173,11 @@ fluor1counter=0; fluor2counter=0; fluor3counter=0;
 %--------------------------------------------------------------------------
 % LOOP OVER FRAMES IN TRACKRANGE
 %--------------------------------------------------------------------------
+%%
 disp(['-----------------------------------------------------------']);
 for i = 1:length(trackRange)
+    
+  %%
   currFrameNum = trackRange(i);
 
   % i is the frame index into lincellnum and trackRange. 
@@ -201,6 +206,7 @@ for i = 1:length(trackRange)
   %------------------------------------------------------------------------
   % LOOP OVER EACH SCHNITZ THAT EXISTS DURING THIS FRAME, AND UPDATE IT
   %------------------------------------------------------------------------
+  %%
   schnitzesForFrame = lincellnum{i}; % [schnitznum for cellno1, schnitznum for cellno2, etc]
   nonZeroSchnitzes = schnitzesForFrame(schnitzesForFrame~=0); % with correction you sometimes end up with unexisting schnitzes (0)
   for s = nonZeroSchnitzes

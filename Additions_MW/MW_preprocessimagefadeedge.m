@@ -15,37 +15,42 @@ function theImage = MW_preprocessimagefadeedge(theImage, bottomOrTop)
 % simple option..
 
 %%
-%testImg2=imread('G:\EXPERIMENTAL_DATA_2017\2017-02-10_OAA_pulsing_asc1004\pos2crop\images\pos2crop-p-2-2678.tif');
+%theImage=imread('H:\EXPERIMENTAL_DATA_2017\2017-03-22_asc1004_cAMP_pulsing\pos2smallcrop\images\pos2smallcrop-p-2-1128.tif');
+MYFILTER = [.0000 0.000 0.000 0.0009 0.0025 0.0067 0.0180 0.0474 0.1192 0.2689 0.5000 0.7311 0.8808  0.9526  0.9820 0.9933  0.9975  0.9991  0.9997  0.9999  1.0000];    
+    % modified version of: 1./(1+(exp(-[-10:10]))); %plot(1./(1+(exp(-[-10:10]))),'o')
+    % previously: [0:20]/THICKNESS; %THICKNESS = 20;
+   
 
 maxValue = max(theImage(:));
 
 % fade the bottom
 if bottomOrTop==1
-    theEnd = size(theImage,1);
+  theEnd = size(theImage,1);
 
 
-    THICKNESS = 20;
-    for i=0:THICKNESS
+  
+  for i=0:numel(MYFILTER)-1 %0:THICKNESS
 
-        theImage(theEnd-i, :) = (1-i/THICKNESS) .* double(maxValue) .* ones(1,size(theImage,2)) +....
-                                (  i/THICKNESS) .* double(theImage(theEnd-i, :));
-    end
-% or the top    
+    a = MYFILTER(i+1); % alpha value
+    theImage(theEnd-i, :) = (1-a) .* double(maxValue) .* ones(1,size(theImage,2)) +....
+                ( a) .* double(theImage(theEnd-i, :));
+  end
+% or the top  
 elseif bottomOrTop==2
-    THICKNESS = 20;
-    for i=0:THICKNESS
+  
+  for i=0:numel(MYFILTER)-1 %THICKNESS
 
-        theImage(i+1, :) = (1-i/THICKNESS) .* double(maxValue) .* ones(1,size(theImage,2)) +....
-                           (  i/THICKNESS) .* double(theImage(i+1, :));
-    end
-    
+    a = MYFILTER(i+1); % alpha value
+    theImage(i+1, :) = (1-a) .* double(maxValue) .* ones(1,size(theImage,2)) +....
+                        ( a) .* double(theImage(i+1, :));
+  end
+  
 else
-    error('Unrecognized case of bottomOrTop.');
+  error('Unrecognized case of bottomOrTop.');
 end
 
 
 
 %{
 figure; imshow(theImage,[]);
-imageToSegment = theImage;
 %}

@@ -21,6 +21,9 @@
 %   useFullImage:   Default value 1; if set to 0 allows you to handle the
 %                   image uncropped. (Mother function 
 %                   PN_segmoviephase_3colors.m accepts p.useFullImage).
+%   p.segmentationFigures 
+%                   if this is a valid field figures with segmentation
+%                   steps will be shown (independent from saving figures).
 %
 % TODO MW 2015/01
 % Check whether hard-coded algorithm constants in this algorithm can be
@@ -79,7 +82,10 @@ q.parse(imageToSegment, tempVarargin{:});
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %STEP O (O the letter, not 0 the zero !): suppress shot noise
 O_PhImageFilt = medfilt2(imageToSegment);
-% figure; imshow(O_PhImageFilt,[]);
+
+if isfield(p,'segmentationFigures')
+    figure(1); imshow(O_PhImageFilt,[]);
+end
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %% STEP A : find a global mask and crop the image
@@ -133,7 +139,9 @@ if q.Results.saveSteps
     %saveas(A_maskImage,'A_maskImage','png')
 end
 
-% figure(1); imshow(A_cropPhImage,[]);
+if isfield(p,'segmentationFigures')
+    figure(1); imshow(A_cropPhImage,[]);
+end
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %% STEP B : find edges 
@@ -191,8 +199,10 @@ savePNGofImage(B_edgeImage2,'B_edgeImage2',q.Results.saveDir);
 savePNGofImage(B_fillEdgeImage2,'B_fillEdgeImage2',q.Results.saveDir);
 end
 
-% figure(1); imshow(B_edgeImage1,[]);
-% figure(2); imshow(B_edgeImage2,[]);
+if isfield(p,'segmentationFigures')
+    figure(1); imshow(B_edgeImage1,[]);
+    figure(2); imshow(B_edgeImage2,[]);
+end
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %% STEP C : prepare seeds for watershedding
@@ -214,8 +224,10 @@ savePNGofImage(C_seeds1,'C_seeds1',q.Results.saveDir);
 savePNGofImage(C_seeds2,'C_seeds2',q.Results.saveDir);
 end
 
-% figure(1); imshow(C_cellMask,[]);
-% figure(2); imshow(C_seeds2,[]);
+if isfield(p,'segmentationFigures')
+    figure(1); imshow(C_cellMask,[]);
+    figure(2); imshow(C_seeds2,[]);
+end
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %% STEP D : suppress branch points of the skeleton
@@ -226,7 +238,9 @@ C_seeds2(logical(brchpts)) = 0;
 C_seeds2 = bwmorph(C_seeds2,'spur',3);
 C_seeds2 = bwareaopen(C_seeds2,10,8);
 
-% figure(1); imshow(C_seeds2,[]);
+if isfield(p,'segmentationFigures')
+    figure(1); imshow(C_seeds2,[]);
+end
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %% STEP E : cut long cells which neck is deeper than neckDepth
@@ -250,7 +264,9 @@ if q.Results.saveSteps
 savePNGofImage(C_seeds2,'C_seeds2',q.Results.saveDir);
 end
 
-% figure(1); imshow(C_seeds2,[]);
+if isfield(p,'segmentationFigures')
+    figure(1); imshow(C_seeds2,[]);
+end
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %% STEP Z : final segmentation by watershedding
@@ -284,8 +300,11 @@ savePNGofImage(Z_maskToFill & ~Z_seeds,'Z_Mask and seeds',q.Results.saveDir);
 savePNGofImage(Z_segmentedImage,'Z_segmentedImage',q.Results.saveDir);
 end
 
-% figure(1); imshow(Z_segmentedImage,[]);
-% PN_imshowlabel(p,Z_segmentedImage,[],[],[])
+if isfield(p,'segmentationFigures')
+    figure(1); imshow(Z_segmentedImage,[]);
+    p.showPhaseImage=0;
+    figure(2); PN_imshowlabel(p,Z_segmentedImage,[],[],[]);
+end
 
 %%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%    SEGMENTATION END   %%%%%%%%%%%%%%%%

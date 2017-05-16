@@ -1,7 +1,7 @@
 
 
 
-function L = MW_deletecellsattheedge(L)
+function L = MW_deletecellsattheedge(p,L)
 % Cuts cells that are at the edge of the image. Every cell that is within
 % MARGIN pixels of any edge, gets deleted.
 %

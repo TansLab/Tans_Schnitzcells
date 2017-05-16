@@ -15,7 +15,7 @@ function theImage = MW_preprocessimagefadeedge(theImage, bottomOrTop)
 % simple option..
 
 %%
-%theImage=imread('H:\EXPERIMENTAL_DATA_2017\2017-03-22_asc1004_cAMP_pulsing\pos2smallcrop\images\pos2smallcrop-p-2-1128.tif');
+%theImage=imread('H:\EXPERIMENTAL_DATA_2017\2017-03-22_asc1004_cAMP_pulsing\pos2smallcrop\images\pos2smallcrop-p-2-1344.tif');
 MYFILTER = [.0000 0.000 0.000 0.0009 0.0025 0.0067 0.0180 0.0474 0.1192 0.2689 0.5000 0.7311 0.8808  0.9526  0.9820 0.9933  0.9975  0.9991  0.9997  0.9999  1.0000];    
     % modified version of: 1./(1+(exp(-[-10:10]))); %plot(1./(1+(exp(-[-10:10]))),'o')
     % previously: [0:20]/THICKNESS; %THICKNESS = 20;

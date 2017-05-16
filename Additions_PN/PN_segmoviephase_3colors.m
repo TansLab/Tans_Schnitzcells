@@ -496,7 +496,7 @@ for i= p.segRange
     end
 
     if isfield(p,'mothermachine')
-        LNsub = MW_deletecellsattheedge(LNsub);
+        LNsub = MW_deletecellsattheedge(p,LNsub);
     end
     
     

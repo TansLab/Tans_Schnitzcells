@@ -61,9 +61,15 @@ q.addParamValue('neckDepth',2,@isnumeric);
 q.addParamValue('saveSteps',false,@islogical);  %indicate if you want to save intermediate images  
 q.addParamValue('saveDir',pwd,@ischar);    %directory where intermediate treatment images are saved      
 
-% Parse user values
+%% Parse user values
 q.parse(imageToSegment, varargin{:});
 
+%%
+%{
+% Example settings
+tempVarargin={'rangeFiltSize', 35}
+q.parse(imageToSegment, tempVarargin{:});
+%}
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%    SEGMENTATION   %%%%%%%%%%%%%%%%%%%%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -73,7 +79,7 @@ q.parse(imageToSegment, varargin{:});
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %STEP O (O the letter, not 0 the zero !): suppress shot noise
 O_PhImageFilt = medfilt2(imageToSegment);
-% figure; imshow(O_PhImageFilt);
+% figure; imshow(O_PhImageFilt,[]);
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %% STEP A : find a global mask and crop the image
@@ -127,6 +133,7 @@ if q.Results.saveSteps
     %saveas(A_maskImage,'A_maskImage','png')
 end
 
+% figure(1); imshow(A_cropPhImage,[]);
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %% STEP B : find edges 
@@ -178,15 +185,14 @@ if DE_boolean
 end
 
 
-
-
-
 if q.Results.saveSteps
 savePNGofImage(B_edgeImage1,'B_edgeImage1',q.Results.saveDir);
 savePNGofImage(B_edgeImage2,'B_edgeImage2',q.Results.saveDir);
 savePNGofImage(B_fillEdgeImage2,'B_fillEdgeImage2',q.Results.saveDir);
 end
 
+% figure(1); imshow(B_edgeImage1,[]);
+% figure(2); imshow(B_edgeImage2,[]);
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %% STEP C : prepare seeds for watershedding
@@ -208,19 +214,25 @@ savePNGofImage(C_seeds1,'C_seeds1',q.Results.saveDir);
 savePNGofImage(C_seeds2,'C_seeds2',q.Results.saveDir);
 end
 
+% figure(1); imshow(C_cellMask,[]);
+% figure(2); imshow(C_seeds2,[]);
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %% STEP D : suppress branch points of the skeleton
+
 brchpts = PN_FindBranchPoints(C_seeds2);
 C_seeds2(logical(brchpts)) = 0;
 %some cleaning
 C_seeds2 = bwmorph(C_seeds2,'spur',3);
 C_seeds2 = bwareaopen(C_seeds2,10,8);
 
+% figure(1); imshow(C_seeds2,[]);
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %% STEP E : cut long cells which neck is deeper than neckDepth
+
 continueToCut = true;
+
 icut = C_seeds2;
 while continueToCut
     [cellsToRemove cutPoints] = PN_CutLongCells(icut,C_cellMask,q.Results.neckDepth);
@@ -238,6 +250,7 @@ if q.Results.saveSteps
 savePNGofImage(C_seeds2,'C_seeds2',q.Results.saveDir);
 end
 
+% figure(1); imshow(C_seeds2,[]);
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %% STEP Z : final segmentation by watershedding
@@ -271,6 +284,10 @@ savePNGofImage(Z_maskToFill & ~Z_seeds,'Z_Mask and seeds',q.Results.saveDir);
 savePNGofImage(Z_segmentedImage,'Z_segmentedImage',q.Results.saveDir);
 end
 
+% figure(1); imshow(Z_segmentedImage,[]);
+% PN_imshowlabel(p,Z_segmentedImage,[],[],[])
+
+%%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%    SEGMENTATION END   %%%%%%%%%%%%%%%%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
                     

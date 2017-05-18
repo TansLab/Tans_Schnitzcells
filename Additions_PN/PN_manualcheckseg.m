@@ -145,6 +145,7 @@ disp('              press ''b'' to restrict segmentation to overlaps with previo
 disp('                             (requires assistedCorrection mode, protential trouble after backstep '','')')
 disp('              press ''n'' to toggle fullscreen mode (go to next frame after toggling it off).')
 disp('                    ''s'' to toggle no numbers, cell numbers, schnitz numbers.')
+disp('              press ''k'' to merge cells in previous frame that have joined into one cell in this frame')
 
 disp(' ')
 

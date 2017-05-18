@@ -342,9 +342,11 @@ while ~done
                 Lout(zoomrect(1):zoomrect(2),zoomrect(3):zoomrect(4))=Lzoom;
                 updatedCellNumbers=[updatedCellNumbers;max2(Lout)+1]; % blubb
             end
+            
             close(addfig)
             figure(ourfig)
             done=0;
+            
         elseif cc=='x'
             Lout_undo=Lout;   %for undo step NW 2014-01
             %subcolroi=imresize_old(~roipoly,1/res);
@@ -365,7 +367,21 @@ while ~done
             updatedCellNumbers=[updatedCellNumbers;affectedcells]; %blubb
             %
             done=0;
-        elseif cc=='k' % don't use!
+        elseif cc=='k' % cell joining option
+            
+            affectedcells = MW_joinmergers(p,Lout,rect,L_prec,rect_prec);            
+            
+            updatedCellNumbers=[updatedCellNumbers;affectedcells]; % note that this option is currently not used, ie. this code is useless
+            
+            % since L_prec has changed, let's reload it
+            fileLocation=[p.segmentationDir p.movieName 'seg' sprintf('%03d', p.currentFrame-1) '.mat'];
+            load(fileLocation,'Lc');
+            L_prec=Lc;
+            clear Lc; % just to prevent mixups
+            
+            done=0;
+            
+            %{
             disp(['obsolete and not correct version!'])
             %subcolroi=imresize_old(~roipoly,1/res);
             subcolroi=~roipoly;
@@ -379,6 +395,7 @@ while ~done
             %           Lout=renumberimage(Lout);
             
             done=0;
+            %}
             
         elseif cc=='t'
             
@@ -853,6 +870,7 @@ while ~done
         % ===
         if cz(1)=='n'
             Lout_undo=Lout;   %for undo step NW 2014-01
+            
             % join cells
             pos1=pos;
             j1=Lout(round(pos(1,2)),round(pos(1,1)));

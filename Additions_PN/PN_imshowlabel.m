@@ -47,9 +47,12 @@ function outim = PN_imshowlabel(p,L,rect,Lp,rectp,varargin)
 % p.showPerim         if this is a valid field, sohws outlines of cells
 % p.showPhaseImage    if this field exists and is false, the phase image is
 %                     hidden (per default phase image is shown and 
-%                     p.showPhaseImage is set to 1).
+%                     p.showPhaseImage is set to 1).q
 % p.slookup           if this field is set to a frame label to schnitz nr
 %                     lookup table, schnitz nrs will be displayed.
+% p.showLargeCentroids
+%                     if this is a valid field the centroids from cells in
+%                     the previous frame will be shown as large circles
 %
 %
 %
@@ -142,17 +145,20 @@ if assistedCorrection
     [rw clm] = find(L);
     center_new = round([mean(clm) mean(rw)]);
     pad_motion = center_new + [rect(2) rect(1)] - [rectp(2) rectp(1)] - center_old; 
+    
     %Positions of the centroids of the former image in the new image
     propLp = regionprops(Lp,'Centroid');
-    centroids = cat(1, propLp.Centroid);
-    centroids = round(centroids + ones(size(propLp))*([rectp(2)-1 rectp(1)-1] + pad_motion));
+    centroidsraw = cat(1, propLp.Centroid);
+    centroids = round(centroidsraw + ones(size(propLp))*([rectp(2)-1 rectp(1)-1] + pad_motion));
     imcentroids = zeros(max(rect(3),rectp(3)),max(rect(4),rectp(4)));
+    
     try
         linearInd = sub2ind(size(imcentroids), centroids(:,2), centroids(:,1));
     catch
         warning('Converting centroids to linear indices failed.');
         linearInd = NaN;
     end
+    
     if ~isnan(linearInd)
         imcentroids(linearInd) = 1;
     
@@ -162,6 +168,7 @@ if assistedCorrection
         Ltemp(logical(imcentroids)) = 0;
         propLtemp = regionprops(Ltemp,'EulerNumber');
         ideul = find([propLtemp.EulerNumber]<0); %label of cells which may have been re-merged
+        
         %detect too small cells
         propL = regionprops(L,'Area');
         characSize = median([propL.Area]);
@@ -170,6 +177,7 @@ if assistedCorrection
     
         % Labels of suspicious cells
         allSuspiciousLabels = union(ideul,idsmall);
+                
     else
         allSuspiciousLabels = [];
     end
@@ -184,7 +192,7 @@ if isfield(p,'problemCells');
     end
     
     % If problemcells are known, we can label them in this image
-    if ~isempty(p.problemCells)
+    if ~isempty(p.problemCells) & isfield(p,'currentFrame')
         schnitzNrsProblemCells = find(p.problemCells(:,2)==p.currentFrame);
         allSuspiciousLabels = [ allSuspiciousLabels ...
                     p.problemCells(schnitzNrsProblemCells,3)'];    
@@ -491,6 +499,19 @@ if p.showNr~=0
     end
 end
 
+end
+
+% Option below shows centroids from previous frame. The colonies tend to
+% shift a bit because the field of view tends to shift a bit. The white
+% circle is corrected for this, the grey one is not.
+% This option is an addition to the black dots already shown, which are
+% equivalent to the white circles.
+if isfield(p,'showLargeCentroids')
+    if exist('centroidsraw','var')
+        hold on; plot(centroidsraw(:,1),centroidsraw(:,2),'o','Color',[.7 .7 .7]);
+        pad_motion
+        hold on; plot(centroidsraw(:,1) + pad_motion(1), centroidsraw(:,2) + pad_motion(2),'o','Color',[1 1 1]);
+    end
 end
 
 

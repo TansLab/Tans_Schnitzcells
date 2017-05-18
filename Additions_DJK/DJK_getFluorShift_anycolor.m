@@ -218,6 +218,7 @@ else
               tot_fluor(di+ p.maxShift+1,dj+ p.maxShift+1) = sum(fluor_shifted(seg > 0));
             end
           end
+          
           % best translation is the one with largest fluorescence within seg
           [shift_y, shift_x] = find(tot_fluor == max2(tot_fluor)); % find returns [row, col]
           best_shift(1) = - (mean(shift_x) -  p.maxShift - 1);

@@ -115,6 +115,7 @@ if debugmode
     %perimImg = imdilate(perimImg,strel('disk',3,4)); % imdilate use TODO can be optimized
 
     areaImg1 = frame1BWarea+frame1;
+    p.showPhaseImage=0
     h4=figure(), PN_imshowlabel(p,areaImg1,[],[],[]);
 
     areaImg2 = frame2BWarea+frame2;

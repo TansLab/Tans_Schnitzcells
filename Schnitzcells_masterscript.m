@@ -703,10 +703,19 @@ if any(strcmp(runsections,{'allpreliminary', 'allfull','correctionsandanalysis'}
         % replace matrices
         load(ourSettings.fluorCorrectionImagePaths{colorIdx}, 'flatfield', 'shading', 'replace');
 
+        
         % Finding shifts.
         disp('Looking for shifts');
-        optimalShift = DJK_getFluorShift_anycolor(p,'manualRange', ourSettings.currentFrameRange,'fluorcolor',currentFluor,'maxShift',MAXSHIFT);
-        disp('Correcting');
+        if ~isfield(p,'mothermachine')
+            optimalShift = DJK_getFluorShift_anycolor(p,'manualRange', ourSettings.currentFrameRange,'fluorcolor',currentFluor,'maxShift',MAXSHIFT);
+                % BUG HERE? TODO: the same shift is applied to all images. I
+                % wonder whether this is what is intended..
+            disp('Correcting');
+        else
+            disp('INFO: mothermachine option is activated, so not looking for optimal fluor shift. Set optimalShift = [0,0].')
+            optimalShift = [0,0];            
+        end
+        
         % Correct images (shading, background).
         DJK_correctFluorImage_anycolor(p, flatfield, shading, replace,'manualRange', ourSettings.currentFrameRange,  'fluorShift', optimalShift, 'deconv_func', @(im) deconvlucy(im, PSF),'fluorcolor',currentFluor,'minimalMode',0);
 

@@ -124,12 +124,17 @@ if q.Results.useFullImage~=1  % default: crop image to ROI
     bb = propsMaskImage(idx).BoundingBox;
     ROI_segmentation = [ceil(bb([2 1])) ceil(bb([2 1]))+bb([4 3])-[1 1]];   %ymin xmin ymax xmax
 else  % exception: skip cropping
+    
     A_cropMaskImage=ones(size(imageToSegment));
+    ROI_segmentation = [1 1 size(imageToSegment)];
+    
     %crop a little bit, otherwise background calculation of fluor is going
     %to fail
+    %{
     myIncr=15;
     ROI_segmentation=[1+myIncr 1+myIncr size(A_cropMaskImage,1)-myIncr size(A_cropMaskImage,2)-myIncr];
     A_cropMaskImage=A_cropMaskImage(ROI_segmentation(1):ROI_segmentation(3),ROI_segmentation(2):ROI_segmentation(4));
+    %}
 end
 
 A_cropPhImage = O_PhImageFilt(ROI_segmentation(1):ROI_segmentation(3),ROI_segmentation(2):ROI_segmentation(4)); %cropped ph image image

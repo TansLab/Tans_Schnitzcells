@@ -12,7 +12,7 @@ function L = MW_deletecellsattheedge(p,L)
 % 
 
 %% Parameters
-MARGIN=20; % this should be equal to THICKNESS in MW_preprocessimagefadeedge
+MARGIN=30; % this should be tuned with size of filter in MW_preprocessimagefadeedge
 
 %% Function
 

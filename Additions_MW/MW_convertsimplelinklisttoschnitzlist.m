@@ -16,7 +16,9 @@ linklistschnitz = [linklist(:,1), zeros(size(linklist,1),2), linklist(:,2)];
 uniqueWithoutZeros=unique(linklistschnitz(:,1));
 uniqueWithoutZeros=uniqueWithoutZeros(uniqueWithoutZeros>0);
 % now count the nr of instances of each unique entry
-[parentcount,indices] = hist(linklistschnitz(:,1),uniqueWithoutZeros);
+indices = uniqueWithoutZeros';
+binedges = [indices-.5 indices(end)];
+parentcount = histcounts(linklistschnitz(:,1),binedges);
 
 % identify which ones are occuring multiple times (cells that have more
 % than one cells linked have probably divided).

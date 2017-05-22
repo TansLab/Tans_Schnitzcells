@@ -36,8 +36,8 @@ DISKSIZE=15;
 MAXSHIFT=20;
 
 if ~exist('frame1Number','var')
-    frame1Number=1040;
-    frame2Number=1041;
+    frame1Number=1045;
+    frame2Number=1046;
 end
 
 if isfield(p,'debugmode')
@@ -412,21 +412,25 @@ for cellidxsin2 = 1:max(frame2(:)) % by construction these are indices
     %unique(frame1filtered(currentcell))
     
     % Quantify the overlap w. respect to previous frame.
-    uniqueExclZeros = unique(frame1filtered(currentcellidx2));
-    uniqueExclZeros = uniqueExclZeros(find(uniqueExclZeros>0));   
-    if numel(uniqueExclZeros)>1
-        [pixcounts,possibleParentsList] = hist(frame1filtered(currentcellidx2),uniqueExclZeros);
-    
-        % Get the most likely one
-        [maxpixcount, temp_idx] = max(pixcounts);
-        mostlikelyparentidx1 = possibleParentsList(temp_idx);
-    else
-        mostlikelyparentidx1 = uniqueExclZeros;
-        if isempty(mostlikelyparentidx1)
-            mostlikelyparentidx1 = 0;
-        end
-    end
-    
+    uniqueCellNrsHit = unique(frame1filtered(currentcellidx2));
+    % Zeros could be excluded, but we want to allow for disappearing cells 
+    %uniqueExclZeros = uniqueCellNrsHit(find(uniqueCellNrsHit>0));         
+
+    % now identify the parent which has most overlap
+    possibleParentsList = uniqueCellNrsHit';
+    edges = [possibleParentsList-.5 possibleParentsList(end)+.5];
+    pixcounts = histcounts(frame1filtered(currentcellidx2),edges);
+    %[pixcounts,possibleParentsList] = hist(frame1filtered(currentcellidx2),uniqueExclZeros);
+
+    % Get the most likely one
+    [maxpixcount, temp_idx] = max(pixcounts);
+    mostlikelyparentidx1 = possibleParentsList(temp_idx);
+
+    % debugging
+    if  max(pixcounts)<20
+        warning(['Low overlap detected, ' num2str(max(pixcounts)) ' pixels']);
+    end    
+
     %disp(['Found link ' num2str(cellidxsin2) ' to ' num2str(mostlikelyparentidx1) '.']);
     linklist = [linklist; mostlikelyparentidx1,cellidxsin2]; % [parent, daughter; ..]
 end

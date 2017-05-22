@@ -17,7 +17,7 @@ uniqueWithoutZeros=unique(linklistschnitz(:,1));
 uniqueWithoutZeros=uniqueWithoutZeros(uniqueWithoutZeros>0);
 % now count the nr of instances of each unique entry
 indices = uniqueWithoutZeros';
-binedges = [indices-.5 indices(end)];
+binedges = [indices-.5 indices(end)+.5];
 parentcount = histcounts(linklistschnitz(:,1),binedges);
 
 % identify which ones are occuring multiple times (cells that have more

@@ -132,7 +132,7 @@ end
 
 %% resize the first frame such that frames can be fitted on top of each other
 
-if ~p.mothermachine
+if ~isfield(p,'mothermachine')
 
     STATS1 = regionprops(frame1BWarea, 'Area');
     STATS2 = regionprops(frame2BWarea, 'Area');

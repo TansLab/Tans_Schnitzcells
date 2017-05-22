@@ -7,8 +7,14 @@ function [linklistschnitz, segFile1Path, segFile2Path] = MW_linkframes(p, frame1
 % if p.debugmode is valid field, then also figures are plotted.
 % if p.ignoreFailedChecksTracker is a valid field, also frames with failed
 %   checks are linked.
-% 
 %
+% Hard coded parameters
+% DISKSIZE=15; 
+%       feature size of space between cells, used to create 1 colony
+% MAXSHIFT=20; % 
+%       extra alignment parameter for mothermachine data, which refines the
+%       alignment between two colonies.
+% 
 % Note term parent and daughter are here also used to link the same
 % individual over two frames!
 %
@@ -27,11 +33,11 @@ function [linklistschnitz, segFile1Path, segFile2Path] = MW_linkframes(p, frame1
 %% Parameters 
 
 DISKSIZE=15;
-MARGIN=10;
+MAXSHIFT=20;
 
 if ~exist('frame1Number','var')
-    frame1Number=180;
-    frame2Number=181;
+    frame1Number=1040;
+    frame2Number=1041;
 end
 
 if isfield(p,'debugmode')
@@ -79,13 +85,14 @@ end
 data=load(segFile1Path,'Lc');
 frame1=data.Lc;
 if debugmode
+    p.showPhaseImage=0
     h1=figure()
     PN_imshowlabel(p,frame1,[],[],[]);
 end
 % Load file 2
 data=load(segFile2Path,'Lc');
 frame2=data.Lc;
-if debugmode
+if debugmode    
     h2=figure(), PN_imshowlabel(p,frame2,[],[],[]);
 end
 
@@ -123,21 +130,30 @@ if debugmode
     
 end
 
-%%
-STATS1 = regionprops(frame1BWarea, 'Area');
-STATS2 = regionprops(frame2BWarea, 'Area');
-    
-if (numel(STATS1) > 1) || (numel(STATS2) > 1)
-    warning('Failed to detect single colony area, attempting to fix by summing areas.');
-    totalArea1=sum(arrayfun(@(k) STATS1(k).Area, 1:numel(STATS1)));
-    totalArea2=sum(arrayfun(@(k) STATS2(k).Area, 1:numel(STATS2)));
-    clear STATS1; STATS1.Area = totalArea1;
-    clear STATS2; STATS2.Area = totalArea2;
-end
+%% resize the first frame such that frames can be fitted on top of each other
 
-resizeratio = sqrt(STATS2.Area/STATS1.Area);
-    
-frame1resized = imresize(frame1, resizeratio,'nearest');
+if ~p.mothermachine
+
+    STATS1 = regionprops(frame1BWarea, 'Area');
+    STATS2 = regionprops(frame2BWarea, 'Area');
+
+    if (numel(STATS1) > 1) || (numel(STATS2) > 1)
+        warning('Failed to detect single colony area, attempting to fix by summing areas.');
+        totalArea1=sum(arrayfun(@(k) STATS1(k).Area, 1:numel(STATS1)));
+        totalArea2=sum(arrayfun(@(k) STATS2(k).Area, 1:numel(STATS2)));
+        clear STATS1; STATS1.Area = totalArea1;
+        clear STATS2; STATS2.Area = totalArea2;
+    end
+
+    resizeratio = sqrt(STATS2.Area/STATS1.Area);
+
+    frame1resized = imresize(frame1, resizeratio,'nearest');
+else
+    % but skip this procedure if we're analyzing mother machine data
+    % because in that case disappearing cells disturb this procedure.
+    frame1resized=frame1;
+    disp('INFO: mothermachine option activated, skipping resizing');
+end
 
 if debugmode
     resizeratio
@@ -155,6 +171,8 @@ frame1resizedBWarea=imerode(frame1resizedBWarea,se);
 % Find centroids
 STATS1 = regionprops(frame1resizedBWarea, 'Centroid');
 STATS2 = regionprops(frame2BWarea, 'Centroid');
+
+% Special case where not a single colony area detected
 if (numel(STATS1) > 1) || (numel(STATS2) > 1)
     warning('Failed to detect single colony area. Attempting to fix by averaging centroids.');    
     
@@ -226,16 +244,132 @@ frame1recentered(iInEnlarged(1):iInEnlarged(2), jInEnlarged(1):jInEnlarged(2)) =
 frame1recentered = padarray(frame1,deltaSize,'post'); % resize to have equal size
 frame1recentered = imtranslate(frame1recentered,deltacentroids); % align
 %}
-             
-             
+
+
+%% Additional translation optimization (for the mothermachine)
+% Check if the translation optimization can be improved by translating in
+% the x direction. This direction might be misaligned because cells
+% disappear.
+% This might actually not only be useful for mother machine data, but
+% currently it's only used for that..
+
+if isfield(p,'mothermachine')
+    
+    % because commutativeness of summation, aligning the two functions that
+    % are the sum in y-direction can be used to align the whole frame along
+    % the x-direction
+    fr1ysum = sum(frame1recentered>0);
+    fr2ysum = sum(frame2>0);
+
+    % show what's going on
+    if debugmode
+        figure; plot(fr1ysum,'-b','LineWidth',2);
+        hold on; plot(fr2ysum,'-r','LineWidth',2);
+    end
+
+    % now simply try a bunch of shifts and see when the functions of the 
+    % two respective frames overlap most
+    paddedy2 = [zeros(1,MAXSHIFT) fr2ysum zeros(1,MAXSHIFT)];    
+    shiftsToLoop = -MAXSHIFT:MAXSHIFT;
+    overlapScore = NaN(1,numel(shiftsToLoop));
+    for idx=1:numel(shiftsToLoop)
+
+        shift = shiftsToLoop(idx);
+        shiftedy1 = [zeros(1,MAXSHIFT+shift) fr1ysum zeros(1,MAXSHIFT-shift)];
+
+        difference = abs(paddedy2-shiftedy1);%.^2;
+        overlapScore(idx) = sum(difference);
+
+        %figure; plot(paddedy2,'-b','LineWidth',2);
+        %hold on; plot(shiftedy1,'-r','LineWidth',2);
+        %title(['shift = ' num2str(shift)]);
+
+    end
+
+    % show the overlap score of each of the shifts in a plot if desired
+    if debugmode
+        figure; plot(shiftsToLoop,overlapScore,'LineWidth',3);
+        xlabel('shift'); ylabel('overlap score'); MW_makeplotlookbetter(20); 
+    end
+
+    % determine the optimal shift
+    [m,optimalIdx] = min(overlapScore);
+    optimalShift = shiftsToLoop(optimalIdx);
+
+    % always output to user
+    disp(['MOTHERMACHINE correction resulted in additional x-shift of ' num2str(optimalShift)]);
+
+    % recenter the frame accordingly
+    frHeight = size(frame1recentered,1);
+    frWidth = size(frame1recentered,2);
+    frame1recentered = [zeros(frHeight,MAXSHIFT) frame1recentered zeros(frHeight,MAXSHIFT)];
+    frame1recentered = frame1recentered(:,[1+MAXSHIFT-optimalShift:frWidth+MAXSHIFT-optimalShift]);
+end
+
+%% Now repeat along the other dimension (y)
+% Strictly, this might not be necessary because cells disappear along the
+% x-axis, mostly creating artifical center of mass shifts along that
+% direction. 
+% Nevertheless, we might as well also optimize the y-direction of the
+% image.
+
+if isfield(p,'mothermachine')
+    
+    % see previous section for comments, this is same but in other
+    % direction
+    
+    fr1ysum = sum(frame1recentered'>0);
+    fr2ysum = sum(frame2'>0);
+
+    if debugmode
+        figure; plot(fr1ysum,'-b','LineWidth',2);
+        hold on; plot(fr2ysum,'-r','LineWidth',2);
+    end
+
+    paddedy2 = [zeros(1,MAXSHIFT) fr2ysum zeros(1,MAXSHIFT)];
+    shiftsToLoop = -MAXSHIFT:MAXSHIFT;
+    overlapScore = NaN(1,numel(shiftsToLoop));
+    for idx=1:numel(shiftsToLoop)
+
+        shift = shiftsToLoop(idx);
+
+        shiftedy1 = [zeros(1,MAXSHIFT+shift) fr1ysum zeros(1,MAXSHIFT-shift)];
+
+        difference = abs(paddedy2-shiftedy1);%.^2;
+        overlapScore(idx) = sum(difference);
+
+        %figure; plot(paddedy2,'-b','LineWidth',2);
+        %hold on; plot(shiftedy1,'-r','LineWidth',2);
+        %title(['shift = ' num2str(shift)]);
+
+    end
+
+	if debugmode
+        figure; plot(shiftsToLoop,overlapScore,'LineWidth',3);
+        xlabel('shift'); ylabel('overlap score'); MW_makeplotlookbetter(20); 
+    end
+
+    [m,optimalIdx] = min(overlapScore);
+    optimalShift = shiftsToLoop(optimalIdx);
+
+    disp(['MOTHERMACHINE correction resulted in additional y-shift of ' num2str(optimalShift)]);
+
+    frHeight = size(frame1recentered,1);
+    frWidth = size(frame1recentered,2);
+    frame1recentered = [zeros(MAXSHIFT,frWidth); frame1recentered; zeros(MAXSHIFT,frWidth)];
+    frame1recentered = frame1recentered([1+MAXSHIFT-optimalShift:frHeight+MAXSHIFT-optimalShift],:);
+    
+end
+
 %% plot overlay of aligned images
              
 if debugmode
     frameBW = (frame1recentered>0);
+    
     frameBWarea=imdilate(frameBW,se);
     frameBWarea=imerode(frameBWarea,se);
     
-    overlayareas = frameBWarea+frame2BWarea;
+    overlayareas = frameBWarea+frame2BWarea*2;
     figure, PN_imshowlabel(p,overlayareas,[],[],[]);
     
     overlaycentered = frame1recentered+frame2;

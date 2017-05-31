@@ -9,6 +9,7 @@ function MW_makeMovieRaw(p,ourSettings)
 % p.slookup             give lookup table to display schnitz nrs.
 % p.showPhaseImage      display phase image
 % p.customColors        can be used to display schnitz colors
+% p.problemCells        highlights cells in checkerboard pattern
 
 %% 
 outputDir = [p.analysisDir 'movies\raw\'];
@@ -27,7 +28,7 @@ for frameIndex = ourSettings.currentFrameRange
     p.currentFrame = frameIndex;
     
     % Load segmentation from this frame
-    load([p.segmentationDir 'pos2cropseg' sprintf('%03d', frameIndex) '.mat']);%,'Lc','rect');
+    load([p.segmentationDir p.movieName 'seg' sprintf('%03d', frameIndex) '.mat']);%,'Lc','rect');
     
     % If checked segmentation exists
     if exist('Lc','var')      

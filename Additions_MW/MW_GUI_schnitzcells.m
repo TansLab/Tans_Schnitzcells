@@ -27,7 +27,7 @@ function varargout = MW_GUI_schnitzcells(varargin)
 
 % Edit the above text to modify the response to help MW_GUI_schnitzcells
 
-% Last Modified by GUIDE v2.5 19-May-2016 16:33:13
+% Last Modified by GUIDE v2.5 31-May-2017 20:51:08
 
 % Begin initialization code - DO NOT EDIT
 gui_Singleton = 1;
@@ -960,4 +960,102 @@ global p
 p = evalin('base', 'p');
 
 winopen(p.dateDir);
+
+
+
+% --- Executes on button press in ignoreFailedChecksTracker.
+function ignoreFailedChecksTracker_Callback(hObject, eventdata, handles)
+% hObject    handle to ignoreFailedChecksTracker (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+
+% Hint: get(hObject,'Value') returns toggle state of ignoreFailedChecksTracker
+
+% set ignoreFailedChecksTracker
+
+% --- Executes on button press in showPhaseImage.
+function showPhaseImage_Callback(hObject, eventdata, handles)
+% hObject    handle to showPhaseImage (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+
+% Hint: get(hObject,'Value') returns toggle state of showPhaseImage
+% set showPhaseImage
+
+% --- Executes on button press in showLargeCentroids.
+function showLargeCentroids_Callback(hObject, eventdata, handles)
+% hObject    handle to showLargeCentroids (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+
+% Hint: get(hObject,'Value') returns toggle state of showLargeCentroids
+
+% set showLargeCentroids
+
+% --- Executes on button press in dontShowExtendedReport.
+function dontShowExtendedReport_Callback(hObject, eventdata, handles)
+% hObject    handle to dontShowExtendedReport (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+
+% Hint: get(hObject,'Value') returns toggle state of dontShowExtendedReport
+
+% set dontShowExtendedReport
+
+
+function mothermachine_Callback(hObject, eventdata, handles)
+% hObject    handle to mothermachine (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+
+% Hints: get(hObject,'String') returns contents of mothermachine as text
+%        str2double(get(hObject,'String')) returns contents of mothermachine as a double
+
+
+% --- Executes during object creation, after setting all properties.
+function mothermachine_CreateFcn(hObject, eventdata, handles)
+% hObject    handle to mothermachine (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    empty - handles not created until after all CreateFcns called
+
+% Hint: edit controls usually have a white background on Windows.
+%       See ISPC and COMPUTER.
+if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColor'))
+    set(hObject,'BackgroundColor','white');
+end
+
+
+% --- Executes on button press in pushbutton52.
+function pushbutton52_Callback(hObject, eventdata, handles)
+% hObject    handle to pushbutton52 (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+
+% retrieve our parameters
+p = evalin('base', 'p');
+
+p.showPhaseImage = ...
+    get(handles.showPhaseImage,'Value');
+p.showLargeCentroids = ...
+    get(handles.showLargeCentroids,'Value');
+p.dontShowExtendedReport = ...
+    get(handles.dontShowExtendedReport,'Value');
+p.ignoreFailedChecksTracker = ...
+    get(handles.ignoreFailedChecksTracker,'Value');
+p.mothermachine = ...
+    str2num(get(handles.mothermachine,'String'));
+
+%{
+showPhaseImage
+showLargeCentroids
+dontShowExtendedReport
+ignoreFailedChecksTracker
+mothermachine
+%}
+
+% update workspace
+assignin ('base','p',p);
+
+disp('p structure updated w. additional options.');
+
 

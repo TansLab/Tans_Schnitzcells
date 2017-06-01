@@ -27,7 +27,7 @@ function varargout = MW_GUI_schnitzcells(varargin)
 
 % Edit the above text to modify the response to help MW_GUI_schnitzcells
 
-% Last Modified by GUIDE v2.5 31-May-2017 20:51:08
+% Last Modified by GUIDE v2.5 01-Jun-2017 12:43:21
 
 % Begin initialization code - DO NOT EDIT
 gui_Singleton = 1;
@@ -963,15 +963,15 @@ winopen(p.dateDir);
 
 
 
-% --- Executes on button press in ignoreFailedChecksTracker.
-function ignoreFailedChecksTracker_Callback(hObject, eventdata, handles)
-% hObject    handle to ignoreFailedChecksTracker (see GCBO)
+% --- Executes on button press in skipFramesWithProblems.
+function skipFramesWithProblems_Callback(hObject, eventdata, handles)
+% hObject    handle to skipFramesWithProblems (see GCBO)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    structure with handles and user data (see GUIDATA)
 
-% Hint: get(hObject,'Value') returns toggle state of ignoreFailedChecksTracker
+% Hint: get(hObject,'Value') returns toggle state of skipFramesWithProblems
 
-% set ignoreFailedChecksTracker
+% set skipFramesWithProblems
 
 % --- Executes on button press in showPhaseImage.
 function showPhaseImage_Callback(hObject, eventdata, handles)
@@ -1040,8 +1040,8 @@ p.showLargeCentroids = ...
     get(handles.showLargeCentroids,'Value');
 p.dontShowExtendedReport = ...
     get(handles.dontShowExtendedReport,'Value');
-p.ignoreFailedChecksTracker = ...
-    get(handles.ignoreFailedChecksTracker,'Value');
+p.skipFramesWithProblems = ...
+    get(handles.skipFramesWithProblems,'Value');
 p.mothermachine = ...
     str2num(get(handles.mothermachine,'String'));
 

@@ -5,8 +5,8 @@ function [linklistschnitz, segFile1Path, segFile2Path] = MW_linkframes(p, frame1
 %
 % Extra inputs:
 % if p.debugmode is valid field, then also figures are plotted.
-% if p.ignoreFailedChecksTracker is a valid field, also frames with failed
-%   checks are linked.
+% if p.skipFramesWithProblems =1 then frames with issues will be skipped
+%   (to allow for another tracker to try). Default =0.
 %
 % Hard coded parameters
 % DISKSIZE=15; 
@@ -52,6 +52,11 @@ end
 if isfield(p,'override') % backwards compatibility
     p.overwrite=p.override;
 end
+
+if isfield(p,'skipFramesWithProblems') % backwards compatibility
+    p.skipFramesWithProblems= 0;
+end
+
 
 % Data file names
 myFileStringStart = [p.dateDir p.movieName '\segmentation\' p.movieName 'seg'];
@@ -503,7 +508,7 @@ if checksPassed
     
 else
     
-    if ~isfield(p,'ignoreFailedChecksTracker')
+    if p.skipFramesWithProblems
         disp(['WARNING: Checks not passed. Skipping frames ' num2str(frame1Number) '-' num2str(frame2Number) '. Re-track with other tracker.']);
             % other trackers: DJK_tracker_djk or NW_tracker_centroid_vs_area
         linklistschnitz = -1;

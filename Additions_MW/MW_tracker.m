@@ -4,8 +4,9 @@ function p = MW_tracker(p, varargin)
 % function MW_tracker(p, varargin)
 %
 % if p.debugmode is valid field, then also figures are plotted.
-% if p.ignoreFailedChecksTracker is a valid field, also frames with failed
-%   checks are linked.
+% if p.skipFramesWithProblems =1 then frames with issues will be skipped
+%   (to allow for another tracker to try). Default =0.
+%   (This parameter is used in the MW_linkframes function.)
 
 % Code from NW_tracker_centroid_vs_area
 % ***************************************************************************

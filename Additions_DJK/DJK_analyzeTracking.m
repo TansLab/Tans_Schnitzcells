@@ -393,6 +393,7 @@ dispAndWrite(fid, ['-------------------------------------------------']);
 if p.dontShowExtendedReport
     
     dispAndWrite(fid, ['Not showing extended report. Activate by removing field p.dontShowExtendedReport.']);
+    dispAndWrite(fid, ['Note that by pressing "s" in manual check seg your can also see schnitz colors & nrs..']);
     
 else
 

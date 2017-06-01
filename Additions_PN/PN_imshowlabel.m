@@ -507,10 +507,10 @@ end
 % This option is an addition to the black dots already shown, which are
 % equivalent to the white circles.
 if isfield(p,'showLargeCentroids')
-    if exist('centroidsraw','var')
-        hold on; plot(centroidsraw(:,1),centroidsraw(:,2),'o','Color',[.7 .7 .7]);
-        pad_motion
-        hold on; plot(centroidsraw(:,1) + pad_motion(1), centroidsraw(:,2) + pad_motion(2),'o','Color',[1 1 1]);
+    if p.showLargeCentroids & exist('centroidsraw','var')
+            hold on; plot(centroidsraw(:,1),centroidsraw(:,2),'o','Color',[.7 .7 .7]);
+            pad_motion
+            hold on; plot(centroidsraw(:,1) + pad_motion(1), centroidsraw(:,2) + pad_motion(2),'o','Color',[1 1 1]);
     end
 end
 

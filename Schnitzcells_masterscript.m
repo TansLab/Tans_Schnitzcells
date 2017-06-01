@@ -594,6 +594,9 @@ if any(strcmp(runsections,{'checkaftercustom'}))
     if ~isfield(ourSettings,'pixelsAreaDiv')
         ourSettings.pixelsAreaDiv=[-4 13];
     end
+    if ~isfield(p,'overwrite')
+        p.overwrite=0;
+    end
 
     %disp('Option not working yet.. Use (re)track (..) instead.');
     

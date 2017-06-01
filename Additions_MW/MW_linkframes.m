@@ -36,8 +36,8 @@ DISKSIZE=15;
 MAXSHIFT=20;
 
 if ~exist('frame1Number','var')
-    frame1Number=1045;
-    frame2Number=1046;
+    frame1Number=531;
+    frame2Number=532;
 end
 
 if isfield(p,'debugmode')
@@ -370,6 +370,7 @@ if debugmode
     frameBWarea=imerode(frameBWarea,se);
     
     overlayareas = frameBWarea+frame2BWarea*2;
+    p.showPhaseImage=0;
     figure, PN_imshowlabel(p,overlayareas,[],[],[]);
     
     overlaycentered = frame1recentered+frame2;
@@ -395,7 +396,7 @@ frame1filtered = frame1recentered .* (frame2>0);
 %frame2filtered = (frame1recentered>0) .* frame2;
 
 if debugmode
-    p.showNr = 1;
+    p.showNr = 1;    
     figure, PN_imshowlabel(p,frame1filtered,[],[],[]);
     %figure, PN_imshowlabel(p,frame2filtered,[],[],[]);
 end
@@ -405,7 +406,9 @@ end
 % loop over all the cells, use indices from frame 2 as reference
 linklist = [];
 for cellidxsin2 = 1:max(frame2(:)) % by construction these are indices 
-% Note that "1" and "2" suffixes relate to frame 1 and frame 2 resp.
+    
+    %%
+    % Note that "1" and "2" suffixes relate to frame 1 and frame 2 resp.
     % retrieve overlap info
     currentcellidx2 = find(frame2==cellidxsin2);
     %frame1filtered(currentcell)

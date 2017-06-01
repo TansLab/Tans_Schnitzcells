@@ -486,6 +486,9 @@ elseif any(strcmp(runsections,{'allfull','trackandmanualcorrections'}))% full
     if ~isfield(ourSettings,'pixelsLenDef')
         ourSettings.pixelsLenDef=[-4 13];
     end
+    if ~isfield(ourSettings,'pixelsAreaDiv')
+        ourSettings.pixelsAreaDiv=[-4 13];
+    end
     
     % Alternative trackers one can try
     % This is quite useful if errors occur. manualrange can be edited to
@@ -505,7 +508,9 @@ elseif any(strcmp(runsections,{'allfull','trackandmanualcorrections'}))% full
     DJK_tracker_djk(p,'manualRange', ourSettings.currentFrameRange); % default tracker           
     
     % Find problem cells
-    [problems, theOutputFilePath] = DJK_analyzeTracking(p,'manualRange', ourSettings.currentFrameRange, 'pixelsMoveDef', ourSettings.pixelsMoveDef, 'pixelsLenDef', ourSettings.pixelsLenDef);
+    [problems, theOutputFilePath] = DJK_analyzeTracking(p,'manualRange', ourSettings.currentFrameRange, ...
+        'pixelsMoveDef', ourSettings.pixelsMoveDef, 'pixelsLenDef', ourSettings.pixelsLenDef,...
+        'pixelsAreaDiv', ourSettings.pixelsAreaDiv);
     % open output file in external editor (not necessary, but convenient)
     eval(['!' ourSettings.MYTEXTEDITOR ' ' theOutputFilePath ' &']);
     
@@ -586,12 +591,17 @@ if any(strcmp(runsections,{'checkaftercustom'}))
     if ~isfield(ourSettings,'pixelsLenDef')
         ourSettings.pixelsLenDef=[-4 13];
     end
-    
+    if ~isfield(ourSettings,'pixelsAreaDiv')
+        ourSettings.pixelsAreaDiv=[-4 13];
+    end
+
     %disp('Option not working yet.. Use (re)track (..) instead.');
     
     
     % Find problem cells    
-    [problems, theOutputFilePath] = DJK_analyzeTracking(p,'manualRange', ourSettings.currentFrameRange, 'pixelsMoveDef', 15, 'pixelsLenDef', [-4 13]);
+    [problems, theOutputFilePath] = DJK_analyzeTracking(p,'manualRange', ourSettings.currentFrameRange, ...
+        'pixelsMoveDef', ourSettings.pixelsMoveDef, 'pixelsLenDef', ourSettings.pixelsLenDef,...
+        'pixelsAreaDiv', ourSettings.pixelsAreaDiv);
     % open output file in external editor (not necessary, but convenient)
     eval(['!' ourSettings.MYTEXTEDITOR ' ' theOutputFilePath ' &']);
     

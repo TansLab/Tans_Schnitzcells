@@ -10,6 +10,7 @@ function MW_makeMovieRaw(p,ourSettings)
 % p.showPhaseImage      display phase image
 % p.customColors        can be used to display schnitz colors
 % p.problemCells        highlights cells in checkerboard pattern
+% p.hideFig             doesnt't show output figure
 
 %% 
 outputDir = [p.analysisDir 'movies\raw\'];
@@ -20,6 +21,10 @@ end
 % add a color map if schnitz number lookup table is available
 if isfield(p,'slookup')
     p=MW_addschnitzcolorscustomcolormap(p);
+end
+
+if ~isfield(p,'hideFig')
+    p.hideFig=0;
 end
 
 %% Loop over currently set frames
@@ -33,8 +38,12 @@ for frameIndex = ourSettings.currentFrameRange
     % If checked segmentation exists
     if exist('Lc','var')      
         
-        % print it using PN_imshowlabel
-        h2=figure(2); %clf; already done in PN_imshowlabel if figure is the same
+        % print it using PN_imshowlabel        
+        if p.hideFig
+            h2=figure('visible','off'); %clf; already done in PN_imshowlabel if figure is the same
+        else
+            h2=figure(2);
+        end
         PN_imshowlabel(p,Lc,rect,[],[],'phaseImage',phsub);
 
         % Save that figure
@@ -48,6 +57,13 @@ for frameIndex = ourSettings.currentFrameRange
    
     clear Lc;
     
+    if ~mod(frameIndex,20)
+        prctDone=round(frameIndex./max(ourSettings.currentFrameRange)*100);
+        disp([num2str(frameIndex) '/' num2str(max(ourSettings.currentFrameRange)) ' frames done']);        
+    end
+    
 end
+
+disp('Movie all done');
 
 end

@@ -60,7 +60,7 @@ end
 %--------------------------------------------------------------------------
 % overwrite any schnitzcells parameters/defaults given optional fields/values
 %--------------------------------------------------------------------------
-% Set default parameter values if they don't exist yet
+%% Set default parameter values if they don't exist yet
 if ~existfield(p,'schnitzName')
   p.schnitzName = [p.tracksDir,p.movieName,'-Schnitz.mat'];
 end
@@ -146,12 +146,15 @@ end
 %--------------------------------------------------------------------------
 % LOOP OVER FRAMES IN TRACKRANGE
 %--------------------------------------------------------------------------
-for i = 1:length(trackRange)
-  currFrameNum = trackRange(i);
 
-  % i is the frame index into lincellnum and trackRange. 
-  % trackRange(i) gives the actual frame number that corresponds 
-  % to a given lincellnum{i}.
+%%
+for frameRangeIdx = 1:length(trackRange)
+  %%
+  currFrameNum = trackRange(frameRangeIdx);
+
+  % frameRangeIdx is the frame index into lincellnum and trackRange. 
+  % trackRange(frameRangeIdx) gives the actual frame number that corresponds 
+  % to a given lincellnum{frameRangeIdx}.
   % Also, recall that a schnitz' frames array is 1-based per 
   % makeschnitz hack to conform to schnitzedit expectations
 
@@ -161,19 +164,25 @@ for i = 1:length(trackRange)
 
   % load segmented image for this frameNum
   name = [p.segmentationDir,p.movieName,'seg',str3(currFrameNum)];
-  disp([' Processing frame ', str3(currFrameNum), ' as nr ', str3(i), ' in range']);
+  disp([' Processing frame ', str3(currFrameNum), ' as nr ', str3(frameRangeIdx), ' in range']);
   load([name]); % including variables: LNsub, Lc, phsub, timestamp, rect, yback, yreg, yshift, expty, gainy    
 
   %------------------------------------------------------------------------
   % LOOP OVER EACH SCHNITZ THAT EXISTS DURING THIS FRAME, AND UPDATE IT
   %------------------------------------------------------------------------
-  schnitzesForFrame = lincellnum{i}; % [schnitznum for cellno1, schnitznum for cellno2, etc]
+  schnitzesForFrame = lincellnum{frameRangeIdx}; % [schnitznum for cellno1, schnitznum for cellno2, etc]
   nonZeroSchnitzes = schnitzesForFrame(schnitzesForFrame~=0); % with correction you sometimes end up with unexisting schnitzes (0)
+  
+  %%
   for s = nonZeroSchnitzes
+    
+    %s
+      
     % figure out index within this schnitz' age-based arrays
     age = find((schnitzcells(s).frame_nrs) == currFrameNum); % MW fix 2014/12
+    
     if isempty(age)
-      error(['lincellnum says schnitz num ' s 'exists in frame ' currFrameNum ', but that frame can''t be found in the schnitz' frames array']);
+      error(['lincellnum says schnitz num ' num2str(s) ' exists in frame ' num2str(currFrameNum) ', but that frame can''t be found in the schnitz'' frames array']);
     end
 
     % get cell number in segmented image for current schnitz & frame
@@ -204,11 +213,11 @@ for i = 1:length(trackRange)
     y_line_rot_right = func_3rd(x_rot+0.5);
 
     % make sure that y_line_rot_right contains lowest value
-    for i = 1:length(y_line_rot_left)
-      if y_line_rot_left(i) < y_line_rot_right(i)
-        temp = y_line_rot_left(i);
-        y_line_rot_left(i) = y_line_rot_right(i);
-        y_line_rot_right(i) = temp;
+    for idx1 = 1:length(y_line_rot_left)
+      if y_line_rot_left(idx1) < y_line_rot_right(idx1)
+        temp = y_line_rot_left(idx1);
+        y_line_rot_left(idx1) = y_line_rot_right(idx1);
+        y_line_rot_right(idx1) = temp;
       end
     end
     
@@ -236,29 +245,34 @@ for i = 1:length(trackRange)
     total_dist_25_points_left   = []; 
     total_dist_25_points_right  = []; 
     left_set = 0; right_set = 0;
-    for i = 1:length(x_rot_line_left)
-      dist_squared_left = (x_rot-x_rot_line_left(i)).^2 + (y_rot-y_line_rot_left(i)).^2;
+    
+    %%
+    for idx5 = 1:length(x_rot_line_left)
+      dist_squared_left = (x_rot-x_rot_line_left(idx5)).^2 + (y_rot-y_line_rot_left(idx5)).^2;
       dist_squared_left_sorted = sort(dist_squared_left);
-      %if numel(dist_squared_left_sorted)<25 % MW debug, redundant.
-      %    dist_squared_left_sorted
-      %end
-      total_dist_25_points_left(i) = sum(dist_squared_left_sorted(1:25)) * 0.01;
       
-      dist_squared_right = (x_rot-x_rot_line_right(length(x_rot_line_left)+1-i)).^2 + (y_rot-y_line_rot_right(length(x_rot_line_left)+1-i)).^2;
+      if numel(dist_squared_left_sorted)<25 % MW debug, redundant.
+          disp(['Cell ' num2str(schnitzcells(s).cellno) ' in frame ' num2str(currFrameNum) ' has a size of ' num2str(schnitzcells(s).areaPixels) ' pixels.']);
+          disp(['Maybe you should manually correct the file: ' name '.mat']);
+          error('Assumption that cells have a minimum size not met.');                    
+      end
+      total_dist_25_points_left(idx5) = sum(dist_squared_left_sorted(1:25)) * 0.01;
+      
+      dist_squared_right = (x_rot-x_rot_line_right(length(x_rot_line_left)+1-idx5)).^2 + (y_rot-y_line_rot_right(length(x_rot_line_left)+1-idx5)).^2;
       dist_squared_right_sorted = sort(dist_squared_right);
-      total_dist_25_points_right(i) = sum(dist_squared_right_sorted(1:25)) * 0.01;
+      total_dist_25_points_right(idx5) = sum(dist_squared_right_sorted(1:25)) * 0.01;
       
-      if total_dist_25_points_left(i) < 1.1 & ~left_set
-        schnitzcells(s).fitNew_x_rot_left(age)   = x_rot_line_left(i);
+      if total_dist_25_points_left(idx5) < 1.1 & ~left_set
+        schnitzcells(s).fitNew_x_rot_left(age)   = x_rot_line_left(idx5);
         left_set = 1;
-        if i==1
+        if idx5==1
           warning(['error: left: in fr' str3(currFrameNum) ' cellno ' str3(cellnum) ' schnitz ' str3(s) ]);
         end
       end
-      if total_dist_25_points_right(i) < 1.1 & ~right_set
-        schnitzcells(s).fitNew_x_rot_right(age)   = x_rot_line_right(length(x_rot_line_left)+1-i);
+      if total_dist_25_points_right(idx5) < 1.1 & ~right_set
+        schnitzcells(s).fitNew_x_rot_right(age)   = x_rot_line_right(length(x_rot_line_left)+1-idx5);
         right_set = 1;
-        if i==1
+        if idx5==1
           warning(['error: right: in fr' str3(currFrameNum) ' cellno ' str3(cellnum) ' schnitz ' str3(s) ]);
         end
       end
@@ -300,12 +314,12 @@ for i = 1:length(trackRange)
       % Calc distance to seg points, and phase contrast alonf extended fitted line
       total_dist_25_points_total    = [];
       phaseContrast_total = [];
-      for i = 1:length(x_rot_line_total)
-        dist_squared_total = (x_rot-x_rot_line_total(i)).^2 + (y_rot-y_rot_line_total(i)).^2;
+      for idx2 = 1:length(x_rot_line_total)
+        dist_squared_total = (x_rot-x_rot_line_total(idx2)).^2 + (y_rot-y_rot_line_total(idx2)).^2;
         dist_squared_total_sorted = sort(dist_squared_total);
-        total_dist_25_points_total(i) = sum(dist_squared_total_sorted(1:25)) * 0.01;
+        total_dist_25_points_total(idx2) = sum(dist_squared_total_sorted(1:25)) * 0.01;
         
-        phaseContrast_total(i) = interp2(phsub,x_line_total(i),y_line_total(i));
+        phaseContrast_total(idx2) = interp2(phsub,x_line_total(idx2),y_line_total(idx2));
       end
 
       % normalize phaseContrast
@@ -413,9 +427,9 @@ for i = 1:length(trackRange)
 
       % calc derivative of phase and plot *5 + 1
       d_phaseContrast_total = []; d_x_rot_line_total = [];
-      for i = 1:length(phaseContrast_total)-1
-        d_x_rot_line_total(i) = x_rot_line_total(i) + 0.5*(x_rot_line_total(i+1) - x_rot_line_total(i));
-        d_phaseContrast_total(i) = 5 * (phaseContrast_total(i+1) - phaseContrast_total(i)) + 1;
+      for idx3 = 1:length(phaseContrast_total)-1
+        d_x_rot_line_total(idx3) = x_rot_line_total(idx3) + 0.5*(x_rot_line_total(idx3+1) - x_rot_line_total(idx3));
+        d_phaseContrast_total(idx3) = 5 * (phaseContrast_total(idx3+1) - phaseContrast_total(idx3)) + 1;
       end
       hold on; plot(d_x_rot_line_total,d_phaseContrast_total, 'r:', 'LineWidth',1);
       
@@ -441,6 +455,7 @@ for i = 1:length(trackRange)
       %--------------------------------------------------------------------------    
     end
   end % loop over schnitzesForFrame
+  
 end % loop over frames
 %--------------------------------------------------------------------------
 

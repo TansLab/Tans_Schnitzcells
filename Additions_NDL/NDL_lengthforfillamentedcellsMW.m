@@ -1,5 +1,5 @@
 function [p, allLengthsOfBacteriaInPixels, allLengthsOfBacteriaInMicrons,allLengthsOfBacteriaInPixelsMW, allLengthsOfBacteriaInMicronsMW] = NDL_lengthforfillamentedcellsMW(p, frameRange) 
-%function [p,schnitzcells] = NDL_lengthforfillamentedcells(p) 
+%%function [p,schnitzcells] = NDL_lengthforfillamentedcells(p) 
 % 
 % Function written by Nick de Lange and Martijn Wehrens.
 % 2016/04
@@ -143,10 +143,10 @@ for framenr = frameRange
         
         if extraOutput
             % show original
-            h1=figure(); clf; 
+            h1=figure(1); clf; 
             imshow(Lc,[]);
             % show conversion
-            h2=figure(); clf;
+            h2=figure(2); clf;
             axis equal;
             plot(x,y,'.');
         end
@@ -169,7 +169,7 @@ for framenr = frameRange
         % binaryImage=padarray(binaryImage,[paddingsize,paddingsize]);
 
         if extraOutput
-            h3=figure();
+            h3=figure(3); clf;
             imshow(binaryImage);
         end
         % calculate total area of bacterium
@@ -180,7 +180,7 @@ for framenr = frameRange
         %binaryImageSkeletonized = skeleton(binaryImage); % downloaded this, but to tricky to get to work
 
         if extraOutput
-            h4=figure(); clf;
+            h4=figure(4); clf;
             imshow(binaryImageSkeletonized)
             imshow((binaryImage+binaryImageSkeletonized)/2,[])
         end
@@ -188,7 +188,7 @@ for framenr = frameRange
         edgesBinary = binaryImage-bwmorph(binaryImage,'erode');
         
         if extraOutput
-            figure(); clf;
+            figure(5); clf;
             imshow(edgesBinary+binaryImageSkeletonized)
         end
         
@@ -197,7 +197,7 @@ for framenr = frameRange
         edge = boundaries{1,1}; % Extracts correct edge of the 2 determined boundaries
         
         if extraOutput
-            h71=figure(); clf; hold on;
+            h71=figure(6); clf; hold on;
             axis equal;
             
             plot(edge(:,1),edge(:,2))            
@@ -207,7 +207,7 @@ for framenr = frameRange
         endsBeforeSpurring = bwmorph(binaryImageSkeletonized,'endpoints');
         
         if extraOutput
-            h50=figure(); clf;
+            h50=figure(7); clf;
             imshow(endsBeforeSpurring)
         end
         %% % Calculate number of ends before removing branches
@@ -231,7 +231,7 @@ for framenr = frameRange
         %% % Disconnects at branch points - Not used anywhere in the script
         binaryImageDisconnected = binaryImageSkeletonized-bwmorph(binaryImageSkeletonized,'branchpoints');
         if extraOutput
-            figure(); clf;
+            figure(8); clf;
             imshow(binaryImageDisconnected);
         end
         %% % XXX Just to try other fitting - definitely doesn't work for filamented cells XXX
@@ -279,7 +279,7 @@ for framenr = frameRange
                 ends = bwmorph(binaryImageSkeletonized,'endpoints');
                 numEnds = sum(sum(ends,2));
                 if countSpurring>1000
-                    figure(); imshow(binaryImageSkeletonized,[]);
+                    figure(9); imshow(binaryImageSkeletonized,[]);
                     error(['Error spurring, cellnum=' num2str(cellno) ', showing current skeleton.']);                    
                 end;
         end
@@ -296,7 +296,7 @@ for framenr = frameRange
         ends = bwmorph(binarySkeletonBranchless,'endpoints');
         
         if extraOutput
-            h51=figure(); clf;
+            h51=figure(10); clf;
             imshow(ends)
         end
         %% % Finds x & y values of endings after removing branches
@@ -348,12 +348,12 @@ for framenr = frameRange
         skeletonXYpoleToPole = twotimesSkeletonBoundary(poleIndex:poleIndex+round((size(skeletonBoundary,1)+1)/2-1),:); % -1 to correct for poleIndex
         
         if extraOutput
-            h5=figure(); clf;
+            h5=figure(11); clf;
             imshow((binarySkeletonBranchless+binaryImage)/2)
         end
         
         if extraOutput
-            h71=figure(); clf; hold on;
+            h71=figure(12); clf; hold on;
             axis equal;
             
             plot(edge(:,1),edge(:,2))            
@@ -498,7 +498,7 @@ for framenr = frameRange
             extrapolatedSkeleton1 = [toextrapolatexleft' extrapolatedValuesLeft'];
         catch
             cellno
-            figure(); imshow(binaryImage+binaryImageSkeletonized,[]);
+            figure(13); imshow(binaryImage+binaryImageSkeletonized,[]);
             smoothSkeletonXYpoleToPole
             error('Extrapolation failed.');
         end 
@@ -507,9 +507,9 @@ for framenr = frameRange
             %%           
             
             extrapolatedSkeleton1
-            figure()            
-            fnplt(extrapolatedSpline1,[smoothSkeletonXYpoleToPole(1,1)-directionFactorLeft1*adjustingFactor1*(EXTRAPOLATIONLENGTH)... 
-                smoothSkeletonXYpoleToPole(1,1)+directionFactorRight1*adjustingFactor1*(EXTRAPOLATIONLENGTH)])
+            %figure()            
+            %fnplt(extrapolatedSpline1,[smoothSkeletonXYpoleToPole(1,1)-directionFactorLeft1*adjustingFactor1*(EXTRAPOLATIONLENGTH)... 
+            %    smoothSkeletonXYpoleToPole(1,1)+directionFactorRight1*adjustingFactor1*(EXTRAPOLATIONLENGTH)])
         end
         %% % Extrapolates second end of the bacteria - fit is forced through the 'end' and extrapolates linearly outside data interval
         %% Determine on which skeleton values left extrapolation should be based
@@ -549,14 +549,14 @@ for framenr = frameRange
         
         if extraOutput
             extrapolatedSkeleton2
-            figure()            
-            fnplt(extrapolatedSpline2,[smoothSkeletonXYpoleToPole(length(smoothSkeletonXYpoleToPole),1)-directionFactorLeft2*adjustingFactor2*(EXTRAPOLATIONLENGTH)... 
-                smoothSkeletonXYpoleToPole(length(smoothSkeletonXYpoleToPole),1)+directionFactorRight2*adjustingFactor2*(EXTRAPOLATIONLENGTH)])
+            %figure()            
+            %fnplt(extrapolatedSpline2,[smoothSkeletonXYpoleToPole(length(smoothSkeletonXYpoleToPole),1)-directionFactorLeft2*adjustingFactor2*(EXTRAPOLATIONLENGTH)... 
+            %    smoothSkeletonXYpoleToPole(length(smoothSkeletonXYpoleToPole),1)+directionFactorRight2*adjustingFactor2*(EXTRAPOLATIONLENGTH)])
         end
         %% % Plot extrapolations and segmented edges
         if extraOutput
             %%
-            h72=figure(); clf; axis equal; hold on;            
+            h72=figure(14); clf; axis equal; hold on;            
             
             plot(edge(:,1),edge(:,2));
             %plot(extrapolatedSkeleton1(:,1),extrapolatedSkeleton1(:,2)); % Nick's extrapolation (old)

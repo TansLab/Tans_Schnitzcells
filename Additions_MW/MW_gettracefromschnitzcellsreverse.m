@@ -12,6 +12,11 @@ function [myTraces] = MW_gettracefromschnitzcellsreverse(schnitzcells,lastSchnit
 %
 %
 % Output:
+% 
+%     myTraces(i).lineageSchnitzNrs     schnitznr's of mother, daugther, granddaughter, grand-granddaughter etc.
+%     myTraces(i).time                  your timeField
+%     myTraces(i).divisionIndices       indices of the trace at which divisions occur
+%     myTraces(i).('YOURFIELD')         values of the fields you supplied in yFields
 
 
 

@@ -42,7 +42,7 @@ function p = NW_initializeFluorData(p, varargin)
 
 
 %-------------------------------------------------------------------------------
-% Parse the input arguments, input error checking. Use inputParser in
+%% Parse the input arguments, input error checking. Use inputParser in
 % recent matlab releases.
 %-------------------------------------------------------------------------------
 numRequiredArgs = 1;
@@ -109,7 +109,7 @@ end
 %    p.slices = [ 1:p.numphaseslices ]; % by default, use all slices
 %end
 
-% check if segmentedImages exist and are in folder /segmentation/
+%% check if segmentedImages exist and are in folder /segmentation/
 segmentedImages=dir([p.segmentationDir, '*seg*.mat']); % MW 2015/04 
 if isempty(segmentedImages)
     error(['Can''t find any matlab files of segmented images in directory ' p.segmentationDir])
@@ -120,6 +120,11 @@ end
 % figure it out by counting ".mat" files of segmented frames in
 % /segmentation/
 if ~isfield(p,'manualRange')
+    error('manualRange not given in optional parameters.');
+        % NOTE: the code below would figure out the range by itself, but
+        % does not work for numbers >999. This could be fixed by using more
+        % advanced regular expression.
+        % Therefor, let's just throw an error here now.
     [s,I] = sort({segmentedImages.name}');
     segmentedImages = segmentedImages(I);
     numpos= findstr(segmentedImages(1).name, '.mat')-3;
@@ -137,13 +142,14 @@ disp (p);
 
 
 %--------------------------------------------------------------------------
-% Loop over frames : load .mat files of segmented Images and add fluor data
+%% Loop over frames : load .mat files of segmented Images and add fluor data
 %--------------------------------------------------------------------------
 % set fluorescence picture counters to '-1' (i.e. fluor color not
 % attributed)
 fluor1counter=-1; fluor2counter=-1; fluor3counter=-1;
 
 for i= p.manualRange
+    %%
     %----------------------------------------------------------------------
     % Search for [segmentation].mat file
     segImage =  dir([p.segmentationDir, '*seg', str3(i), '.mat']); % .mat file of current image % MW 2015/04
@@ -154,10 +160,10 @@ for i= p.manualRange
         message=sprintf('Cannot find segmented image with frame number %d. Will skip number...',i);
         disp(message);
     else
-        % Load phaseFullSize, LNsub and rect from [segmentation].mat file
+        %% Load phaseFullSize, LNsub and rect from [segmentation].mat file
         eval(['load(''' p.segmentationDir segImage.name ''', ''phaseFullSize'',''LNsub'',''rect'')']);
          
-        % ------------------extract data ---------------------------------
+        %% ------------------extract data ---------------------------------
         %
         % NOTE that this code "loops" over the 3 fluor codes in a
         % hard-coded way, i.e. code has been copied-pasted three times, for
@@ -167,12 +173,22 @@ for i= p.manualRange
         % fluor1: check for existence of image and add data to .mat file if
         % existent
         if ~strcmp(p.fluor1,'none')
-            if (fluor1counter==-1) fluor1counter=0;end
+            
+            if (fluor1counter==-1) fluor1counter=0; end
+            
+            % filename of fluor data picture
             fluor1name=[p.imageDir,p.movieName,'-' p.fluor1 '-',str3(i),'.tif'];
-            if exist(fluor1name)==2 & numel(rect)>0 % if no cells found, rect is empty, and gives error
+            
+            if exist(fluor1name,'file')==2 & numel(rect)>0 % if no cells found, rect is empty, and gives error
+                
+                %%
                 disp('found fluor1 image');
+                
                 fluor1counter=fluor1counter+1;
+                
+                % obtain fluor data
                 [fluor1reg, fluor1shift, fluor1back, fluor1binning] = quicknoreg(LNsub,fluor1name,rect,0,phaseFullSize); 
+                % obtain info (EXPosure time, importantly)
                 [exptfluor1str, gainfluor1, exptfluor1] = imsettings(fluor1name);
                 
                 % change names to actual color: fluor1back -> yback, or

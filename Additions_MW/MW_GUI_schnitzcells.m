@@ -27,7 +27,7 @@ function varargout = MW_GUI_schnitzcells(varargin)
 
 % Edit the above text to modify the response to help MW_GUI_schnitzcells
 
-% Last Modified by GUIDE v2.5 01-Jun-2017 12:43:21
+% Last Modified by GUIDE v2.5 01-Jun-2017 17:15:00
 
 % Begin initialization code - DO NOT EDIT
 gui_Singleton = 1;
@@ -1059,3 +1059,20 @@ assignin ('base','p',p);
 disp('p structure updated w. additional options.');
 
 
+
+
+% --- Executes on button press in pushbutton53.
+function pushbutton53_Callback(hObject, eventdata, handles)
+% hObject    handle to pushbutton53 (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+
+global runsections 
+
+% call script, runsections defines which sectino of sript to run
+runsections = 'makemovieraw'
+Schnitzcells_masterscript 
+
+% update workspace
+assignin ('base','ourSettings',ourSettings)
+assignin ('base','p',p)

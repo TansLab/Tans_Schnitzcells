@@ -674,6 +674,29 @@ if any(strcmp(runsections,{'allfull','makemovie'}))
     winopen([p.analysisDir 'movies\']);
 end
 
+%%
+if any(strcmp(runsections,{'allfull','makemovieraw'}))
+
+    % user info
+    disp('Making movie, manual options like p.hideFig and p.showNr can be found in ''help MW_makeMovieRaw''');
+    
+    if ~isfield(p,'showNr')
+        p.showNr=2;
+    end
+    if ~isfield(p,'hideFig')
+        p.hideFig=1;
+    end
+    
+    % Make movie
+    MW_makeMovieRaw(p,ourSettings);
+
+    % Let user know done, open output folder.
+    mysound=load('gong'); sound(mysound.y);    
+    disp(['Done making analysis. Opening movie folder at ' p.analysisDir 'movies\..'])
+    winopen([p.analysisDir 'movies\']);
+end
+
+
 %% Create backup of segtrack
 % Press CTRL+enter.
 % Creates a backup of the tracking.
@@ -759,7 +782,7 @@ if any(strcmp(runsections,{'allpreliminary', 'allfull','correctionsandanalysis'}
 
     DJK_addToSchnitzes_length(p);
     
-    % In case of full analysis
+    % In case of full analysis, also calculate skeleton length
     if strcmp(ourSettings.analysisType, 'full')
         % Also calculate skeleton lengths
         NDL_addToSchnitzes_skeletonLengthMW(p); % saves schnitzcells param

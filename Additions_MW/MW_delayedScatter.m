@@ -237,7 +237,7 @@ for yfieldbranchtoplot=[2,3]
     xlim([0, myXlimFig1]);
     myYlimFig1 = [min([0, [branchData.(associatedFieldNames{yfieldbranchtoplot})]]),...
                   max([branchData.(associatedFieldNames{yfieldbranchtoplot})])];
-    ylim([myYlimFig1(1), myYlimFig1(2)*1.5]);
+%     ylim([myYlimFig1(1), myYlimFig1(2)*1.5]);
 
 
     %Set all fontsizes

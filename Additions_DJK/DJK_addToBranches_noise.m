@@ -81,7 +81,7 @@ for i = 1:length(p.dataFields)
     return;
   end
 end
-
+%%
 % first dataField should contain time (timeField)
 timeField = char(p.dataFields(1));
 
@@ -89,12 +89,12 @@ unique_timeField  = unique([branches.(timeField)]);
 %--------------------------------------------------------------------------
 
 
-%--------------------------------------------------------------------------
+%% ------------------------------------------------------------------------
 % GET MEAN FOR NOISE & NORM FIELDS
 %--------------------------------------------------------------------------
 datafield_sum = zeros(length(p.dataFields), length(unique_timeField));
 datafield_count = zeros(length(p.dataFields), length(unique_timeField));
-
+%
 % loop over branches
 for branchNr = 1:length(branches)
   for age = 1:length(branches(branchNr).schnitzNrs)
@@ -107,9 +107,10 @@ for branchNr = 1:length(branches)
 end
 
 datafield_mean = datafield_sum ./ datafield_count; %[comment NW: I think this is the 'normal' mean: Sum(YFP-intensities of all cells)/(# cells in this frames). I'm pretty sure that the weighing with 'count' is cancelled out
-
+%%
 % loop over noiseFields in dataFields
 for i = 2:length(p.dataFields) 
+  %%
   field = char(p.dataFields(i));
   noisefield = ['noise_' field];
   normfield  = ['norm_' field]; 

@@ -999,7 +999,7 @@ end
 
 if any(strcmp(runsections,{'allfull', 'makeoutputfull', 'rerunfullanalysis'})) % full
     
-    % Seting up main output parameter
+    %% Seting up main output parameter
     output = struct;
     
     % ourSettings up some more parameters
@@ -1071,6 +1071,7 @@ if any(strcmp(runsections,{'allfull', 'makeoutputfull', 'rerunfullanalysis'})) %
         associatedFieldNames = {ourSettings.fieldNamesWithFluorLetter(fluorIdx).timeFieldName, ourSettings.fieldNamesWithFluorLetter(fluorIdx).fluorFieldName, ourSettings.fieldNamesWithFluorLetter(fluorIdx).muFieldName};
         % obtain some ourSettings from Excel file
         badSchnitzes = ourSettings.badSchnitzes; alreadyRemovedInMatFile = ourSettings.alreadyRemovedInMatFile;
+        addSlowOnes = ourSettings.addSlowOnes;
         myID = ourSettings.myID; myGroupID = ourSettings.myGroupID;
         myFitTime = ourSettings.fitTimeCrosscorr;
         myOutputFolder = ourSettings.myOutputFolder;
@@ -1100,6 +1101,7 @@ if any(strcmp(runsections,{'allfull', 'makeoutputfull', 'rerunfullanalysis'})) %
         associatedFieldNames = {ourSettings.fieldNamesWithFluorLetter(fluorIdx).timeFieldNameDerivative, ourSettings.fieldNamesWithFluorLetter(fluorIdx).fluorDerivativeFieldName, ourSettings.fieldNamesWithFluorLetter(fluorIdx).muFieldNameDerivative};
         % parse some ourSettings from Excel file
         badSchnitzes = ourSettings.badSchnitzes; alreadyRemovedInMatFile = ourSettings.alreadyRemovedInMatFile;
+        addSlowOnes = ourSettings.addSlowOnes;
         myID = ourSettings.myID; myGroupID = ourSettings.myGroupID;
         myFitTime = ourSettings.fitTimeCrosscorr;
         % Execute delayed scatter script

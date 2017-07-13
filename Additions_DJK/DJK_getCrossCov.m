@@ -74,6 +74,7 @@ end
 % --------------------------------------------------------------------------
 % overwrite any schnitzcells parameters/defaults given optional fields/values
 % --------------------------------------------------------------------------
+%%
 if ~existfield(p,'timeField')
   disp('p.timeField not set, reverting to default ''Y_time''.');
   p.timeField = 'Y_time';
@@ -110,7 +111,7 @@ if ~existfield(p,'override')
   p.override = 0;
 end
 % --------------------------------------------------------------------------
-
+%%
 if ~p.override
   % --------------------------------------------------------------------------
   % Check whether branches have same length
@@ -118,12 +119,13 @@ if ~p.override
   maxBranchLength = func_check_branchLength(branches);
   % --------------------------------------------------------------------------
 
-
+    %%
   % --------------------------------------------------------------------------
   % Check sampling interval for even spacing
   % --------------------------------------------------------------------------
   interval = func_check_spacingError(branches(1).(p.timeField), p.spacingError);
 
+  %%
   % time for crosscorrelation
   for br = 1:length(branches)
     branches(br).corr_time = interval * [-maxBranchLength+1:maxBranchLength-1];
@@ -137,7 +139,7 @@ else
   rs = [0];
   interval = 0;
 end
-
+%%
 % --------------------------------------------------------------------------
 % Calc of correlation for each branch
 % --------------------------------------------------------------------------
@@ -157,7 +159,7 @@ crossCov_composite = struct;
 crossCov_composite.Y = zeros(1,length([-maxBranchLength+1:maxBranchLength-1]));
 crossCov_composite.X = interval * [-maxBranchLength+1:maxBranchLength-1];
 
-% loop over different time-lags r
+%% loop over different time-lags r
 for r = rs
   total_weight = 0; % calc total weight for this r
 
@@ -264,6 +266,7 @@ end
 % check whether constant sampling in timefield
 function out = func_check_spacingError(timeData, spacingError), ...
 
+%%
 timeData = timeData-timeData(1);
 fit = polyfit([1:length(timeData)],timeData,1);
 % disp([' * Time interval is ' num2str(fit(1)) ' (mins)']); %blubb
@@ -289,6 +292,7 @@ out = fit(1);
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % check whether branches have same length
 function max_br_length = func_check_branchLength(branches), ...
+%%
 max_br_length = 0;
 min_br_length  = realmax('double');
 for br = 1:length(branches)

@@ -36,8 +36,8 @@ DISKSIZE=15;
 MAXSHIFT=20;
 
 if ~exist('frame1Number','var')
-    frame1Number=531;
-    frame2Number=532;
+    frame1Number=2;
+    frame2Number=3;
 end
 
 if isfield(p,'debugmode')

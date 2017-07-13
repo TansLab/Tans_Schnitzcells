@@ -90,7 +90,7 @@ end
 %--------------------------------------------------------------------------
 
 
-%--------------------------------------------------------------------------
+%% ------------------------------------------------------------------------
 % overwrite any schnitzcells parameters/defaults given optional fields/values
 %--------------------------------------------------------------------------
 % If not provided, use standard dataFields
@@ -126,7 +126,7 @@ if ~existfield(p,'fitTime')
 end
 %--------------------------------------------------------------------------
 
-%--------------------------------------------------------------------------
+%% -------------------------------------------------------------------------
 % More input error checking
 %--------------------------------------------------------------------------
 
@@ -148,7 +148,7 @@ if any(deltaNumelsDatafields)
 end
 
 
-%--------------------------------------------------------------------------
+%% ------------------------------------------------------------------------
 % SOME PREPARATION FOR OUTPUT
 %--------------------------------------------------------------------------
 % remembers whether data for this schnitz has been used already
@@ -276,6 +276,10 @@ end
 if p.sameLength   
     
     originalSize = numel(branches);
+    
+    % Throw out empty branches first
+    emptyBranchIndices = arrayfun(@(x) isempty(x.(timeField)),branches)
+    branches = branches(~emptyBranchIndices);
     
     % get all lengths, begin times, and end times
     branchlengths = arrayfun(@(x) length(x.(timeField)),branches);

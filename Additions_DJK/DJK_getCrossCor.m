@@ -89,7 +89,7 @@ if ~existfield(branches(1), p.timeField)
 end
 
 % if too little data, exit
-if (length(branches(1).(fieldX)) < 2), error('Not enough data'); end
+if (length(branches(1).(fieldX)) < 2), warning('Not enough data'); end
 
 % settings
 if ~existfield(p,'bias')

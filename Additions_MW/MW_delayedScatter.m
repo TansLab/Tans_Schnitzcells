@@ -346,6 +346,12 @@ trimmed_branches = DJK_trim_branch_data(branchData,NRBRANCHGROUPS);
 % Divide branchdata in groups based on those N start schnitzes
 branch_groups = DJK_divide_branch_data(trimmed_branches);
 
+% In case you want to skip the branch group procedure, and create branch
+% groups that are in fact just the original branches
+% branchData = MW_remove_empty_branches(branchData,3);
+% branch_groups = DJK_divide_branch_data(branchData);
+
+
 % Colony average mean has already been substracted so theoretically extra
 % normalization shouldn't have an effect.
 p.extraNorm=0;

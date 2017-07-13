@@ -92,7 +92,7 @@ if numExtraArgs > 0
     end
 end
 
-%%%%%%%%%%%default values
+%% %%%%%%%%%%default values
 %growth medium (nb: special problems in rich medium: holes + fringed edges)
 if ~existfield(p,'medium')                                %special treatment in case of rich medium
     p.medium='normal';  
@@ -118,6 +118,8 @@ end
 if ~existfield(p,'minCellArea')                           %minimum cell area (objects smaller than that will be erased)
     p.minCellArea = 250;
 end
+
+
 % if rich medium, minimal cell area should be set to a small value (100).
 % enforce it
 if strcmp(p.medium,'rich')==1 & p.minCellArea>100
@@ -180,7 +182,7 @@ if ~existfield(p, 'onScreen')
 end
 
 
-%--------------------------------------------------------------------------
+%% --------------------------------------------------------------------------
 % Checking or creation of directories
 %--------------------------------------------------------------------------
 
@@ -466,14 +468,14 @@ for i= p.segRange
     %----------------------------------------------------------------------
     
     
-    % Parameters for segmentation
+    %% Parameters for segmentation
     % === 
     inputsOfSegmentation = {'rangeFiltSize',p.rangeFiltSize,'maskMargin',p.maskMargin,...
         'useFullImage',p.useFullImage, 'LoG_Smoothing',p.LoG_Smoothing,'minCellArea',p.minCellArea,...
         'GaussianFilter',p.GaussianFilter,'minDepth',p.minDepth,...
         'neckDepth',p.neckDepth,'saveSteps',p.saveSteps,'saveDir',saveDirectory};
     
-    %---------------------------------------------------------------------------
+    %% ---------------------------------------------------------------------------
     %---------------------------------------------------------------------------
     % THE REAL AND TRUE SEGMENTATION IS HERE:
     if isfield(p,'mothermachine')
@@ -490,7 +492,7 @@ for i= p.segRange
     if strcmp(p.medium,'normal')==1
         [phsub,LNsub,rect]= PN_segphase(p,imageToSegment,inputsOfSegmentation{:});    
     elseif strcmp(p.medium,'rich')==1
-        [phsub,LNsub,rect]= NW_segphase_richMed(p,imageToSegment,inputsOfSegmentation{:});    
+        [phsub,LNsub,rect]= NW_segphase_richMed(imageToSegment,inputsOfSegmentation{:});
     else
         error('Don''t know how to segment...')
     end

@@ -836,6 +836,10 @@ if any(strcmp(runsections,{'allpreliminary', 'allfull','correctionsandanalysis'}
 
         % only necessary 1 time
         if strcmp(currentFluor, fluorColors{1}) 
+            % Here the field "phase2" is added, which is similar to phase, 
+            % but contains also "predicted" values for 
+            % for fields where phase was not known. Predictions are based
+            % on another parameter (length, in this case).
             schnitzcells = DJK_addToSchnitzes_predictedValues(schnitzcells, 'phase', 'length_fitNew', 'phase2', [0 1]);
             NW_saveSchnitzcells(p,schnitzcells); % could be integrated to DJK_addToSchnitzes_predictedValues
         end
@@ -896,6 +900,11 @@ if any(strcmp(runsections,{'allpreliminary', 'allfull','correctionsandanalysis'}
 
         % Save updated schnitzcells structure
         NW_saveSchnitzcells(p,schnitzcells); 
+        
+        % Now also add a field that identifies frames at which
+        % concentration and production rate of fluor have been determiend.
+        p.schnitzFilePath = [p.tracksDir p.movieName '-Schnitz.mat'];
+        schnitzcells = MW_addToSchnitzes_indices_atXdX(p.schnitzFilePath,X);
     end
 
     % Let user know we're done

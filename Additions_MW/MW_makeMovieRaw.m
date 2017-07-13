@@ -27,7 +27,9 @@ if ~isfield(p,'hideFig')
     p.hideFig=0;
 end
 
+
 %% Loop over currently set frames
+if p.hideFig, h2=figure('visible','off'); end, tic
 for frameIndex = ourSettings.currentFrameRange
     
     p.currentFrame = frameIndex;
@@ -40,6 +42,7 @@ for frameIndex = ourSettings.currentFrameRange
         
         % print it using PN_imshowlabel        
         if p.hideFig
+            close(h2);
             h2=figure('visible','off'); %clf; already done in PN_imshowlabel if figure is the same
         else
             h2=figure(2);
@@ -57,9 +60,12 @@ for frameIndex = ourSettings.currentFrameRange
    
     clear Lc;
     
-    if ~mod(frameIndex,20)
-        prctDone=round(frameIndex./max(ourSettings.currentFrameRange)*100);
-        disp([num2str(frameIndex) '/' num2str(max(ourSettings.currentFrameRange)) ' frames done']);        
+    % gimmick, give user progress updates
+    if ~mod(frameIndex,20)        
+        progress = (frameIndex-min(ourSettings.currentFrameRange))./(max(ourSettings.currentFrameRange)-min(ourSettings.currentFrameRange));
+        prctDone=round(progress*100);
+        timeRemaining = toc/progress*(1-progress);
+        disp([num2str(prctDone) '% done -- current frame = ' num2str(frameIndex) '(max =' num2str(max(ourSettings.currentFrameRange)) '). Projected ' num2str(round(timeRemaining/60)) ' mins remaining.']);        
     end
     
 end

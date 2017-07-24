@@ -44,7 +44,9 @@ function [branches, crossCov_composite] = DJK_getCrossCov(p, branches, fieldX, f
 %                 default: 0.05
 % 'extraNorm'=1   perform an extra normalization where the mean of each
 %                 branch is subtracted (default: 0)
-% 'override'=1    used for crossCor when only r=0 is needed
+% 'rzeroonly'=1    used for crossCor when only r=0 is needed
+% 'sameLength'    to signal that function should handle branches of uneven
+%                 length
 
 %--------------------------------------------------------------------------
 % Input error checking
@@ -107,23 +109,25 @@ end
 if ~existfield(p,'extraNorm')
   p.extraNorm = 0;
 end
-if ~existfield(p,'override')
-  p.override = 0;
+if ~existfield(p,'rzeroonly')
+  p.rzeroonly = 0;
 end
 % --------------------------------------------------------------------------
 %%
-if ~p.override
+if ~p.rzeroonly
   % --------------------------------------------------------------------------
   % Check whether branches have same length
-  % --------------------------------------------------------------------------
-  maxBranchLength = func_check_branchLength(branches);
+  % --------------------------------------------------------------------------  
+  maxBranchLength=max(arrayfun(@(x) numel(x.schnitzNrs),branches));
+  % %maxBranchLength = func_check_branchLength(branches); % old way - sub function
   % --------------------------------------------------------------------------
 
     %%
   % --------------------------------------------------------------------------
   % Check sampling interval for even spacing
   % --------------------------------------------------------------------------
-  interval = func_check_spacingError(branches(1).(p.timeField), p.spacingError);
+  allTimesUnique = unique([branches(:).(p.timeField)]);
+  interval = func_check_spacingError(allTimesUnique, p.spacingError);
 
   %%
   % time for crosscorrelation
@@ -160,15 +164,19 @@ crossCov_composite.Y = zeros(1,length([-maxBranchLength+1:maxBranchLength-1]));
 crossCov_composite.X = interval * [-maxBranchLength+1:maxBranchLength-1];
 
 %% loop over different time-lags r
+
+%total_weight = nan(1,numel(rs));
+
 for r = rs
+
   total_weight = 0; % calc total weight for this r
 
   % loop over branches
-  for br = 1:length(branches)      
-      
+  for br = 1:length(branches)           
+
     X = branches(br).(fieldX);
     Y = branches(br).(fieldY);
-  
+
     % in case extra normalization, subtract mean of branch
     if p.extraNorm
       X = X - mean(X);
@@ -185,6 +193,7 @@ for r = rs
         W = ones(1,N-abs(r));
       case 1 % weighing 1 performs standard weighing (like Elowitz) (default)
         W = 1 ./ branches(br).count(1+abs(r):end); 
+            % MW NOTE: should not both contributing points factor in here?
       case 2 % weighing 2 performs 3/4 weighing
         W = 1 ./ branches(br).count(1+abs(r):end); 
         for i = 1:N-abs(r)
@@ -201,9 +210,9 @@ for r = rs
         disp('Unknown weighing method! Using default');
         W = 1 ./ branches(br).count(1+abs(r):end); 
     end
-    
+
     total_weight = total_weight + sum( W );
-  
+
     % in case r is positive
     if r >= 0
       branches(br).(targetField)(N+r) = sum( X(1:N-r) .* Y(1+r:N) );
@@ -231,13 +240,13 @@ for r = rs
 end
 % -------------------------------------------------------------------------
 
-
+%%
 % --------------------------------------------------------------------------
 % In case of autocorrelation, only return [0 ->]
 % --------------------------------------------------------------------------
 % check whether we're dealing with an autocorrelation
-% if p.override, already doing only 0
-if strcmp(fieldX, fieldY) & ~p.override
+% if p.rzeroonly, already doing only 0
+if strcmp(fieldX, fieldY) & ~p.rzeroonly
   
   % Find location of zero on x-axis (tau)
   idx = find(crossCov_composite.X==0); %MW 2014/07/30 neater code
@@ -257,6 +266,8 @@ if strcmp(fieldX, fieldY) & ~p.override
     branches(br).(targetField) = branches(br).(targetField)(idx:end); % MW 2014/07/30 neater code
        
   end 
+
+    disp('Autocorr detected.');
   
 end
 % --------------------------------------------------------------------------
@@ -264,8 +275,8 @@ end
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % check whether constant sampling in timefield
-function out = func_check_spacingError(timeData, spacingError), ...
-
+function interval = func_check_spacingError(timeData, spacingError), ...
+%timeData=allTimesUnique, spacingError= p.spacingError
 %%
 timeData = timeData-timeData(1);
 fit = polyfit([1:length(timeData)],timeData,1);
@@ -285,25 +296,27 @@ if interval_error
   %figure; plot(timeData,'bo'); hold on; plot(fittedTimeData,'k-'); %enable
   %for investigation. otherwise slows matlab down
 end
-out = fit(1);
+interval = fit(1);
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%{
 % check whether branches have same length
-function max_br_length = func_check_branchLength(branches), ...
+function maxBranchLength = func_check_branchLength(branches), ...
 %%
-max_br_length = 0;
+maxBranchLength = 0;
 min_br_length  = realmax('double');
 for br = 1:length(branches)
-  max_br_length = max(max_br_length, length(branches(br).schnitzNrs));
+  maxBranchLength = max(maxBranchLength, length(branches(br).schnitzNrs));
   min_br_length = min(min_br_length, length(branches(br).schnitzNrs));  
 end
 
-if (max_br_length == min_br_length)
+if (maxBranchLength == min_br_length)
   %disp([' * All branches have same length: ' num2str(min_br_length) '
   %timepoints.']); blubb NW2012-010 just commented out
 else
-  disp([' * Branches have different lengths: from ' num2str(min_br_length) ' to ' num2str(max_br_length) ' timepoints. Watch out! Do not know whether composite is correct!']);
+  disp([' * Branches have different lengths: from ' num2str(min_br_length) ' to ' num2str(maxBranchLength) ' timepoints. Watch out! Do not know whether composite is correct!']);
 end
+%}
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%

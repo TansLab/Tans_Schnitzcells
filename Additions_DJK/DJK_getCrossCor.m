@@ -110,6 +110,7 @@ end
 % --------------------------------------------------------------------------
 % Calc of cross covariances
 % --------------------------------------------------------------------------
+%%
 [branches_crossCov, crossCov_composite] = DJK_getCrossCov(p, branches, fieldX, fieldY, ...
                                                           'timeField', p.timeField, ...
                                                           'bias', p.bias, ...
@@ -123,7 +124,7 @@ end
                                                           'weighing', p.weighing, ...
                                                           'spacingError', p.spacingError, ...
                                                           'extraNorm', p.extraNorm, ...
-                                                          'override', 1);
+                                                          'rzeroonly', 1);
 
 [branches_crossCov_YY, crossCov_YY_composite] = DJK_getCrossCov(p, branches, fieldY, fieldY, ...
                                                           'timeField', p.timeField, ...
@@ -131,9 +132,37 @@ end
                                                           'weighing', p.weighing, ...
                                                           'spacingError', p.spacingError, ...
                                                           'extraNorm', p.extraNorm, ...
-                                                          'override', 1);
+                                                          'rzeroonly', 1);
 % --------------------------------------------------------------------------
 
+%% MW - use to plot output if desired
+%{
+targetField='crossCov_noise_muP9_fitNew_cycCor_noise_muP9_fitNew_cycCor';
+figure; clf; hold on;
+%for idx=1:numel(branches)
+%    plot(branches_crossCov_YY(idx).corr_time,branches_crossCov_YY(idx).(targetField),'-');
+%end
+halfwayindex=(numel(crossCov_YY_composite.Y)+1)/2;
+sqrtvarxxvaryy=sqrt(crossCov_XX_composite.Y(halfwayindex)*crossCov_YY_composite.Y(halfwayindex));
+plot(crossCov_composite.X,crossCov_composite.Y./sqrtvarxxvaryy,'k-','LineWidth',2)
+
+
+myYlim=[-2,2];
+plot([0,0],myYlim,'-k');
+
+% checking
+plot([-100,100],[-1,-1],'--k');
+plot([-100,100],[1,1],'--k');
+
+ylim(myYlim);
+
+ylabel('Correlation');
+xlabel('Lag');
+
+MW_makeplotlookbetter(20);
+%}
+
+%%
 % --------------------------------------------------------------------------
 % Calc of correlations
 % --------------------------------------------------------------------------
@@ -159,7 +188,8 @@ end
 
 % make branches
 for br = 1:length(branches)
-  branches(br).(targetField) = branches_crossCov(br).(sourceField) / sqrt(branches_crossCov_XX(br).(sourceField_XX)(end) * branches_crossCov_YY(br).(sourceField_YY)(end));
+  branches(br).(targetField) = branches_crossCov(br).(sourceField) / ...
+        sqrt(branches_crossCov_XX(br).(sourceField_XX)(end) * branches_crossCov_YY(br).(sourceField_YY)(end));
   branches(br).corr_time = branches_crossCov(br).corr_time;
   branches(br).X = crossCov_composite.X;
   branches(br).Y = branches(br).(targetField);
@@ -170,4 +200,20 @@ crossCor_composite = struct;
 crossCor_composite.X = crossCov_composite.X;
 r_0 = (length(crossCov_XX_composite.X) + 1) / 2; %=entry with time delay=0
 crossCor_composite.Y = crossCov_composite.Y / sqrt(crossCov_XX_composite.Y(r_0)*crossCov_YY_composite.Y(r_0));
+
+%% MW - use to plot output if desired
+%{
+figure; clf; hold on;
+%for idx=1:numel(crossCor_composite)
+plot(crossCor_composite(idx).X,crossCor_composite(idx).Y,'-');
+%end
+
+plot([min(crossCor_composite(idx).X),max(crossCor_composite(idx).X)],[0,0],'k-');
+plot([0,0],[-1,1],'k-');
+
+xlim([min(crossCor_composite(idx).X),max(crossCor_composite(idx).X)]);
+ylim([-1,1]);
+%}
+
+
 % -------------------------------------------------------------------------

@@ -1,4 +1,4 @@
-function [branches, crossCov_composite] = DJK_getCrossCov(p, branches, fieldX, fieldY, varargin);
+function [branches, crossCov_composite, total_weight] = MW_getCrossCov(p, branches, fieldX, fieldY, varargin);
 % [branches, crossCov_composite] = DJK_getCrossCov(p, branches, fieldX, fieldY, varargin)
 %
 % DJK_getCrossCov returns the cross covariance of a set of branches,
@@ -23,8 +23,21 @@ function [branches, crossCov_composite] = DJK_getCrossCov(p, branches, fieldX, f
 %
 % OUTPUT
 % 'branches'            branches structure with calculated cross covariance for each branch added
-% 'crossCov_composite'  struct with Y = calculated composite cross covariance for branches
-%                                   X = corr time
+%   .corr_time                            = r or tau value in Sxy(r)
+%   .(['crossCov_' fieldX '_' fieldY])    = covariance for different tau
+%                                           values between fieldX and
+%                                           fieldY
+%   .(['var_' fieldX])                    = variance first input field
+%   .(['var_' fieldY])                    = variance second input field
+%
+% 'crossCov_composite'  struct with
+%   .Y                      = calculated composite cross covariance for branches
+%   .X                      = corr time
+%   .['var_' fieldX]        = composite variance(fieldX,fieldX), 
+%                             variance of first input field
+%   .['var_' fieldY]        = composite variance(fieldY,fieldY), 
+%                             variance of second input field
+%                                   
 %
 % REQUIRED ARGUMENTS:
 % 'p'
@@ -44,7 +57,9 @@ function [branches, crossCov_composite] = DJK_getCrossCov(p, branches, fieldX, f
 %                 default: 0.05
 % 'extraNorm'=1   perform an extra normalization where the mean of each
 %                 branch is subtracted (default: 0)
-% 'override'=1    used for crossCor when only r=0 is needed
+% 'rzeroonly'=1   used for crossCor when only r=0 is needed (e.g. when you
+%                 just want to calculate cov at r=0 and the variance 
+%                 for X and Y)
 % 'sameLength'    to signal that function should handle branches of uneven
 %                 length
 
@@ -109,16 +124,16 @@ end
 if ~existfield(p,'extraNorm')
   p.extraNorm = 0;
 end
-if ~existfield(p,'override')
-  p.override = 0;
+if ~existfield(p,'rzeroonly')
+  p.rzeroonly = 0;
 end
 % --------------------------------------------------------------------------
 %%
-if ~p.override
+if ~p.rzeroonly
   % --------------------------------------------------------------------------
   % Check whether branches have same length
   % --------------------------------------------------------------------------  
-  maxBranchLength=max(arrayfun(@(x) numel(x.schnitzNrs),branches));
+  maxBranchLength=max(arrayfun(@(x) numel(x.(p.timeField)),branches));
   % %maxBranchLength = func_check_branchLength(branches); % old way - sub function
   % --------------------------------------------------------------------------
 
@@ -139,7 +154,7 @@ if ~p.override
   rs = [-maxBranchLength+1:maxBranchLength-1];
 
 else
-  maxBranchLength = length(branches(1).schnitzNrs);
+  maxBranchLength=max(arrayfun(@(x) numel(x.(p.timeField)),branches));
   rs = [0];
   interval = 0;
 end
@@ -162,29 +177,17 @@ end
 crossCov_composite = struct;
 crossCov_composite.Y = zeros(1,length([-maxBranchLength+1:maxBranchLength-1]));
 crossCov_composite.X = interval * [-maxBranchLength+1:maxBranchLength-1];
+crossCov_composite.(['var_' fieldX]) = 0;
+crossCov_composite.(['var_' fieldY]) = 0;
 
 %% loop over different time-lags r
 
 %total_weight = nan(1,numel(rs));
 
-for r = rs
-
-  total_weight = 0; % calc total weight for this r
-
-  % loop over branches
-  for br = 1:length(branches)      
+% loop over branches
+total_weight  = zeros(1,numel(rs)); %total_w_count = zeros(1,numel(rs));
+for br = 1:length(branches)
       
-    if ~p.sameLength
-        % recalcalculate the max length for this branch
-        currentBranchLength=numel(branches.schnitzNrs);
-
-        if outsiderange r
-            skip
-        end
-        % Better may be to change the order of the loops, but then weighing
-        % scheme should be re-modelled
-    end
-
     X = branches(br).(fieldX);
     Y = branches(br).(fieldY);
 
@@ -193,70 +196,178 @@ for r = rs
       X = X - mean(X);
       Y = Y - mean(Y);
     end
-
+    
     %length of this particular branch
-    N = length(X);
+    currentBranchLength = length(X);
+    
+    
+    %%
+    % determine times and lags (r) again if branches are not same length
+    % (and not when we only do r=0, since then straightforward rs=0)
+    if (~p.sameLength) && (~p.rzeroonly)
 
-    % determine weighing
-    clear W;
-    switch p.weighing
-      case 0 % performs no weighing for composite 
-        W = ones(1,N-abs(r));
-      case 1 % weighing 1 performs standard weighing (like Elowitz) (default)
-        W = 1 ./ branches(br).count(1+abs(r):end); 
-      case 2 % weighing 2 performs 3/4 weighing
-        W = 1 ./ branches(br).count(1+abs(r):end); 
-        for i = 1:N-abs(r)
-          if branches(br).count(i) > 1
-            W(i) = W(i)*0.75;
-          end
-        end
-      case 3 % weighing 3 performs Daan weighing
-        for i = 1:N-abs(r)
-          B = branches(br).branchpoints(i+abs(r)) - branches(br).branchpoints(i);
-          W(i) = (1/(2*branches(br).count(i+abs(r)))) * (1 + 2^B);
-        end
-      otherwise
-        disp('Unknown weighing method! Using default');
-        W = 1 ./ branches(br).count(1+abs(r):end); 
+        %%
+        % recalcalculate the max length for this branch
+        %currentBranchLength=numel(branches(br).(p.timeField));
+
+        % recalculate the delay r
+        rs = [-currentBranchLength+1:currentBranchLength-1];
+
+        % recalcalculate the time
+        branches(br).corr_time = interval * [-currentBranchLength+1:currentBranchLength-1];
+
+        % prepare cross-corr field
+        branches(br).(targetField) = nan(1,maxBranchLength*2-1);
+        % branches(br).(['w_' targetField]) = nan(1,maxBranchLength*2-1);
+        
+        % prepare timefield 
+        lackingSize = maxBranchLength-currentBranchLength;
+        branches(br).corr_time = ...
+            interval * [-maxBranchLength+1:maxBranchLength-1];
+        %{
+        branches(br).w_corr_time = ...
+            [nan(1,lackingSize) ...
+            interval * [-currentBranchLength+1:currentBranchLength-1] ...
+            nan(1,lackingSize) ];
+        %}
+
     end
 
-    total_weight = total_weight + sum( W );
+    for r = rs
 
-    % in case r is positive
-    if r >= 0
-      branches(br).(targetField)(N+r) = sum( X(1:N-r) .* Y(1+r:N) );
-      crossCov_composite.Y(N+r) = crossCov_composite.Y(N+r) + sum( X(1:N-r) .* Y(1+r:N) .* W );
-    % in case r is negative
-    else
-      branches(br).(targetField)(N+r) = sum( Y(1:N+r) .* X(1-r:N) );
-      crossCov_composite.Y(N+r) = crossCov_composite.Y(N+r) + sum( Y(1:N+r) .* X(1-r:N) .* W );
+        %% determine weighing for this delay r
+        clear W;
+        switch p.weighing
+          case 0 % performs no weighing for composite 
+            W = ones(1,currentBranchLength-abs(r));
+          case 1 % weighing 1 performs standard weighing (like Elowitz) (default)
+            W = 1 ./ branches(br).count(1+abs(r):end); 
+          case 2 % weighing 2 performs 3/4 weighing
+            W = 1 ./ branches(br).count(1+abs(r):end); 
+            for i = 1:currentBranchLength-abs(r)
+              if branches(br).count(i) > 1
+                W(i) = W(i)*0.75;
+              end
+            end
+          case 3 % weighing 3 performs Daan weighing
+            for i = 1:currentBranchLength-abs(r)
+              B = branches(br).branchpoints(i+abs(r)) - branches(br).branchpoints(i);
+              W(i) = (1/(2*branches(br).count(i+abs(r)))) * (1 + 2^B);
+            end
+          case 4 % weighing MW, 1/(N_p1*N_p2)
+            if r >= 0
+                W =  1 ./(branches(br).count(1:currentBranchLength-r) .* branches(br).count(1+r:currentBranchLength));
+            else
+                W = 1 ./ (branches(br).count(1:currentBranchLength+r) .* branches(br).count(1-r:currentBranchLength));
+            end
+          otherwise % otherwise
+            disp('Unknown weighing method! Using default');
+            W = 1 ./ branches(br).count(1+abs(r):end); 
+        end
+        
+        total_weight(maxBranchLength+r)  = total_weight(maxBranchLength+r) + sum( W );        
+        %total_w_count(maxBranchLength+r) = total_w_count(maxBranchLength+r) + numel( W );
+
+        %%
+        % calculate the actual cross-covariance
+        % in case r is positive
+        if r >= 0
+          branches(br).(targetField)(maxBranchLength+r)         = sum( X(1:currentBranchLength-r) .* Y(1+r:currentBranchLength));% .* W);            
+          crossCov_composite.Y(maxBranchLength+r) = crossCov_composite.Y(maxBranchLength+r) + sum( X(1:currentBranchLength-r) .* Y(1+r:currentBranchLength) .* W);
+                    
+        % in case r is negative
+        else
+          %currentCovarianceForR = sum( Y(1:currentBranchLength+r) .* X(1-r:currentBranchLength)  .* W);
+          branches(br).(targetField)(maxBranchLength+r)         = sum( Y(1:currentBranchLength+r) .* X(1-r:currentBranchLength) );%  .* W);
+            % for lineages, we choose to not have weighing within the
+            % lineage; one could also make weighed branches
+          crossCov_composite.Y(maxBranchLength+r) = crossCov_composite.Y(maxBranchLength+r) + sum( Y(1:currentBranchLength+r) .* X(1-r:currentBranchLength) .* W);                    
+        end
+
+        % if unbiased divide by (N-r) -> Elowitz is unbiased, Simpson is biased
+        if ~p.bias
+          branches(br).(targetField)(maxBranchLength+r) = branches(br).(targetField)(maxBranchLength+r) / (currentBranchLength-abs(r));
+          % MW NOTE
+          % Note that this simply calculates the expected value for your
+          % covariance by dividing C(tau)=sum_t(X(t)Y(t+tau)) by the
+          % number of elements you sum over.
+        end
+        
+        
+        %% also determine variance for the branch
+        % we need the weights for this r, so do it here
+        % (one could also pre-calculate and store the weights instead..)
+        if r==0
+            
+            % calculate raw variance
+            branches(br).(['var_' fieldX]) = sum( X .* X);%  .* W) 
+            branches(br).(['var_' fieldY]) = sum( Y .* Y);%  .* W) 
+            
+            %branches(br).(['w_var_' fieldX]) = sum( X .* X .* W ) ;% ./ mean(W);                
+            %branches(br).(['w_var_' fieldY]) = sum( Y .* Y .* W ) ;% ./ mean(W);
+            
+            % also calculate and add contribution to composite
+%             if ~p.bias
+%                 crossCov_composite.(['var_' fieldX]) = crossCov_composite.(['var_' fieldX]) + ...
+%                     sum( X .* X .* W)./(currentBranchLength-abs(r));
+%                 crossCov_composite.(['var_' fieldY]) = crossCov_composite.(['var_' fieldY]) + ...
+%                     sum( Y .* Y .* W)./(currentBranchLength-abs(r));
+%             else
+                crossCov_composite.(['var_' fieldX]) = crossCov_composite.(['var_' fieldX]) + ...
+                    sum( X .* X .* W);
+                crossCov_composite.(['var_' fieldY]) = crossCov_composite.(['var_' fieldY]) + ...
+                    sum( Y .* Y .* W);
+%             end
+            
+            % divide by nr of points contributing to sum
+            if ~p.bias
+                % for branches
+                branches(br).(['var_' fieldX]) = branches(br).(['var_' fieldX])./(currentBranchLength-abs(r));
+                branches(br).(['var_' fieldY]) = branches(br).(['var_' fieldY])./(currentBranchLength-abs(r));
+            end
+            
+        end
+
     end
+  
+    if numel(branches(br).(targetField))~=numel(branches(br).corr_time)
+        error('Something went wrong');
+    end
+
+end
+
+%%
+
+% Previously, the composite was already determined here; I think it might
+% be more fair to determine the variance(x,x) and variance(y,y) first, and
+% divide corresponding branches by corresponding variances. (instead of as
+% previously, dividing by a composite variance.)
+
+crossCov_composite.Y = crossCov_composite.Y ./ total_weight;
+%{
+for r = rs
+    % divide by total weight
+    crossCov_composite.Y(maxBranchLength+r) = crossCov_composite.Y(maxBranchLength+r) / total_weight(maxBranchLength+r);
 
     % if unbiased divide by (N-r) -> Elowitz is unbiased, Simpson is biased
-    if ~p.bias
-      branches(br).(targetField)(N+r) = branches(br).(targetField)(N+r) / (N-abs(r));
-    end
-
-  end
-
-  % divide by total weight
-  crossCov_composite.Y(maxBranchLength+r) = crossCov_composite.Y(maxBranchLength+r) / total_weight;
-
-  % if unbiased divide by (N-r) -> Elowitz is unbiased, Simpson is biased
-  if p.bias
-    crossCov_composite.Y(maxBranchLength+r) = crossCov_composite.Y(maxBranchLength+r) * (N-abs(r));
-  end
+    %if ~p.bias
+    %    crossCov_composite.Y(maxBranchLength+r) = crossCov_composite.Y(maxBranchLength+r) * (currentBranchLength-abs(r));
+    %end
 end
+%}
+
+% to show:
+% figure;plot(crossCov_composite.X,crossCov_composite.Y,'-')
+
 % -------------------------------------------------------------------------
 
-
+%%
 % --------------------------------------------------------------------------
 % In case of autocorrelation, only return [0 ->]
 % --------------------------------------------------------------------------
 % check whether we're dealing with an autocorrelation
-% if p.override, already doing only 0
-if strcmp(fieldX, fieldY) & ~p.override
+% if p.rzeroonly, already doing only 0
+if strcmp(fieldX, fieldY) & ~p.rzeroonly
   
   % Find location of zero on x-axis (tau)
   idx = find(crossCov_composite.X==0); %MW 2014/07/30 neater code
@@ -280,7 +391,17 @@ if strcmp(fieldX, fieldY) & ~p.override
 end
 % --------------------------------------------------------------------------
 
+%%
+%{
+if isfield(p,'debug')
 
+    figure; clf; hold on;
+    for idx=1:numel(branches)
+        plot(branches(idx).corr_time,branches(idx).(targetField),'-');
+    end
+
+end
+%}
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % check whether constant sampling in timefield
 function interval = func_check_spacingError(timeData, spacingError), ...
@@ -328,3 +449,4 @@ else
 end
 %}
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+

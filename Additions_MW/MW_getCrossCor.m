@@ -117,87 +117,103 @@ end
 %p.weighing=1;
 %p.bias=0;
 
-p.weighing=1;
-p.bias=0;
-p.extraNorm=0;
 
+
+% for testing purposes one can manually set these fields when p and
+% branches are loaded from a dataset:
+% fieldX = 'noise_dC5_cycCor'; fieldY = 'muP9_fitNew_atdC5_cycCor'; p.timeField ='dC5_time'
+
+% Obtain the actual cross-correlations, variance and composite thereof:
+% Note that the following settings will set the method to calculate the
+% composite cross-correlation:
+% p.weighing=1;     % Weighing method
+% p.bias=0;         % Do not adjust 
+% p.extraNorm=0;    % Normalization of separate branches
 [branches_crossCov, crossCov_composite,total_weight] = MW_getCrossCov(p, branches, fieldX, fieldY, ...
                                                           'timeField', p.timeField, ...
                                                           'bias', p.bias, ...
                                                           'weighing', p.weighing, ...
                                                           'spacingError', p.spacingError, ...
                                                           'extraNorm', p.extraNorm);
+                  
 
-% fieldX = 'noise_dC5_cycCor'; fieldY = 'muP9_fitNew_atdC5_cycCor'; p.timeField ='dC5_time'
+%% determine composed cross-correlation
 
-% reset to before
-p.weighing=3; 
-p.bias=0; 
 
-disp('Done');
-
-%{
-[branches_crossCov_XX, crossCov_XX_composite] = MW_getCrossCov(p, branches, fieldX, fieldX, ...
-                                                          'timeField', p.timeField, ...
-                                                          'bias', p.bias, ...
-                                                          'weighing', p.weighing, ...
-                                                          'spacingError', p.spacingError, ...
-                                                          'extraNorm', p.extraNorm, ...
-                                                          'rzeroonly', 1);
-
-[branches_crossCov_YY, crossCov_YY_composite] = MW_getCrossCov(p, branches, fieldY, fieldY, ...
-                                                          'timeField', p.timeField, ...
-                                                          'bias', p.bias, ...
-                                                          'weighing', p.weighing, ...
-                                                          'spacingError', p.spacingError, ...
-                                                          'extraNorm', p.extraNorm, ...
-                                                          'rzeroonly', 1);
-%}
-
-%
-%figure; clf; hold on;
-%plot(branches_crossCov(1).corr_time,branches_crossCov(1).w_crossCov_noise_C6_mean_cycCor_noise_muP9_fitNew_cycCor)
+%%
 % --------------------------------------------------------------------------
+% Calc of correlations
+% --------------------------------------------------------------------------
+sourceField       = ['crossCov_' fieldX '_' fieldY];
+sourceField_varX  = ['var_' fieldX];
+sourceField_varY  = ['var_' fieldY];
+targetField       = ['crossCor_' fieldX '_' fieldY];
+%blubb % force truncation to 63 characters to suppress waring NW
+%2012-05-16. AKWARD!!!!!
+% edit MW 2017, let's try it without this truncation actually..
+% if length(targetField)>63
+%     targetField=targetField(1:63);
+% end
+% if length(sourceField_varX)>63
+%     sourceField_varX=sourceField_varX(1:63);
+%     warning('Field name too long, truncated..'); % MW line added
+% end
+% if length(sourceField_varY)>63
+%     sourceField_varY=sourceField_varY(1:63);
+%     warning('Field name too long, truncated..');
+% end
+% if length(sourceField)>63
+%     sourceField=sourceField(1:63);
+%     warning('Field name too long, truncated..');
+% end
+% blubb ende
+
+% make branches
+for br = 1:length(branches)
+    
+    % calculate normalization factor
+    varXbr  = branches_crossCov(br).(sourceField_varX);
+    varYbr  = branches_crossCov(br).(sourceField_varY);
+    varXYbr = sqrt(varXbr*varYbr);
+    
+    %  normalize by variance 
+    branches(br).(targetField) = branches_crossCov(br).(sourceField) / varXYbr;
+    branches(br).(targetField) = branches_crossCov(br).(sourceField) / varXYbr;
+    
+    branches(br).corr_time = branches_crossCov(br).corr_time;
+    branches(br).X = crossCov_composite.X;
+    branches(br).Y = branches(br).(targetField);
+end
+
+
+% Normalize the composite covariance with variance to get the cross-correlation
+% ===
+crossCor_composite = struct;
+
+% normalization factor
+varX = crossCov_composite.(sourceField_varX); % variance in X 
+varY = crossCov_composite.(sourceField_varY); % variance in Y
+varXY = sqrt(varX*varY); % 
+
+crossCor_composite.X = crossCov_composite.X;
+crossCor_composite.Y = crossCov_composite.Y / varXY;
 
 %% plotting new way
-targetField=['crossCov_' fieldX '_' fieldY];
-%targetField='crossCov_noise_dC5_cycCor_noise_muP9_fitNew_atdC5_cycCor'
+%{
 figure(1); clf; hold on;
 
 % Plot separate branches' CCs
 % ===
-title(['R(' fieldX ',' fieldY ')'],'Interpreter','None');
-halfwayidx=(numel(branches_crossCov(1).corr_time)+1)/2;
-for idx=1:numel(branches)
-
-    corrT{idx} = branches_crossCov(idx).corr_time;
-
-    corrR{idx} = (branches_crossCov(idx).(targetField))./ ...
-               ( ...
-                sqrt(  branches_crossCov(idx).(['var_' fieldX]) * ...
-                       branches_crossCov(idx).(['var_' fieldY])  ));
-    
-    %plot(corrT{idx}, corrR{idx},'-o','LineWidth',(numel(branches)-idx+1)*3);
-    plot(corrT{idx}, corrR{idx},'-','LineWidth',1);
+for idx=1:numel(branches)  
+    plot(branches(idx).corr_time, branches(idx).(targetField),'-','LineWidth',1);
 end
 
-% Now calculate and plot the composite
+% Now plot the composite
 % ===
+plot(crossCor_composite.X, crossCor_composite.Y,'-o','LineWidth',3,'Color','k');
 
-varianceXXYY=sqrt(  crossCov_composite.(['var_' fieldX])./(total_weight(halfwayidx)) * ...
-                    crossCov_composite.(['var_' fieldY])./(total_weight(halfwayidx))  );
-
-plot(crossCov_composite.X, crossCov_composite.Y./varianceXXYY,'-o','LineWidth',3,'Color','k');
-
-%plot(crossCov_composite.X, crossCov_composite.Y./varianceXXYY_noweight,'b--','LineWidth',2);
-
-
-
-% checking
-%plot([-100,100],[-1,-1],'--k');
-%plot([-100,100],[1,1],'--k');
-
-
+% Cosmetics
+title(['R(' fieldX ',' 10 fieldY ')'],'Interpreter','None');
 ylabel('Correlation');
 xlabel('Lag');
 
@@ -207,106 +223,9 @@ myYlim=[-1,1];
 ylim(myYlim);
 plot([0,0],myYlim,'-k');
 
-myXlim=[min(corrT{idx}), max(corrT{idx})];
+myXlim=[min(branches(idx).corr_time), max(branches(idx).corr_time)];
 xlim(myXlim)
 plot(myXlim,[0,0],'-k');
-
-%%
-uniqueTimes=unique([corrT{1}]); 
-warning('Times are not exactly identical -- check this'); % TODO!!!!
-dT = uniqueTimes(2)-uniqueTimes(1);
-edges = [uniqueTimes(1)-dT/2 uniqueTimes+dT/2];
-[meanValuesForBins, binCenters,stdValuesForBins,stdErrValuesForBins, counts,binnedValues, medianValuesForBins]=binnedaveraging(corrT,corrR,edges)
-plot(binCenters,meanValuesForBins,'k-','LineWidth',3);
-
-plot([min(edges),max(edges)],[0,0],'k-');
-plot([0,0],[-1,1],'k-');
-ylim([-1,1]);
-xlim([min(edges),max(edges)]);
-
-%%
-total_weight
-%var_weight = total_weight((length(total_weight)+1)/2)
-%%
-
-figure; clf; hold on;
-title('calculating median for separately divided by variance');
-corrTw={}; corrRw={};
-for idx=1:numel(branches)
-
-    corrTw{idx} = branches_crossCov(idx).corr_time;
-    corrRw{idx} = branches_crossCov(idx).([targetField])./ ...
-                   ( ...
-                    sqrt(  branches_crossCov(idx).(['var_' fieldX]) * ...
-                           branches_crossCov(idx).(['var_' fieldY])  ));
-
-    plot(corrTw{idx},...
-         corrRw{idx},...
-         '-');
-end
-
-uniqueTimes=unique([corrTw{:}]); 
-dT = uniqueTimes(2)-uniqueTimes(1);
-edges = [uniqueTimes(1)-dT/2 uniqueTimes+dT/2];
-[meanValuesForBins, binCenters,stdValuesForBins,stdErrValuesForBins, counts,binnedValues,medianValuesForBins]=binnedaveraging(corrTw,corrRw,edges);
-plot(binCenters,medianValuesForBins,'k-','LineWidth',3);
-
-
-plot([min(edges),max(edges)],[0,0],'k-');
-plot([0,0],[-1,1],'k-');
-ylim([-1,1]);
-xlim([min(edges),max(edges)]);
-
-
-
-%% determine composed cross-correlation
-
-
-
-%%
-% --------------------------------------------------------------------------
-% Calc of correlations
-% --------------------------------------------------------------------------
-sourceField     = ['crossCov_' fieldX '_' fieldY];
-sourceField_XX  = ['crossCov_' fieldX '_' fieldX];
-sourceField_YY  = ['crossCov_' fieldY '_' fieldY];
-targetField     = ['crossCor_' fieldX '_' fieldY];
-%blubb % force truncation to 63 characters to suppress waring NW
-%2012-05-16. AKWARD!!!!!
-if length(targetField)>63
-    targetField=targetField(1:63);
-end
-if length(sourceField_XX)>63
-    sourceField_XX=sourceField_XX(1:63);
-end
-if length(sourceField_YY)>63
-    sourceField_YY=sourceField_YY(1:63);
-end
-if length(sourceField)>63
-    sourceField=sourceField(1:63);
-end
-% blubb ende
-
-% make branches
-for br = 1:length(branches)
-  branches(br).(targetField) = branches_crossCov(br).(sourceField) / ...
-        sqrt(branches_crossCov_XX(br).(sourceField_XX)(end) * branches_crossCov_YY(br).(sourceField_YY)(end));
-  branches(br).corr_time = branches_crossCov(br).corr_time;
-  branches(br).X = crossCov_composite.X;
-  branches(br).Y = branches(br).(targetField);
-end
-
-% make composite
-crossCor_composite = struct;
-crossCor_composite.X = crossCov_composite.X;
-r_0 = (length(crossCov_XX_composite.X) + 1) / 2; %=entry with time delay=0
-crossCor_composite.Y = crossCov_composite.Y / sqrt(crossCov_XX_composite.Y(r_0)*crossCov_YY_composite.Y(r_0));
-
-%%
-targetField='crossCov_noise_muP9_fitNew_cycCor_noise_muP9_fitNew_cycCor';
-figure; clf; hold on;
-for idx=1:numel(crossCor_composite)
-    plot(crossCor_composite(idx).X,crossCor_composite(idx).Y,'-');
-end
+%}
 
 % -------------------------------------------------------------------------

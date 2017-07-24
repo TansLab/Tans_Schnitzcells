@@ -12,6 +12,16 @@ if ~exist('N', 'var')
     N=1;
 end
 
+%% Count branches
+numelBranches = arrayfun(@(x) numel(x.schnitzNrs),branches)
+
+%% Select branches that are longer than N
+branches_nonempty = branches(numelBranches>N);
+
+
+%%
+% Less elegant way:
+%{
 %%
 branches_nonempty=struct;
 allFields =  fieldnames(branches);
@@ -32,9 +42,7 @@ for branchIdx = 1:numel(branches)
    end
 
 end
-
-
-
+%}
 
 end
 

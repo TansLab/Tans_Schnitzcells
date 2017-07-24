@@ -75,6 +75,10 @@ if ~exist('associatedFieldNames') | ~exist('p') | ~exist('badSchnitzes')
     error('input not supplied.')
 end
     
+if ~isfield(p,'sameLength')
+    p.sameLength=1; % assume that the branches are the same length unless told otherwise
+end
+
 % At sections there are some more parameters to set. They are marked in
 % capitals.
 
@@ -196,6 +200,7 @@ s_rm = MW_calculateframe_nrs(s_rm); % backwards compatibility fix
 fitTime = fitTime + [2 -2];
 
 branchData = MW_getBranches(p,s_rm,'dataFields',{associatedFieldNames{1}, associatedFieldNames{2}, associatedFieldNames{3} }, 'fitTime', fitTime); 
+    % set p.sameLength=0 to not care about equal lengths
 name_rm_branch = [name_rm '_' num2str(fitTime(1)) '_' num2str(fitTime(2)) '_Conc_oldRates'];
 
 
@@ -205,10 +210,10 @@ HIGHLIGHTSUSPICOUS = 0;
 
 for yfieldbranchtoplot=[2,3]
 
-    % Just some plot colors
+    %% Just some plot colors
     distinguishableColors = distinguishable_colors(numel(branchData)+1,[1 1 1]); 
 
-    % Plot all branches
+    %% Plot all branches
     h1=figure(); clf; hold on;
     offset=100; width1=800; height1=600;
     set(h1, 'Position', [offset offset width1 height1]);
@@ -218,7 +223,8 @@ for yfieldbranchtoplot=[2,3]
         set(l, 'LineWidth', (numelBranches-branchIdx+1)/numelBranches*10);
     end
 
-    % Brute force average branches (note weighing is irrelevant for average)
+    %% Brute force average branches (note weighing is irrelevant for average)
+    %{
     branchMatrixFieldX = []; branchMatrixFieldY = [];
     for branchIdx = 1:numelBranches
         currentXvector = branchData(branchIdx).(associatedFieldNames{1});
@@ -229,7 +235,16 @@ for yfieldbranchtoplot=[2,3]
     end
     meanXvector = mean(branchMatrixFieldX);
     meanYvector = mean(branchMatrixFieldY);
-
+    %}
+    
+    %% 
+    currentXvector = {branchData(:).(associatedFieldNames{1})};
+    currentYvector = {branchData(:).(associatedFieldNames{yfieldbranchtoplot})};
+    uniqueTimes = unique([currentXvector{:}]);
+    currentEdges = uniqueTimes-(uniqueTimes(2)-uniqueTimes(1))/2;
+    [meanYvector, meanXvector,stdValuesForBins,stdErrValuesForBins, counts,binnedValues]=binnedaveraging(currentXvector,currentYvector,currentEdges)
+    
+    %%
     % xlabel
     xlabel(associatedFieldNames{1},'Interpreter', 'None'), ylabel(associatedFieldNames{yfieldbranchtoplot},'Interpreter', 'None')
 
@@ -243,7 +258,7 @@ for yfieldbranchtoplot=[2,3]
     %Set all fontsizes
     MW_makeplotlookbetter(20);
     
-    % Plot histogram
+    %% Plot histogram
     h2=figure(), clf, hold on
     allYdata = [branchData.(associatedFieldNames{yfieldbranchtoplot})];
     [nelements, centers] = hist(allYdata,200)
@@ -341,16 +356,31 @@ CONTROLSUFFIX = '_randomizedlineages';
 % Some additional editing of the branches:
 branchData = DJK_addToBranches_noise(p, branchData,'dataFields',{associatedFieldNames{1},associatedFieldNames{2},associatedFieldNames{3}});
 
-% Trim of starting frames until there are N start schnitzes
-trimmed_branches = DJK_trim_branch_data(branchData,NRBRANCHGROUPS);
-% Divide branchdata in groups based on those N start schnitzes
-branch_groups = DJK_divide_branch_data(trimmed_branches);
+% Trim branches if they are the same length
+if p.sameLength==1
+    % Note that this only work if branches all originate at t=0, which
+    % might not be the case if they are not the same length
+    
+    % Trim of starting frames until there are N start schnitzes
+    trimmed_branches = DJK_trim_branch_data(branchData,NRBRANCHGROUPS);
+    % Divide branchdata in groups based on those N start schnitzes
+    branch_groups = DJK_divide_branch_data(trimmed_branches);
+else    
+    % Remove empty branches (can be case due short branches without points
+    % where data was taken.
+    branchData = MW_remove_empty_branches(branchData,3); 
+    % Put in one group just to accomodate the script
+    branch_groups = struct;
+      
+    branch_groups(1).branches = branchData;
+    branch_groups(1).parent_cell = 0;
+    branch_groups(1).nr_branches = length(branchData);
+end
 
 % In case you want to skip the branch group procedure, and create branch
 % groups that are in fact just the original branches
 % branchData = MW_remove_empty_branches(branchData,3);
 % branch_groups = DJK_divide_branch_data(branchData);
-
 
 % Colony average mean has already been substracted so theoretically extra
 % normalization shouldn't have an effect.
@@ -361,39 +391,91 @@ p.extraNorm=0;
 % performed, namely to filter out colony average behavior.
 [CorrData,composite_corr] = DJK_plot_crosscorrelation_standard_error_store(p, branch_groups, [FIELDPREFIX associatedFieldNames{1,2}],[FIELDPREFIX associatedFieldNames{1,3}] ,'selectionName',name_rm_branch,'timeField',associatedFieldNames{1},'onScreen',ONSCREEN); 
 
-% For negative control, combine growth rates and fluor signal traces randomly
-% control one becomes equal to original
-branch_groupsControl = branch_groups;
-for groupIdx=1:numel(branch_groups)
+%%
+% Create a control branch structure
+if p.sameLength==1
+    % For negative control, combine growth rates and fluor signal traces randomly
+    % control one becomes equal to original
+    branch_groupsControl = branch_groups;
+    for groupIdx=1:numel(branch_groups)
 
-    % Clear last field (which is field that's going to be scrambled)
-    branch_groupsControl(groupIdx).(associatedFieldNames{1,3}) = [];
-    branch_groupsControl(groupIdx).([FIELDPREFIX associatedFieldNames{1,3}]) = [];
-    
-    % Get original data for last field
-    data = {branch_groups(groupIdx).branches(:).(associatedFieldNames{1,3})};
-    % Randomize data for last field
-    randomizeddata = {data{randperm(numel(data))}};
-    
-    % Repeat above for noise_(..) fields
-    % Get original data for last field
-    noisedata = {branch_groups(groupIdx).branches(:).([FIELDPREFIX associatedFieldNames{1,3}])};
-    % Randomize data for last field
-    noiserandomizeddata = {noisedata{randperm(numel(noisedata))}};
-    
-    % for each branch
-    for i=1:numel(branch_groups(groupIdx).branches)
-        
-        % set to randomized lineages within that branch
-        branch_groupsControl(groupIdx).branches(i).([associatedFieldNames{1,3} CONTROLSUFFIX]) = ...
-            randomizeddata{i};
-        
-        % set to randomized lineages within that branch
-        branch_groupsControl(groupIdx).branches(i).([FIELDPREFIX associatedFieldNames{1,3} CONTROLSUFFIX]) = ...
-            noiserandomizeddata{i};
+        % Clear last field (which is field that's going to be scrambled)
+        branch_groupsControl(groupIdx).(associatedFieldNames{1,3}) = [];
+        branch_groupsControl(groupIdx).([FIELDPREFIX associatedFieldNames{1,3}]) = [];
+
+        % Get original data for last field
+        data = {branch_groups(groupIdx).branches(:).(associatedFieldNames{1,3})};
+        % Randomize data for last field
+        randomizeddata = {data{randperm(numel(data))}};
+
+        % Repeat above for noise_(..) fields
+        % Get original data for last field
+        noisedata = {branch_groups(groupIdx).branches(:).([FIELDPREFIX associatedFieldNames{1,3}])};
+        % Randomize data for last field
+        noiserandomizeddata = {noisedata{randperm(numel(noisedata))}};
+
+        % for each branch
+        for i=1:numel(branch_groups(groupIdx).branches)
+
+            % set to randomized lineages within that branch
+            branch_groupsControl(groupIdx).branches(i).([associatedFieldNames{1,3} CONTROLSUFFIX]) = ...
+                randomizeddata{i};
+
+            % set to randomized lineages within that branch
+            branch_groupsControl(groupIdx).branches(i).([FIELDPREFIX associatedFieldNames{1,3} CONTROLSUFFIX]) = ...
+                noiserandomizeddata{i};
+        end
     end
-end
+else
+    % when we have differently sized branches, the above control becomes
+    % impossible to create -- so we resort to a less stringent control,
+    % where at each point in time, we just randomly scramble the data from
+    % all branches for one parameter.
+    % Note that in this situation, there should only be 1 branchgroup, so
+    % only branch_groupsControl(1) will exist. (See above why.)
+    %%
+    branch_groupsControl = branch_groups;
+    %branch_groupsControl(1).branches(1).([associatedFieldNames{1,3} CONTROLSUFFIX]) = [];
+    %branch_groupsControl(1).branches(1).([FIELDPREFIX associatedFieldNames{1,3} CONTROLSUFFIX]) = [];
+    
+    allTimePoints = unique([branch_groupsControl(1).branches.(associatedFieldNames{1})]);
+    timeLookupTable={};
 
+    for currentTimePointIdx=1:numel(allTimePoints)
+        %%
+        % get applicable indices for this point in time
+        
+        currentTimePoint=allTimePoints(currentTimePointIdx);
+        
+        % Collect indices for each branch that match with this timepoints
+        % (empty if timepoint does not exist in this data)
+        timeHits= arrayfun(@(br) find(branch_groupsControl(1).branches(br).(associatedFieldNames{1}) == currentTimePoint), 1:numel(branch_groupsControl(1).branches),'UniformOutput',0);
+        % Branches for which there is data
+        hitBranches= find(arrayfun(@(br) ~isempty(find(branch_groupsControl(1).branches(br).(associatedFieldNames{1}) == currentTimePoint)), 1:numel(branch_groupsControl(1).branches)));
+        % Create lookup tables
+        %timeLookupTable{currentTimePointIdx} = timeHits;
+        %branchLookupTable{currentTimePointIdx} = hitBranches;
+        
+        % Now we know which branches to mix, so do that
+        randomizedBranches = hitBranches(randperm(numel(hitBranches)));
+        
+        for brIdx=1:numel(hitBranches)
+            
+            sourceBranchIdx = hitBranches(brIdx);
+            targetBranchIdx = randomizedBranches(brIdx);
+            
+            % actual randomization            
+            branch_groupsControl(1).branches(sourceBranchIdx).([associatedFieldNames{3} CONTROLSUFFIX])(timeHits{sourceBranchIdx}) = ...
+                branch_groups(1).branches(targetBranchIdx).([associatedFieldNames{3}])(timeHits{targetBranchIdx});
+            % also do for normalized field
+            branch_groupsControl(1).branches(sourceBranchIdx).([FIELDPREFIX associatedFieldNames{3} CONTROLSUFFIX])(timeHits{sourceBranchIdx}) = ...
+                branch_groups(1).branches(targetBranchIdx).([FIELDPREFIX associatedFieldNames{3}])(timeHits{targetBranchIdx});
+                                                    
+        end
+        
+    end
+    
+end
 [CorrDataControl, composite_corrControl] = DJK_plot_crosscorrelation_standard_error_store(p, branch_groupsControl, [FIELDPREFIX associatedFieldNames{1,2}],[FIELDPREFIX associatedFieldNames{1,3} CONTROLSUFFIX] ,'selectionName',name_rm_branch,'timeField',associatedFieldNames{1},'onScreen',ONSCREEN); 
 
 % Do we want to filter out colony average behavior for the "delayed
@@ -469,7 +551,11 @@ l=plot(iTausCalculated,correlationsPerTau,'o-r','LineWidth',2)
 h5=figure(),clf,hold on;
 
 % Plot DJK cross correlation function
-errorbar(CorrData(:,1),CorrData(:,2),CorrData(:,3),'s-','Color', [.5,.5,.5], 'LineWidth',2)
+if size(CorrData,2)>2
+    errorbar(CorrData(:,1),CorrData(:,2),CorrData(:,3),'s-','Color', [.5,.5,.5], 'LineWidth',2)
+else
+    plot(CorrData(:,1),CorrData(:,2),'s-','Color', [.5,.5,.5], 'LineWidth',2)
+end
 l1=plot(CorrData(:,1),CorrData(:,2),'s-k','LineWidth',2)
 
 % Plot control DJK cross correlation function

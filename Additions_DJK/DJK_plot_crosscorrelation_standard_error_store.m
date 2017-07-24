@@ -149,8 +149,9 @@ end
 %                                       otherwise the input-'p' to the whole function is overwritten, including
 %                                       information about 'saveDir' (older version did not require
 %                                       'p'as a function-input.)
+%%
 for i = 1:length(branch_groups)
-  [trash, branch_groups(i).composite_corr] = DJK_getCrossCor(p, branch_groups(i).branches, fieldX, fieldY, 'bias', p.bias, 'weighing', p.weighing, 'extraNorm', p.extraNorm);
+  [trash, branch_groups(i).composite_corr] = MW_getCrossCor(p, branch_groups(i).branches, fieldX, fieldY, 'bias', p.bias, 'weighing', p.weighing, 'extraNorm', p.extraNorm);
 end
 % -------------------------------------------------------------------------
 
@@ -188,6 +189,7 @@ for i = 1:length(branch_groups)
           plot(branch_groups(i).composite_corr.X/60, branch_groups(i).composite_corr.Y, '-', 'LineWidth', 2, 'Color', [0.5 0.5 0.5]); hold on;
     end
 end
+
 plot(branch_groups(i).composite_corr.X/60, mean(composite_corr), '-', 'LineWidth', 3, 'Color', [0 0 0]); hold on;
 xlabel('time [h]');
 ylabel('crosscorr');
@@ -195,6 +197,7 @@ title(['single branch_groups (' fieldX ', ' fieldY ')'],'interpreter','none');
 hold on
 x_lim=get(gca,'xlim');y_lim=get(gca,'ylim');
 plot(x_lim,[0 0],'-k'); plot([0 0 ],y_lim,'-k');  % plot axis
+
 if p.colorMode==1 % legend with branch_group indices
     mylegend='''1'' ';
     for i=2:length(branch_groups)
@@ -202,16 +205,24 @@ if p.colorMode==1 % legend with branch_group indices
     end
     eval(['legend(' mylegend ')']);
 end   
+
 saveas(gcf,[p.DJK_saveDir figureName1 '.png'], 'png');
+
 if ~p.onScreen
     close(h)
 end
 
 h=figure('visible',visibleOnOff); 
-errorbar(branch_groups(i).composite_corr.X/60,mean(composite_corr),std(composite_corr), '-', 'LineWidth', 2, 'Color', [0 0 0]); hold on;
+
+if numel(branch_groups)>1
+    errorbar(branch_groups(i).composite_corr.X/60,mean(composite_corr),std(composite_corr), '-', 'LineWidth', 2, 'Color', [0 0 0]); hold on;
+    title(['errorbars (' fieldX ', ' fieldY ')'],'interpreter','none');
+else
+    plot(branch_groups.composite_corr.X/60,composite_corr,'-', 'LineWidth', 2, 'Color', [0 0 0]); hold on;
+end
+
 xlabel('time [h]');
 ylabel('crosscorr');
-title(['errorbars (' fieldX ', ' fieldY ')'],'interpreter','none');
 hold on
 x_lim=get(gca,'xlim');y_lim=get(gca,'ylim');
 plot(x_lim,[0 0],'-k'); plot([0 0 ],y_lim,'-k');  % plot axis
@@ -221,7 +232,11 @@ if ~p.onScreen
 end
 
 h=figure('visible',visibleOnOff); 
-errorbar(branch_groups(i).composite_corr.X/60,mean(composite_corr),std(composite_corr)/sqrt(length(branch_groups)), '-', 'LineWidth', 2, 'Color', [0 0 0]); hold on;
+if numel(branch_groups)>1
+    errorbar(branch_groups(i).composite_corr.X/60,mean(composite_corr),std(composite_corr)/sqrt(length(branch_groups)), '-', 'LineWidth', 2, 'Color', [0 0 0]); hold on;
+else
+    plot(branch_groups.composite_corr.X/60,composite_corr, '-', 'LineWidth', 2, 'Color', [0 0 0]); hold on;
+end
 xlabel('time [h]');
 ylabel('crosscorr');
 title(['errorbars normalized (' fieldX ', ' fieldY ')'],'interpreter','none');
@@ -236,8 +251,15 @@ end
 
 
 clear CorrData;
-CorrData(:,1)=branch_groups(i).composite_corr.X/60;
-CorrData(:,2)=mean(composite_corr);
-CorrData(:,3)=std(composite_corr)/sqrt(length(branch_groups));
+if numel(branch_groups)>1
+    CorrData(:,1)=branch_groups(i).composite_corr.X/60;
+    CorrData(:,2)=mean(composite_corr);
+    CorrData(:,3)=std(composite_corr)/sqrt(length(branch_groups));
+else
+    CorrData(:,1)=branch_groups.composite_corr.X/60;
+    CorrData(:,2)=composite_corr;
+end
+
+%
 
 

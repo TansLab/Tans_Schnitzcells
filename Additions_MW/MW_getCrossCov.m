@@ -48,11 +48,21 @@ function [branches, crossCov_composite, total_weight] = MW_getCrossCov(p, branch
 % OPTIONAL ARGUMENTS:
 % 'timeField'     field used as time and stored in branches
 %                 default: 'Y_time'
-% 'bias'=1        do not adjust for less data at larger delay times (default: 0)
+% 'bias'=1        Do not adjust for less data at larger delay times (default: 0)
+%                 MW: The p.bias=1 option simply allows you to not calculate 
+%                 the expected value C(tau)=sum(X(t)Y(t+tau))/N_contributing, 
+%                 but C(tau)=sum(X(t)Y(t+tau)) instead. This doesn't make
+%                 sense in the usual context of composite CCs as generally
+%                 used currently (July-2017).
+%                 MW: note that this only influences the CCs in the
+%                 separate branches, since the weighing implicitly takes
+%                 care of this for the composite calculation.
 % 'weighing'  =0  performs no weighing for composite 
 %             =1  performs standard weighing (like Elowitz) (default=1)
 %             =2  performs 3/4 weighing
 %             =3  performs Daan weighing
+%             =4  performs MW weighing, not scientifically chosen, just
+%                 intuitively.
 % 'spacingError'  error allowed in spacing (in fraction of average spacing)
 %                 default: 0.05
 % 'extraNorm'=1   perform an extra normalization where the mean of each
@@ -322,7 +332,7 @@ for br = 1:length(branches)
             % divide by nr of points contributing to sum
             if ~p.bias
                 % for branches
-                branches(br).(['var_' fieldX]) = branches(br).(['var_' fieldX])./(currentBranchLength-abs(r));
+                branches(br).(['var_' fieldX]) = branches(br).(['var_' fieldX])./(currentBranchLength-abs(r)); % /(N_{contributing points})
                 branches(br).(['var_' fieldY]) = branches(br).(['var_' fieldY])./(currentBranchLength-abs(r));
             end
             
@@ -336,28 +346,15 @@ for br = 1:length(branches)
 
 end
 
-%%
+%% Determine the composite covariance and variance by dividing by the total weights.
 
-% Previously, the composite was already determined here; I think it might
-% be more fair to determine the variance(x,x) and variance(y,y) first, and
-% divide corresponding branches by corresponding variances. (instead of as
-% previously, dividing by a composite variance.)
-
+halfwayIdx=maxBranchLength; % where r=0.
 crossCov_composite.Y = crossCov_composite.Y ./ total_weight;
-%{
-for r = rs
-    % divide by total weight
-    crossCov_composite.Y(maxBranchLength+r) = crossCov_composite.Y(maxBranchLength+r) / total_weight(maxBranchLength+r);
+crossCov_composite.(['var_' fieldX]) = crossCov_composite.(['var_' fieldX]) ./ total_weight(halfwayIdx);
+crossCov_composite.(['var_' fieldY]) = crossCov_composite.(['var_' fieldY]) ./ total_weight(halfwayIdx);
 
-    % if unbiased divide by (N-r) -> Elowitz is unbiased, Simpson is biased
-    %if ~p.bias
-    %    crossCov_composite.Y(maxBranchLength+r) = crossCov_composite.Y(maxBranchLength+r) * (currentBranchLength-abs(r));
-    %end
-end
-%}
-
-% to show:
-% figure;plot(crossCov_composite.X,crossCov_composite.Y,'-')
+% Note that dividing by N_{contributing points} not needed here since
+% weighing implicitly does this already. -MW
 
 % -------------------------------------------------------------------------
 

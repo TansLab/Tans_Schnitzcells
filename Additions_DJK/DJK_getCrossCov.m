@@ -193,7 +193,10 @@ for r = rs
         W = ones(1,N-abs(r));
       case 1 % weighing 1 performs standard weighing (like Elowitz) (default)
         W = 1 ./ branches(br).count(1+abs(r):end); 
-            % MW NOTE: should not both contributing points factor in here?
+            % NOTE MW: Here, only the count of one point contributing to
+            % pair is used, because this is equivalent to subtracting
+            % non-unique pairs (a pair of points is already redundant
+            % if only one point being redundant).
       case 2 % weighing 2 performs 3/4 weighing
         W = 1 ./ branches(br).count(1+abs(r):end); 
         for i = 1:N-abs(r)

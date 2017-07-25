@@ -391,7 +391,8 @@ p.extraNorm=0;
 % performed, namely to filter out colony average behavior.
 [CorrData,composite_corr] = DJK_plot_crosscorrelation_standard_error_store(p, branch_groups, [FIELDPREFIX associatedFieldNames{1,2}],[FIELDPREFIX associatedFieldNames{1,3}] ,'selectionName',name_rm_branch,'timeField',associatedFieldNames{1},'onScreen',ONSCREEN); 
 
-%%
+%% Create negative control 
+
 % Create a control branch structure
 if p.sameLength==1
     % For negative control, combine growth rates and fluor signal traces randomly
@@ -426,57 +427,77 @@ if p.sameLength==1
                 noiserandomizeddata{i};
         end
     end
-else
-    % when we have differently sized branches, the above control becomes
-    % impossible to create -- so we resort to a less stringent control,
-    % where at each point in time, we just randomly scramble the data from
-    % all branches for one parameter.
-    % Note that in this situation, there should only be 1 branchgroup, so
-    % only branch_groupsControl(1) will exist. (See above why.)
-    %%
-    branch_groupsControl = branch_groups;
-    %branch_groupsControl(1).branches(1).([associatedFieldNames{1,3} CONTROLSUFFIX]) = [];
-    %branch_groupsControl(1).branches(1).([FIELDPREFIX associatedFieldNames{1,3} CONTROLSUFFIX]) = [];
     
-    allTimePoints = unique([branch_groupsControl(1).branches.(associatedFieldNames{1})]);
-    timeLookupTable={};
+    % Calculate the cross-correlation
+    [CorrDataControl, composite_corrControl] = DJK_plot_crosscorrelation_standard_error_store(p, branch_groupsControl, [FIELDPREFIX associatedFieldNames{1,2}],[FIELDPREFIX associatedFieldNames{1,3} CONTROLSUFFIX] ,'selectionName',name_rm_branch,'timeField',associatedFieldNames{1},'onScreen',ONSCREEN); 
+    
+else
+    multipleCorrDataControl=struct; multipleComposite_corrControl=struct;
+    if isfield(p,'dontmakeplots'), oldSettingdontmakeplots = p.dontmakeplots; else, oldSettingdontmakeplots=0; end
+    p.dontmakeplots=1;
+    % actually, get 100 negative controls here..
+    for repeatIdx= 1:100
 
-    for currentTimePointIdx=1:numel(allTimePoints)
+        % when we have differently sized branches, the above control becomes
+        % impossible to create -- so we resort to a less stringent control,
+        % where at each point in time, we just randomly scramble the data from
+        % all branches for one parameter.
+        % Note that in this situation, there should only be 1 branchgroup, so
+        % only branch_groupsControl(1) will exist. (See above why.)
         %%
-        % get applicable indices for this point in time
-        
-        currentTimePoint=allTimePoints(currentTimePointIdx);
-        
-        % Collect indices for each branch that match with this timepoints
-        % (empty if timepoint does not exist in this data)
-        timeHits= arrayfun(@(br) find(branch_groupsControl(1).branches(br).(associatedFieldNames{1}) == currentTimePoint), 1:numel(branch_groupsControl(1).branches),'UniformOutput',0);
-        % Branches for which there is data
-        hitBranches= find(arrayfun(@(br) ~isempty(find(branch_groupsControl(1).branches(br).(associatedFieldNames{1}) == currentTimePoint)), 1:numel(branch_groupsControl(1).branches)));
-        % Create lookup tables
-        %timeLookupTable{currentTimePointIdx} = timeHits;
-        %branchLookupTable{currentTimePointIdx} = hitBranches;
-        
-        % Now we know which branches to mix, so do that
-        randomizedBranches = hitBranches(randperm(numel(hitBranches)));
-        
-        for brIdx=1:numel(hitBranches)
-            
-            sourceBranchIdx = hitBranches(brIdx);
-            targetBranchIdx = randomizedBranches(brIdx);
-            
-            % actual randomization            
-            branch_groupsControl(1).branches(sourceBranchIdx).([associatedFieldNames{3} CONTROLSUFFIX])(timeHits{sourceBranchIdx}) = ...
-                branch_groups(1).branches(targetBranchIdx).([associatedFieldNames{3}])(timeHits{targetBranchIdx});
-            % also do for normalized field
-            branch_groupsControl(1).branches(sourceBranchIdx).([FIELDPREFIX associatedFieldNames{3} CONTROLSUFFIX])(timeHits{sourceBranchIdx}) = ...
-                branch_groups(1).branches(targetBranchIdx).([FIELDPREFIX associatedFieldNames{3}])(timeHits{targetBranchIdx});
-                                                    
+        branch_groupsControl = branch_groups;
+        %branch_groupsControl(1).branches(1).([associatedFieldNames{1,3} CONTROLSUFFIX]) = [];
+        %branch_groupsControl(1).branches(1).([FIELDPREFIX associatedFieldNames{1,3} CONTROLSUFFIX]) = [];
+
+        allTimePoints = unique([branch_groupsControl(1).branches.(associatedFieldNames{1})]);
+        timeLookupTable={};
+
+        for currentTimePointIdx=1:numel(allTimePoints)
+            %%
+            % get applicable indices for this point in time
+
+            currentTimePoint=allTimePoints(currentTimePointIdx);
+
+            % Collect indices for each branch that match with this timepoints
+            % (empty if timepoint does not exist in this data)
+            timeHits= arrayfun(@(br) find(branch_groupsControl(1).branches(br).(associatedFieldNames{1}) == currentTimePoint), 1:numel(branch_groupsControl(1).branches),'UniformOutput',0);
+            % Branches for which there is data
+            hitBranches= find(arrayfun(@(br) ~isempty(find(branch_groupsControl(1).branches(br).(associatedFieldNames{1}) == currentTimePoint)), 1:numel(branch_groupsControl(1).branches)));
+            % Create lookup tables
+            %timeLookupTable{currentTimePointIdx} = timeHits;
+            %branchLookupTable{currentTimePointIdx} = hitBranches;
+
+            % Now we know which branches to mix, so do that
+            randomizedBranches = hitBranches(randperm(numel(hitBranches)));
+
+            for brIdx=1:numel(hitBranches)
+
+                sourceBranchIdx = hitBranches(brIdx);
+                targetBranchIdx = randomizedBranches(brIdx);
+
+                % actual randomization            
+                branch_groupsControl(1).branches(sourceBranchIdx).([associatedFieldNames{3} CONTROLSUFFIX])(timeHits{sourceBranchIdx}) = ...
+                    branch_groups(1).branches(targetBranchIdx).([associatedFieldNames{3}])(timeHits{targetBranchIdx});
+                % also do for normalized field
+                branch_groupsControl(1).branches(sourceBranchIdx).([FIELDPREFIX associatedFieldNames{3} CONTROLSUFFIX])(timeHits{sourceBranchIdx}) = ...
+                    branch_groups(1).branches(targetBranchIdx).([FIELDPREFIX associatedFieldNames{3}])(timeHits{targetBranchIdx});
+
+            end
+
         end
+
+        % Calculate the cross-correlation
+        [CorrDataControl, composite_corrControl] = DJK_plot_crosscorrelation_standard_error_store(p, branch_groupsControl, [FIELDPREFIX associatedFieldNames{1,2}],[FIELDPREFIX associatedFieldNames{1,3} CONTROLSUFFIX] ,'selectionName',name_rm_branch,'timeField',associatedFieldNames{1},'onScreen',ONSCREEN); 
+        
+        % save them
+        multipleCorrDataControl(repeatIdx).CorrDataControl          = CorrDataControl;
+        multipleComposite_corrControl(repeatIdx).composite_corrControl    = composite_corrControl;
         
     end
-    
+    p.dontmakeplots=oldSettingdontmakeplots;
 end
-[CorrDataControl, composite_corrControl] = DJK_plot_crosscorrelation_standard_error_store(p, branch_groupsControl, [FIELDPREFIX associatedFieldNames{1,2}],[FIELDPREFIX associatedFieldNames{1,3} CONTROLSUFFIX] ,'selectionName',name_rm_branch,'timeField',associatedFieldNames{1},'onScreen',ONSCREEN); 
+
+%% Now calculate the delayed scatter plots
 
 % Do we want to filter out colony average behavior for the "delayed
 % scatter" plots also? Maybe do this with noise fields?
@@ -550,6 +571,17 @@ l=plot(iTausCalculated,correlationsPerTau,'o-r','LineWidth',2)
 
 h5=figure(),clf,hold on;
 
+% Plot control DJK cross correlation function
+%errorbar(CorrDataControl(:,1),CorrDataControl(:,2),CorrDataControl(:,3),'x-','Color', [.5,.5,.5], 'LineWidth',2)
+if exist('CorrDataControl','var')
+    for idx=1:numel(multipleCorrDataControl)
+        l3=plot(multipleCorrDataControl(idx).CorrDataControl(:,1),multipleCorrDataControl(idx).CorrDataControl(:,2),...
+            '-','LineWidth',2,'Color',[.7 .7 .7])
+    end
+else
+    l3=plot(CorrDataControl(:,1),CorrDataControl(:,2),'x-b','LineWidth',2)
+end
+
 % Plot DJK cross correlation function
 if size(CorrData,2)>2
     errorbar(CorrData(:,1),CorrData(:,2),CorrData(:,3),'s-','Color', [.5,.5,.5], 'LineWidth',2)
@@ -557,10 +589,6 @@ else
     plot(CorrData(:,1),CorrData(:,2),'s-','Color', [.5,.5,.5], 'LineWidth',2)
 end
 l1=plot(CorrData(:,1),CorrData(:,2),'s-k','LineWidth',2)
-
-% Plot control DJK cross correlation function
-%errorbar(CorrDataControl(:,1),CorrDataControl(:,2),CorrDataControl(:,3),'x-','Color', [.5,.5,.5], 'LineWidth',2)
-l3=plot(CorrDataControl(:,1),CorrDataControl(:,2),'x-b','LineWidth',2)
 
 % Calculate appropriate x-axis assuming assuming same delta(x) as CorrData,
 % and dx is same everywhere.

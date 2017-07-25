@@ -159,96 +159,101 @@ end
 %% -------------------------------------------------------------------------
 % PLOTTING 
 % -------------------------------------------------------------------------
-% Make Figure Name
-figureName1 = ['crosscorr_' fieldX ' _ ' fieldY 'single_branchgroups'];
-figureName2 = ['crosscorr_' fieldX ' _ ' fieldY '_errors'];
-figureName3 = ['crosscorr_' fieldX ' _ ' fieldY '_errors_norm'];
 
-
-% actual plotting 
 for i = 1:length(branch_groups)
-  composite_corr(i,:) = branch_groups(i).composite_corr.Y;
+    composite_corr(i,:) = branch_groups(i).composite_corr.Y;
 end
 
-if p.onScreen
-    visibleOnOff='on';
-else
-    visibleOnOff='off';
-end
+if ~isfield(p,'dontmakeplots')
 
-h=figure('visible',visibleOnOff); 
-% if single groups are to be plotted in color, get the colors
-if p.colorMode==1 %start one color earlier than in NW_makemovieBranchgroups!
-    myColor=[1 1 0.9; 1 0 0 ; 0 1 0 ; 0 0 1; 1 0.6 0.2;  0 1 1; 0 0.5 0.5; 0 0.6 0; 0.6 0 0.4; 0.8 0.5 0; 0.7 0 0; 0.4 0.2 0.6; 0.6 0.2 0; 1 0 0 ; 0 1 0 ; 0 0 1; 1 0.6 0.2;  0 1 1; 0 0.5 0.5; 0 0.6 0; 0.6 0 0.4; 0.8 0.5 0; 0.7 0 0; 0.4 0.2 0.6; 0.6 0.2 0];
-end
-for i = 1:length(branch_groups)
-    if p.colorMode==1
-        colorindex=rem(i,size(myColor,1))+1;
-          plot(branch_groups(i).composite_corr.X/60, branch_groups(i).composite_corr.Y, '-', 'LineWidth', 2, 'Color', myColor(colorindex,:)); hold on;
-    else    
-          plot(branch_groups(i).composite_corr.X/60, branch_groups(i).composite_corr.Y, '-', 'LineWidth', 2, 'Color', [0.5 0.5 0.5]); hold on;
+    % Make Figure Name
+    figureName1 = ['crosscorr_' fieldX ' _ ' fieldY 'single_branchgroups'];
+    figureName2 = ['crosscorr_' fieldX ' _ ' fieldY '_errors'];
+    figureName3 = ['crosscorr_' fieldX ' _ ' fieldY '_errors_norm'];
+
+
+    % actual plotting    
+    if p.onScreen
+        visibleOnOff='on';
+    else
+        visibleOnOff='off';
     end
-end
 
-plot(branch_groups(i).composite_corr.X/60, mean(composite_corr), '-', 'LineWidth', 3, 'Color', [0 0 0]); hold on;
-xlabel('time [h]');
-ylabel('crosscorr');
-title(['single branch_groups (' fieldX ', ' fieldY ')'],'interpreter','none');
-hold on
-x_lim=get(gca,'xlim');y_lim=get(gca,'ylim');
-plot(x_lim,[0 0],'-k'); plot([0 0 ],y_lim,'-k');  % plot axis
-
-if p.colorMode==1 % legend with branch_group indices
-    mylegend='''1'' ';
-    for i=2:length(branch_groups)
-        mylegend=[mylegend, ', ''', num2str(i),''''];
+    h=figure('visible',visibleOnOff); 
+    % if single groups are to be plotted in color, get the colors
+    if p.colorMode==1 %start one color earlier than in NW_makemovieBranchgroups!
+        myColor=[1 1 0.9; 1 0 0 ; 0 1 0 ; 0 0 1; 1 0.6 0.2;  0 1 1; 0 0.5 0.5; 0 0.6 0; 0.6 0 0.4; 0.8 0.5 0; 0.7 0 0; 0.4 0.2 0.6; 0.6 0.2 0; 1 0 0 ; 0 1 0 ; 0 0 1; 1 0.6 0.2;  0 1 1; 0 0.5 0.5; 0 0.6 0; 0.6 0 0.4; 0.8 0.5 0; 0.7 0 0; 0.4 0.2 0.6; 0.6 0.2 0];
     end
-    eval(['legend(' mylegend ')']);
-end   
+    for i = 1:length(branch_groups)
+        if p.colorMode==1
+            colorindex=rem(i,size(myColor,1))+1;
+              plot(branch_groups(i).composite_corr.X/60, branch_groups(i).composite_corr.Y, '-', 'LineWidth', 2, 'Color', myColor(colorindex,:)); hold on;
+        else    
+              plot(branch_groups(i).composite_corr.X/60, branch_groups(i).composite_corr.Y, '-', 'LineWidth', 2, 'Color', [0.5 0.5 0.5]); hold on;
+        end
+    end
 
-saveas(gcf,[p.DJK_saveDir figureName1 '.png'], 'png');
+    plot(branch_groups(i).composite_corr.X/60, mean(composite_corr), '-', 'LineWidth', 3, 'Color', [0 0 0]); hold on;
+    xlabel('time [h]');
+    ylabel('crosscorr');
+    title(['single branch_groups (' fieldX ', ' fieldY ')'],'interpreter','none');
+    hold on
+    x_lim=get(gca,'xlim');y_lim=get(gca,'ylim');
+    plot(x_lim,[0 0],'-k'); plot([0 0 ],y_lim,'-k');  % plot axis
 
-if ~p.onScreen
-    close(h)
+    if p.colorMode==1 % legend with branch_group indices
+        mylegend='''1'' ';
+        for i=2:length(branch_groups)
+            mylegend=[mylegend, ', ''', num2str(i),''''];
+        end
+        eval(['legend(' mylegend ')']);
+    end   
+
+    saveas(gcf,[p.DJK_saveDir figureName1 '.png'], 'png');
+
+    if ~p.onScreen
+        close(h)
+    end
+
+    h=figure('visible',visibleOnOff); 
+
+    if numel(branch_groups)>1
+        errorbar(branch_groups(i).composite_corr.X/60,mean(composite_corr),std(composite_corr), '-', 'LineWidth', 2, 'Color', [0 0 0]); hold on;
+        title(['errorbars (' fieldX ', ' fieldY ')'],'interpreter','none');
+    else
+        plot(branch_groups.composite_corr.X/60,composite_corr,'-', 'LineWidth', 2, 'Color', [0 0 0]); hold on;
+    end
+
+    xlabel('time [h]');
+    ylabel('crosscorr');
+    hold on
+    x_lim=get(gca,'xlim');y_lim=get(gca,'ylim');
+    plot(x_lim,[0 0],'-k'); plot([0 0 ],y_lim,'-k');  % plot axis
+    saveas(gcf,[p.DJK_saveDir figureName2 '.png'], 'png');
+    if ~p.onScreen
+        close(h)
+    end
+
+    h=figure('visible',visibleOnOff); 
+    if numel(branch_groups)>1
+        errorbar(branch_groups(i).composite_corr.X/60,mean(composite_corr),std(composite_corr)/sqrt(length(branch_groups)), '-', 'LineWidth', 2, 'Color', [0 0 0]); hold on;
+    else
+        plot(branch_groups.composite_corr.X/60,composite_corr, '-', 'LineWidth', 2, 'Color', [0 0 0]); hold on;
+    end
+    xlabel('time [h]');
+    ylabel('crosscorr');
+    title(['errorbars normalized (' fieldX ', ' fieldY ')'],'interpreter','none');
+    hold on
+    x_lim=get(gca,'xlim');y_lim=get(gca,'ylim');
+    plot(x_lim,[0 0],'-k'); plot([0 0 ],y_lim,'-k');  % plot axis
+    saveas(gcf,[p.DJK_saveDirErrornorm figureName3 '.png'], 'png');
+    if ~p.onScreen
+        close(h)
+    end
+    % ---------------------------------------------------------------------
 end
 
-h=figure('visible',visibleOnOff); 
-
-if numel(branch_groups)>1
-    errorbar(branch_groups(i).composite_corr.X/60,mean(composite_corr),std(composite_corr), '-', 'LineWidth', 2, 'Color', [0 0 0]); hold on;
-    title(['errorbars (' fieldX ', ' fieldY ')'],'interpreter','none');
-else
-    plot(branch_groups.composite_corr.X/60,composite_corr,'-', 'LineWidth', 2, 'Color', [0 0 0]); hold on;
-end
-
-xlabel('time [h]');
-ylabel('crosscorr');
-hold on
-x_lim=get(gca,'xlim');y_lim=get(gca,'ylim');
-plot(x_lim,[0 0],'-k'); plot([0 0 ],y_lim,'-k');  % plot axis
-saveas(gcf,[p.DJK_saveDir figureName2 '.png'], 'png');
-if ~p.onScreen
-    close(h)
-end
-
-h=figure('visible',visibleOnOff); 
-if numel(branch_groups)>1
-    errorbar(branch_groups(i).composite_corr.X/60,mean(composite_corr),std(composite_corr)/sqrt(length(branch_groups)), '-', 'LineWidth', 2, 'Color', [0 0 0]); hold on;
-else
-    plot(branch_groups.composite_corr.X/60,composite_corr, '-', 'LineWidth', 2, 'Color', [0 0 0]); hold on;
-end
-xlabel('time [h]');
-ylabel('crosscorr');
-title(['errorbars normalized (' fieldX ', ' fieldY ')'],'interpreter','none');
-hold on
-x_lim=get(gca,'xlim');y_lim=get(gca,'ylim');
-plot(x_lim,[0 0],'-k'); plot([0 0 ],y_lim,'-k');  % plot axis
-saveas(gcf,[p.DJK_saveDirErrornorm figureName3 '.png'], 'png');
-if ~p.onScreen
-    close(h)
-end
-% -------------------------------------------------------------------------
-
+%% generate output data ===================================================
 
 clear CorrData;
 if numel(branch_groups)>1

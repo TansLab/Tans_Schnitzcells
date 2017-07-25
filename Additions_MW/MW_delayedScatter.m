@@ -583,7 +583,8 @@ plot(myxlimvalues,[0,0],'k-');
 %legend([l1,l2,l3],{'DJK','MW','Control'})
 legend([l1,l2,l3],{'Lineages','Scatters','Control'})
 
-title(['DJK vs. MW R -- ' myID '_' p. movieDate  '_' p.movieName], 'Interpreter', 'none');
+if p.sameLength==0, sameLengthComment=[10 ' Composite of unequally-sized branches']; else sameLengthComment=''; end
+title(['DJK vs. MW ' 10 myID '_' p. movieDate  '_' p.movieName sameLengthComment], 'Interpreter', 'none');
 xlabel('\tau (hrs)');
 ylabel(['R(' associatedFieldNames{1,2} ',... ' 10 associatedFieldNames{1,3} ') (normalized)'], 'Interpreter', 'none');
 %Set all fontsizes

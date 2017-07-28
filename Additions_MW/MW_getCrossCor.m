@@ -1,5 +1,5 @@
-function [branches, crossCor_composite] = DJK_getCrossCor(p, branches, fieldX, fieldY, varargin);
-% function [branches, crossCor_composite] = DJK_getCrossCor(p, branches, fieldX, fieldY, varargin);
+function [branches, crossCor_composite] = MW_getCrossCor(p, branches, fieldX, fieldY, varargin);
+% function [branches, crossCor_composite] = MW_getCrossCor(p, branches, fieldX, fieldY, varargin);
 %
 % DJK_getCrossCor returns the cross correlation of a set of branches,
 % together with the composite cross correlation. Different settings can be
@@ -121,7 +121,8 @@ end
 
 % for testing purposes one can manually set these fields when p and
 % branches are loaded from a dataset:
-% fieldX = 'noise_dC5_cycCor'; fieldY = 'muP9_fitNew_atdC5_cycCor'; p.timeField ='dC5_time'
+% fieldX = 'C6_mean_cycCor'; fieldY = 'muP9_fitNew_cycCor'; p.timeField ='C_time'
+% fieldX = [FIELDPREFIX associatedFieldNames{2}]; fieldY=[FIELDPREFIX associatedFieldNames{3}]; p.timeField = [associatedFieldNames{1}];
 
 % Obtain the actual cross-correlations, variance and composite thereof:
 % Note that the following settings will set the method to calculate the
@@ -145,8 +146,8 @@ end
 % Calc of correlations
 % --------------------------------------------------------------------------
 sourceField       = ['crossCov_' fieldX '_' fieldY];
-sourceField_varX  = ['var_' fieldX];
-sourceField_varY  = ['var_' fieldY];
+sourceField_varX  = ['varX_' fieldX];
+sourceField_varY  = ['varY_' fieldY];
 targetField       = ['crossCor_' fieldX '_' fieldY];
 %blubb % force truncation to 63 characters to suppress waring NW
 %2012-05-16. AKWARD!!!!!
@@ -199,33 +200,36 @@ crossCor_composite.X = crossCov_composite.X;
 crossCor_composite.Y = crossCov_composite.Y / varXY;
 
 %% plotting new way
-%{
-figure(1); clf; hold on;
 
-% Plot separate branches' CCs
-% ===
-for idx=1:numel(branches)  
-    plot(branches(idx).corr_time, branches(idx).(targetField),'-','LineWidth',1);
+if isfield(p,'extraPlotting')
+    %%
+    figure(1); clf; hold on;
+
+    % Plot separate branches' CCs
+    % ===
+    for idx=1:numel(branches)  
+        plot(branches(idx).corr_time, branches(idx).(targetField),'-','LineWidth',1);
+    end
+
+    % Now plot the composite
+    % ===
+    plot(crossCor_composite.X, crossCor_composite.Y,'-o','LineWidth',3,'Color','k');
+
+    % Cosmetics
+    title(['R(' fieldX ',' 10 fieldY ')'],'Interpreter','None');
+    ylabel('Correlation');
+    xlabel('Lag');
+
+    MW_makeplotlookbetter(20);
+
+    myYlim=[-1,1];
+    ylim(myYlim);
+    plot([0,0],myYlim,'-k');
+
+    myXlim=[min(branches(idx).corr_time), max(branches(idx).corr_time)];
+    xlim(myXlim)
+    plot(myXlim,[0,0],'-k');
+
 end
-
-% Now plot the composite
-% ===
-plot(crossCor_composite.X, crossCor_composite.Y,'-o','LineWidth',3,'Color','k');
-
-% Cosmetics
-title(['R(' fieldX ',' 10 fieldY ')'],'Interpreter','None');
-ylabel('Correlation');
-xlabel('Lag');
-
-MW_makeplotlookbetter(20);
-
-myYlim=[-1,1];
-ylim(myYlim);
-plot([0,0],myYlim,'-k');
-
-myXlim=[min(branches(idx).corr_time), max(branches(idx).corr_time)];
-xlim(myXlim)
-plot(myXlim,[0,0],'-k');
-%}
 
 % -------------------------------------------------------------------------

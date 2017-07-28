@@ -19,6 +19,9 @@
 % - NOTMEANSUBTRACTED   : Don't automatically take fields that have the
 %                         noise subtracted, i.e. noise_FieldOfInterest.
 % - FIGUREVISIBLE       : hides some figures, only saves them 
+% - p.recalcNoise       : re-calculates the colony means per frame and
+%                         subtracts those
+%
 %
 % Example of how to call script:
 %{
@@ -77,6 +80,14 @@ end
     
 if ~isfield(p,'sameLength')
     p.sameLength=1; % assume that the branches are the same length unless told otherwise
+end
+
+if ~isfield(p,'extraNorm')
+    p.extraNorm=0;
+end
+
+if ~isfield(p,'recalcNoise')
+    p.recalcNoise=1;
 end
 
 % At sections there are some more parameters to set. They are marked in
@@ -219,7 +230,7 @@ for yfieldbranchtoplot=[2,3]
     set(h1, 'Position', [offset offset width1 height1]);
     numelBranches = numel(branchData);
     for branchIdx = 1:numelBranches
-        l = plot(branchData(branchIdx).(associatedFieldNames{1}), branchData(branchIdx).(associatedFieldNames{yfieldbranchtoplot}),'-o','Color',distinguishableColors(branchIdx,:))
+        l = plot(branchData(branchIdx).(associatedFieldNames{1}), branchData(branchIdx).(associatedFieldNames{yfieldbranchtoplot}),'-o','Color',distinguishableColors(branchIdx,:));
         set(l, 'LineWidth', (numelBranches-branchIdx+1)/numelBranches*10);
     end
 
@@ -242,13 +253,13 @@ for yfieldbranchtoplot=[2,3]
     currentYvector = {branchData(:).(associatedFieldNames{yfieldbranchtoplot})};
     uniqueTimes = unique([currentXvector{:}]);
     currentEdges = uniqueTimes-(uniqueTimes(2)-uniqueTimes(1))/2;
-    [meanYvector, meanXvector,stdValuesForBins,stdErrValuesForBins, counts,binnedValues]=binnedaveraging(currentXvector,currentYvector,currentEdges)
+    [meanYvector, meanXvector,stdValuesForBins,stdErrValuesForBins, counts,binnedValues]=binnedaveraging(currentXvector,currentYvector,currentEdges);
     
     %%
     % xlabel
     xlabel(associatedFieldNames{1},'Interpreter', 'None'), ylabel(associatedFieldNames{yfieldbranchtoplot},'Interpreter', 'None')
 
-    myXlimFig1 = max(branchData(branchIdx).(associatedFieldNames{1}));
+    myXlimFig1 = max([branchData(:).(associatedFieldNames{1})]);
     xlim([0, myXlimFig1]);
     myYlimFig1 = [min([0, [branchData.(associatedFieldNames{yfieldbranchtoplot})]]),...
                   max([branchData.(associatedFieldNames{yfieldbranchtoplot})])];
@@ -304,7 +315,7 @@ for yfieldbranchtoplot=[2,3]
     legend([l1,l2],{'2\sigma confidence','5\sigma confidence'},'location','Best');
 
     % Now list schnitzes that have suspiciously high signal:
-    mySigma = sigma2;
+    mySigma = sigma2; % i.e. the 2 sigma confidence interval
     suspiciousBranches = []; suspiciousSchnitzes = [];
     for branchIdx = 1:numel(branchData)
         if (     any(branchData(branchIdx).(associatedFieldNames{yfieldbranchtoplot}) > mySigma(2)) ) || ...
@@ -329,7 +340,7 @@ for yfieldbranchtoplot=[2,3]
 
     % Plot mean behavior
     figure(h1), hold on;
-    plot(meanXvector, meanYvector,'-','Color','k','LineWidth',3)
+    plot(meanXvector, meanYvector,'-','Color','k','LineWidth',3);
     
     saveas(h1,[myOutputFolder 'TIF_branches_' associatedFieldNames{1,yfieldbranchtoplot} '.tif']);
     saveas(h1,[myOutputFolder 'EPS_branches_' associatedFieldNames{1,yfieldbranchtoplot} '.eps'],'epsc');
@@ -343,6 +354,8 @@ for yfieldbranchtoplot=[2,3]
     
 end
 
+
+  
 %% Get the actual cross-corrs
 
 %REDUNDANCYALLOWED = 2^2;
@@ -355,6 +368,9 @@ CONTROLSUFFIX = '_randomizedlineages';
 
 % Some additional editing of the branches:
 branchData = DJK_addToBranches_noise(p, branchData,'dataFields',{associatedFieldNames{1},associatedFieldNames{2},associatedFieldNames{3}});
+if p.recalcNoise
+    branchData = MW_addToBranches_noise(branchData, associatedFieldNames);
+end
 
 % Trim branches if they are the same length
 if p.sameLength==1
@@ -384,7 +400,7 @@ end
 
 % Colony average mean has already been substracted so theoretically extra
 % normalization shouldn't have an effect.
-p.extraNorm=0;
+%p.extraNorm=0;
 
 % THIS MIGHT FAIL BECAUSE TIME IS NOT SET CORRECTLY (SHOULD BE time_at_..)
 % To calculate cross correlations, additional normalization is usually
@@ -436,8 +452,18 @@ else
     if isfield(p,'dontmakeplots'), oldSettingdontmakeplots = p.dontmakeplots; else, oldSettingdontmakeplots=0; end
     p.dontmakeplots=1;
     % actually, get 100 negative controls here..
-    for repeatIdx= 1:100
+    NUMCONTROLS=20;
+    for repeatIdx= 1:NUMCONTROLS
 
+        if mod(repeatIdx,10)==0
+            disp(['Running controls, now at ' num2str(repeatIdx) '/' num2str(NUMCONTROLS) '.']);
+        end
+        
+        % Suppress too many messages after 1st loop
+        if repeatIdx==2
+            warning('off')
+        end
+        
         % when we have differently sized branches, the above control becomes
         % impossible to create -- so we resort to a less stringent control,
         % where at each point in time, we just randomly scramble the data from
@@ -455,7 +481,6 @@ else
         for currentTimePointIdx=1:numel(allTimePoints)
             %%
             % get applicable indices for this point in time
-
             currentTimePoint=allTimePoints(currentTimePointIdx);
 
             % Collect indices for each branch that match with this timepoints
@@ -476,11 +501,12 @@ else
                 targetBranchIdx = randomizedBranches(brIdx);
 
                 % actual randomization            
-                branch_groupsControl(1).branches(sourceBranchIdx).([associatedFieldNames{3} CONTROLSUFFIX])(timeHits{sourceBranchIdx}) = ...
-                    branch_groups(1).branches(targetBranchIdx).([associatedFieldNames{3}])(timeHits{targetBranchIdx});
+                branch_groupsControl(1).branches(targetBranchIdx).([associatedFieldNames{3} CONTROLSUFFIX])(timeHits{targetBranchIdx}) = ...
+                    branch_groups(1).branches(sourceBranchIdx).([associatedFieldNames{3}])(timeHits{sourceBranchIdx});
+                
                 % also do for normalized field
-                branch_groupsControl(1).branches(sourceBranchIdx).([FIELDPREFIX associatedFieldNames{3} CONTROLSUFFIX])(timeHits{sourceBranchIdx}) = ...
-                    branch_groups(1).branches(targetBranchIdx).([FIELDPREFIX associatedFieldNames{3}])(timeHits{targetBranchIdx});
+                branch_groupsControl(1).branches(targetBranchIdx).([FIELDPREFIX associatedFieldNames{3} CONTROLSUFFIX])(timeHits{targetBranchIdx}) = ...
+                    branch_groups(1).branches(sourceBranchIdx).([FIELDPREFIX associatedFieldNames{3}])(timeHits{sourceBranchIdx});
 
             end
 
@@ -494,6 +520,9 @@ else
         multipleComposite_corrControl(repeatIdx).composite_corrControl    = composite_corrControl;
         
     end
+    % re-activate warnings
+    warning('on'); 
+    % re-establish old plotting setting    
     p.dontmakeplots=oldSettingdontmakeplots;
 end
 
@@ -506,7 +535,10 @@ p.timeField = associatedFieldNames{1,1};
 % p.tauIndices = [-7:7]; %p.tauIndices = [-29:4:-1,0,1:4:30];
 if isfield(p,'tauIndices'), p=rmfield(p,'tauIndices'); end
 [dataPairsPerTau, iTausCalculated, originColorPerTau, correlationsPerTau] = ...
-    MW_getdelayedscatter(p, branchData, [FIELDPREFIX associatedFieldNames{1,2}], [FIELDPREFIX associatedFieldNames{1,3}], REDUNDANCYALLOWED)
+    MW_getdelayedscatter(p, branchData, [FIELDPREFIX associatedFieldNames{1,2}], [FIELDPREFIX associatedFieldNames{1,3}], REDUNDANCYALLOWED);
+
+% simple plot:
+% halfwayidx = (numel(iTausCalculated)+1)/2; figure; scatter(dataPairsPerTau{halfwayidx}(:,1), dataPairsPerTau{halfwayidx}(:,2))
 
 %% 
 if ~exist('NOTMEANSUBTRACTED','var')
@@ -564,40 +596,82 @@ end
 
 %% Plot "raw" cross cor I calculate (MW)
 
-myfig=figure(),clf,hold on;
-l=plot(iTausCalculated,correlationsPerTau,'o-r','LineWidth',2)
+myfig=figure(); clf; hold on;
+l=plot(iTausCalculated,correlationsPerTau,'o-r','LineWidth',2);
 
-%% Compare two cross-corrs (DJK & MW)
+%% Compare two cross-corrs (DJK & MW), also plot the control
+h5=figure(); clf; hold on;
 
-h5=figure(),clf,hold on;
+myColorsLS = linspecer(4); myColors = [0 0 0; myColorsLS(2,:); myColorsLS(1,:)];
+myColors = [0 0 0; 1 0 0; 0 70/255 170/255];
 
 % Plot control DJK cross correlation function
+% ===
 %errorbar(CorrDataControl(:,1),CorrDataControl(:,2),CorrDataControl(:,3),'x-','Color', [.5,.5,.5], 'LineWidth',2)
-if exist('CorrDataControl','var')
+    % myColorControl=[0 204 255]/255;  myColorControl=[0 85 212]/255;   myColorControl = myColors(3,:);
+    myColorControl = myColors(3,:);
+if exist('multipleCorrDataControl','var')
+    timeData= multipleCorrDataControl(1).CorrDataControl(:,1)';
+    myLineMean=nan(1,numel(timeData)); myLineMax=nan(1,numel(timeData)); myLineMin=nan(1,numel(timeData));
+    for idx=1:numel(timeData)
+        
+        % determine the line for each timepoint
+        valuesAtTau=arrayfun(@(idx2) [multipleCorrDataControl(idx2).CorrDataControl(idx,2)], 1:numel(multipleCorrDataControl));
+        myLineMean(idx) = mean(valuesAtTau);
+        myLineMax(idx)  = max(valuesAtTau);
+        myLineMin(idx)  = min(valuesAtTau);
+        
+        %l3=plot(multipleCorrDataControl(idx).CorrDataControl(:,1),multipleCorrDataControl(idx).CorrDataControl(:,2),...
+        %    '-','LineWidth',2,'Color',[.7 .7 .7])
+    end
+    lighterShadeColor=[.7 .7 .7]; %lighterShadeColor=min(1,[((myColorControl+.7))]);
+    for idx= 1:numel(multipleCorrDataControl)
+        
+        plot(multipleCorrDataControl(idx).CorrDataControl(:,1),multipleCorrDataControl(idx).CorrDataControl(:,2),...
+                '-','LineWidth',1,'Color', lighterShadeColor)
+    end
+    
+    % plot the line
+   l3=plot(timeData,myLineMean,'-',...
+       'LineWidth',2,'Color',myColorControl);
+   plot(timeData,myLineMax,'-',...
+       'LineWidth',2,'Color',myColorControl);
+   plot(timeData,myLineMin,'-',...
+       'LineWidth',2,'Color',myColorControl);
+
+    %{
     for idx=1:numel(multipleCorrDataControl)
         l3=plot(multipleCorrDataControl(idx).CorrDataControl(:,1),multipleCorrDataControl(idx).CorrDataControl(:,2),...
             '-','LineWidth',2,'Color',[.7 .7 .7])
     end
+    %}
 else
-    l3=plot(CorrDataControl(:,1),CorrDataControl(:,2),'x-b','LineWidth',2)
+    l3=plot(CorrDataControl(:,1),CorrDataControl(:,2),'x-','LineWidth',2,'Color',myColorControl)
 end
 
-% Plot DJK cross correlation function
-if size(CorrData,2)>2
-    errorbar(CorrData(:,1),CorrData(:,2),CorrData(:,3),'s-','Color', [.5,.5,.5], 'LineWidth',2)
-else
-    plot(CorrData(:,1),CorrData(:,2),'s-','Color', [.5,.5,.5], 'LineWidth',2)
-end
-l1=plot(CorrData(:,1),CorrData(:,2),'s-k','LineWidth',2)
-
+% Plot MW scatter cross correlation function
+% ===
 % Calculate appropriate x-axis assuming assuming same delta(x) as CorrData,
 % and dx is same everywhere.
 centerIdx=ceil(size(CorrData,1)/2);
 deltaXCorrData = CorrData(centerIdx+1,1)-CorrData(centerIdx,1);
 MWxAxis = iTausCalculated.*deltaXCorrData;
+% make the actual plot
+l2=plot(MWxAxis,correlationsPerTau,'o-','LineWidth',3,'MarkerFaceColor',myColors(2,:),'Color',myColors(2,:));
 
-% Plot MW cross correlation function
-l2=plot(MWxAxis,correlationsPerTau,'o-r','LineWidth',2)
+% Plot DJK cross correlation function
+% ===
+if size(CorrData,2)>2
+    % error bars from branchgroups
+    errorbar(CorrData(:,1),CorrData(:,2),CorrData(:,3),'s-','Color', myColors(1,:), 'LineWidth',2)
+end
+% line itself
+l1=plot(CorrData(:,1),CorrData(:,2),'s-','LineWidth',3,'MarkerFaceColor',myColors(1,:),'Color',myColors(1,:))
+
+% cosmetics
+% ===
+
+
 
 % If you recalculate correlations again w. different params, this allows
 % plotting of extra line.

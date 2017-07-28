@@ -27,15 +27,15 @@ function [branches, crossCov_composite, total_weight] = MW_getCrossCov(p, branch
 %   .(['crossCov_' fieldX '_' fieldY])    = covariance for different tau
 %                                           values between fieldX and
 %                                           fieldY
-%   .(['var_' fieldX])                    = variance first input field
-%   .(['var_' fieldY])                    = variance second input field
+%   .(['varX_' fieldX])                    = variance first input field
+%   .(['varY_' fieldY])                    = variance second input field
 %
 % 'crossCov_composite'  struct with
 %   .Y                      = calculated composite cross covariance for branches
 %   .X                      = corr time
-%   .['var_' fieldX]        = composite variance(fieldX,fieldX), 
+%   .['varX_' fieldX]        = composite variance(fieldX,fieldX), 
 %                             variance of first input field
-%   .['var_' fieldY]        = composite variance(fieldY,fieldY), 
+%   .['varY_' fieldY]        = composite variance(fieldY,fieldY), 
 %                             variance of second input field
 %                                   
 %
@@ -187,8 +187,8 @@ end
 crossCov_composite = struct;
 crossCov_composite.Y = zeros(1,length([-maxBranchLength+1:maxBranchLength-1]));
 crossCov_composite.X = interval * [-maxBranchLength+1:maxBranchLength-1];
-crossCov_composite.(['var_' fieldX]) = 0;
-crossCov_composite.(['var_' fieldY]) = 0;
+crossCov_composite.(['varX_' fieldX]) = 0;
+crossCov_composite.(['varY_' fieldY]) = 0;
 
 %% loop over different time-lags r
 
@@ -198,6 +198,7 @@ crossCov_composite.(['var_' fieldY]) = 0;
 total_weight  = zeros(1,numel(rs)); %total_w_count = zeros(1,numel(rs));
 for br = 1:length(branches)
       
+    %%
     X = branches(br).(fieldX);
     Y = branches(br).(fieldY);
 
@@ -310,8 +311,8 @@ for br = 1:length(branches)
         if r==0
             
             % calculate raw variance
-            branches(br).(['var_' fieldX]) = sum( X .* X);%  .* W) 
-            branches(br).(['var_' fieldY]) = sum( Y .* Y);%  .* W) 
+            branches(br).(['varX_' fieldX]) = sum( X .* X);%  .* W) 
+            branches(br).(['varY_' fieldY]) = sum( Y .* Y);%  .* W) 
             
             %branches(br).(['w_var_' fieldX]) = sum( X .* X .* W ) ;% ./ mean(W);                
             %branches(br).(['w_var_' fieldY]) = sum( Y .* Y .* W ) ;% ./ mean(W);
@@ -323,17 +324,17 @@ for br = 1:length(branches)
 %                 crossCov_composite.(['var_' fieldY]) = crossCov_composite.(['var_' fieldY]) + ...
 %                     sum( Y .* Y .* W)./(currentBranchLength-abs(r));
 %             else
-                crossCov_composite.(['var_' fieldX]) = crossCov_composite.(['var_' fieldX]) + ...
+                crossCov_composite.(['varX_' fieldX]) = crossCov_composite.(['varX_' fieldX]) + ...
                     sum( X .* X .* W);
-                crossCov_composite.(['var_' fieldY]) = crossCov_composite.(['var_' fieldY]) + ...
+                crossCov_composite.(['varY_' fieldY]) = crossCov_composite.(['varY_' fieldY]) + ...
                     sum( Y .* Y .* W);
 %             end
             
             % divide by nr of points contributing to sum
             if ~p.bias
                 % for branches
-                branches(br).(['var_' fieldX]) = branches(br).(['var_' fieldX])./(currentBranchLength-abs(r)); % /(N_{contributing points})
-                branches(br).(['var_' fieldY]) = branches(br).(['var_' fieldY])./(currentBranchLength-abs(r));
+                branches(br).(['varX_' fieldX]) = branches(br).(['varX_' fieldX])./(currentBranchLength-abs(r)); % /(N_{contributing points})
+                branches(br).(['varY_' fieldY]) = branches(br).(['varY_' fieldY])./(currentBranchLength-abs(r));
             end
             
         end
@@ -350,8 +351,8 @@ end
 
 halfwayIdx=maxBranchLength; % where r=0.
 crossCov_composite.Y = crossCov_composite.Y ./ total_weight;
-crossCov_composite.(['var_' fieldX]) = crossCov_composite.(['var_' fieldX]) ./ total_weight(halfwayIdx);
-crossCov_composite.(['var_' fieldY]) = crossCov_composite.(['var_' fieldY]) ./ total_weight(halfwayIdx);
+crossCov_composite.(['varX_' fieldX]) = crossCov_composite.(['varX_' fieldX]) ./ total_weight(halfwayIdx);
+crossCov_composite.(['varY_' fieldY]) = crossCov_composite.(['varY_' fieldY]) ./ total_weight(halfwayIdx);
 
 % Note that dividing by N_{contributing points} not needed here since
 % weighing implicitly does this already. -MW
@@ -362,6 +363,7 @@ crossCov_composite.(['var_' fieldY]) = crossCov_composite.(['var_' fieldY]) ./ t
 % --------------------------------------------------------------------------
 % In case of autocorrelation, only return [0 ->]
 % --------------------------------------------------------------------------
+
 % check whether we're dealing with an autocorrelation
 % if p.rzeroonly, already doing only 0
 if strcmp(fieldX, fieldY) & ~p.rzeroonly
@@ -380,13 +382,14 @@ if strcmp(fieldX, fieldY) & ~p.rzeroonly
     idx = find(branches(br).corr_time==0); % MW 2014/07/30 neater code
     
     % Select only values from X=0 to X(end).
-    branches(br).corr_time = branches(br).corr_time(idx:end); % MW 2014/07/30 neater code
+    branches(br).corr_time     = branches(br).corr_time(idx:end); % MW 2014/07/30 neater code
     branches(br).(targetField) = branches(br).(targetField)(idx:end); % MW 2014/07/30 neater code
        
   end 
   
 end
 % --------------------------------------------------------------------------
+
 
 %%
 %{

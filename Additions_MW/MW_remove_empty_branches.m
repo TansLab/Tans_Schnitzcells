@@ -13,7 +13,7 @@ if ~exist('N', 'var')
 end
 
 %% Count branches
-numelBranches = arrayfun(@(x) numel(x.schnitzNrs),branches)
+numelBranches = arrayfun(@(x) numel(x.schnitzNrs),branches);
 
 %% Select branches that are longer than N
 branches_nonempty = branches(numelBranches>N);

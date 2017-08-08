@@ -163,6 +163,9 @@ for iTau = p.tauIndices
     if iTau < 0, startOfDomain = startOfDomain-iTau; end % handle negative tau
     schnitzUsedPastLoop1 = 0; schnitzUsedPastLoop2 = 0;
     for iTime = endOfDomain:-1:startOfDomain % reverse loop
+        % note the loop is reversed since we want to back-track the
+        % lineage; This changes the chronology, but I don't think that
+        % matters anywhere.
 
         % which schnitzes are we going to use?
         schnitzUsed1 = schnitzesInBranch(iTime);
@@ -206,7 +209,7 @@ for iTau = p.tauIndices
         % MW TODO!
         % redundancyDatapoint = branches(br).count(XX) + branches(br).count(XX);
         
-        % Color code for datapoint to know from which schnitzes it came
+        % Color code for datapoint to know from which lineage it came
         currentOriginColor = lineageColormap(br,:);
         
         % collect a pair
@@ -225,6 +228,11 @@ for iTau = p.tauIndices
 
   end % end branch loop
 
+  % in case chronology does matter, one could fix this by reversing the
+  % order (untested code)
+  %pairCollectionForTau=fliplr(pairCollectionForTau);
+  %originCollectionForTau=fliplr(originCollectionForTau);
+  
   % Calculate covariance for this tau value
   correlationThisTau = corr(pairCollectionForTau(:,1),pairCollectionForTau(:,2));
   

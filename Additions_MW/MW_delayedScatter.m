@@ -211,7 +211,7 @@ s_rm = MW_calculateframe_nrs(s_rm); % backwards compatibility fix
 fitTime = fitTime + [2 -2];
 
 branchData = MW_getBranches(p,s_rm,'dataFields',{associatedFieldNames{1}, associatedFieldNames{2}, associatedFieldNames{3} }, 'fitTime', fitTime); 
-    % set p.sameLength=0 to not care about equal lengths
+    % set p.sameLength=0 to take all (unequally long) branches into account
 name_rm_branch = [name_rm '_' num2str(fitTime(1)) '_' num2str(fitTime(2)) '_Conc_oldRates'];
 
 
@@ -408,51 +408,104 @@ end
 [CorrData,composite_corr] = DJK_plot_crosscorrelation_standard_error_store(p, branch_groups, [FIELDPREFIX associatedFieldNames{1,2}],[FIELDPREFIX associatedFieldNames{1,3}] ,'selectionName',name_rm_branch,'timeField',associatedFieldNames{1},'onScreen',ONSCREEN); 
 
 %% Create negative control 
+clear multipleCorrDataControl
+NUMCONTROLS=50;
 
 % Create a control branch structure
 if p.sameLength==1
-    % For negative control, combine growth rates and fluor signal traces randomly
-    % control one becomes equal to original
-    branch_groupsControl = branch_groups;
-    for groupIdx=1:numel(branch_groups)
+    %% For negative control, combine growth rates and fluor signal traces randomly    
+    % ===
+    
+    multipleCorrDataControl=struct; multipleComposite_corrControl=struct;
+    if isfield(p,'dontmakeplots'), oldSettingdontmakeplots = p.dontmakeplots; else, oldSettingdontmakeplots=0; end
+    p.dontmakeplots=1;
+    % actually, get 100 negative controls here..    
+    for repeatIdx= 1:NUMCONTROLS
 
-        % Clear last field (which is field that's going to be scrambled)
-        branch_groupsControl(groupIdx).(associatedFieldNames{1,3}) = [];
-        branch_groupsControl(groupIdx).([FIELDPREFIX associatedFieldNames{1,3}]) = [];
-
-        % Get original data for last field
-        data = {branch_groups(groupIdx).branches(:).(associatedFieldNames{1,3})};
-        % Randomize data for last field
-        randomizeddata = {data{randperm(numel(data))}};
-
-        % Repeat above for noise_(..) fields
-        % Get original data for last field
-        noisedata = {branch_groups(groupIdx).branches(:).([FIELDPREFIX associatedFieldNames{1,3}])};
-        % Randomize data for last field
-        noiserandomizeddata = {noisedata{randperm(numel(noisedata))}};
-
-        % for each branch
-        for i=1:numel(branch_groups(groupIdx).branches)
-
-            % set to randomized lineages within that branch
-            branch_groupsControl(groupIdx).branches(i).([associatedFieldNames{1,3} CONTROLSUFFIX]) = ...
-                randomizeddata{i};
-
-            % set to randomized lineages within that branch
-            branch_groupsControl(groupIdx).branches(i).([FIELDPREFIX associatedFieldNames{1,3} CONTROLSUFFIX]) = ...
-                noiserandomizeddata{i};
+        if mod(repeatIdx,10)==0
+            disp(['Running controls, now at ' num2str(repeatIdx) '/' num2str(NUMCONTROLS) '.']);
         end
+        
+        % Suppress too many messages after 1st loop
+        if repeatIdx==2
+            warning('off')
+        end
+        
+        % First initialize copy
+        branch_groupsControl = branch_groups;
+
+       % create a list like dataIdx(i) = [branchGroupIdx; branchIdx] that 
+       % tells us where a certain branch i is located
+       branchLocations=[];
+       for grIdx = 1:numel(branch_groupsControl)
+            branchLocations = [branchLocations ...            
+                [grIdx.*ones(1,numel(branch_groupsControl(grIdx).branches));
+                1:numel(branch_groupsControl(grIdx).branches)]
+            ];
+       end
+
+       % now create a random permutation of these branches
+       reshuffleIdxs = randperm(size(branchLocations,2));
+
+       % Now reshuffle the branches
+       for brIdx = 1:numel(reshuffleIdxs)
+            randomSourceIdx = branchLocations(:,reshuffleIdxs(brIdx));
+            branch_groupsControl(branchLocations(1,brIdx)).branches(branchLocations(2,brIdx)).([FIELDPREFIX associatedFieldNames{3} CONTROLSUFFIX]) = ...
+                branch_groupsControl(randomSourceIdx(1)).branches(randomSourceIdx(2)).([FIELDPREFIX associatedFieldNames{3}]);
+       end
+
+        %{
+        % For negative control, combine growth rates and fluor signal traces randomly
+        % control one becomes equal to original
+        branch_groupsControl = branch_groups;    
+        for groupIdx=1:numel(branch_groups)
+
+            % Clear last field (which is field that's going to be scrambled)
+            branch_groupsControl(groupIdx).(associatedFieldNames{1,3}) = [];
+            branch_groupsControl(groupIdx).([FIELDPREFIX associatedFieldNames{1,3}]) = [];
+
+            % Get original data for last field
+            data = {branch_groups(groupIdx).branches(:).(associatedFieldNames{1,3})};
+            % Randomize data for last field
+            randomizeddata = {data{randperm(numel(data))}};
+
+            % Repeat above for noise_(..) fields
+            % Get original data for last field
+            noisedata = {branch_groups(groupIdx).branches(:).([FIELDPREFIX associatedFieldNames{1,3}])};
+            % Randomize data for last field
+            noiserandomizeddata = {noisedata{randperm(numel(noisedata))}};
+
+            % for each branch
+            for i=1:numel(branch_groups(groupIdx).branches)
+
+                % set to randomized lineages within that branch
+                branch_groupsControl(groupIdx).branches(i).([associatedFieldNames{1,3} CONTROLSUFFIX]) = ...
+                    randomizeddata{i};
+
+                % set to randomized lineages within that branch
+                branch_groupsControl(groupIdx).branches(i).([FIELDPREFIX associatedFieldNames{1,3} CONTROLSUFFIX]) = ...
+                    noiserandomizeddata{i};
+            end
+        end
+        %}
+        % Calculate the cross-correlation
+        [CorrDataControl, composite_corrControl] = DJK_plot_crosscorrelation_standard_error_store(p, branch_groupsControl, [FIELDPREFIX associatedFieldNames{1,2}],[FIELDPREFIX associatedFieldNames{1,3} CONTROLSUFFIX] ,'selectionName',name_rm_branch,'timeField',associatedFieldNames{1},'onScreen',ONSCREEN); 
+    
+        % save them
+        multipleCorrDataControl(repeatIdx).CorrDataControl                = CorrDataControl;
+        multipleComposite_corrControl(repeatIdx).composite_corrControl    = composite_corrControl;
+        
     end
     
-    % Calculate the cross-correlation
-    [CorrDataControl, composite_corrControl] = DJK_plot_crosscorrelation_standard_error_store(p, branch_groupsControl, [FIELDPREFIX associatedFieldNames{1,2}],[FIELDPREFIX associatedFieldNames{1,3} CONTROLSUFFIX] ,'selectionName',name_rm_branch,'timeField',associatedFieldNames{1},'onScreen',ONSCREEN); 
-    
+    % re-activate warnings
+    warning('on'); 
+    % re-establish old plotting setting    
+    p.dontmakeplots=oldSettingdontmakeplots;
 else
     multipleCorrDataControl=struct; multipleComposite_corrControl=struct;
     if isfield(p,'dontmakeplots'), oldSettingdontmakeplots = p.dontmakeplots; else, oldSettingdontmakeplots=0; end
     p.dontmakeplots=1;
     % actually, get 100 negative controls here..
-    NUMCONTROLS=20;
     for repeatIdx= 1:NUMCONTROLS
 
         if mod(repeatIdx,10)==0
@@ -625,10 +678,17 @@ if exist('multipleCorrDataControl','var')
         %    '-','LineWidth',2,'Color',[.7 .7 .7])
     end
     lighterShadeColor=[.7 .7 .7]; %lighterShadeColor=min(1,[((myColorControl+.7))]);
-    for idx= 1:numel(multipleCorrDataControl)
+    for idx= 1:3%numel(multipleCorrDataControl)
         
-        plot(multipleCorrDataControl(idx).CorrDataControl(:,1),multipleCorrDataControl(idx).CorrDataControl(:,2),...
+        lSc=plot(multipleCorrDataControl(idx).CorrDataControl(:,1),multipleCorrDataControl(idx).CorrDataControl(:,2),...
                 '-','LineWidth',1,'Color', lighterShadeColor)
+        
+        % highlight some lines
+        %{
+        if any(idx==[numel(multipleCorrDataControl)-2:numel(multipleCorrDataControl)])
+            set(lSc, 'Color', myColorControl);
+        end
+        %}
     end
     
     % plot the line
@@ -850,9 +910,11 @@ for branchIdx = 1:numelBranches
     
     % Get correlations per branch
     [RThisBranch, tauThisBranch] = xcorr(...
-        field1Data, ...
         field2Data, ...
+        field1Data, ...        
         MAXLAGS,'coeff');
+        % for some reason the X and Y are inverted in xcorr function, see
+        % example in documentation.
     
     l = plot(tauThisBranch, RThisBranch,'-','Color',distinguishableColors(branchIdx,:));
     %set(l, 'LineWidth', (numelBranches-branchIdx+1)/numelBranches*10);

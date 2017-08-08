@@ -53,7 +53,7 @@ if isfield(p,'override') % backwards compatibility
     p.overwrite=p.override;
 end
 
-if isfield(p,'skipFramesWithProblems') % backwards compatibility
+if ~isfield(p,'skipFramesWithProblems') % backwards compatibility
     p.skipFramesWithProblems= 0;
 end
 

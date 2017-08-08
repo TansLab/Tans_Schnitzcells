@@ -122,7 +122,7 @@ end
 % for testing purposes one can manually set these fields when p and
 % branches are loaded from a dataset:
 % fieldX = 'C6_mean_cycCor'; fieldY = 'muP9_fitNew_cycCor'; p.timeField ='C_time'
-% fieldX = [FIELDPREFIX associatedFieldNames{2}]; fieldY=[FIELDPREFIX associatedFieldNames{3}]; p.timeField = [associatedFieldNames{1}];
+% fieldX = [FIELDPREFIX associatedFieldNames{2}]; fieldY=[FIELDPREFIX associatedFieldNames{3}]; p.timeField = [associatedFieldNames{1}]; p.bias=0; branches=branch_groups(1).branches; p.spacingError=0.05; p.weighing=1;
 
 % Obtain the actual cross-correlations, variance and composite thereof:
 % Note that the following settings will set the method to calculate the

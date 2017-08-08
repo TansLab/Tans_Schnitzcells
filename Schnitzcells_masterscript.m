@@ -69,6 +69,7 @@ if ~exist('runsections','var') || strcmp(runsections, 'none')
 
     runsections = 'none';
     GUIHandle = MW_GUI_schnitzcells
+    ranFromGUI=1;
 
 end
 
@@ -88,9 +89,14 @@ end
 % declaration of necessary global paramteters (for running from GUI)
 global p ourSettings
 
+% If not set yet, set flag that you don't run from GUI
+if ~exist('ranFromGUI','var')
+    ranFromGUI=0;
+end
+
 % In case you DO NOT want to run from GUI, the following code is
 % automatically executed when runsections is not set by the GUI
-if ~exist('runsections', 'var')
+if ~ranFromGUI
             
     % Parameters to set
     % ==
@@ -101,20 +107,18 @@ if ~exist('runsections', 'var')
         ourSettings.analysisType = 'full';
     end   
 
-    % Set the runsections parameter appropriately
-    if strcmp(ourSettings.analysisType, 'preliminary')
-        runsections = 'allpreliminary'; % all is default
-    elseif strcmp(ourSettings.analysisType, 'full')
-        runsections = 'allfull';        
+    % If not manually determined, set the runsections parameter appropriately
+    if ~exist('runsections','var')
+        if strcmp(ourSettings.analysisType, 'preliminary')
+            runsections = 'allpreliminary'; % all is default
+        elseif strcmp(ourSettings.analysisType, 'full')
+            runsections = 'allfull';        
+        end
     end
     
     % (re)load data at end of analysis from disk if set to 1.
     LOADDATASETATEND = 1;
-    
-    % Signal to script whether has been run from GUI
-    ranFromGUI = 0;
-else
-    ranFromGUI = 1;
+       
 end
 
 % Parameters you should NOT change
@@ -1152,6 +1156,7 @@ if any(strcmp(runsections,{'allfull', 'makeoutputfull', 'rerunfullanalysis'})) %
         %% create autocorrelation functions R(Y, Y)
         % ===
         PLOTSCATTER=0; % activate to plot all scatter plots
+        addSlowOnes=0; % the third field is not mu any more
         
         % Set up appropriate field names
 
@@ -1200,6 +1205,36 @@ if any(strcmp(runsections,{'allfull', 'makeoutputfull', 'rerunfullanalysis'})) %
         output.rateMean{fluorIdx} = theMean; 
         output.rateStd{fluorIdx} = theStd;
     
+        %% R(prod, E): cross-correlations within same fluor between production and concentation
+        % This might be particularly usefull for detecting feedback
+        PLOTSCATTER=0;
+        addSlowOnes=0; % the third field is not mu any more
+        
+        % The concentration field has more datapoint than the rate
+        % field, due the nature of how the derivative is calculated.
+        
+        % Therefor, gather the applicable concentration field values based
+        % on the time vectors of the dX field.
+        someSuffix   = ['_at_d' ourSettings.theLetters(fluorIdx)];
+        if ~isfield(schnitzcells, [ourSettings.fieldNamesWithFluorLetter(fluorIdx).fluorFieldName '_at_d' ourSettings.theLetters(fluorIdx)])
+            %%
+            disp('Preparing additional concentration field');
+            schnitzcellsPath    = ourSettings.myDataFile;
+            timeFieldSelection  = ourSettings.fieldNamesWithFluorLetter(fluorIdx).timeFieldNameDerivative;
+            timeFieldSource     = ourSettings.fieldNamesWithFluorLetter(fluorIdx).timeFieldName;
+            sourceField         = ourSettings.fieldNamesWithFluorLetter(fluorIdx).fluorFieldName;            
+            schnitzcells = MW_addToSchnitzes_fieldYatTime(schnitzcellsPath,timeFieldSelection, timeFieldSource, sourceField, someSuffix);
+        end
+        
+        associatedFieldNames = {ourSettings.fieldNamesWithFluorLetter(fluorIdx).timeFieldNameDerivative, [ourSettings.fieldNamesWithFluorLetter(fluorIdx).fluorFieldName someSuffix], ourSettings.fieldNamesWithFluorLetter(fluorIdx).fluorDerivativeFieldName};
+        % execute analysis scripts
+        MW_delayedScatter
+        % rename for later use
+        output.rateConcentrationCC{fluorIdx} = CorrData; 
+        output.rateConcentrationCCFieldNames{fluorIdx} = associatedFieldNames; 
+        output.rateConcentrationCCBadschnitzes{fluorIdx} = badSchnitzes;                 
+        
+        
         %% Create cross-correlation functions for fluorescent colors
         disp('Making crosscorrs for color vs. color');
         
@@ -1228,6 +1263,30 @@ if any(strcmp(runsections,{'allfull', 'makeoutputfull', 'rerunfullanalysis'})) %
             output.rateDualCrossFieldNames{dualCounter}     = associatedFieldNames; 
             output.rateDualCrossBadSchnitzes{dualCounter}   = badSchnitzes; 
             
+            %% rate fluor N vs concentration fluor M
+            % Note that we can look at 
+            % Concentration_N -> production_N (make sense to observe feedback system)
+            % Production_N -> Concentration_N
+            % Concentration_N -> production_M (makes sense for ribosomes)
+            % Concentration_M -> production_N
+            % Production_M -> Concentration_N (doesn't seem applicable yet)
+            % Production_N -> Concentration_M
+            
+            % TODO: Add code below to analyze the N,M correlations (see
+            % above for correlations of between the same protein in
+            % production and concentration).
+            
+            %{
+            associatedFieldNames = {ourSettings.fieldNamesWithFluorLetter(fluorIdx).timeFieldNameDerivative, ourSettings.fieldNamesWithFluorLetter(fluorIdx).fluorDerivativeFieldName, ourSettings.fieldNamesWithFluorLetter(fluorIdx2).fluorFieldName};                    
+            
+            % execute analysis scripts
+            MW_delayedScatter
+            MW_autoCorr_corrtime_and_fitExponential        
+            % rename for later use
+            output.rateDualCrossCorrData{dualCounter}       = CorrData; 
+            output.rateDualCrossFieldNames{dualCounter}     = associatedFieldNames; 
+            output.rateDualCrossBadSchnitzes{dualCounter}   = badSchnitzes; 
+            %}
         end
         end
     end

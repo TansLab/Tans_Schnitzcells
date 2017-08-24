@@ -111,7 +111,7 @@ for i = 1:nrImages
 end
 
 %% plot all histograms
-figure; clf; 
+h1=figure; clf; 
 subplot(2,1,1); hold on;
 xlabel('Intensity distribution raw imgs');
 ylabel('Count');
@@ -164,7 +164,7 @@ RBGmedianImage2 = repmat(medianImage2,[1 1 3]);
 %}
 
 %% show histogram of the three created imgs
-figure; clf; hold on;
+h2=figure; clf; hold on;
 [myMedianHist1, xMedianHist1] = hist(medianImage1(:),ourSettings.histN);
 [myMedianHist2, xMedianHist2] = hist(medianImage2(:),ourSettings.histN);
 [myMedianHistAll, xMedianHistAll] = hist(medianImageAll(:),ourSettings.histN);
@@ -179,7 +179,7 @@ set(findall(gcf,'type','text'),'FontSize',15,'fontWeight','normal'); set(gca,'Fo
 
 
 %% show images
-figure(); clf; hold on; 
+h3=figure(); clf; hold on; 
 subplottight(1,3,1);
 imshow(medianImage1,[]); title('based subset uneven');
 subplottight(1,3,2);
@@ -193,7 +193,7 @@ set(findall(gcf,'type','text'),'FontSize',15,'fontWeight','normal'); set(gca,'Fo
 deviationImage = medianImage1./medianImage2;
 
 % create histogram of that and show user
-figure; 
+h4=figure; 
 [myDevHist1, xDevHist1] = hist(deviationImage(:),ourSettings.histN);
 plot(xDevHist1, myDevHist1,'.-');
 xlim([0.8,1.2]);
@@ -204,6 +204,18 @@ set(findall(gcf,'type','text'),'FontSize',15,'fontWeight','normal'); set(gca,'Fo
 
 %% Final output   
 outputImage = medianImageAll;
+
+if isfield(ourSettings,'figDir') & isfield(ourSettings,'figName')
+    saveas(h1,[ourSettings.figDir ourSettings.figName 'fig1.fig']); 
+    saveas(h2,[ourSettings.figDir ourSettings.figName 'fig2.fig']); 
+    saveas(h3,[ourSettings.figDir ourSettings.figName 'fig3.fig']); 
+    saveas(h4,[ourSettings.figDir ourSettings.figName 'fig4.fig']); 
+    
+    saveas(h1,[ourSettings.figDir ourSettings.figName 'fig1.svg']); 
+    saveas(h2,[ourSettings.figDir ourSettings.figName 'fig2.svg']); 
+    saveas(h3,[ourSettings.figDir ourSettings.figName 'fig3.svg']); 
+    saveas(h4,[ourSettings.figDir ourSettings.figName 'fig4.svg']);
+end
 
 end
     

@@ -5,6 +5,7 @@ function [myTraces] = MW_gettracefromschnitzcellsreverse(schnitzcells,lastSchnit
 %   schnitzcells    standard schnitzcells struct
 %   lastSchnitzes   the schnitzes with which your traces of interest end
 %                   e.g. [100,110,150]
+%                   Leave empty, i.e. [], to automatically take all ends
 %   timeField       the field that should be used for time data
 %                   e.g. 'time'
 %   yFields         the fields of interest for which you want values
@@ -19,6 +20,12 @@ function [myTraces] = MW_gettracefromschnitzcellsreverse(schnitzcells,lastSchnit
 %     myTraces(i).('YOURFIELD')         values of the fields you supplied in yFields
 
 
+%% Initialize
+
+% Take all last schnitzes if none are given
+if isempty(lastSchnitzes)
+   lastSchnitzes = find([schnitzcells.D]==0);
+end
 
 %% Create schnitz lineage tree
 myTraces=struct;

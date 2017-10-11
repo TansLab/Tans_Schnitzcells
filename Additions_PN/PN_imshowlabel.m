@@ -509,7 +509,7 @@ end
 if isfield(p,'showLargeCentroids')
     if p.showLargeCentroids & exist('centroidsraw','var')
             hold on; plot(centroidsraw(:,1),centroidsraw(:,2),'o','Color',[.7 .7 .7]);
-            pad_motion
+            % pad_motion
             hold on; plot(centroidsraw(:,1) + pad_motion(1), centroidsraw(:,2) + pad_motion(2),'o','Color',[1 1 1]);
     end
 end

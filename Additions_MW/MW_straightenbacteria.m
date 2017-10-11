@@ -75,12 +75,28 @@ end
 %% Prepare output parameters
 allskeletonDistance         = {};
 allrawFluor                 = {};
+allbacterialWidthPixels           = {};
 fluorInterpolatedValues     = {};
 allpeakXPixels              = {};
 allpeakXMicrons             = {};
 allpeakX                    = {};
 allpeakY                    = {};
 allpeakIndices              = {};
+
+%%
+if extraOutput
+    h104=figure();
+else
+    h104=figure('Visible','off');
+    %set(h104,'Visible','off');
+end
+
+if extraOutput
+    h105=figure();
+else
+    h105=figure('Visible','off');
+    %set(h105,'Visible','off');
+end
 
 %% Loop over all frames
 lastFrame=frameRange(end);
@@ -105,7 +121,7 @@ for framenr = frameRange
     load ([p.segmentationDir p.movieName 'seg' sprintf('%03d',framenr) '.mat']);%,'Lc');    
         % Important contents is Lc, which respectively hold the
         % checked segmentation, and the fluorescence image, 
-        
+    segImg = Lc>0;
     
     %% Prepare loop over cellno's in this frame
     
@@ -114,13 +130,15 @@ for framenr = frameRange
     allCellnos = transpose(unique(Lc(nonZeroIndices)));
     highestCellno = max(allCellnos);
     % Prepare output paramers    
-    skeletonDistanceThisFrame = cell(1,highestCellno);
-    rawFluorThisFrame         = cell(1,highestCellno);
-    fluorInterpolatedValues   = cell(1,highestCellno);
-    peakXPixelsThisFrame      = cell(1,highestCellno);
-    peakXMicronsThisFrame     = cell(1,highestCellno);
-    peakYThisFrame            = cell(1,highestCellno);
-    peakIndicesThisFrame      = cell(1,highestCellno);
+    skeletonDistanceThisFrame       = cell(1,highestCellno);
+    rawFluorThisFrame               = cell(1,highestCellno);
+    bacterialWidthThisFrame         = cell(1,highestCellno);
+    bacterialWidthThisFrameMicrons  = cell(1,highestCellno);
+    fluorInterpolatedValues         = cell(1,highestCellno);
+    peakXPixelsThisFrame            = cell(1,highestCellno);
+    peakXMicronsThisFrame           = cell(1,highestCellno);
+    peakYThisFrame                  = cell(1,highestCellno);
+    peakIndicesThisFrame            = cell(1,highestCellno);
     
     disp(['    > ' num2str(highestCellno) ' cell(s) in this frame']);
     
@@ -279,27 +297,33 @@ for framenr = frameRange
 
         straightenedBacterium       = NaN(intAverageBacterialWidth,nrIndicesInSkelet-1);
         straightenedBacteriumFluor  = NaN(intAverageBacterialWidth,nrIndicesInSkelet-1);
+        straightenedBacteriumSeg    = NaN(intAverageBacterialWidth,nrIndicesInSkelet-1);
         theSizeBacteriaImage        = size(phsub); % size ph = size fluor        
         
         for i = 1:(nrIndicesInSkelet-1)
             %straightenedBacterium(:,i) = phsub(sub2ind(theSizeBacteriaImage,tangentialLinesAllCoordsX(i,:)+minX,tangentialLinesAllCoordsY(i,:)+minY));
             straightenedBacterium(:,i)      = phsub   (sub2ind(theSizeBacteriaImage,tangentialLinesAllCoordsX(i,:)+currentminY,tangentialLinesAllCoordsY(i,:)+currentminX));
             straightenedBacteriumFluor(:,i) = fluorImg(sub2ind(theSizeBacteriaImage,tangentialLinesAllCoordsX(i,:)+currentminY,tangentialLinesAllCoordsY(i,:)+currentminX));
+            straightenedBacteriumSeg(:,i)   = segImg(sub2ind(theSizeBacteriaImage,tangentialLinesAllCoordsX(i,:)+currentminY,tangentialLinesAllCoordsY(i,:)+currentminX));
         end
 
+        %{
         if extraOutput
-            figure(104); clf;
+            figure(h104); clf;
         else
-            h=figure(104);
+            h=figure(h104);
             set(h,'Visible','off'); clf;
         end        
+        %}
         
         distanceTangentials = currentDistanceAlongSkeleton-currentSpacingInSkeleton./2;        
         fluorIntensity = mean(straightenedBacteriumFluor);
+        bacterialWidth = sum(straightenedBacteriumSeg);
         
         %% Now create the distance-corrected straightened bacterium
         newXaxis = [ceil(distanceTangentials(1))+1:floor(distanceTangentials(end))-1];
-        interpolatedFluorvalues = NaN(1,numel(newXaxis));
+        interpolatedFluorValues = NaN(1,numel(newXaxis));
+        interpolatedWidthValues = NaN(1,numel(newXaxis));
         for i = 1:numel(newXaxis)
             x = newXaxis(i);
             % first element to the left of this x            
@@ -312,15 +336,20 @@ for framenr = frameRange
             DY = fluorIntensity(rightIndex)-fluorIntensity(leftIndex);
             DX = distanceTangentials(rightIndex)-distanceTangentials(leftIndex);
             dxprime = x-distanceTangentials(leftIndex);
-            interpolatedFluorvalues(i) = fluorIntensity(leftIndex)+(DY/DX)*dxprime;
+            interpolatedFluorValues(i) = fluorIntensity(leftIndex)+(DY/DX)*dxprime;
+            % Determine interpolated value for width
+            DY = bacterialWidth(rightIndex)-bacterialWidth(leftIndex);
+            interpolatedWidthValues(i) = bacterialWidth(leftIndex)+(DY/DX)*dxprime;
         end
         
         % Calculate peak parameters        
-        [peakindexes, peakys] = peakfinder(interpolatedFluorvalues);
+        [peakindexes, peakys] = peakfinder(interpolatedFluorValues);
         peakxs = newXaxis(peakindexes);
         
         %% Create plot
         % ===
+        set(0, 'currentfigure', h104); clf;
+        
         subplot(3,1,1);
         imshow(straightenedBacterium,[]);
         %===
@@ -350,12 +379,13 @@ for framenr = frameRange
         %}
         % == distance-corrected 
         subplot(3,1,3);
-        plot(newXaxis,interpolatedFluorvalues,'.','LineWidth',3); hold on;
+        plot(newXaxis,interpolatedFluorValues,'.','LineWidth',3); hold on;
         xlim([0,max(currentDistanceAlongSkeleton)]);
         %ylim([min(currentdistanceAlongSkeleton),max(currentdistanceAlongSkeleton)]);
-        ylim([0,max(interpolatedFluorvalues)*1.1])
-        xlabel('pixels');
-        ylabel('mean fluor (a.u.)');      
+        if any(interpolatedFluorValues>0)
+            ylim([0,max(interpolatedFluorValues)*1.1])        
+        end
+        xlabel('pixels'); ylabel('mean fluor (a.u.)');      
         plot(peakxs, peakys,'o','MarkerSize',10,'LineWidth',3);
         %plot(peakindexes, peakys,'o','MarkerSize',10,'LineWidth',3);
         MW_makeplotlookbetter(20);
@@ -363,24 +393,42 @@ for framenr = frameRange
         saveLocation = [outputDir p.movieDate p.movieName '_straightenedPlot_' fluorColor '_fr' sprintf('%03d',framenr) 'cell' sprintf('%03d',cellno)];
         saveas(gca, [saveLocation '.tif']);
     
+        %% Figure of straightened segmentation                        
+        set(0, 'currentfigure', h105); clf;
         
-        
-        
+        subplot(4,1,1);
+        imshow(straightenedBacterium,[]);
+        subplot(4,1,2);
+        imshow(straightenedBacteriumSeg, []);
+        subplot(4,1,3)                 
+        plot(bacterialWidth,'-','LineWidth',2);
+        xlabel('Bacterial axis (px)'); ylabel('Width (px)');     
+        subplot(4,1,4)
+        plot(newXaxis.*p.micronsPerPixel,interpolatedWidthValues.*p.micronsPerPixel,'-','LineWidth',2);                        
+        ylim([0,1]);
+        xlabel('Bacterial axis (?m)'); ylabel('Width (?m)');      
+        MW_makeplotlookbetter(12);
+        saveLocation = [outputDir p.movieDate p.movieName '_straightenedSegPlot_fr' sprintf('%03d',framenr) 'cell' sprintf('%03d',cellno)];
+        saveas(h105, [saveLocation '.tif']);
         
         %% /
     
-        skeletonDistanceThisFrame{cellno} = currentDistanceAlongSkeleton;
-        rawFluorThisFrame{cellno}         = fluorIntensity;
-        fluorInterpolatedValues{cellno}   = interpolatedFluorvalues;
-        peakIndicesThisFrame{cellno}      = peakindexes;
-        peakXPixelsThisFrame{cellno}      = peakxs;
-        peakXMicronsThisFrame{cellno}     = peakxs*p.micronsPerPixel;
-        peakYThisFrame{cellno}            = peakys;
+        skeletonDistanceThisFrame{cellno}      = currentDistanceAlongSkeleton;
+        rawFluorThisFrame{cellno}              = fluorIntensity;
+        bacterialWidthThisFrame{cellno}        = bacterialWidth;
+        bacterialWidthThisFrameMicrons{cellno} = bacterialWidth.*p.micronsPerPixel;        
+        fluorInterpolatedValues{cellno}        = interpolatedFluorValues;
+        peakIndicesThisFrame{cellno}           = peakindexes;
+        peakXPixelsThisFrame{cellno}           = peakxs;
+        peakXMicronsThisFrame{cellno}          = peakxs*p.micronsPerPixel;
+        peakYThisFrame{cellno}                 = peakys;
         
     end
      
     allskeletonDistance{framenr} = skeletonDistanceThisFrame;
     allrawFluor{framenr}            = rawFluorThisFrame;
+    allbacterialWidthPixels{framenr}   = bacterialWidthThisFrame;
+    allbacterialWidthMicrons{framenr}   = bacterialWidthThisFrameMicrons;
     allFluorInterpolatedValues{framenr}   = fluorInterpolatedValues;
     allpeakIndices{framenr}      = peakIndicesThisFrame;
     allpeakXPixels{framenr}      = peakXPixelsThisFrame;
@@ -395,11 +443,11 @@ for framenr = frameRange
     
 end
 
-% Save data for later processing
+%% Save data for later processing
 saveLocationMatFile = [outputDir p.movieDate p.movieName '_straightFluorData.mat'];
     save(saveLocationMatFile,...
         'allskeletonDistance', 'allrawFluor', 'allFluorInterpolatedValues', 'allpeakXPixels',...
-        'allpeakXMicrons', 'allpeakY');
+        'allpeakXMicrons', 'allpeakY', 'allbacterialWidthPixels', 'allbacterialWidthMicrons');   
 
 disp(['Completely done straightening. Data saved to ' saveLocationMatFile]);    
     

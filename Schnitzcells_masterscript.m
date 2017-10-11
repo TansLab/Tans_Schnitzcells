@@ -65,6 +65,8 @@
 %% Run this section to start the GUI interface
 % (Press ctrl+enter when cursor is here.)
 
+global ranFromGUI
+
 if ~exist('runsections','var') || strcmp(runsections, 'none')
 
     runsections = 'none';
@@ -364,7 +366,7 @@ end
 % has failed, you can execute this code that allows you to redo that frame
 % with different parameters.
 
-if any(strcmp(runsections,{'redosegforframe'}))   
+if any(strcmp(runsections,{'redosegforframe'}))       
     if ~ranFromGUI
         % EDIT PARAMETERS HERE IF MANUALLY REDOING
         TOREDOFRAME = 10;

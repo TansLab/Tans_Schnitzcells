@@ -201,14 +201,22 @@ while ~done
     
     %% Get keypress
     
+    clear cc;
     validPress = 0;
     while ~validPress,
         
         ct=waitforbuttonpress; % wait for buttonpress
-        cc=get(gcf,'currentcharacter'); % obtain value button % MW 2015/01
         
-        p.lastPressed = cc;
-        
+        % if it's a keyboard press get that character
+        % (ct==1 when keyboard, 0 when mouse)
+        if ct
+            cc=get(gcf,'currentcharacter'); % obtain value button % MW 2015/01
+            p.lastPressed = cc;
+        else
+            cc='*'; % flag for mouse click
+        end
+                        
+        % Only count as valid if 
         if (ct==1) && isempty(cc), % if keyboard pressed (ct==1), check if valid key (not ctrl etc)
             validPress=0;
         else % ct==0: mouseclick
@@ -234,7 +242,7 @@ while ~done
     
     
  % 'm' switch between phase contrast and segmentation image
-    if cc=='m'
+    if strcmp(cc,'m')
         
         % MW 2016/04
         % When upgrading to matlab 2014b some issues started appearing with
@@ -249,6 +257,12 @@ while ~done
         
         % And switch
         showPhase = ~showPhase;            
+                
+        if showPhase
+            disp('Now showing phase only.');
+        else
+            disp('Now showing phase+segmentation.');
+        end        
         
         done = 0; % continue keypress-loop
         

@@ -151,11 +151,15 @@ function pushbutton5_Callback(hObject, eventdata, handles)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    structure with handles and user data (see GUIDATA)
 
+% continue as usual
+global runsections p
+
 % clean up workspace from crop step
 evalin('base', 'clear alldata' );
 
-% continue as usual
-global runsections p
+% Make sure settings are obtained
+ourSettings = evalin('base', 'ourSettings');
+p = evalin('base', 'p');
 
 % Pass on whether we want to use full image for segmentation (default = 0)
 p.useFullImage = get(handles.checkbox4,'Value');

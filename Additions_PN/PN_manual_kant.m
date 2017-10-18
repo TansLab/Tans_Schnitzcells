@@ -98,8 +98,14 @@ while ~done
     else
         % For full screen mode, just set both positions to full screen position
         figure(ourfig); clf; % needs to be cleared to remove prev. img
-        set(ourfig, 'position', p.fullscreenResolution,'Toolbar','none'); % hide toolbar because would cover img
-        ha = axes('Parent',ourfig,'Units','pixels','Position',[1 1 p.screenSize(3:4)]);
+                                
+        set(ourfig, 'units', 'normalized', 'outerposition', [0 0 1 1]); %p.fullscreenResolution+[FULLSCREENMARGIN FULLSCREENMARGIN -2*FULLSCREENMARGIN -2*FULLSCREENMARGIN],'Toolbar','none'); % hide toolbar because would cover img                        
+        ha = axes('Parent',ourfig,'Units','normalized','Position',[0 0 1 1]);
+        
+        % old method
+        %set(ourfig, 'position', p.fullscreenResolution,'Toolbar','none'); % hide toolbar because would cover img
+        %ha = axes('Parent',ourfig,'Units','pixels','Position',[1 1 p.screenSize(3:4)]);
+        
     end
         
     % Update the figure
@@ -117,7 +123,7 @@ while ~done
         end
     else
         % Show unsegmented image
-        clf; % to prevent memory filling up
+        clf(gca); % to prevent memory filling up
         imshow(phsub,[]);
     end               
     
@@ -484,6 +490,8 @@ while ~done
             % option off.
             
             % obtain monitor resolution
+            % NOTE: this is not needed when using normalized units, which
+            % is done now, so this can be removed at some point.. (TODO)
             set(0,'units','pixels');            
             Pix_SS = get(0,'screensize');
             

@@ -537,11 +537,16 @@ while ~done
             done=1;
             dontsave=1;
             backwards = 1;
-        elseif cc == 'R'
-            disp(['currently not in use']) %NW 2012-05-10
-            %   Lout=renumberimage(Lout); 
         elseif cc == 'r' % 
-            disp(['currently not in use']) %NW 2012-05-10
+            if ~isfield(p,'showmubar')
+                p.showmubar=1;
+                disp('Show mu bar activated');
+            else
+                p.showmubar=~p.showmubar;
+                disp('Show mu bar toggled.');
+            end                                   
+            
+            % Old code for previous function
              %   % renumber this cell
              %   cutx=round(pos(1,2));
              %   cuty=round(pos(1,1));

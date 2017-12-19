@@ -188,6 +188,19 @@ end
 % Press CTRL+enter.
 % Schnitzcells takes the struct "p" as input. This is basically a less
 % extended version of the ourSettings struct. "p" is set here.
+%
+% Note that the settings for microscope and camera will affect the number
+% of microns per pixels, which is an important setting in determining the
+% length.
+% The microns per pixel are hard coded in the DJK_initschnitz function. The
+% values are also listed below for reference:
+% hamamatsu camera, setup 1 (new camera, installed in 2014-11)
+% p.micronsPerPixel = 0.0438;
+% CoolSnap camera, setup 1 (old camera)
+% p.micronsPerPixel = 0.04065;
+% camera hamamatsu, setup 2 (always same camera)
+% p.micronsPerPixel = 0.04312;
+
 
 if any(strcmp(runsections,{'allpreliminary', 'allfull','createp'}))
     
@@ -1025,6 +1038,7 @@ if any(strcmp(runsections,{'allpreliminary', 'allfull', 'makeoutputfull','rerunf
     disp('Loading complete.');
 
 end
+
 %% More analyses for full analysis
 % Press CTRL+enter.
 % This section provides a load of analysis of the schnitzcells structure.
@@ -1032,8 +1046,6 @@ end
 % parameters. It is convenient to save this analysis to a database 
 % with all your experiments. The script savingFluorDynamicsData provides
 % you with this opportunity (see section "Database" below).
-
-
 
 if any(strcmp(runsections,{'allfull', 'makeoutputfull', 'rerunfullanalysis'})) % full
     
@@ -1309,7 +1321,7 @@ end
 
 %% Save p and ourSettings struct to file in output dir if desired
 if any(strcmp(runsections,{'allfull', 'makeoutputfull','rerunfullanalysis'})) % full
-   outputFilename = [p.dateDir 'outputandsettings_' p.movieName '.mat'];
+   outputFilename = [p.dateDir 'outputandsettings_v2_' p.movieName '.mat'];
    save(outputFilename, 'p', 'ourSettings', 'schnitzcells', 's_rm', 'output');
    
    disp(['p (parameter), output, schnitzcells and ourSettings structs were saved to: ' outputFilename]);

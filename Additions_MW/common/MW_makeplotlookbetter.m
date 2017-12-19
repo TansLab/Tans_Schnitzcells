@@ -1,5 +1,5 @@
 
-function MW_makeplotlookbetter(FontSize,optionalParameters)
+function MW_makeplotlookbetter(FontSize,optionalParameters,plotSize,setRenderer)
 % function MW_makeplotlookbetter(FontSize)
 %
 % Currently only sets all font sizes to <FontSize>. 
@@ -10,6 +10,11 @@ function MW_makeplotlookbetter(FontSize,optionalParameters)
 % - optionalParameters.style
 %                   Will cause some additional changes to be made based on
 %                   this string.
+% - plotSize        if set will set plotsize to 2*plotSize=2*[width height]; 
+%                   note that the size is doubled to increase resolution
+%                   for non-vector images; you should also double the
+%                   font-size manually accordingly in the input arguments.
+% - setRenderer     if setRenderer=1 will set renderer to painters
 %
 % One can use function "linspecer" to generate colors that are
 % distinguishable by human eye.
@@ -22,6 +27,14 @@ end
 set(findall(gcf,'type','text'),'FontSize',FontSize,'fontWeight','normal','FontName','Arial')
 set(gca,'FontSize',FontSize)
 set(gca,'FontName','Arial')
+
+if exist('plotSize','var')
+    set(gcf,'Units','centimeters','Position',[3,3,plotSize*2]);
+end
+
+if exist('setRenderer','var')
+    set(gcf,'RendererMode','manual','Renderer','Painters');
+end
 
 %{
 if strcmp(optionalParameters.style, 'CBmanuscript')

@@ -137,6 +137,9 @@ end
 if ~existfield(p,'rzeroonly')
   p.rzeroonly = 0;
 end
+if ~isfield(p,'sameLength')
+    p.sameLength=1; % assume that the branches are the same length unless told otherwise
+end
 % --------------------------------------------------------------------------
 %%
 if ~p.rzeroonly

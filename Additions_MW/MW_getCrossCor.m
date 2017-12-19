@@ -16,7 +16,7 @@ function [branches, crossCor_composite] = MW_getCrossCor(p, branches, fieldX, fi
 % before a warning is shown.
 %
 % biased:         in Sxy(r) don't divide by (N-|r|) ->  way
-%                 for larger delay times the autocorrelatiNature439_608on will always decrease
+%                 for larger delay times the autocorrelation will always decrease
 %
 % OUTPUT
 % 'branches'            branches structure with calculated cross covariance for each branch added
@@ -49,10 +49,10 @@ function [branches, crossCor_composite] = MW_getCrossCor(p, branches, fieldX, fi
 % Input error checking
 %--------------------------------------------------------------------------
 % Settings
-numRequiredArgs = 4; functionName = 'DJK_getCrossCor';
+numRequiredArgs = 4; functionName = 'MW_getCrossCor';
 
 if (nargin < numRequiredArgs) | (mod(nargin,2) ~= (mod(numRequiredArgs,2)) | ~isSchnitzParamStruct(p))
-  errorMessage = sprintf('%s\n%s',['Error width input arguments of ' functionName],['Try "help ' functionName '".']);
+  errorMessage = sprintf('%s\n%s',['Error with input arguments of ' functionName],['Try "help ' functionName '".']);
   error(errorMessage);
 end
 

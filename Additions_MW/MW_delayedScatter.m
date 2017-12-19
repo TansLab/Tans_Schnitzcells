@@ -21,6 +21,8 @@
 % - FIGUREVISIBLE       : hides some figures, only saves them 
 % - p.recalcNoise       : re-calculates the colony means per frame and
 %                         subtracts those
+% - SHOWSOMECONTROLLINES  if this parameter is set then control line
+%                          examples will be shown.
 %
 %
 % Example of how to call script:
@@ -68,8 +70,15 @@ MW_delayedScatter.m
 
 %}
 
+% some parameters for visuals
+someColors=linspecer(5);
+PLOTSIZE=[6,4]; FONTSIZE=7;
+
+% ??
 PERFORMSOMECHECKS = 0;
 
+
+% additional options
 if ~exist('myOutputFolder')
     myOutputFolder = 'C:\Users\wehrens\Desktop\testdelayedscatter\output\';
 end
@@ -89,6 +98,7 @@ end
 if ~isfield(p,'recalcNoise')
     p.recalcNoise=1;
 end
+
 
 % At sections there are some more parameters to set. They are marked in
 % capitals.
@@ -217,12 +227,17 @@ name_rm_branch = [name_rm '_' num2str(fitTime(1)) '_' num2str(fitTime(2)) '_Conc
 
 %% Plot branches
 HIGHLIGHTSUSPICOUS = 0;
+NBINS = 50;
 %yfieldbranchtoplot = 3; % 3 = growth, 2 = fluor
 
 for yfieldbranchtoplot=[2,3]
 
     %% Just some plot colors
-    distinguishableColors = distinguishable_colors(numel(branchData)+1,[1 1 1]); 
+    %distinguishableColors = distinguishable_colors(numel(branchData)+1,[1 1 1]);  % XXX
+    % create distinguishable colors
+    distinguishableColors = linspecer(numel(branchData)+1); 
+    % randomize order of colors to get better effect
+    distinguishableColors=distinguishableColors(randperm(size(distinguishableColors,1)),:);
 
     %% Plot all branches
     h1=figure(); clf; hold on;
@@ -230,7 +245,8 @@ for yfieldbranchtoplot=[2,3]
     set(h1, 'Position', [offset offset width1 height1]);
     numelBranches = numel(branchData);
     for branchIdx = 1:numelBranches
-        l = plot(branchData(branchIdx).(associatedFieldNames{1}), branchData(branchIdx).(associatedFieldNames{yfieldbranchtoplot}),'-o','Color',distinguishableColors(branchIdx,:));
+        l = plot(branchData(branchIdx).(associatedFieldNames{1}), branchData(branchIdx).(associatedFieldNames{yfieldbranchtoplot}),'-','Color',distinguishableColors(branchIdx,:));
+        ldot = plot(branchData(branchIdx).(associatedFieldNames{1}), branchData(branchIdx).(associatedFieldNames{yfieldbranchtoplot}),'.','Color',[1 1 1]);
         set(l, 'LineWidth', (numelBranches-branchIdx+1)/numelBranches*10);
     end
 
@@ -272,29 +288,47 @@ for yfieldbranchtoplot=[2,3]
     %% Plot histogram
     h2=figure(), clf, hold on
     allYdata = [branchData.(associatedFieldNames{yfieldbranchtoplot})];
-    [nelements, centers] = hist(allYdata,200)
+    [nelements, centers] = hist(allYdata,NBINS)
     deltaY = centers(2)-centers(1);
     totalCount = numel(allYdata);
     %nelements=nelements./deltaY;
     %plot(centers,nelements,'or','LineWidth',2)
-    bar(centers,nelements,'FaceColor','r','EdgeColor','r')
-    % Fit distribution
-    pd=fitdist(allYdata', 'Normal')
+    bar(centers,nelements,'FaceColor',someColors(1,:),'EdgeColor',someColors(1,:))
+    
+    % Fit Normal distribution
+    pd=fitdist(allYdata', 'Normal')    
     fittedDistrX = [min(allYdata):(max(allYdata)-min(allYdata))/100:max(allYdata)]
     fittedDistrYnorm = normpdf(fittedDistrX,pd.mu,pd.sigma)
     fittedDistrY = fittedDistrYnorm.*totalCount.*deltaY;
-    plot(fittedDistrX,fittedDistrY,'k', 'LineWidth', 3);
+    plot(fittedDistrX,fittedDistrY,'k', 'LineWidth', 2);
+    
+    % Fit gamma distribution
+    %{
+    % Note that 
+    % Hashimoto M, Nozoe T, Nakaoka H, Okura R, Akiyoshi S, Kaneko K, Kussell E, Wakamoto Y: Noise-driven growth rate gain in clonal cellular populations. Proc. Natl. Acad. Sci. U. S. A. 2016, 113:3251–3256.
+    % claim the generation time has a gamma distribution; but we'd have to
+    % transform the dbls/hr data -- or the distribution accordingly --
+    % to check this claim. (Or make a plot of the generation times directly
+    % from the schnitzcells.
+    % Anyways, in this context it is not so useful.
+    pdgamma=fitdist(allYdata(allYdata>0)', 'Gamma')    
+    fittedDistrGammaX = [min(allYdata):(max(allYdata)-min(allYdata))/100:max(allYdata)];
+    fittedDistrGammaYnorm = pdf(pdgamma,fittedDistrGammaX);
+    fittedDistrGammaY = fittedDistrGammaYnorm .*totalCount.*deltaY;    
+    plot(fittedDistrGammaX,fittedDistrGammaY,':k', 'LineWidth', 2);
+    %}
+    
     %probplot(allYdata)
     MW_makeplotlookbetter(20);
 
     title(['PDF for ' associatedFieldNames{yfieldbranchtoplot}],'Interpreter','None');
     xlabel(associatedFieldNames{yfieldbranchtoplot},'Interpreter','None');
-    ylabel('PDF(s) * N * \Deltas (counts)');
+    ylabel('PDF(s) * N * \Deltas (counts)');    
 
     % Define some axes limits
     myYlim = max(nelements)*1.1;
     ylim([0,myYlim]);
-    xlim([myYlimFig1(1), myYlimFig1(2)*1.5]);
+    xlim([myYlimFig1(1), myYlimFig1(2)*1.1]);
 
     % TODO make 99% confidence and plot in previous figure.
     %confidence = paramci(pd,'Alpha',.01);
@@ -305,7 +339,7 @@ for yfieldbranchtoplot=[2,3]
     plot([sigma5(1),sigma5(1)],[0,myYlim],':','Color',[.5 .5 .5],'LineWidth', 2)
     plot([sigma5(2),sigma5(2)],[0,myYlim],':','Color',[.5 .5 .5],'LineWidth', 2)
 
-    % Now also plot confidence intervals in previous figure
+    %% Now also plot confidence intervals in previous figure
     figure(h1), hold on;
     l1=plot([0,myXlimFig1],[sigma2(1),sigma2(1)],'--','Color',[.5 .5 .5],'LineWidth', 2)
     plot([0,myXlimFig1],[sigma2(2),sigma2(2)],'--','Color',[.5 .5 .5],'LineWidth', 2)
@@ -314,7 +348,7 @@ for yfieldbranchtoplot=[2,3]
 
     legend([l1,l2],{'2\sigma confidence','5\sigma confidence'},'location','Best');
 
-    % Now list schnitzes that have suspiciously high signal:
+    %% Now list schnitzes that have suspiciously high signal:
     mySigma = sigma2; % i.e. the 2 sigma confidence interval
     suspiciousBranches = []; suspiciousSchnitzes = [];
     for branchIdx = 1:numel(branchData)
@@ -341,16 +375,60 @@ for yfieldbranchtoplot=[2,3]
     % Plot mean behavior
     figure(h1), hold on;
     plot(meanXvector, meanYvector,'-','Color','k','LineWidth',3);
-    
+        
     saveas(h1,[myOutputFolder 'TIF_branches_' associatedFieldNames{1,yfieldbranchtoplot} '.tif']);
-    saveas(h1,[myOutputFolder 'EPS_branches_' associatedFieldNames{1,yfieldbranchtoplot} '.eps'],'epsc');
+    saveas(h1,[myOutputFolder 'SVG_branches_' associatedFieldNames{1,yfieldbranchtoplot} '.svg']);
+    saveas(h1,[myOutputFolder 'FIG_branches_' associatedFieldNames{1,yfieldbranchtoplot} '.fig']);
+    %saveas(h1,[myOutputFolder 'EPS_branches_' associatedFieldNames{1,yfieldbranchtoplot} '.eps'],'epsc');
 
     saveas(h2,[myOutputFolder 'TIF_PDF_' associatedFieldNames{1,yfieldbranchtoplot} '.tif']);
-    saveas(h2,[myOutputFolder 'EPS_PDF_' associatedFieldNames{1,yfieldbranchtoplot} '.eps'],'epsc');
+    saveas(h2,[myOutputFolder 'SVG_PDF_' associatedFieldNames{1,yfieldbranchtoplot} '.svg']);
+    saveas(h2,[myOutputFolder 'FIG_PDF_' associatedFieldNames{1,yfieldbranchtoplot} '.fig']);
+    %saveas(h2,[myOutputFolder 'EPS_PDF_' associatedFieldNames{1,yfieldbranchtoplot} '.eps'],'epsc');
+    
+    % Also save plots with better axes labels
+    figure(h1);    
+    MW_makeplotlookbetter(FONTSIZE*2,[],PLOTSIZE);
+    if associatedFieldNames{1,yfieldbranchtoplot}(1) == 'd'
+        ylabel('Fluorophore production (a.u./min)');
+    elseif associatedFieldNames{1,yfieldbranchtoplot}(1) == 'm'
+        ylabel('Growth rate (doublings/hr)');
+    elseif any(strcmp(upper(associatedFieldNames{1,yfieldbranchtoplot}(1)),{'G','R','C','Y'}))        
+        ylabel('Fluorophore concentration (a.u./pixel)');
+    end
+    xlabel('Time (mins)');
+    saveas(h1,[myOutputFolder 'TIF_branches_' associatedFieldNames{1,yfieldbranchtoplot} '_readableLabels.tif']);
+    saveas(h1,[myOutputFolder 'SVG_branches_' associatedFieldNames{1,yfieldbranchtoplot} '_readableLabels.svg']);
+    saveas(h1,[myOutputFolder 'FIG_branches_' associatedFieldNames{1,yfieldbranchtoplot} '_readableLabels.fig']);
+        
+    figure(h2);
+    MW_makeplotlookbetter(FONTSIZE*2,[],PLOTSIZE);    
+    if associatedFieldNames{1,yfieldbranchtoplot}(1) == 'd'
+        xlabel('Production (a.u./min)');
+    elseif associatedFieldNames{1,yfieldbranchtoplot}(1) == 'm'
+        xlabel('Growth rate (doublings/hr)');
+    elseif any(strcmp(upper(associatedFieldNames{1,yfieldbranchtoplot}(1)),{'G','R','C','Y'}))        
+        xlabel('Concentration (a.u./pixel)');
+    end
+    title([]);
+    ylabel('Observations');
+    
+    saveas(h2,[myOutputFolder 'TIF_PDF_' associatedFieldNames{1,yfieldbranchtoplot} '_readableLabels.tif']);
+    saveas(h2,[myOutputFolder 'SVG_PDF_' associatedFieldNames{1,yfieldbranchtoplot} '_readableLabels.svg']);
+    saveas(h2,[myOutputFolder 'FIG_PDF_' associatedFieldNames{1,yfieldbranchtoplot} '_readableLabels.fig']);
     
     % For later output
     output.branchavg.([associatedFieldNames{yfieldbranchtoplot} '_xfield']) = meanXvector; % usually time
     output.branchavg.(associatedFieldNames{yfieldbranchtoplot}) = meanYvector;
+    
+    % save data relating to the pdf
+    output.pdf.(associatedFieldNames{yfieldbranchtoplot}).centers           =centers;
+    output.pdf.(associatedFieldNames{yfieldbranchtoplot}).nelements         =nelements;
+    output.pdf.(associatedFieldNames{yfieldbranchtoplot}).fittedDistrX      =fittedDistrX;
+    output.pdf.(associatedFieldNames{yfieldbranchtoplot}).fittedDistrYnorm  =fittedDistrYnorm;
+    output.pdf.(associatedFieldNames{yfieldbranchtoplot}).fittedDistrY      =fittedDistrY;
+    output.pdf.(associatedFieldNames{yfieldbranchtoplot}).sigma2            =sigma2;
+    output.pdf.(associatedFieldNames{yfieldbranchtoplot}).sigma5            =sigma5;
     
 end
 
@@ -656,7 +734,7 @@ l=plot(iTausCalculated,correlationsPerTau,'o-r','LineWidth',2);
 h5=figure(); clf; hold on;
 
 myColorsLS = linspecer(4); myColors = [0 0 0; myColorsLS(2,:); myColorsLS(1,:)];
-myColors = [0 0 0; 1 0 0; 0 70/255 170/255];
+%myColors = [0 0 0; 1 0 0; 0 70/255 170/255];
 
 % Plot control DJK cross correlation function
 % ===
@@ -677,28 +755,39 @@ if exist('multipleCorrDataControl','var')
         %l3=plot(multipleCorrDataControl(idx).CorrDataControl(:,1),multipleCorrDataControl(idx).CorrDataControl(:,2),...
         %    '-','LineWidth',2,'Color',[.7 .7 .7])
     end
-    lighterShadeColor=[.7 .7 .7]; %lighterShadeColor=min(1,[((myColorControl+.7))]);
-    for idx= 1:3%numel(multipleCorrDataControl)
-        
-        lSc=plot(multipleCorrDataControl(idx).CorrDataControl(:,1),multipleCorrDataControl(idx).CorrDataControl(:,2),...
-                '-','LineWidth',1,'Color', lighterShadeColor)
-        
-        % highlight some lines
-        %{
-        if any(idx==[numel(multipleCorrDataControl)-2:numel(multipleCorrDataControl)])
-            set(lSc, 'Color', myColorControl);
+    if exist('SHOWSOMECONTROLLINES','var')
+        lighterShadeColor=[.7 .7 .7]; %lighterShadeColor=min(1,[((myColorControl+.7))]);
+        for idx= 1:3%numel(multipleCorrDataControl)
+
+            lSc=plot(multipleCorrDataControl(idx).CorrDataControl(:,1),multipleCorrDataControl(idx).CorrDataControl(:,2),...
+                    '-','LineWidth',1,'Color', lighterShadeColor)
+
+            % highlight some lines
+            %{
+            if any(idx==[numel(multipleCorrDataControl)-2:numel(multipleCorrDataControl)])
+                set(lSc, 'Color', myColorControl);
+            end
+            %}
         end
-        %}
     end
     
     % plot the line
    l3=plot(timeData,myLineMean,'-',...
        'LineWidth',2,'Color',myColorControl);
+   %{
    plot(timeData,myLineMax,'-',...
        'LineWidth',2,'Color',myColorControl);
    plot(timeData,myLineMin,'-',...
        'LineWidth',2,'Color',myColorControl);
-
+    %}
+    
+   fh=area(timeData,myLineMax,...
+       'FaceColor',myColorControl,'LineStyle','none','FaceAlpha',.25);
+   %alpha(fh,.25)
+   fh=area(timeData,myLineMin,...
+       'FaceColor',myColorControl,'LineStyle','none','FaceAlpha',.25);
+   %alpha(fh,.25)
+   
     %{
     for idx=1:numel(multipleCorrDataControl)
         l3=plot(multipleCorrDataControl(idx).CorrDataControl(:,1),multipleCorrDataControl(idx).CorrDataControl(:,2),...
@@ -716,17 +805,21 @@ end
 centerIdx=ceil(size(CorrData,1)/2);
 deltaXCorrData = CorrData(centerIdx+1,1)-CorrData(centerIdx,1);
 MWxAxis = iTausCalculated.*deltaXCorrData;
-% make the actual plot
-l2=plot(MWxAxis,correlationsPerTau,'o-','LineWidth',3,'MarkerFaceColor',myColors(2,:),'Color',myColors(2,:));
+% make the actual plot of scatter correlations
+l2=plot(MWxAxis,correlationsPerTau,'-','LineWidth',1,'MarkerFaceColor',myColors(2,:),'Color',myColors(2,:));
+plot(MWxAxis,correlationsPerTau,'.','LineWidth',1,'MarkerFaceColor',myColors(2,:),'Color',myColors(2,:));
 
 % Plot DJK cross correlation function
 % ===
 if size(CorrData,2)>2
     % error bars from branchgroups
-    errorbar(CorrData(:,1),CorrData(:,2),CorrData(:,3),'s-','Color', myColors(1,:), 'LineWidth',2)
+    h=errorbar(CorrData(:,1),CorrData(:,2),CorrData(:,3),'-','Color', myColors(1,:), 'LineWidth',1)
+    h.CapSize = 1;
 end
 % line itself
-l1=plot(CorrData(:,1),CorrData(:,2),'s-','LineWidth',3,'MarkerFaceColor',myColors(1,:),'Color',myColors(1,:))
+l1=plot(CorrData(:,1),CorrData(:,2),'-','LineWidth',2,'MarkerFaceColor',myColors(1,:),'Color',myColors(1,:))
+plot(CorrData(:,1),CorrData(:,2),'.','LineWidth',1,'MarkerFaceColor',[.5 .5 .5],'Color',[.5 .5 .5])
+%l1=plot(CorrData(:,1),CorrData(:,2),'.','LineWidth',2,'MarkerFaceColor',[1 1 1],'Color',[1 1 1])
 
 % cosmetics
 % ===
@@ -739,11 +832,13 @@ l1=plot(CorrData(:,1),CorrData(:,2),'s-','LineWidth',3,'MarkerFaceColor',myColor
 
 myxlimvalues=[min(CorrData(:,1)), max(CorrData(:,1))];
 xlim(myxlimvalues);
-ylim([-1.1,1.1]);
+%ylim([-1.1,1.1]);
+ylim([-.5,.5]);
 plot(myxlimvalues,[0,0],'k-');
 
 %legend([l1,l2,l3],{'DJK','MW','Control'})
-legend([l1,l2,l3],{'Lineages','Scatters','Control'})
+%legend([l1,l2,l3],{'Lineages','Scatters','Control'})
+legend([l1,l2,l3],{'Lineages','Scatters','Control'});%,'Location','Best')
 
 if p.sameLength==0, sameLengthComment=[10 ' Composite of unequally-sized branches']; else sameLengthComment=''; end
 title(['DJK vs. MW ' 10 myID '_' p. movieDate  '_' p.movieName sameLengthComment], 'Interpreter', 'none');
@@ -758,6 +853,41 @@ plot([0,0],[-1,1],'-k');
 saveas(h5,[myOutputFolder 'TIF_crosscorrs_' associatedFieldNames{1,2} '_' associatedFieldNames{1,3} '.tif']);
 saveas(h5,[myOutputFolder 'EPS_crosscorrs_' associatedFieldNames{1,2} '_' associatedFieldNames{1,3} '.eps'],'epsc');
 
+%%
+figure(h5);
+MW_makeplotlookbetter(FONTSIZE*2,[],PLOTSIZE);    
+title([]);
+xlabel('? (hrs)');
+legend([l1,l2,fh],{'Lineages','Scatters','Control'},'Location','Best')
+%Set all fontsizes
+set(findall(gcf,'type','text'),'FontSize',15,'fontWeight','normal');
+set(gca,'FontSize',15);
+
+% Determine y label
+% ===
+% Simply based on the parameter name
+if associatedFieldNames{1,2}(1) == 'd'
+    param1name='p';
+elseif associatedFieldNames{1,2}(1) == 'm'
+    param1name='µ';
+elseif any(strcmp(upper(associatedFieldNames{1,2}(1)),{'G','R','C','Y'}))        
+    param1name='C';
+end
+% Again for 2nd parameter
+if associatedFieldNames{1,3}(1) == 'd'
+    param2name='p';
+elseif associatedFieldNames{1,3}(1) == 'm'
+    param2name='µ';
+elseif any(strcmp(upper(associatedFieldNames{1,3}(1)),{'G','R','C','Y'}))        
+    param2name='C';
+end
+ylabel(['Correlation(' param1name ',' param2name ')']);
+
+%
+saveas(h5,[myOutputFolder 'FIG_crosscorrs_' associatedFieldNames{1,2} '_' associatedFieldNames{1,3} '.fig']);
+saveas(h5,[myOutputFolder 'TIF_crosscorrs_' associatedFieldNames{1,2} '_' associatedFieldNames{1,3} '.tif']);
+saveas(h5,[myOutputFolder 'SVG_crosscorrs_' associatedFieldNames{1,2} '_' associatedFieldNames{1,3} '.svg']);
+%saveas(h5,[myOutputFolder 'EPS_crosscorrs_' associatedFieldNames{1,2} '_' associatedFieldNames{1,3} '.eps'],'epsc');
 
 
 %% Plot code from CRPcAMP..overview..general

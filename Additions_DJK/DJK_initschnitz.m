@@ -357,6 +357,7 @@ if ~existfield(p,'micronsPerPixel')
             if strcmp(p.camera, 'hamamatsu')
                 % hamamatsu camera, setup 1 (new camera)
                 p.micronsPerPixel = 0.0438;
+                    % (installed in 2014-11)
             elseif strcmp(p.camera, 'coolsnap')
                 % CoolSnap camera, setup 1 (old camera)
                 p.micronsPerPixel = 0.04065;

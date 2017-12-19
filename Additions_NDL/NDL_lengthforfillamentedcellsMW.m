@@ -146,9 +146,9 @@ for framenr = frameRange
             h1=figure(1); clf; 
             imshow(Lc,[]);
             % show conversion
-            h2=figure(2); clf;
-            axis equal;
+            h2=figure(2); clf;            
             plot(x,y,'.');
+            axis equal;
         end
         %% % Select ROI and make image binary
         % administration required to select ROI - excludes surroundings
@@ -424,7 +424,7 @@ for framenr = frameRange
         %% % Finds directionality of skeleton ends & creates variables to account for later on
         
         directionFindLength = min(EXTRAPOLATIONLENGTH, round(length(smoothSkeletonXYpoleToPole)/2)); % Finds appropriate length over which to decide the direction
-        directionxEnd1 = smoothSkeletonXYpoleToPole(1,1)-smoothSkeletonXYpoleToPole(1+directionFindLength,1); % Positive = to the right, negative = to the left
+        directionxEnd1 = smoothSkeletonXYpoleToPole(1+directionFindLength,1)-smoothSkeletonXYpoleToPole(1,1); % Positive = to the right, negative = to the left
         directionxEnd2 = smoothSkeletonXYpoleToPole(end,1)-smoothSkeletonXYpoleToPole(end-directionFindLength,1); % Positive = to the right, negative = to the left
         
         directionFactorLeft1 = 1; % Set standard values: - Only used in practice when a filamented cell has its ends (close to) perpendicular on each other
@@ -477,9 +477,11 @@ for framenr = frameRange
             
             % Create x-values for the extrapolated part
             if directionxEnd1 < 0
-                toextrapolatexleft = [min(toFitXleft)-extrapolationLength:min(toFitXleft)];
-            else    
+                % bacterial direction is towards left, extrapolate towards right
                 toextrapolatexleft = [max(toFitXleft):max(toFitXleft)+extrapolationLength];
+            else    
+                % bacterial direction is towards right, extrapolate towards left
+                toextrapolatexleft = [min(toFitXleft)-extrapolationLength:min(toFitXleft)];                
             end
             
             % create y-values based on those x-values
@@ -608,9 +610,9 @@ for framenr = frameRange
         % create the x,y coordinates for the extrapolated piece within cell
         % boundaries
         if directionxEnd1<0
-            extrapolatedSkeleton1WithinEdge = extrapolatedSkeleton1(icor:end,:);
-        else            
-            extrapolatedSkeleton1WithinEdge = extrapolatedSkeleton1(1:icor,:);
+            extrapolatedSkeleton1WithinEdge = extrapolatedSkeleton1(icor:-1:1,:);
+        else
+            extrapolatedSkeleton1WithinEdge = extrapolatedSkeleton1(icor:end,:);            
         end        
         
         % determine distance to both ends from found intersection point

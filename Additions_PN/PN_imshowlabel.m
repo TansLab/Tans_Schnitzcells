@@ -514,6 +514,21 @@ if isfield(p,'showLargeCentroids')
     end
 end
 
+if isfield(p,'showmubar')    
+            
+            imSize=size(phaseImg);
+                        
+            lengthBar = 1./p.micronsPerPixel;
+            
+            posx=[10,10+lengthBar];
+            posy=[imSize(1)-10,imSize(1)-10];
+            posytext=imSize(1)-27;
+            
+            %plot([10,10+lengthBar],[imSize(1)-10,imSize(1)-10],'LineWidth',5,'Color',[1 1 1]);
+            hold on; plot(posx,posy,'LineWidth',5,'Color',[1 1 1]);
+            text(posx(1),posytext,'1 µm','FontSize', 12,'Color',[1,1,1])
+    
+end
 
 %elapsed time: 0.45
 %stop5=toc

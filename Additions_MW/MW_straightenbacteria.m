@@ -36,6 +36,22 @@ function MW_straightenbacteria(p, frameRange, fluorColor)
 % Currently, bacteria is only straightened for branchless skeleton, not the
 % extrapolated parts of the skeleton. Also peak distances are determined
 % from this, but corrected using the extrapolated length of the extra ends.
+%
+% BACTERIAL WIDTH
+% In principle it might be possible to determine the bacterial width rather
+% precisely based on the segmentation files and the skeleton. I had
+% introduced some code to address this, but I overlooked the facts that
+% a) There is already a preliminary estimate of the bacterial width
+% (area/skeleton lenght) which is used during straightening; as such the
+% straightened skeleton might be biased by this estimate.
+% b) If one estimates the width from the tangential lines in combination
+% with the segmentation, then there should be a correction for the actual
+% distance between pixels (i.e. the total number of pixels does not
+% translate to a distance because they might be under an angle).
+% Instead of addressing these issues, for now it is easier to go with the
+% estimate (area/skeleton lenght) in our analyses. Bacterial width could be
+% calculated more precisely later by extending this script.
+% -MW
 
 %% Parameters
 % SMOOTHELEMENTS has been set to 0 since it is now already performed in
@@ -184,9 +200,11 @@ for framenr = frameRange
         nrIndicesInSkelet = size(currentSkeletonXYpoleToPole,1);
         % 1st few elements
         for i = 1:SMOOTHELEMENTS
+            %%
             plusminus = i-1;
             smoothSkeleton(i,1) = mean(currentSkeletonXYpoleToPole(i+windowArray(SMOOTHELEMENTS+1-plusminus:SMOOTHELEMENTS+1+plusminus),1));
             smoothSkeleton(i,2) = mean(currentSkeletonXYpoleToPole(i+windowArray(SMOOTHELEMENTS+1-plusminus:SMOOTHELEMENTS+1+plusminus),2));
+            %plot(smoothSkeleton(i,1), smoothSkeleton(i,2),'<k','MarkerFaceColor','r','MarkerSize',10); disp('REMOVE THIS LINE!!')
         end
         % main piece of skeleton
         for i = SMOOTHELEMENTS+1:nrIndicesInSkelet-SMOOTHELEMENTS
@@ -200,11 +218,13 @@ for framenr = frameRange
             plusminus = nrIndicesInSkelet-i;
             smoothSkeleton(i,1) = mean(currentSkeletonXYpoleToPole(i+windowArray(SMOOTHELEMENTS+1-plusminus:SMOOTHELEMENTS+1+plusminus),1));
             smoothSkeleton(i,2) = mean(currentSkeletonXYpoleToPole(i+windowArray(SMOOTHELEMENTS+1-plusminus:SMOOTHELEMENTS+1+plusminus),2));
+            %plot(smoothSkeleton(i,1), smoothSkeleton(i,2),'^k','MarkerFaceColor','b'); disp('REMOVE THIS LINE!!')
         end
         
         if extraOutput
             figure(102); hold on; 
-            plot(smoothSkeleton(:,1), smoothSkeleton(:,2),'o')
+            plot(smoothSkeleton(:,1), smoothSkeleton(:,2),'o');
+            axis equal;
         end
 
          %% plot the skeleton on the original image
@@ -229,12 +249,12 @@ for framenr = frameRange
         for i = 1:(nrIndicesInSkelet-1)
 
             % two consecutive points
-            vec1 = smoothSkeleton(i,:);
-            vec2 = smoothSkeleton(i+1,:);
+            point1 = smoothSkeleton(i,:);
+            point2 = smoothSkeleton(i+1,:);
 
             % x2-x1 and y2-y1
-            sideLength1 = vec1(1)-vec2(1);
-            sideLength2 = vec1(2)-vec2(2);
+            sideLength1 = point1(1)-point2(1);
+            sideLength2 = point1(2)-point2(2);
 
             % angle between points
             theangle = atan(sideLength2/sideLength1);
@@ -243,15 +263,17 @@ for framenr = frameRange
             deltax = -sin(theangle)*halfAverageBacterialWidth;
             deltay = cos(theangle)*halfAverageBacterialWidth;
 
-            pointsA(i,:) = smoothSkeleton(i,:)+[deltax, deltay];
-            pointsB(i,:) = smoothSkeleton(i+1,:)-[deltax, deltay];
+            %pointsA(i,:) = point1+[deltax, deltay];
+            %pointsB(i,:) = point2-[deltax, deltay];
 
-            angles(i) = theangle;
+            %angles(i) = theangle;
 
-            vectonext(i,:)=[sideLength1,sideLength2];
+            %vectonext(i,:)=[sideLength1,sideLength2];
 
-            tangentialLineXY1(i,:) = smoothSkeleton(i,:)+[deltax, deltay]+.5*[sideLength1 sideLength2];
-            tangentialLineXY2(i,:) = smoothSkeleton(i,:)-[deltax, deltay]+.5*[sideLength1 sideLength2];
+            centerXY = (point1+point2)./2;
+            
+            tangentialLineXY1(i,:) = centerXY+[deltax, deltay];%+.5*[sideLength1 sideLength2];
+            tangentialLineXY2(i,:) = centerXY-[deltax, deltay];%+.5*[sideLength1 sideLength2];
 
             tangentialLinesAllCoordsX(i,:) = uint16(round(linspace(tangentialLineXY1(i,1),tangentialLineXY2(i,1),intAverageBacterialWidth)));
             tangentialLinesAllCoordsY(i,:) = uint16(round(linspace(tangentialLineXY1(i,2),tangentialLineXY2(i,2),intAverageBacterialWidth)));
@@ -318,7 +340,9 @@ for framenr = frameRange
         
         distanceTangentials = currentDistanceAlongSkeleton-currentSpacingInSkeleton./2;        
         fluorIntensity = mean(straightenedBacteriumFluor);
-        bacterialWidth = sum(straightenedBacteriumSeg);
+        %bacterialWidth = sum(straightenedBacteriumSeg); 
+            % parts referring to bacterial width have been removed, see
+            % remark at top of this function
         
         %% Now create the distance-corrected straightened bacterium
         newXaxis = [ceil(distanceTangentials(1))+1:floor(distanceTangentials(end))-1];
@@ -338,8 +362,8 @@ for framenr = frameRange
             dxprime = x-distanceTangentials(leftIndex);
             interpolatedFluorValues(i) = fluorIntensity(leftIndex)+(DY/DX)*dxprime;
             % Determine interpolated value for width
-            DY = bacterialWidth(rightIndex)-bacterialWidth(leftIndex);
-            interpolatedWidthValues(i) = bacterialWidth(leftIndex)+(DY/DX)*dxprime;
+            %DY = bacterialWidth(rightIndex)-bacterialWidth(leftIndex);
+            %interpolatedWidthValues(i) = bacterialWidth(leftIndex)+(DY/DX)*dxprime;
         end
         
         % Calculate peak parameters        
@@ -393,7 +417,8 @@ for framenr = frameRange
         saveLocation = [outputDir p.movieDate p.movieName '_straightenedPlot_' fluorColor '_fr' sprintf('%03d',framenr) 'cell' sprintf('%03d',cellno)];
         saveas(gca, [saveLocation '.tif']);
     
-        %% Figure of straightened segmentation                        
+        %% Figure of straightened segmentation for determining bacterial width
+        %{
         set(0, 'currentfigure', h105); clf;
         
         subplot(4,1,1);
@@ -410,13 +435,13 @@ for framenr = frameRange
         MW_makeplotlookbetter(12);
         saveLocation = [outputDir p.movieDate p.movieName '_straightenedSegPlot_fr' sprintf('%03d',framenr) 'cell' sprintf('%03d',cellno)];
         saveas(h105, [saveLocation '.tif']);
-        
+        %}
         %% /
     
         skeletonDistanceThisFrame{cellno}      = currentDistanceAlongSkeleton;
         rawFluorThisFrame{cellno}              = fluorIntensity;
-        bacterialWidthThisFrame{cellno}        = bacterialWidth;
-        bacterialWidthThisFrameMicrons{cellno} = bacterialWidth.*p.micronsPerPixel;        
+        %bacterialWidthThisFrame{cellno}        = bacterialWidth;
+        %bacterialWidthThisFrameMicrons{cellno} = bacterialWidth.*p.micronsPerPixel;        
         fluorInterpolatedValues{cellno}        = interpolatedFluorValues;
         peakIndicesThisFrame{cellno}           = peakindexes;
         peakXPixelsThisFrame{cellno}           = peakxs;
@@ -427,8 +452,8 @@ for framenr = frameRange
      
     allskeletonDistance{framenr} = skeletonDistanceThisFrame;
     allrawFluor{framenr}            = rawFluorThisFrame;
-    allbacterialWidthPixels{framenr}   = bacterialWidthThisFrame;
-    allbacterialWidthMicrons{framenr}   = bacterialWidthThisFrameMicrons;
+    %allbacterialWidthPixels{framenr}   = bacterialWidthThisFrame;
+    %allbacterialWidthMicrons{framenr}   = bacterialWidthThisFrameMicrons;
     allFluorInterpolatedValues{framenr}   = fluorInterpolatedValues;
     allpeakIndices{framenr}      = peakIndicesThisFrame;
     allpeakXPixels{framenr}      = peakXPixelsThisFrame;
@@ -447,7 +472,8 @@ end
 saveLocationMatFile = [outputDir p.movieDate p.movieName '_straightFluorData.mat'];
     save(saveLocationMatFile,...
         'allskeletonDistance', 'allrawFluor', 'allFluorInterpolatedValues', 'allpeakXPixels',...
-        'allpeakXMicrons', 'allpeakY', 'allbacterialWidthPixels', 'allbacterialWidthMicrons');   
+        'allpeakXMicrons', 'allpeakY');
+    %, 'allbacterialWidthPixels', 'allbacterialWidthMicrons');   
 
 disp(['Completely done straightening. Data saved to ' saveLocationMatFile]);    
     

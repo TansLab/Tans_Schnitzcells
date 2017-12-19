@@ -133,6 +133,18 @@ if debugmode
     areaImg2 = frame2BWarea+frame2;
     h5=figure(), PN_imshowlabel(p,areaImg2,[],[],[]);    
     
+    originalOverlap=frame1BWarea+frame2BWarea*2;
+    h101=figure(), PN_imshowlabel(p,originalOverlap,[],[],[]);
+    
+    %% image used for thesis MW also:
+    h102=figure(), imshow(originalOverlap,[]);    
+    hold on;
+    somecolors=linspecer(2);
+    STATS1 = regionprops(frame1BWarea, 'Centroid');
+    STATS2 = regionprops(frame2BWarea, 'Centroid');    
+    plot(STATS1(1).Centroid(1),STATS1(1).Centroid(2),'o','LineWidth',2,'Color',somecolors(1,:));
+    plot(STATS2(1).Centroid(1),STATS2(1).Centroid(2),'o','LineWidth',2,'Color',somecolors(2,:));    
+    
 end
 
 %% resize the first frame such that frames can be fitted on top of each other
@@ -153,6 +165,12 @@ if ~isfield(p,'mothermachine')
     resizeratio = sqrt(STATS2.Area/STATS1.Area);
 
     frame1resized = imresize(frame1, resizeratio,'nearest');
+    
+    if debugmode
+        resizeratio
+        h6=figure(), PN_imshowlabel(p,frame1resized,[],[],[]);
+    end
+    
 else
     % but skip this procedure if we're analyzing mother machine data
     % because in that case disappearing cells disturb this procedure.
@@ -160,10 +178,7 @@ else
     disp('INFO: mothermachine option activated, skipping resizing');
 end
 
-if debugmode
-    resizeratio
-    h6=figure(), PN_imshowlabel(p,frame1resized,[],[],[]);
-end
+
 
  
 %% create aligned frame #1

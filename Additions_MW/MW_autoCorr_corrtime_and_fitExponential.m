@@ -11,7 +11,7 @@ fittedExponential = exp(mytimepoints./-tau);
 
 myxlim=[min(CorrData(:,1)), max(CorrData(:,1))];
 
-figure(20), clf, hold on
+h20=figure('Visible',FIGUREVISIBLE), clf, hold on
 plot(myxlim, [0 0],'k-');% axis at zero
 if p.sameLength
     errorbar(CorrData(:,1),CorrData(:,2),CorrData(:,3),'o','LineWidth',3,'Color',[.5 .5 .5])
@@ -25,5 +25,5 @@ xlabel('\tau [hr]')
 ylabel([associatedFieldNames{2} 10 'autocorrelation [normalized]'],'Interpreter','None');
 MW_makeplotlookbetter(20)
 
-saveas(20,[myOutputFolder 'TIF_crosscorrs_' associatedFieldNames{1,2} '_' associatedFieldNames{1,3} '_expFit.tif']);
-saveas(20,[myOutputFolder 'EPS_crosscorrs_' associatedFieldNames{1,2} '_' associatedFieldNames{1,3} '_expFit.eps'],'epsc');
+saveas(h20,[myOutputFolder 'TIF_crosscorrs_' associatedFieldNames{1,2} '_' associatedFieldNames{1,3} '_expFit.tif']);
+saveas(h20,[myOutputFolder 'EPS_crosscorrs_' associatedFieldNames{1,2} '_' associatedFieldNames{1,3} '_expFit.eps'],'epsc');

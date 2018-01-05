@@ -5,7 +5,7 @@
 
 % Paramater settings ----------
 if ~exist('FITTIME', 'var')
-    FITTIME = 800;
+    FITTIME = [0 800];
 end
 if ~exist('EXPORTFOLDER', 'var')
     EXPORTFOLDER = 'C:\Users\wehrens\Desktop\export\';
@@ -72,7 +72,7 @@ end
 %% Plotting
 
 % Some plotting settings
-h = figure('Name', myFile,'pos', [100 100 800+100 400+100]); % 700x600
+h = figure('Name', myFile,'pos', [100 100 800+100 400+100],'Visible',FIGUREVISIBLE); % 700x600
 subplot(1,2,1);
 title([ 'Raw data, lengths bacteria at each frame'])
 xlabel('Time in minutes');
@@ -123,7 +123,7 @@ saveas(h, [EXPORTFOLDER 'TIF_bacteriaSize_RAW-' p.myID '.tif'])
 % Plotting setup
 FONTSIZE = 24;
 
-h = figure('pos', [100 100 700+100 600+100]); % 700x600
+h = figure('pos', [100 100 700+100 600+100],'Visible',FIGUREVISIBLE); % 700x600
 semilogy(myTimes, summedLengthsPerFrame,'o','LineWidth',4,'Color',[.6 .6 .6], 'MarkerSize',12);
 hold on;
 ylim([min(summedLengthsPerFrame)/2,max(summedLengthsPerFrame)*2]);

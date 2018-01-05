@@ -18,7 +18,8 @@
 % Additional (optional) parameters:
 % - NOTMEANSUBTRACTED   : Don't automatically take fields that have the
 %                         noise subtracted, i.e. noise_FieldOfInterest.
-% - FIGUREVISIBLE       : hides some figures, only saves them 
+% - FIGUREVISIBLE       : choose 'off' or 'on' to make figures
+%                         invisible/visible
 % - p.recalcNoise       : re-calculates the colony means per frame and
 %                         subtracts those
 % - SHOWSOMECONTROLLINES  if this parameter is set then control line
@@ -240,7 +241,7 @@ for yfieldbranchtoplot=[2,3]
     distinguishableColors=distinguishableColors(randperm(size(distinguishableColors,1)),:);
 
     %% Plot all branches
-    h1=figure(); clf; hold on;
+    h1=figure('Visible', FIGUREVISIBLE); clf; hold on;
     offset=100; width1=800; height1=600;
     set(h1, 'Position', [offset offset width1 height1]);
     numelBranches = numel(branchData);
@@ -286,7 +287,7 @@ for yfieldbranchtoplot=[2,3]
     MW_makeplotlookbetter(20);
     
     %% Plot histogram
-    h2=figure(), clf, hold on
+    h2=figure('Visible', FIGUREVISIBLE), clf, hold on
     allYdata = [branchData.(associatedFieldNames{yfieldbranchtoplot})];
     [nelements, centers] = hist(allYdata,NBINS)
     deltaY = centers(2)-centers(1);
@@ -340,7 +341,8 @@ for yfieldbranchtoplot=[2,3]
     plot([sigma5(2),sigma5(2)],[0,myYlim],':','Color',[.5 .5 .5],'LineWidth', 2)
 
     %% Now also plot confidence intervals in previous figure
-    figure(h1), hold on;
+    %figure(h1); set(gcf,'Visible', FIGUREVISIBLE); hold on;
+    set(0, 'CurrentFigure', h1); hold on;
     l1=plot([0,myXlimFig1],[sigma2(1),sigma2(1)],'--','Color',[.5 .5 .5],'LineWidth', 2)
     plot([0,myXlimFig1],[sigma2(2),sigma2(2)],'--','Color',[.5 .5 .5],'LineWidth', 2)
     l2=plot([0,myXlimFig1],[sigma5(1),sigma5(1)],':','Color',[.5 .5 .5],'LineWidth', 2)
@@ -373,7 +375,8 @@ for yfieldbranchtoplot=[2,3]
     suspiciousBranches        
 
     % Plot mean behavior
-    figure(h1), hold on;
+    %figure(h1); set(gcf,'Visible', FIGUREVISIBLE); hold on;
+    set(0, 'CurrentFigure', h1); hold on;
     plot(meanXvector, meanYvector,'-','Color','k','LineWidth',3);
         
     saveas(h1,[myOutputFolder 'TIF_branches_' associatedFieldNames{1,yfieldbranchtoplot} '.tif']);
@@ -387,7 +390,8 @@ for yfieldbranchtoplot=[2,3]
     %saveas(h2,[myOutputFolder 'EPS_PDF_' associatedFieldNames{1,yfieldbranchtoplot} '.eps'],'epsc');
     
     % Also save plots with better axes labels
-    figure(h1);    
+    % figure(h1);  set(gcf,'Visible', FIGUREVISIBLE);
+    set(0, 'CurrentFigure', h1); hold on;
     MW_makeplotlookbetter(FONTSIZE*2,[],PLOTSIZE);
     if associatedFieldNames{1,yfieldbranchtoplot}(1) == 'd'
         ylabel('Fluorophore production (a.u./min)');
@@ -401,7 +405,8 @@ for yfieldbranchtoplot=[2,3]
     saveas(h1,[myOutputFolder 'SVG_branches_' associatedFieldNames{1,yfieldbranchtoplot} '_readableLabels.svg']);
     saveas(h1,[myOutputFolder 'FIG_branches_' associatedFieldNames{1,yfieldbranchtoplot} '_readableLabels.fig']);
         
-    figure(h2);
+    %figure(h2); set(gcf,'Visible', FIGUREVISIBLE);
+    set(0, 'CurrentFigure', h2); hold on;
     MW_makeplotlookbetter(FONTSIZE*2,[],PLOTSIZE);    
     if associatedFieldNames{1,yfieldbranchtoplot}(1) == 'd'
         xlabel('Production (a.u./min)');
@@ -438,7 +443,11 @@ end
 
 %REDUNDANCYALLOWED = 2^2;
 REDUNDANCYALLOWED = 2^2;
-ONSCREEN=1;
+if strcmp(FIGUREVISIBLE,'off')
+    ONSCREEN=0;
+else
+    ONSCREEN=1;
+end
 NRBRANCHGROUPS=4;
 FIELDPREFIX = 'noise_';
 CONTROLSUFFIX = '_randomizedlineages';
@@ -686,7 +695,7 @@ if NOTMEANSUBTRACTED
     if ~exist('SHOWPLUSMINFROMZERO','var'), SHOWPLUSMINFROMZERO = 25; end
     
     % Set up figure
-    h98=figure(), clf, hold on;
+    h98=figure('Visible', FIGUREVISIBLE); clf; hold on;
     
     % Redundant with below
     indexMidpoint = ceil(numel(iTausCalculated)/2)
@@ -727,11 +736,11 @@ end
 
 %% Plot "raw" cross cor I calculate (MW)
 
-myfig=figure(); clf; hold on;
+myfig=figure('Visible', FIGUREVISIBLE); clf; hold on;
 l=plot(iTausCalculated,correlationsPerTau,'o-r','LineWidth',2);
 
 %% Compare two cross-corrs (DJK & MW), also plot the control
-h5=figure(); clf; hold on;
+h5=figure('Visible', FIGUREVISIBLE); clf; hold on;
 
 myColorsLS = linspecer(4); myColors = [0 0 0; myColorsLS(2,:); myColorsLS(1,:)];
 %myColors = [0 0 0; 1 0 0; 0 70/255 170/255];
@@ -824,8 +833,6 @@ plot(CorrData(:,1),CorrData(:,2),'.','LineWidth',1,'MarkerFaceColor',[.5 .5 .5],
 % cosmetics
 % ===
 
-
-
 % If you recalculate correlations again w. different params, this allows
 % plotting of extra line.
 %l3=plot(CorrData(:,1),correlationsPerTau100,'o-','Color',[1 .5 0],'LineWidth',2)
@@ -833,7 +840,18 @@ plot(CorrData(:,1),CorrData(:,2),'.','LineWidth',1,'MarkerFaceColor',[.5 .5 .5],
 myxlimvalues=[min(CorrData(:,1)), max(CorrData(:,1))];
 xlim(myxlimvalues);
 %ylim([-1.1,1.1]);
-ylim([-.5,.5]);
+if ~strcmp(associatedFieldNames{1,2},associatedFieldNames{1,3})
+    myylimvalues=[min(CorrData(:,2)), max(CorrData(:,2))];
+    if myylimvalues(1)>-.5, myylimvalues(1) = -.5; end
+    if myylimvalues(2)<.5, myylimvalues(2) = .5; end
+    ylim(myylimvalues); % normal cross-correlation usually within this range
+
+else
+    myylimvalues=[min(CorrData(:,2)), 1];
+    if myylimvalues(1)>-.2, myylimvalues(1) = -.2; end
+    ylim(myylimvalues); % when fields are identical, it is an autocorrelation, and limits should be adjusted accordingly
+end
+
 plot(myxlimvalues,[0,0],'k-');
 
 %legend([l1,l2,l3],{'DJK','MW','Control'})
@@ -854,7 +872,8 @@ saveas(h5,[myOutputFolder 'TIF_crosscorrs_' associatedFieldNames{1,2} '_' associ
 saveas(h5,[myOutputFolder 'EPS_crosscorrs_' associatedFieldNames{1,2} '_' associatedFieldNames{1,3} '.eps'],'epsc');
 
 %%
-figure(h5);
+%figure(h5); set(gcf,'Visible', FIGUREVISIBLE);
+set(0, 'CurrentFigure', h5); hold on;
 MW_makeplotlookbetter(FONTSIZE*2,[],PLOTSIZE);    
 title([]);
 xlabel('? (hrs)');
@@ -899,7 +918,7 @@ SHOWPLUSMINFROMZERO = 25;
 PLOT3DSCATTER = 0;
 
 % Whether plots should be shown.
-if ~exist('FIGUREVISIBLE','var'), FIGUREVISIBLE=1; end;
+if ~exist('FIGUREVISIBLE','var'), FIGUREVISIBLE='on'; end;
 
 % What range should be plotted.
 numeliTausCalculated=numel(iTausCalculated);
@@ -912,13 +931,12 @@ numelRangeiTausCalculated = numel(rangeiTausCalculated);
 myColorMap = colormap(winter(numel(iTausCalculated)));
 
 if PLOT3DSCATTER
-    h2 = figure(); clf; hold on;
+    h2 = figure('Visible', FIGUREVISIBLE); clf; hold on;
     offset=100; width1=500; height1=500;
     set(h2, 'Position', [offset offset width1 height1]);
 end
 
-h3 = figure(); 
-if ~FIGUREVISIBLE, set(gcf,'Visible', 'off'); end
+h3 = figure('Visible', FIGUREVISIBLE); 
 clf; hold on;
 
 % Initialization
@@ -932,14 +950,16 @@ for delayIdx = rangeiTausCalculated
     
     % plot scatter
     if PLOT3DSCATTER
-        h2 = figure(h2);
+        %h2 = figure(h2); set(gcf,'Visible', FIGUREVISIBLE);
+        set(0, 'CurrentFigure', h2); hold on;
         if ~FIGUREVISIBLE, set(gcf,'Visible', 'off'); end
         hold on;
         scatter3(data(:,1),data(:,2),ones(1,numel(data(:,2)))*iTausCalculated(delayIdx),3,myColorMap(delayIdx,:),'.');%,'Color',distinguishableColors(myGrouping(i)+1,:),'MarkerSize',3);
     end
 
     % plot
-    figure(h3); clf, hold on;
+    %figure(h3); set(gcf,'Visible', FIGUREVISIBLE); clf; hold on;
+    set(0, 'CurrentFigure', h3); hold on;
     offset=100; width1=500; height1=500;
     set(h3, 'Position', [(offset+width1) offset width1 height1]);     
 
@@ -1007,7 +1027,8 @@ legend( legendLines, legendDescriptions,'Location','northeast');
 %}
 
 if PLOT3DSCATTER && ~CALCULATEONLY
-    figure(h2);
+    %figure(h2); set(gcf,'Visible', FIGUREVISIBLE);
+    set(0, 'CurrentFigure', h2); hold on;
     xlabel('Growth rate (dbl/hr)');
     ylabel('Concentration (a.u.)');
     %Set all fontsizes
@@ -1024,7 +1045,7 @@ end
 MAXLAGS=40; % width of the correlation function, i.e. frames lag 
 
 % Plot all branches
-h4=figure(); clf; hold on;
+h4=figure('Visible', FIGUREVISIBLE); clf; hold on;
 numelBranches = numel(branchData);
 lengthCorr = MAXLAGS*2+1;
 meanR = zeros(1,lengthCorr); meanTau = zeros(1,lengthCorr); 

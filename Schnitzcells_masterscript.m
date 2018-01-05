@@ -219,7 +219,16 @@ if any(strcmp(runsections,{'allpreliminary', 'allfull','createp'}))
         ourSettings.rootDir, 'cropLeftTop',ourSettings.cropLeftTop, 'cropRightBottom',ourSettings.cropRightBottom,...
         'fluor1',ourSettings.fluor1,'fluor2',ourSettings.fluor2,'fluor3',ourSettings.fluor3,...
         'setup',ourSettings.setup,'softwarePackage',ourSettings.softwarePackage,'camera',ourSettings.camera);
-
+        % NOTE: p.movieDate should only contain the date (e.g. 1998-10-10), 
+        % whilst ourSettings.movieDate often also contains an explanatory 
+        % suffix.(E.g. 1998-10-10_OldSchoolExperiment.) Therefor, 
+        % p.movieDate = ourSettings.movieDate(1:10). 
+        % This is a bit awkward, but since
+        % there are already 50+ configuration files that use this
+        % convention, I did not change it when I realized this was
+        % inconvenient.
+        % -MW, 2018
+    
     % Set framerange according to analysis type
     if any(strcmp(ourSettings.analysisType,'preliminary')) % fast analysis
         ourSettings.currentFrameRange = ourSettings.frameRangePreliminary;
@@ -1321,10 +1330,15 @@ end
 
 %% Save p and ourSettings struct to file in output dir if desired
 if any(strcmp(runsections,{'allfull', 'makeoutputfull','rerunfullanalysis'})) % full
-   outputFilename = [p.dateDir 'outputandsettings_v2_' p.movieName '.mat'];
-   save(outputFilename, 'p', 'ourSettings', 'schnitzcells', 's_rm', 'output');
-   
-   disp(['p (parameter), output, schnitzcells and ourSettings structs were saved to: ' outputFilename]);
+    
+   if ~exist('DONTSAVEFULLANALYSISATEND','var')
+    
+       outputFilename = [p.dateDir 'outputandsettings_v2_' p.movieDate '_' p.movieName '.mat'];
+       save(outputFilename, 'p', 'ourSettings', 'schnitzcells', 's_rm', 'output');
+
+       disp(['p (parameter), output, schnitzcells and ourSettings structs were saved to: ' outputFilename]);
+       
+   end
 end
 
 

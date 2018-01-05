@@ -26,7 +26,8 @@ function [ourSettings, alldata] = MW_readsettingsfromexcelfile(ourSettings)
             
             % Double check whether it's not double (leads to hairy situations)
             if any(strcmp(processedFieldNames,alldata{i, 1}))
-                error('There are duplicate field names in Excel file, please correct!')
+                disp(['Config file w. error message: ' ourSettings.configfilepath]);
+                error(['''' alldata{i, 1} ''' appears to be a duplicate field name in Excel file , please correct!'])
             end
             
             %% create a parameter with the name contained by alldata{i, 1} 

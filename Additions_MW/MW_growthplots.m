@@ -10,6 +10,9 @@ end
 if ~exist('EXPORTFOLDER', 'var')
     EXPORTFOLDER = 'C:\Users\wehrens\Desktop\export\';
 end
+if ~exist('FIGUREVISIBLE','var')
+   FIGUREVISIBLE = 'on'; 
+end
 % -----------------------------
 
 

@@ -1128,6 +1128,7 @@ if any(strcmp(runsections,{'allfull', 'makeoutputfull', 'rerunfullanalysis'})) %
         % Set up appropriate field names for R(concentration,mu)
         % TODO MW: todo: make this X_time etc, and do a strrep for X to applicable color
         associatedFieldNames = {ourSettings.fieldNamesWithFluorLetter(fluorIdx).timeFieldName, ourSettings.fieldNamesWithFluorLetter(fluorIdx).fluorFieldName, ourSettings.fieldNamesWithFluorLetter(fluorIdx).muFieldName};
+        
         % obtain some ourSettings from Excel file
         badSchnitzes = ourSettings.badSchnitzes; alreadyRemovedInMatFile = ourSettings.alreadyRemovedInMatFile;
         addSlowOnes = ourSettings.addSlowOnes;

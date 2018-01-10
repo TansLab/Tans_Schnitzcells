@@ -3,6 +3,21 @@
 
 % MW 2015/04
 %
+% NEW DESCRIPTION
+% This script was historically used to generate delayed scatter plots, but
+% has become a "key" script that performs cross-correlation analysis and
+% also outputs other parameter information (like probability distrutions,
+% branch plots, noise over time, etc). 
+%     The script is not optimized for this task, and given the original
+% function of calculating CCs, there is a high level of redundancy, which
+% is especially inconvenient since the introduction of the controls.
+%     For the CC analysis, but also for the others, the script starts with 
+% the "p" and "schnitzcells" parameters, plus some additional parameters,
+% to get CCs (and more). It is generally called from the 
+% "Schnitzcells_masterscript.m" script.
+% 
+%
+% OLD DESCRIPTION
 % Script to quickly generate "delayed scatter" plots, for now based on
 % NW's data handling; 
 % MW TODO: Check PN data.
@@ -14,6 +29,9 @@
 %
 % - makeDtime   if set to 0 nothing happens, if set to 1, extra 
 %               MWDJK_dX_time filed is recalculated.
+% - myFitTime   This is the time that is taken into consideration for the
+%               analysis. In Schnitzcells_masterscript, 
+%               myFitTime = ourSettings.fitTimeCrosscorr;
 %
 % Additional (optional) parameters:
 % - NOTMEANSUBTRACTED   : Don't automatically take fields that have the
@@ -24,6 +42,17 @@
 %                         subtracts those
 % - SHOWSOMECONTROLLINES  if this parameter is set then control line
 %                          examples will be shown.
+%
+%
+% TODO
+% Note that it is actually a bit awkward that delayed scatter also
+% performs analyses on the single parameter level (like plotting branches
+% and plotting branch groups), since this leads to a load of redundancy.
+% Similarly, a load of computation could be saved if branch groups are
+% calculated for multiple parameters (>2) at once, such that multiple
+% cross-correlations (or other two way comparisons) could be determined
+% from one branch data set...
+%
 %
 %
 % Example of how to call script:
@@ -245,10 +274,12 @@ for yfieldbranchtoplot=[2,3]
     offset=100; width1=800; height1=600;
     set(h1, 'Position', [offset offset width1 height1]);
     numelBranches = numel(branchData);
+    branchLineHandles = [];
+    branchDotsHandles = [];
     for branchIdx = 1:numelBranches
-        l = plot(branchData(branchIdx).(associatedFieldNames{1}), branchData(branchIdx).(associatedFieldNames{yfieldbranchtoplot}),'-','Color',distinguishableColors(branchIdx,:));
-        ldot = plot(branchData(branchIdx).(associatedFieldNames{1}), branchData(branchIdx).(associatedFieldNames{yfieldbranchtoplot}),'.','Color',[1 1 1]);
-        set(l, 'LineWidth', (numelBranches-branchIdx+1)/numelBranches*10);
+        branchLineHandles(end+1) = plot(branchData(branchIdx).(associatedFieldNames{1}), branchData(branchIdx).(associatedFieldNames{yfieldbranchtoplot}),'-','Color',distinguishableColors(branchIdx,:));
+        branchDotsHandles(end+1) = plot(branchData(branchIdx).(associatedFieldNames{1}), branchData(branchIdx).(associatedFieldNames{yfieldbranchtoplot}),'.','Color',[1 1 1]);
+        set(branchLineHandles(end), 'LineWidth', (numelBranches-branchIdx+1)/numelBranches*10);
     end
 
     %% Brute force average branches (note weighing is irrelevant for average)
@@ -270,7 +301,7 @@ for yfieldbranchtoplot=[2,3]
     currentYvector = {branchData(:).(associatedFieldNames{yfieldbranchtoplot})};
     uniqueTimes = unique([currentXvector{:}]);
     currentEdges = uniqueTimes-(uniqueTimes(2)-uniqueTimes(1))/2;
-    [meanYvector, meanXvector,stdValuesForBins,stdErrValuesForBins, counts,binnedValues]=binnedaveraging(currentXvector,currentYvector,currentEdges);
+    [meanYvector, meanXvector,stdValuesForBins,stdErrValuesForBins, counts,binnedValues,medianYvector]=binnedaveraging(currentXvector,currentYvector,currentEdges);    
     
     %%
     % xlabel
@@ -294,14 +325,15 @@ for yfieldbranchtoplot=[2,3]
     totalCount = numel(allYdata);
     %nelements=nelements./deltaY;
     %plot(centers,nelements,'or','LineWidth',2)
-    bar(centers,nelements,'FaceColor',someColors(1,:),'EdgeColor',someColors(1,:))
+    pdfBarHandles = bar(centers,nelements,'FaceColor',someColors(1,:),'EdgeColor',someColors(1,:))    
     
     % Fit Normal distribution
     pd=fitdist(allYdata', 'Normal')    
     fittedDistrX = [min(allYdata):(max(allYdata)-min(allYdata))/100:max(allYdata)]
     fittedDistrYnorm = normpdf(fittedDistrX,pd.mu,pd.sigma)
     fittedDistrY = fittedDistrYnorm.*totalCount.*deltaY;
-    plot(fittedDistrX,fittedDistrY,'k', 'LineWidth', 2);
+    % plot
+    pdfLineHandle=plot(fittedDistrX,fittedDistrY,'k', 'LineWidth', 2);
     
     % Fit gamma distribution
     %{
@@ -333,22 +365,24 @@ for yfieldbranchtoplot=[2,3]
 
     % TODO make 99% confidence and plot in previous figure.
     %confidence = paramci(pd,'Alpha',.01);
+    pdfSigmaHandles=[];
     sigma2 = pd.mu + 4.*[-pd.sigma, pd.sigma];
-    plot([sigma2(1),sigma2(1)],[0,myYlim],'--','Color',[.5 .5 .5],'LineWidth', 2)
-    plot([sigma2(2),sigma2(2)],[0,myYlim],'--','Color',[.5 .5 .5],'LineWidth', 2)
+    pdfSigmaHandles(1)=plot([sigma2(1),sigma2(1)],[0,myYlim],'--','Color',[.5 .5 .5],'LineWidth', 2)
+    pdfSigmaHandles(2)=plot([sigma2(2),sigma2(2)],[0,myYlim],'--','Color',[.5 .5 .5],'LineWidth', 2)
     sigma5 = pd.mu + 5.*[-pd.sigma, pd.sigma];
-    plot([sigma5(1),sigma5(1)],[0,myYlim],':','Color',[.5 .5 .5],'LineWidth', 2)
-    plot([sigma5(2),sigma5(2)],[0,myYlim],':','Color',[.5 .5 .5],'LineWidth', 2)
+    pdfSigmaHandles(3)=plot([sigma5(1),sigma5(1)],[0,myYlim],':','Color',[.5 .5 .5],'LineWidth', 2)
+    pdfSigmaHandles(4)=plot([sigma5(2),sigma5(2)],[0,myYlim],':','Color',[.5 .5 .5],'LineWidth', 2)
 
     %% Now also plot confidence intervals in previous figure
     %figure(h1); set(gcf,'Visible', FIGUREVISIBLE); hold on;
+    sigmaLineHandles=[];
     set(0, 'CurrentFigure', h1); hold on;
-    l1=plot([0,myXlimFig1],[sigma2(1),sigma2(1)],'--','Color',[.5 .5 .5],'LineWidth', 2)
-    plot([0,myXlimFig1],[sigma2(2),sigma2(2)],'--','Color',[.5 .5 .5],'LineWidth', 2)
-    l2=plot([0,myXlimFig1],[sigma5(1),sigma5(1)],':','Color',[.5 .5 .5],'LineWidth', 2)
-    plot([0,myXlimFig1],[sigma5(2),sigma5(2)],':','Color',[.5 .5 .5],'LineWidth', 2)
+    sigmaLineHandles(1)=plot([0,myXlimFig1],[sigma2(1),sigma2(1)],'--','Color',[.5 .5 .5],'LineWidth', 2)
+    sigmaLineHandles(2)=plot([0,myXlimFig1],[sigma2(2),sigma2(2)],'--','Color',[.5 .5 .5],'LineWidth', 2)
+    sigmaLineHandles(3)=plot([0,myXlimFig1],[sigma5(1),sigma5(1)],':','Color',[.5 .5 .5],'LineWidth', 2)
+    sigmaLineHandles(4)=plot([0,myXlimFig1],[sigma5(2),sigma5(2)],':','Color',[.5 .5 .5],'LineWidth', 2)
 
-    legend([l1,l2],{'2\sigma confidence','5\sigma confidence'},'location','Best');
+    legend([sigmaLineHandles(1), sigmaLineHandles(3)],{'2\sigma confidence','5\sigma confidence'},'location','Best');
 
     %% Now list schnitzes that have suspiciously high signal:
     mySigma = sigma2; % i.e. the 2 sigma confidence interval
@@ -374,11 +408,13 @@ for yfieldbranchtoplot=[2,3]
     suspiciousSchnitzes = unique(suspiciousSchnitzes)
     suspiciousBranches        
 
-    % Plot mean behavior
+    %% Plot mean behavior
     %figure(h1); set(gcf,'Visible', FIGUREVISIBLE); hold on;
     set(0, 'CurrentFigure', h1); hold on;
-    plot(meanXvector, meanYvector,'-','Color','k','LineWidth',3);
+    meanLineHandle=plot(meanXvector, meanYvector,'-','Color','k','LineWidth',3);
+    medianLineHandle=plot(meanXvector, medianYvector,'-.','Color','k','LineWidth',3);
         
+    %% Save the plots
     saveas(h1,[myOutputFolder 'TIF_branches_' associatedFieldNames{1,yfieldbranchtoplot} '.tif']);
     saveas(h1,[myOutputFolder 'SVG_branches_' associatedFieldNames{1,yfieldbranchtoplot} '.svg']);
     saveas(h1,[myOutputFolder 'FIG_branches_' associatedFieldNames{1,yfieldbranchtoplot} '.fig']);
@@ -422,9 +458,66 @@ for yfieldbranchtoplot=[2,3]
     saveas(h2,[myOutputFolder 'SVG_PDF_' associatedFieldNames{1,yfieldbranchtoplot} '_readableLabels.svg']);
     saveas(h2,[myOutputFolder 'FIG_PDF_' associatedFieldNames{1,yfieldbranchtoplot} '_readableLabels.fig']);
     
-    % For later output
+    %% Now modify the branch plot for smaller sized plots
+    
+    % Cosmetics
+    set(0, 'CurrentFigure', h1); hold on;
+    set(branchLineHandles, 'Color', [.8 .8 .8],'LineWidth',1)
+    
+    % Create highlight lines
+    someMoreLineColors=linspecer(5);
+    NRHIGHLIGHTLINES=3;
+    for highlightLinesIdx=1:NRHIGHLIGHTLINES
+        randomIdx=ceil(rand().*(numel(branchLineHandles)));
+        set(branchLineHandles(randomIdx), 'Color', someMoreLineColors(highlightLinesIdx,:),'LineWidth',1);        
+        uistack(branchLineHandles(randomIdx),'top');
+    end
+    
+    % More cosmetics
+    set(branchDotsHandles, 'Marker', 'none');
+    set(meanLineHandle, 'LineWidth', 1);
+    set(medianLineHandle, 'LineWidth', 1);
+    set(sigmaLineHandles, 'Color', 'k','LineWidth',1);
+    uistack(meanLineHandle,'top');
+    legend('off');  
+    
+    % Y limits
+    myYlimBranches = [min([branchData(:).(associatedFieldNames{yfieldbranchtoplot}),sigma5(1)]),...
+              max([branchData(:).(associatedFieldNames{yfieldbranchtoplot}),sigma5(2)]) ];
+    dataRange = myYlimBranches(2)-myYlimBranches(1);
+    myYlimBranches=myYlimBranches+[-dataRange/100 dataRange/100]; %widen range by 1 percent
+    ylim(myYlimBranches);
+    
+    % Front size
+    MW_makeplotlookbetter(10);
+    
+    saveas(h1,[myOutputFolder 'TIF_branches_' associatedFieldNames{1,yfieldbranchtoplot} '_small.tif']);
+    saveas(h1,[myOutputFolder 'SVG_branches_' associatedFieldNames{1,yfieldbranchtoplot} '_small.svg']);
+    saveas(h1,[myOutputFolder 'FIG_branches_' associatedFieldNames{1,yfieldbranchtoplot} '_small.fig']);
+    
+    %% Also for PDF create smaller version
+    set(0, 'CurrentFigure', h2); hold on;
+    if ishandle(pdfBarHandles), delete(pdfBarHandles); end
+      
+    pdfAreaHandles = area(centers,nelements,'EdgeColor','none');
+    set(pdfAreaHandles,'FaceColor',[.7 .7 .7]);
+    uistack(pdfAreaHandles,'bottom');
+        
+    set(pdfSigmaHandles, 'Color', 'k','LineWidth',1);
+    set(pdfLineHandle, 'Color', 'k','LineWidth',1);
+    
+    MW_makeplotlookbetter(10);
+    
+    saveas(h2,[myOutputFolder 'TIF_PDF_' associatedFieldNames{1,yfieldbranchtoplot} '_small.tif']);
+    saveas(h2,[myOutputFolder 'SVG_PDF_' associatedFieldNames{1,yfieldbranchtoplot} '_small.svg']);
+    saveas(h2,[myOutputFolder 'FIG_PDF_' associatedFieldNames{1,yfieldbranchtoplot} '_small.fig']);
+    %}
+    %% For later output
     output.branchavg.([associatedFieldNames{yfieldbranchtoplot} '_xfield']) = meanXvector; % usually time
     output.branchavg.(associatedFieldNames{yfieldbranchtoplot}) = meanYvector;
+    output.branchdata.(associatedFieldNames{yfieldbranchtoplot}) = branchData;
+    %output.branchgroups.(associatedFieldNames{yfieldbranchtoplot}) = branch_groups;
+    %output.branchgroups.(associatedFieldNames{yfieldbranchtoplot}) = branch_groupsControl;
     
     % save data relating to the pdf
     output.pdf.(associatedFieldNames{yfieldbranchtoplot}).centers           =centers;
@@ -434,6 +527,7 @@ for yfieldbranchtoplot=[2,3]
     output.pdf.(associatedFieldNames{yfieldbranchtoplot}).fittedDistrY      =fittedDistrY;
     output.pdf.(associatedFieldNames{yfieldbranchtoplot}).sigma2            =sigma2;
     output.pdf.(associatedFieldNames{yfieldbranchtoplot}).sigma5            =sigma5;
+        
     
 end
 
@@ -493,6 +587,8 @@ end
 % To calculate cross correlations, additional normalization is usually
 % performed, namely to filter out colony average behavior.
 [CorrData,composite_corr] = DJK_plot_crosscorrelation_standard_error_store(p, branch_groups, [FIELDPREFIX associatedFieldNames{1,2}],[FIELDPREFIX associatedFieldNames{1,3}] ,'selectionName',name_rm_branch,'timeField',associatedFieldNames{1},'onScreen',ONSCREEN); 
+
+disp('Done getting cross correlations');
 
 %% Create negative control 
 clear multipleCorrDataControl
@@ -691,6 +787,7 @@ end
 
 %% Plot trace of mean point..
 if NOTMEANSUBTRACTED
+    
     % Initialize
     if ~exist('SHOWPLUSMINFROMZERO','var'), SHOWPLUSMINFROMZERO = 25; end
     
@@ -751,19 +848,24 @@ myColorsLS = linspecer(4); myColors = [0 0 0; myColorsLS(2,:); myColorsLS(1,:)];
     % myColorControl=[0 204 255]/255;  myColorControl=[0 85 212]/255;   myColorControl = myColors(3,:);
     myColorControl = myColors(3,:);
 if exist('multipleCorrDataControl','var')
-    timeData= multipleCorrDataControl(1).CorrDataControl(:,1)';
-    myLineMean=nan(1,numel(timeData)); myLineMax=nan(1,numel(timeData)); myLineMin=nan(1,numel(timeData));
-    for idx=1:numel(timeData)
+    
+    % determine the boundaries of the area that is touched by the control
+    % lines
+    timeDataControl= multipleCorrDataControl(1).CorrDataControl(:,1)';
+    myLineMeanControl=nan(1,numel(timeDataControl)); myLineMax=nan(1,numel(timeDataControl)); myLineMin=nan(1,numel(timeDataControl));
+    for idx=1:numel(timeDataControl)
         
         % determine the line for each timepoint
         valuesAtTau=arrayfun(@(idx2) [multipleCorrDataControl(idx2).CorrDataControl(idx,2)], 1:numel(multipleCorrDataControl));
-        myLineMean(idx) = mean(valuesAtTau);
+        myLineMeanControl(idx) = mean(valuesAtTau);
         myLineMax(idx)  = max(valuesAtTau);
         myLineMin(idx)  = min(valuesAtTau);
         
         %l3=plot(multipleCorrDataControl(idx).CorrDataControl(:,1),multipleCorrDataControl(idx).CorrDataControl(:,2),...
         %    '-','LineWidth',2,'Color',[.7 .7 .7])
     end
+    
+    % Now show some example lines if desired
     if exist('SHOWSOMECONTROLLINES','var')
         lighterShadeColor=[.7 .7 .7]; %lighterShadeColor=min(1,[((myColorControl+.7))]);
         for idx= 1:3%numel(multipleCorrDataControl)
@@ -780,54 +882,55 @@ if exist('multipleCorrDataControl','var')
         end
     end
     
-    % plot the line
-   l3=plot(timeData,myLineMean,'-',...
+   %% Plot the control
+   lControlArea1=area(timeDataControl,myLineMax,...
+       'FaceColor',myColorControl,'LineStyle','none','FaceAlpha',.25);
+   %alpha(fh,.25)
+   lControlArea2=area(timeDataControl,myLineMin,...
+       'FaceColor',myColorControl,'LineStyle','none','FaceAlpha',.25);
+   %alpha(fh,.25)
+   
+   lControlMean=plot(timeDataControl,myLineMeanControl,'-',...
        'LineWidth',2,'Color',myColorControl);
+      
    %{
    plot(timeData,myLineMax,'-',...
        'LineWidth',2,'Color',myColorControl);
    plot(timeData,myLineMin,'-',...
        'LineWidth',2,'Color',myColorControl);
     %}
-    
-   fh=area(timeData,myLineMax,...
-       'FaceColor',myColorControl,'LineStyle','none','FaceAlpha',.25);
-   %alpha(fh,.25)
-   fh=area(timeData,myLineMin,...
-       'FaceColor',myColorControl,'LineStyle','none','FaceAlpha',.25);
-   %alpha(fh,.25)
-   
     %{
     for idx=1:numel(multipleCorrDataControl)
-        l3=plot(multipleCorrDataControl(idx).CorrDataControl(:,1),multipleCorrDataControl(idx).CorrDataControl(:,2),...
+        lControlMean=plot(multipleCorrDataControl(idx).CorrDataControl(:,1),multipleCorrDataControl(idx).CorrDataControl(:,2),...
             '-','LineWidth',2,'Color',[.7 .7 .7])
     end
     %}
 else
-    l3=plot(CorrDataControl(:,1),CorrDataControl(:,2),'x-','LineWidth',2,'Color',myColorControl)
+    lControlMean=plot(CorrDataControl(:,1),CorrDataControl(:,2),'x-','LineWidth',2,'Color',myColorControl)
 end
 
-% Plot MW scatter cross correlation function
+%% Plot MW scatter cross correlation function
 % ===
 % Calculate appropriate x-axis assuming assuming same delta(x) as CorrData,
 % and dx is same everywhere.
 centerIdx=ceil(size(CorrData,1)/2);
 deltaXCorrData = CorrData(centerIdx+1,1)-CorrData(centerIdx,1);
 MWxAxis = iTausCalculated.*deltaXCorrData;
-% make the actual plot of scatter correlations
-l2=plot(MWxAxis,correlationsPerTau,'-','LineWidth',1,'MarkerFaceColor',myColors(2,:),'Color',myColors(2,:));
-plot(MWxAxis,correlationsPerTau,'.','LineWidth',1,'MarkerFaceColor',myColors(2,:),'Color',myColors(2,:));
 
-% Plot DJK cross correlation function
+% PLOT make the actual plot of scatter correlations
+lCCmw=plot(MWxAxis,correlationsPerTau,'-','LineWidth',1,'MarkerFaceColor',myColors(2,:),'Color',myColors(2,:));
+lCCdotsmw=plot(MWxAxis,correlationsPerTau,'.','LineWidth',1,'MarkerFaceColor',myColors(2,:),'Color',myColors(2,:));
+
+%% Plot DJK cross correlation function
 % ===
 if size(CorrData,2)>2
     % error bars from branchgroups
-    h=errorbar(CorrData(:,1),CorrData(:,2),CorrData(:,3),'-','Color', myColors(1,:), 'LineWidth',1)
-    h.CapSize = 1;
+    hCCerrorDJK=errorbar(CorrData(:,1),CorrData(:,2),CorrData(:,3),'-','Color', myColors(1,:), 'LineWidth',1)
+    hCCerrorDJK.CapSize = 1;
 end
 % line itself
-l1=plot(CorrData(:,1),CorrData(:,2),'-','LineWidth',2,'MarkerFaceColor',myColors(1,:),'Color',myColors(1,:))
-plot(CorrData(:,1),CorrData(:,2),'.','LineWidth',1,'MarkerFaceColor',[.5 .5 .5],'Color',[.5 .5 .5])
+lCCdjk=plot(CorrData(:,1),CorrData(:,2),'-','LineWidth',2,'MarkerFaceColor',myColors(1,:),'Color',myColors(1,:))
+lCCdotsDjk=plot(CorrData(:,1),CorrData(:,2),'.','LineWidth',1,'MarkerFaceColor',[.5 .5 .5],'Color',[.5 .5 .5])
 %l1=plot(CorrData(:,1),CorrData(:,2),'.','LineWidth',2,'MarkerFaceColor',[1 1 1],'Color',[1 1 1])
 
 % cosmetics
@@ -856,7 +959,7 @@ plot(myxlimvalues,[0,0],'k-');
 
 %legend([l1,l2,l3],{'DJK','MW','Control'})
 %legend([l1,l2,l3],{'Lineages','Scatters','Control'})
-legend([l1,l2,l3],{'Lineages','Scatters','Control'});%,'Location','Best')
+legend([lCCdjk,lCCmw,lControlMean],{'Lineages','Scatters','Control'});%,'Location','Best')
 
 if p.sameLength==0, sameLengthComment=[10 ' Composite of unequally-sized branches']; else sameLengthComment=''; end
 title(['DJK vs. MW ' 10 myID '_' p. movieDate  '_' p.movieName sameLengthComment], 'Interpreter', 'none');
@@ -871,13 +974,14 @@ plot([0,0],[-1,1],'-k');
 saveas(h5,[myOutputFolder 'TIF_crosscorrs_' associatedFieldNames{1,2} '_' associatedFieldNames{1,3} '.tif']);
 saveas(h5,[myOutputFolder 'EPS_crosscorrs_' associatedFieldNames{1,2} '_' associatedFieldNames{1,3} '.eps'],'epsc');
 
-%%
+%% Now make it look nicer for saving
+
 %figure(h5); set(gcf,'Visible', FIGUREVISIBLE);
 set(0, 'CurrentFigure', h5); hold on;
 MW_makeplotlookbetter(FONTSIZE*2,[],PLOTSIZE);    
 title([]);
-xlabel('? (hrs)');
-legend([l1,l2,fh],{'Lineages','Scatters','Control'},'Location','Best')
+xlabel('Delay (hrs)');
+legend([lCCdjk,lCCmw,lControlArea1],{'Lineages','Scatters','Control'},'Location','Best')
 %Set all fontsizes
 set(findall(gcf,'type','text'),'FontSize',15,'fontWeight','normal');
 set(gca,'FontSize',15);
@@ -903,11 +1007,58 @@ end
 ylabel(['Correlation(' param1name ',' param2name ')']);
 
 %
-saveas(h5,[myOutputFolder 'FIG_crosscorrs_' associatedFieldNames{1,2} '_' associatedFieldNames{1,3} '.fig']);
-saveas(h5,[myOutputFolder 'TIF_crosscorrs_' associatedFieldNames{1,2} '_' associatedFieldNames{1,3} '.tif']);
-saveas(h5,[myOutputFolder 'SVG_crosscorrs_' associatedFieldNames{1,2} '_' associatedFieldNames{1,3} '.svg']);
+saveas(h5,[myOutputFolder 'FIG_crosscorrs_' associatedFieldNames{1,2} '_' associatedFieldNames{1,3} '_humanReadable.fig']);
+saveas(h5,[myOutputFolder 'TIF_crosscorrs_' associatedFieldNames{1,2} '_' associatedFieldNames{1,3} '_humanReadable.tif']);
+saveas(h5,[myOutputFolder 'SVG_crosscorrs_' associatedFieldNames{1,2} '_' associatedFieldNames{1,3} '_humanReadable.svg']);
 %saveas(h5,[myOutputFolder 'EPS_crosscorrs_' associatedFieldNames{1,2} '_' associatedFieldNames{1,3} '.eps'],'epsc');
 
+%% Now also modify it for smaller visualization
+set(0, 'CurrentFigure', h5); hold on;
+
+set(lControlMean, 'LineWidth',1,'Color',myColorControl);
+set([lControlArea1 lControlArea2], 'FaceColor',[.8 .8 .8],'EdgeColor','none','FaceAlpha',1);
+set(lCCdjk, 'LineWidth',1,'Color','k');
+legend('off');
+
+NRERRORBARS=20;
+selectedIndicesError=round(linspace(1,numel(CorrData(:,1)),NRERRORBARS));
+%delete(hCCerrorDJKsmall)
+hCCerrorDJKsmall=errorbar(CorrData(selectedIndicesError,1),CorrData(selectedIndicesError,2),CorrData(selectedIndicesError,3),'LineStyle','none','Color','k','CapSize',0)
+
+if ishandle(hCCerrorDJK), delete(hCCerrorDJK); end
+if ishandle(lCCdotsDjk), delete(lCCdotsDjk); end
+if ishandle(lCCdotsmw), delete(lCCdotsmw); end
+
+MW_makeplotlookbetter(10);
+
+saveas(h5,[myOutputFolder 'FIG_crosscorrs_' associatedFieldNames{1,2} '_' associatedFieldNames{1,3} '_small.fig']);
+saveas(h5,[myOutputFolder 'TIF_crosscorrs_' associatedFieldNames{1,2} '_' associatedFieldNames{1,3} '_small.tif']);
+saveas(h5,[myOutputFolder 'SVG_crosscorrs_' associatedFieldNames{1,2} '_' associatedFieldNames{1,3} '_small.svg']);
+
+%% Now also save these CC values for later usage
+
+% CC based on scatter plots
+output.CC.([associatedFieldNames{1,2} '_' associatedFieldNames{1,3}]).iTausCalculated = iTausCalculated;    
+output.CC.([associatedFieldNames{1,2} '_' associatedFieldNames{1,3}]).correlationsPerTau = correlationsPerTau;
+output.CC.([associatedFieldNames{1,2} '_' associatedFieldNames{1,3}]).MWxAxis = MWxAxis;
+
+% Control CC
+if exist('multipleCorrDataControl','var')
+
+    output.CC.([associatedFieldNames{1,2} '_' associatedFieldNames{1,3}]).multipleCorrDataControl = multipleCorrDataControl;
+    
+    output.CC.([associatedFieldNames{1,2} '_' associatedFieldNames{1,3}]).myLineMeanControl = myLineMeanControl;
+    output.CC.([associatedFieldNames{1,2} '_' associatedFieldNames{1,3}]).myLineMax = myLineMax;
+    output.CC.([associatedFieldNames{1,2} '_' associatedFieldNames{1,3}]).myLineMin = myLineMin;
+
+else
+    
+    output.CC.([associatedFieldNames{1,2} '_' associatedFieldNames{1,3}]).CorrDataControl = CorrDataControl;
+    
+end
+
+% CC itself
+output.CC.([associatedFieldNames{1,2} '_' associatedFieldNames{1,3}]).CorrData = CorrData;
 
 %% Plot code from CRPcAMP..overview..general
 % ==========
@@ -970,7 +1121,7 @@ for delayIdx = rangeiTausCalculated
     
     % contour (from kde)
     [bandwidth,density,X,Y] = kde2d(data);      
-    [C, l1] = contour(X,Y,density,NRCONTOURLINES,'-k','LineWidth',2);
+    [C, lCCdjk] = contour(X,Y,density,NRCONTOURLINES,'-k','LineWidth',2);
     % For later storage
     bandwidths{delayIdx}    = bandwidth;
     densities{delayIdx}     = density;
@@ -1089,7 +1240,7 @@ MW_makeplotlookbetter(20);
 % check if fields 2 and 3 are identical, i.e. autocorr has been made
 if strcmp(associatedFieldNames{2},associatedFieldNames{3})
     
-    % then calculate noise for this field
+    %% then calculate noise for this field
     rawData = [branchData(:).(associatedFieldNames{2})];
     
     % Calculate noise (std / mean)
@@ -1137,8 +1288,121 @@ if PERFORMSOMECHECKS
     plot(R(2).YValues, R(2).countYValues, 'ob','LineWidth',2);
 end
 
+%% Also create a plot of the noise over time (i.e. distribution width)
+% Do this only if we're calculating an autocorrelation function (to save
+% computation time)
 
+% Note: branchData is already ignoring schnitzes to be removed and time
+% outside the time period of interest, but we can't use that here (easily)
+% since it contains redundant data.
+%     So, we need to use s_rm and also select for the correct fitTime
 
+if strcmp(associatedFieldNames{2},associatedFieldNames{3})
+    
+    fieldIndex=2;
+
+    %%
+    timeField       = associatedFieldNames{1};
+    fieldOfInterest = associatedFieldNames{fieldIndex};
+
+    % Group all data together
+    allTimes     = [s_rm.(timeField)];
+    allData      = [s_rm.(fieldOfInterest)];
+    % make selection
+    indicesToSelect = allTimes>fitTime(1) & allTimes<fitTime(2);
+    theTimes     = allTimes(indicesToSelect);
+    theData      = allData(indicesToSelect);
+    
+    % Unique values
+    uniqueTimes  = sort(unique(theTimes));
+    
+    %
+    % calculate variances per frame and store them
+    varianceValuesOverTime = NaN(1,numel(uniqueTimes)); 
+    stdValuesOverTime = NaN(1,numel(uniqueTimes)); 
+    meanValuesOverTime = NaN(1,numel(uniqueTimes));
+    numberOfValues = NaN(1,numel(uniqueTimes));
+    for timeIdx = 1:numel(uniqueTimes)
+
+        timePoint = uniqueTimes(timeIdx);
+
+        selectionIdxs = theTimes==timePoint;    
+        valuesThisFrame = theData(selectionIdxs);
+        valuesThisFrame = valuesThisFrame(~isnan(valuesThisFrame));
+        
+        varianceValuesOverTime(timeIdx) = var(valuesThisFrame);
+        stdValuesOverTime(timeIdx) = std(valuesThisFrame);
+        meanValuesOverTime(timeIdx) = mean(valuesThisFrame);
+        
+        numberOfValues(timeIdx)  = numel(valuesThisFrame);
+        
+        % valuesThisFrameNormalized = valuesThisFrame./mean(valuesThisFrame);
+        % variancesNormalized(timeIdx) = var(valuesThisFrameNormalized);
+    end
+
+    % calculate coefficient of variation (cv)
+    coefficientOfVariationOverTime = stdValuesOverTime./meanValuesOverTime;   
+    
+    % calculate an estimated variance based on last 10 frames
+    meanVarianceLast10  = mean(varianceValuesOverTime(end-9:end));
+    medianVarianceLast10= median(varianceValuesOverTime(end-9:end));            
+    stdVarianceLast10   = std(varianceValuesOverTime(end-9:end));
+
+    % calculate an estimated cv based on last 10 frames
+    meanCoefficientOfVariationLast10   = mean(coefficientOfVariationOverTime(end-9:end));
+    medianCoefficientOfVariationLast10 = median(coefficientOfVariationOverTime(end-9:end));            
+    stdCoefficientOfVariationLast10    = std(coefficientOfVariationOverTime(end-9:end));
+    
+    %% Create a figure
+    h6=figure('Visible', FIGUREVISIBLE); clf; hold on;
+    %bar(uniqueTimes/60,variancesNormalized);%,'-o','LineWidth',2)
+    hCVoverTime = plot(uniqueTimes/60,coefficientOfVariationOverTime,'-','LineWidth',2);          
+    title(['Population based variance' 10 'Median last 10 frms = ' num2str(medianCoefficientOfVariationLast10) ' +/- ' num2str(stdCoefficientOfVariationLast10) '.']);
+    xlabel('Time (hrs)'); 
+    ylabel('Coefficient of variation');
+    MW_makeplotlookbetter(10);
+
+    MYLOWN = 25;
+    CVsFromSomeDataPoints = coefficientOfVariationOverTime(numberOfValues>MYLOWN);
+    myYlimCV=[min([CVsFromSomeDataPoints,0]),max(CVsFromSomeDataPoints)*1.05];
+    if any(numberOfValues>MYLOWN) % if there was selection use it for ylim
+        ylim(myYlimCV);
+    end
+    
+    %% Save it
+    saveas(h6,[myOutputFolder 'FIG_CVovertime_' associatedFieldNames{1,fieldIndex} '.fig']);
+    saveas(h6,[myOutputFolder 'TIF_CVovertime_' associatedFieldNames{1,fieldIndex} '.tif']);
+    saveas(h6,[myOutputFolder 'SVG_CVovertime_' associatedFieldNames{1,fieldIndex} '.svg']);
+
+    % Now small version
+    set(hCVoverTime,'LineWidth',1);    
+    saveas(h6,[myOutputFolder 'FIG_CVovertime_' associatedFieldNames{1,fieldIndex} '_small.fig']);
+    saveas(h6,[myOutputFolder 'TIF_CVovertime_' associatedFieldNames{1,fieldIndex} '_small.tif']);
+    saveas(h6,[myOutputFolder 'SVG_CVovertime_' associatedFieldNames{1,fieldIndex} '_small.svg']);
+
+    %% Save data for later usage
+    
+    % Base info
+    output.CV.(fieldOfInterest).varianceValuesOverTime = varianceValuesOverTime;
+    output.CV.(fieldOfInterest).stdValuesOverTime      = stdValuesOverTime;
+    output.CV.(fieldOfInterest).meanValuesOverTime     = meanValuesOverTime;
+    output.CV.(fieldOfInterest).numberOfValues         = numberOfValues;
+
+    % CV over time
+    output.CV.(fieldOfInterest).coefficientOfVariationOverTime = coefficientOfVariationOverTime;
+    
+    % Variance based on last 10 frames
+    output.CV.(fieldOfInterest).meanVarianceLast10   = meanVarianceLast10;
+    output.CV.(fieldOfInterest).medianVarianceLast10 = medianVarianceLast10;
+    output.CV.(fieldOfInterest).stdVarianceLast10    = stdVarianceLast10;
+
+    % CV based on last 10 frames
+    output.CV.(fieldOfInterest).meanCoefficientOfVariationLast10   = meanCoefficientOfVariationLast10;
+    output.CV.(fieldOfInterest).medianCoefficientOfVariationLast10 = medianCoefficientOfVariationLast10
+    output.CV.(fieldOfInterest).stdCoefficientOfVariationLast10    = stdCoefficientOfVariationLast10;
+    
+end 
+   
 
 
 

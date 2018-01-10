@@ -1,6 +1,6 @@
 
 function MW_makeplotlookbetter(FontSize,optionalParameters,plotSize,setRenderer)
-% function MW_makeplotlookbetter(FontSize)
+% function MW_makeplotlookbetter(FontSize,optionalParameters,plotSize,setRenderer)
 %
 % Currently only sets all font sizes to <FontSize>. 
 %
@@ -18,6 +18,9 @@ function MW_makeplotlookbetter(FontSize,optionalParameters,plotSize,setRenderer)
 %
 % One can use function "linspecer" to generate colors that are
 % distinguishable by human eye.
+%
+% Example:
+% MW_makeplotlookbetter(8*2,[],SIZE,1)
 
 if ~exist('optionalParameters','var')
     optionalParameters.style = 'default';

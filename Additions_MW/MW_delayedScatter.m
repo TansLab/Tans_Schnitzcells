@@ -107,7 +107,6 @@ PLOTSIZE=[6,4]; FONTSIZE=7;
 % ??
 PERFORMSOMECHECKS = 0;
 
-
 % additional options
 if ~exist('myOutputFolder')
     myOutputFolder = 'C:\Users\wehrens\Desktop\testdelayedscatter\output\';
@@ -1383,10 +1382,12 @@ if strcmp(associatedFieldNames{2},associatedFieldNames{3})
     %% Save data for later usage
     
     % Base info
+    output.CV.(fieldOfInterest).time                   = uniqueTimes;
     output.CV.(fieldOfInterest).varianceValuesOverTime = varianceValuesOverTime;
     output.CV.(fieldOfInterest).stdValuesOverTime      = stdValuesOverTime;
     output.CV.(fieldOfInterest).meanValuesOverTime     = meanValuesOverTime;
     output.CV.(fieldOfInterest).numberOfValues         = numberOfValues;
+                                                       
 
     % CV over time
     output.CV.(fieldOfInterest).coefficientOfVariationOverTime = coefficientOfVariationOverTime;

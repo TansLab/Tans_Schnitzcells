@@ -1340,17 +1340,19 @@ if strcmp(associatedFieldNames{2},associatedFieldNames{3})
     end
 
     % calculate coefficient of variation (cv)
-    coefficientOfVariationOverTime = stdValuesOverTime./meanValuesOverTime;   
+    coefficientOfVariationOverTime = stdValuesOverTime./meanValuesOverTime;       
     
-    % calculate an estimated variance based on last 10 frames
-    meanVarianceLast10  = mean(varianceValuesOverTime(end-9:end));
-    medianVarianceLast10= median(varianceValuesOverTime(end-9:end));            
-    stdVarianceLast10   = std(varianceValuesOverTime(end-9:end));
+    % calculate an estimated variance based on last 10 frames (or if total
+    % <10, take all frames)
+    framesToSubtract = min(numel(varianceValuesOverTime)-1,9);
+    meanVarianceLast10  = mean(varianceValuesOverTime(end-framesToSubtract:end));
+    medianVarianceLast10= median(varianceValuesOverTime(end-framesToSubtract:end));            
+    stdVarianceLast10   = std(varianceValuesOverTime(end-framesToSubtract:end));
 
     % calculate an estimated cv based on last 10 frames
-    meanCoefficientOfVariationLast10   = mean(coefficientOfVariationOverTime(end-9:end));
-    medianCoefficientOfVariationLast10 = median(coefficientOfVariationOverTime(end-9:end));            
-    stdCoefficientOfVariationLast10    = std(coefficientOfVariationOverTime(end-9:end));
+    meanCoefficientOfVariationLast10   = mean(coefficientOfVariationOverTime(end-framesToSubtract:end));
+    medianCoefficientOfVariationLast10 = median(coefficientOfVariationOverTime(end-framesToSubtract:end));            
+    stdCoefficientOfVariationLast10    = std(coefficientOfVariationOverTime(end-framesToSubtract:end));
     
     %% Create a figure
     h6=figure('Visible', FIGUREVISIBLE); clf; hold on;

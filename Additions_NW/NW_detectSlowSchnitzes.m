@@ -2,6 +2,9 @@ function slowSchnitzes=NW_detectSlowSchnitzes(p,schnitzcells,muField,varargin)
 % finds schnitzes that grow very slowly and returns their numbers. Can be
 % used as suggestions to delete schnitzes from analysis.
 % Uses muField (which must be a growth rate) to test for slow growth
+% Extension 2018-04: also mark those that have an imaginary component as
+% slow.
+% 
 % Output: -  array with schnitznumbers
 %         -  writes also a file in /analysisDir/slowschnitzes where detailed
 %            frames and growth rates are stored for each schnitz
@@ -106,8 +109,14 @@ dispAndWrite(fid, ['-------------------------------------------------']);
 slowSchnitzes=[];
 
 for schnitzrun=1:length(schnitzcells)
+    
       isBelowThreshold=find(schnitzcells(1,schnitzrun).(muField)<p.muThreshold);
+      
+      % Also detect NaN values
       isBelowThreshold=[isBelowThreshold, find(isnan(schnitzcells(1,schnitzrun).(muField)))]; % MW 2015/07
+      % Also detect imaginary values
+      isBelowThreshold=[isBelowThreshold, find(   imag(schnitzcells(1,schnitzrun).(muField)) > 0  )]; % MW 2018/04
+      
       if ~isempty(isBelowThreshold); 
           slowSchnitzes=[slowSchnitzes;schnitzrun]; % add schnitz to output-array
           % keep track of frames and growth rate in output file

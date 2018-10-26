@@ -16,12 +16,17 @@ warning('This function is untested!');
 
 load(schnitzcellsPath);
 
+%%
 for schnitzIdx = 1:numel(schnitzcells)
    schnitzcells(schnitzIdx).([fieldY someSuffix]) = schnitzcells(schnitzIdx).(fieldY)(schnitzcells(schnitzIdx).(atX));
 end
 
+%%
 %if saveTheFile
 save(schnitzcellsPath, 'schnitzcells');
 %end
 
 disp(['Done creating field ' fieldY someSuffix '.']);
+
+
+

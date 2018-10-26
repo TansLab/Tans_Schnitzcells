@@ -27,6 +27,12 @@ for schnitzIdx = 1:numel(schnitzcells)
     
    schnitzcells(schnitzIdx).(['indices_at_d' fluorColor]) = ... 
         ismember(schnitzcells(schnitzIdx).time,schnitzcells(schnitzIdx).(['time_atd' fluorColor]));
+    
+   if isfield(schnitzcells,['d' fluorColor '5_time'])
+       schnitzcells(schnitzIdx).(['indices_at_d' fluorColor '_time']) = ... 
+            ismember(schnitzcells(schnitzIdx).time,schnitzcells(schnitzIdx).(['d' fluorColor '5_time']));
+   end
+
 end
 
 %if saveTheFile

@@ -33,11 +33,20 @@ set(gca,'FontName','Arial')
 
 if exist('plotSize','var')
     set(gcf,'Units','centimeters','Position',[3,3,plotSize*2]);
+    
+    % Now for pdfs the following is also important:
+    %set(gcf, 'PaperUnits', 'normalized')
+    %set(gcf, 'PaperPosition', [0 0 1 1])
+    set(gcf, 'PaperUnits', 'centimeters')
+    set(gcf, 'PaperSize', plotSize*2)
+    set(gcf, 'PaperPosition', [0 0 plotSize*2])
 end
 
 if exist('setRenderer','var')
     set(gcf,'RendererMode','manual','Renderer','Painters');
 end
+
+
 
 %{
 if strcmp(optionalParameters.style, 'CBmanuscript')

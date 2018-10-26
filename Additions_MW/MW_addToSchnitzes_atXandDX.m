@@ -13,7 +13,7 @@
 % slighlty modified such that phaseFIelds are overwritten and not added one
 % after the other if function is called multiple times (NW 2012-09-11)
 %
-function [schnitzcells] = DJK_addToSchnitzes_atRandDR(schnitzcells, field,X) 
+function [schnitzcells] = MW_addToSchnitzes_atXandDX(schnitzcells, field,X) 
 
 
 %--------------------------------------------------------------------------

@@ -103,7 +103,7 @@ for i = 1:numelThedata
             frameSummedLength = frameSummedLength + ...
                 relevantSchnitzes(idx).length_fitNew(schnitzNrAndIndexForCurrentFrame(idx,2));
         end
-        frameData(count).frameSummedLength = frameSummedLength
+        frameData(count).frameSummedLength = frameSummedLength;
         %frameData(count).frameSummedLength = sum([relevantSchnitzes.length_fitNew]);      
         
         % Colony fluor mean

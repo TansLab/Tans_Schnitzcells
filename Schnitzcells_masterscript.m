@@ -883,6 +883,11 @@ if any(strcmp(runsections,{'allpreliminary', 'allfull','correctionsandanalysis'}
         schnitzcells = DJK_addToSchnitzes_cycleCor(schnitzcells,...
             ['d' X '5'],... % dX5
             ['phase2_at_d' X '5_time']);
+        % also for new rate:      
+        schnitzcells = DJK_addToSchnitzes_cycleCor(schnitzcells,...
+            ['d' X '5_divAreaPx'],... % dX5
+            ['phase2_at_d' X '5_time']);
+        % and for concentration
         schnitzcells = DJK_addToSchnitzes_cycleCor(schnitzcells,...
             [X '6_mean'],... % X6mean
             ['phase2_at' X '']); % etc..
@@ -903,7 +908,7 @@ if any(strcmp(runsections,{'allpreliminary', 'allfull','correctionsandanalysis'}
         schnitzcells = DJK_addToSchnitzes_cycleCor(schnitzcells,...
             [X '5_mean'],...
             ['phase2_at' X '']);
-
+        
         % Cropping vectors
         for muWindowSize = ourSettings.muWindow
 
@@ -1048,6 +1053,43 @@ if any(strcmp(runsections,{'allpreliminary', 'allfull', 'makeoutputfull','rerunf
 
 end
 
+%% Adding the production rate field
+if any(strcmp(runsections,{'allfull', 'makeoutputfull', 'rerunfullanalysis'})) % full
+
+% This is backwards compatibility to add the field dX5_divAreaPx and
+% dX5_divAreaPx_cycCor.
+
+% First gather fluor color letters
+allFluorColors = {p.fluor1 p.fluor2 p.fluor3};
+fluorColorsUsed = {};
+for flIdx = 1:3
+    if ~strcmp(allFluorColors{flIdx},'none')
+        fluorColorsUsed{end+1} = upper(allFluorColors{flIdx});
+    end
+end
+% then determine additional fields if necessary
+saveFlag=0;
+for flIdx = 1:numel(fluorColorsUsed)
+    X = fluorColorsUsed{flIdx};
+
+    if ~isfield(schnitzcells, ['d' X '5_divAreaPx'])
+        schnitzcells = MW_fluorRate_anycolor(schnitzcells,X,'length_fitNew');
+
+        % Note that the new rate is compatible (only) with X5 phase
+        schnitzcells = DJK_addToSchnitzes_cycleCor(schnitzcells,...
+            ['d' X '5_divAreaPx'],... % dX5
+            ['phase2_at_d' X '5_time']);
+
+        saveFlag=1;
+    end
+end
+
+% Save the result
+if saveFlag
+    NW_saveSchnitzcells(p,schnitzcells); 
+end
+
+end
 %% More analyses for full analysis
 % Press CTRL+enter.
 % This section provides a load of analysis of the schnitzcells structure.
